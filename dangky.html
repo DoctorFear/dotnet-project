@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>ancientBOOK — Đăng ký thành viên</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,500&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --alice: #F2F7FF;
+    --egyptian: #0B409C;
+    --catalina: #0D226B;
+    --ink: #071233;
+    --saffron: #FDBE34;
+    --muted: #5b6e99;
+    --hairline: #dce6f7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--alice);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- top bar ---------- */
+  .top-bar {
+    background: var(--ink);
+    color: var(--alice);
+    padding: 9px 48px;
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    letter-spacing: 0.2px;
+  }
+  .top-bar strong { color: var(--saffron); font-weight: 600; }
+
+  /* ---------- header & LOGO ĐẬM DÀY ---------- */
+  .header {
+    background: #fff;
+    border-bottom: 2px solid var(--hairline);
+    padding: 18px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .brand-name {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 800; /* Rất dày dặn */
+    color: var(--catalina);
+    letter-spacing: -0.6px;
+    display: inline-flex;
+    align-items: baseline;
+    user-select: none;
+  }
+  .brand-name span.book-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 24px;
+    font-weight: 900; /* Cực dày (Black) */
+    color: var(--egyptian);
+    letter-spacing: 1.2px;
+    margin-left: 2px;
+  }
+  .brand-name .accent-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    background-color: var(--saffron);
+    border-radius: 50%;
+    margin-left: 4px;
+    box-shadow: 0 0 6px rgba(253, 190, 52, 0.7);
+  }
+
+  /* ---------- main layout ---------- */
+  .main-wrapper {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 48px 24px;
+  }
+  .book-card {
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid var(--hairline);
+    box-shadow: 0 24px 48px -20px rgba(7, 18, 51, 0.28);
+    display: flex;
+    width: 980px;
+    max-width: 100%;
+    min-height: 600px;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(14px);
+    animation: settle 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+  }
+  @keyframes settle {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .book-card { animation: none; opacity: 1; transform: none; }
+  }
+
+  /* ---------- left panel: the "shelf" ---------- */
+  .visual-column {
+    flex: 0 0 40%;
+    position: relative;
+    background: var(--catalina);
+    color: var(--alice);
+    padding: 44px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+  .visual-column::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        rgba(242,247,255,0.05) 0px,
+        rgba(242,247,255,0.05) 2px,
+        transparent 2px,
+        transparent 26px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        rgba(253,190,52,0.07) 0px,
+        rgba(253,190,52,0.07) 1px,
+        transparent 1px,
+        transparent 91px
+      );
+    pointer-events: none;
+  }
+  .visual-column::after{
+    content:"";
+    position:absolute;
+    left:0; right:0; bottom:0;
+    height:1px;
+    background: linear-gradient(90deg, transparent, rgba(253,190,52,0.5), transparent);
+  }
+  .visual-inner { position: relative; z-index: 1; }
+
+  .panel-kicker {
+    font-size: 13px;
+    color: var(--saffron);
+    font-weight: 600;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+  }
+  .quote-text {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 21px;
+    line-height: 1.5;
+    color: var(--alice);
+    margin-top: 18px;
+    max-width: 34ch;
+  }
+  .quote-author {
+    font-size: 12px;
+    color: rgba(242,247,255,0.65);
+    margin-top: 16px;
+    font-weight: 500;
+  }
+  .quote-author::before { content: "— "; }
+
+  .perks-list { list-style: none; margin-top: 8px; }
+  .perks-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: rgba(242,247,255,0.9);
+    padding: 12px 0;
+    border-top: 1px solid rgba(242,247,255,0.12);
+  }
+  .perks-item:last-child { border-bottom: 1px solid rgba(242,247,255,0.12); }
+  .perks-mark {
+    flex: 0 0 auto;
+    width: 16px; height: 16px;
+    margin-top: 1px;
+    color: var(--saffron);
+  }
+
+  /* ---------- right panel: the form ---------- */
+  .form-column {
+    flex: 1;
+    padding: 48px 52px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .form-title {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--catalina);
+    letter-spacing: -0.3px;
+  }
+  .form-subtitle {
+    font-size: 13.5px;
+    color: var(--muted);
+    margin-top: 6px;
+    margin-bottom: 30px;
+  }
+
+  .input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 16px;
+  }
+  .form-group { margin-bottom: 18px; }
+  .form-group.full-width { grid-column: span 2; }
+
+  .form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 7px;
+  }
+  .form-input {
+    width: 100%;
+    padding: 10px 2px 10px 2px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid var(--hairline);
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  .form-input:focus { border-bottom-color: var(--egyptian); }
+  .form-input::placeholder { color: #a8b6d6; }
+
+  .btn-register {
+    width: 100%;
+    padding: 13px;
+    background: var(--egyptian);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    margin-top: 12px;
+    position: relative;
+    overflow: hidden;
+    transition: background-color 0.2s ease;
+  }
+  .btn-register:hover { background: var(--catalina); }
+  .btn-register:focus-visible {
+    outline: 2px solid var(--saffron);
+    outline-offset: 2px;
+  }
+
+  .form-footer {
+    margin-top: 20px;
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+  }
+  .form-link {
+    color: var(--egyptian);
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+  }
+  .form-link:hover { border-bottom-color: var(--egyptian); }
+
+  @media (max-width: 720px) {
+    .book-card { flex-direction: column; width: 100%; min-height: 0; }
+    .visual-column { flex: none; padding: 36px 28px; }
+    .quote-text { font-size: 18px; }
+    .form-column { padding: 36px 28px; }
+    .input-grid { grid-template-columns: 1fr; }
+    .form-group.full-width { grid-column: span 1; }
+    .top-bar, .header { padding-left: 24px; padding-right: 24px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <span>Miễn phí vận chuyển cho đơn hàng từ <strong>250.000 đ</strong></span>
+    <span>Hotline <strong>1900 636 467</strong></span>
+  </div>
+
+  <header class="header">
+    <div class="brand-name">
+      ancient<span class="book-text">BOOK</span><span class="accent-dot"></span>
+    </div>
+  </header>
+
+  <main class="main-wrapper">
+    <div class="book-card">
+
+      <div class="visual-column">
+        <div class="visual-inner">
+          <span class="panel-kicker">Góc độc giả</span>
+          <p class="quote-text">Một cuốn sách thực sự hay dạy tôi nhiều điều hơn là chỉ đọc nó. Tôi phải nhanh chóng đặt nó xuống, bắt đầu sống theo những gì nó gợi ý.</p>
+          <p class="quote-author">Henry David Thoreau</p>
+        </div>
+
+        <div class="visual-inner">
+          <ul class="perks-list">
+            <li class="perks-item">
+              <svg class="perks-mark" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Tích lũy điểm thưởng F-Point cho mọi tựa sách
+            </li>
+            <li class="perks-item">
+              <svg class="perks-mark" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Nhận thông báo sớm khi có ấn bản giới hạn
+            </li>
+            <li class="perks-item">
+              <svg class="perks-mark" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Tư vấn viên hỗ trợ trực tuyến 24/7
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="form-column">
+        <h2 class="form-title">Tạo tài khoản mới</h2>
+        <p class="form-subtitle">Đồng hành cùng hàng ngàn độc giả trên toàn quốc</p>
+
+        <div class="input-grid">
+          <div class="form-group full-width">
+            <label class="form-label">Họ và tên</label>
+            <input type="text" class="form-input" value="Hà Thái Sơn" placeholder="VD: Nguyễn Văn A">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Tên đăng nhập</label>
+            <input type="text" class="form-input" value="thaison_dev" placeholder="username">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Số điện thoại</label>
+            <input type="text" class="form-input" value="0909123456" placeholder="09xx xxx xxx">
+          </div>
+
+          <div class="form-group full-width">
+            <label class="form-label">Địa chỉ email</label>
+            <input type="email" class="form-input" value="thaison@example.com" placeholder="name@domain.com">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Mật khẩu</label>
+            <input type="password" class="form-input" value="••••••••" placeholder="Tối thiểu 6 ký tự">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Xác nhận mật khẩu</label>
+            <input type="password" class="form-input" value="••••••••" placeholder="Nhập lại mật khẩu">
+          </div>
+        </div>
+
+        <button class="btn-register">Đăng ký tài khoản</button>
+
+        <p class="form-footer">Đã có tài khoản? <a href="#" class="form-link">Đăng nhập ngay</a></p>
+      </div>
+
+    </div>
+  </main>
+
+</body>
+</html>

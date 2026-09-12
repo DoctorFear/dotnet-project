@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ancientBOOK — Hồ sơ cá nhân</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --alice: #F2F7FF;
+    --egyptian: #0B409C;
+    --catalina: #0D226B;
+    --ink: #071233;
+    --saffron: #FDBE34;
+    --muted: #5b6e99;
+    --hairline: #dce6f7;
+    --white: #ffffff;
+    --danger: #d93838;
+    --danger-bg: #fdf2f2;
+    --success: #15803d;
+    --success-bg: #ecfdf5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--alice);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .icon { width: 17px; height: 17px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ---------- 1. TOP UTILITY BAR ---------- */
+  .top-bar {
+    background: var(--ink);
+    color: var(--alice);
+    padding: 8px 48px;
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    letter-spacing: 0.2px;
+  }
+  .top-bar strong { color: var(--saffron); font-weight: 600; }
+  .top-links { display: flex; gap: 20px; list-style: none; }
+
+  /* ---------- 2. NAVBAR STOREFRONT ---------- */
+  .store-header {
+    background: var(--white);
+    border-bottom: 1.5px solid var(--hairline);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .navbar-main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .brand-logo {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--catalina);
+    letter-spacing: -0.6px;
+    display: inline-flex;
+    align-items: baseline;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .brand-logo span.book-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--egyptian);
+    letter-spacing: 1.2px;
+    margin-left: 2px;
+  }
+  .brand-logo .accent-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background-color: var(--saffron);
+    border-radius: 50%;
+    margin-left: 4px;
+  }
+
+  .search-container {
+    flex: 1;
+    max-width: 460px;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .search-input {
+    width: 100%;
+    padding: 9px 40px 9px 14px;
+    border: 1.5px solid var(--hairline);
+    border-radius: 6px;
+    font-size: 13.5px;
+    outline: none;
+    font-family: inherit;
+    background: #fafcff;
+    color: var(--ink);
+    transition: border-color 0.15s ease;
+  }
+  .search-input:focus {
+    border-color: var(--egyptian);
+    background: #fff;
+  }
+  .search-btn {
+    position: absolute;
+    right: 5px;
+    background: var(--egyptian);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .search-btn:hover { background: var(--catalina); }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .nav-action-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--catalina);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 10px;
+    border-radius: 6px;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .nav-action-link:hover {
+    background: var(--alice);
+    color: var(--egyptian);
+  }
+  .badge-count {
+    background: var(--egyptian);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ======================================================== */
+  /* ---------- USER DROPDOWN KHI HOVER & ICON XOAY --------- */
+  /* ======================================================== */
+  .user-menu-wrapper { 
+    position: relative;
+    padding: 4px 0; /* Vùng đệm tránh bị mất hover khi rê chuột */
+  }
+  .user-dropdown-trigger {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 3px 12px 3px 3px;
+    border-radius: 999px;
+    background: var(--alice);
+    border: 1px solid var(--hairline);
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  
+  /* Hiệu ứng xoay icon chevron mượt mà */
+  .icon-chevron-user {
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Khi hover vào wrapper: đổi màu nút, xoay icon 180 độ */
+  .user-menu-wrapper:hover .user-dropdown-trigger {
+    border-color: var(--egyptian);
+    background: #e8f0fe;
+  }
+  .user-menu-wrapper:hover .icon-chevron-user {
+    transform: rotate(180deg);
+  }
+  
+  .user-avatar-tiny {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    border: 1.5px solid var(--saffron);
+    background: #fff;
+  }
+  .user-name-text {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--catalina);
+  }
+
+  /* Dropdown Menu tự động hiện khi hover */
+  .user-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 250px;
+    background: var(--white);
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    padding: 6px;
+    display: none;
+    z-index: 1000;
+    list-style: none;
+    box-shadow: 0 8px 24px -6px rgba(7, 18, 51, 0.12);
+  }
+  .user-menu-wrapper:hover .user-dropdown-menu {
+    display: block;
+  }
+
+  .dropdown-item-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .dropdown-item-link:hover {
+    background: var(--alice);
+    color: var(--egyptian);
+  }
+  .dropdown-item-link.danger {
+    color: var(--danger);
+    border-top: 1px solid var(--hairline);
+    margin-top: 4px;
+    border-radius: 0 0 5px 5px;
+  }
+  .dropdown-item-link.danger:hover {
+    background: var(--danger-bg);
+  }
+
+  /* Sub-Navbar & Mega Menu */
+  .navbar-sub {
+    border-top: 1px solid var(--hairline);
+    background: #fff;
+    position: relative;
+  }
+  .sub-nav-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+  }
+  .nav-categories {
+    display: flex;
+    list-style: none;
+    gap: 8px;
+  }
+  .nav-categories a {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 12px;
+    color: var(--muted);
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+  .nav-categories a:hover {
+    color: var(--egyptian);
+    background: var(--alice);
+  }
+  .badge-tag-voucher {
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 2px;
+  }
+
+  .category-dropdown-wrapper {
+    position: relative;
+  }
+  .category-trigger {
+    cursor: pointer;
+    font-weight: 700 !important;
+    color: var(--catalina) !important;
+  }
+  .category-trigger .icon-chevron {
+    transition: transform 0.2s ease;
+  }
+  .category-dropdown-wrapper:hover .category-trigger .icon-chevron {
+    transform: rotate(180deg);
+  }
+
+  .mega-categories-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 780px;
+    background: #ffffff;
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    box-shadow: 0 12px 32px -8px rgba(7, 18, 51, 0.15);
+    padding: 14px 16px;
+    display: none;
+    z-index: 1000;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px 6px;
+  }
+  .category-dropdown-wrapper:hover .mega-categories-menu {
+    display: grid;
+  }
+
+  .mega-category-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 5px;
+    text-decoration: none;
+    color: var(--ink);
+    font-size: 12.5px;
+    font-weight: 500;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .cat-bullet {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--hairline);
+    flex-shrink: 0;
+    transition: background 0.15s ease;
+  }
+  .mega-category-item:hover {
+    background: var(--alice);
+    color: var(--egyptian);
+  }
+  .mega-category-item:hover .cat-bullet {
+    background: var(--saffron);
+  }
+
+  /* ---------- 3. LAYOUT GIAO DIỆN CHÍNH ---------- */
+  .main-container-single {
+    flex: 1;
+    max-width: 860px;
+    width: 100%;
+    margin: 32px auto;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .form-panel {
+    background: var(--white);
+    border-radius: 10px;
+    border: 1px solid var(--hairline);
+    padding: 30px 36px;
+  }
+  .panel-header {
+    border-bottom: 1.5px solid var(--hairline);
+    padding-bottom: 14px;
+    margin-bottom: 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .panel-title {
+    font-family: 'Fraunces', serif;
+    font-size: 21px;
+    font-weight: 700;
+    color: var(--catalina);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .form-grid-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 20px;
+  }
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .form-field.full { grid-column: span 2; }
+  .field-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .form-control {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 13.5px;
+    font-family: inherit;
+    color: var(--ink);
+    border: 1.5px solid var(--hairline);
+    border-radius: 6px;
+    outline: none;
+    background: #fff;
+    transition: border-color 0.15s ease;
+  }
+  .form-control:focus {
+    border-color: var(--egyptian);
+  }
+  .form-control.error-state {
+    border-color: var(--danger);
+    background: var(--danger-bg);
+  }
+  .form-control[readonly] {
+    background-color: var(--alice);
+    color: #64748b;
+    cursor: default;
+  }
+  select.form-control { cursor: pointer; }
+  .field-error-msg { font-size: 11px; color: var(--danger); font-weight: 600; display: none; }
+
+  /* KHỐI ĐỊA CHỈ */
+  .address-section-divider {
+    grid-column: span 2;
+    margin-top: 6px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--hairline);
+  }
+  .address-box {
+    background: #fafcff;
+    border: 1.5px solid var(--hairline);
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin-top: 8px;
+  }
+  .address-box-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .address-box-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--catalina);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-add-second-address {
+    grid-column: span 2;
+    background: #fff;
+    border: 1.5px dashed var(--egyptian);
+    color: var(--egyptian);
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.15s ease;
+    font-family: inherit;
+  }
+  .btn-add-second-address:hover { background: var(--alice); }
+
+  .btn-remove-address {
+    background: none;
+    border: none;
+    color: var(--danger);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+  .btn-remove-address:hover { text-decoration: underline; opacity: 0.85; }
+
+  .toggle-pwd-btn {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    transition: color 0.15s ease;
+  }
+  .toggle-pwd-btn:hover { color: var(--catalina); }
+
+  /* NÚT THAO TÁC */
+  .form-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 22px;
+  }
+  .btn-submit-action {
+    padding: 10px 22px;
+    background: var(--egyptian);
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.15s ease;
+  }
+  .btn-submit-action:hover { background: var(--catalina); }
+
+  .btn-trigger-pwd {
+    padding: 10px 18px;
+    background: #fff;
+    color: var(--catalina);
+    border: 1.5px solid var(--hairline);
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .btn-trigger-pwd:hover {
+    border-color: var(--egyptian);
+    background: var(--alice);
+  }
+
+  /* Toast */
+  .toast-stack {
+    position: fixed; top: 20px; right: 20px; z-index: 2000;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .toast-item {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 8px;
+    font-size: 13px; font-weight: 500;
+    box-shadow: 0 4px 16px rgba(7, 18, 51, 0.15);
+  }
+  .toast-item.success .icon { color: #4ade80; }
+  .toast-item.error { background: var(--danger); }
+
+  @media (max-width: 860px) {
+    .form-grid-layout { grid-template-columns: 1fr; }
+    .form-field.full, .address-section-divider, .btn-add-second-address { grid-column: span 1; }
+    .top-bar, .navbar-main, .sub-nav-content { padding-left: 16px; padding-right: 16px; }
+    .search-container { display: none; }
+    .form-panel { padding: 22px 18px; }
+    .form-actions { flex-direction: column; align-items: stretch; }
+    .mega-categories-menu { width: 100%; grid-template-columns: repeat(2, 1fr); left: 0; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- 1. TOP UTILITY BAR -->
+  <div class="top-bar">
+    <div>Miễn phí giao hàng toàn quốc cho đơn từ <strong>250.000 đ</strong> • Cam kết 100% sách chính hãng</div>
+    <ul class="top-links">
+      <span>Hotline hỗ trợ: <strong>1900 636 467</strong></span>
+    </ul>
+  </div>
+
+  <!-- 2. NAVBAR STOREFRONT -->
+  <header class="store-header">
+    <div class="navbar-main">
+      <a href="#" class="brand-logo">
+        ancient<span class="book-text">BOOK</span><span class="accent-dot"></span>
+      </a>
+
+      <div class="search-container">
+        <input type="text" class="search-input" placeholder="Tìm sách cổ điển, tác giả, NXB hoặc mã ISBN...">
+        <button class="search-btn" title="Tìm kiếm">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        </button>
+      </div>
+
+      <div class="nav-actions">
+        <a href="#" class="nav-action-link" title="Sách yêu thích">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          <span>Yêu thích</span>
+          <span class="badge-count">3</span>
+        </a>
+
+        <a href="#" class="nav-action-link" title="Giỏ hàng">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          <span>Giỏ hàng</span>
+          <span class="badge-count">2</span>
+        </a>
+
+        <!-- USER PILL: HIỂN THỊ TÊN ĐĂNG NHẬP + HOVER MỞ DROPDOWN + ICON XOAY -->
+        <div class="user-menu-wrapper">
+          <div class="user-dropdown-trigger" id="userDropdownTrigger">
+            <img src="https://media.istockphoto.com/id/2149922267/vector/user-icon.jpg?s=612x612&w=0&k=20&c=i6jYPfB1pWjK8pll6YRxAK9fgBmf65-w5wbKH9R1dyQ=" class="user-avatar-tiny" alt="User Avatar">
+            <span class="user-name-text" id="navUserName">thaison_dev</span>
+            <svg class="icon icon-chevron-user" viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+
+          <ul class="user-dropdown-menu" id="userDropdownMenu">
+            <li>
+              <a href="#info-form-section" class="dropdown-item-link">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>Hồ sơ & Đổi mật khẩu</span>
+              </a>
+            </li>
+            <li>
+              <a href="#" class="dropdown-item-link">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                <span>Lịch sử đơn đặt sách</span>
+              </a>
+            </li>
+            <li>
+              <a href="#" class="dropdown-item-link danger">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                <span>Đăng xuất tài khoản</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUB-NAVBAR KÈM MEGA MENU -->
+    <div class="navbar-sub">
+      <div class="sub-nav-content">
+        <ul class="nav-categories">
+          
+          <li class="category-dropdown-wrapper">
+            <a href="#" class="category-trigger">
+              <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+              <span>Danh mục thể loại</span>
+              <svg class="icon icon-chevron" viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="m6 9 6 6 6-6"/></svg>
+            </a>
+
+            <!-- 20 DANH MỤC -->
+            <div class="mega-categories-menu">
+              <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Văn học Việt Nam</a>
+              <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Văn học Cổ điển</a>
+              <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Tiểu thuyết Trinh thám</a>
+              <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Khoa học Viễn tưởng</a>
+              <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Triết học Phương Đông</a>
+              <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Triết học Phương Tây</a>
+              <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Lịch sử & Khảo cổ</a>
+              <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Văn hóa & Tôn giáo</a>
+              <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Tâm lý học Ứng dụng</a>
+              <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Khoa học Tự nhiên</a>
+              <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Công nghệ & Lập trình</a>
+              <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Kinh tế & Đầu tư</a>
+              <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Quản trị & Lãnh đạo</a>
+              <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Nghệ thuật & Kiến trúc</a>
+              <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Âm nhạc & Điện ảnh</a>
+              <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Y học & Sức khỏe</a>
+              <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Văn học Thiếu nhi</a>
+              <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Tạp chí & Khảo luận</a>
+              <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Bản thảo & Sách cổ</a>
+              <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Ấn phẩm Giới hạn</a>
+            </div>
+          </li>
+
+          <li>
+            <a href="#">
+              <span>Khuyến mãi & Voucher</span>
+              <span class="badge-tag-voucher">Hot</span>
+            </a>
+          </li>
+        </ul>
+        <div style="font-size: 12px; color: var(--muted);">
+          Thành viên: <strong style="color: var(--catalina);">Hạng Bạc (240 F-Points)</strong>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 3. MAIN WORKSPACE -->
+  <main class="main-container-single">
+
+    <!-- BIỂU MẪU: THÔNG TIN CÁ NHÂN & ĐỊA CHỈ GIAO HÀNG -->
+    <section class="form-panel" id="info-form-section">
+      <div class="panel-header">
+        <h2 class="panel-title">
+          <svg class="icon" viewBox="0 0 24 24" style="color: var(--egyptian);"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Thông Tin Cá Nhân
+        </h2>
+      </div>
+
+      <form id="profileInfoForm" onsubmit="handleUpdateInfo(event)" style="display: flex; flex-direction: column;">
+        <div class="form-grid-layout">
+          
+
+           <div class="form-field">
+            <label class="field-label" for="inputUsername">Tên đăng nhập</label>
+            <div class="input-wrapper">
+              <input type="text" id="inputUsername" class="form-control" value="thaison_dev" readonly>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label" for="inputEmail">Địa chỉ Email</label>
+            <div class="input-wrapper">
+              <input type="email" id="inputEmail" class="form-control" value="thaison@example.com" readonly>
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="field-label" for="inputFullName">Họ và tên</label>
+            <div class="input-wrapper">
+              <input type="text" id="inputFullName" class="form-control" value="Hà Thái Sơn" placeholder="Nhập họ và tên">
+            </div>
+            <span class="field-error-msg" id="errorFullName">Vui lòng nhập họ và tên</span>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label" for="inputPhone">Số điện thoại</label>
+            <div class="input-wrapper">
+              <input type="text" id="inputPhone" class="form-control" value="0909123456" placeholder="Nhập số điện thoại">
+            </div>
+            <span class="field-error-msg" id="errorPhone">Số điện thoại không hợp lệ</span>
+          </div>
+
+
+
+          <!-- ĐỊA CHỈ 1 -->
+          <div class="address-section-divider">
+            <div class="address-box">
+              <div class="address-box-header">
+                <div class="address-box-title">
+                  <svg class="icon" viewBox="0 0 24 24" style="color: var(--egyptian);"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  <span>Địa chỉ nhận hàng 1</span>
+                </div>
+              </div>
+
+              <div class="form-grid-layout" style="gap: 12px 16px;">
+                <div class="form-field">
+                  <label class="field-label">Tỉnh / Thành phố</label>
+                  <select id="province1" class="form-control" onchange="onProvinceChange(1)">
+                    <option value="">Chọn Tỉnh / Thành phố</option>
+                  </select>
+                </div>
+
+                <div class="form-field">
+                  <label class="field-label">Phường / Xã</label>
+                  <select id="ward1" class="form-control">
+                    <option value="">Chọn Phường / Xã</option>
+                  </select>
+                </div>
+
+                <div class="form-field full">
+                  <label class="field-label">Số nhà, tên đường</label>
+                  <input type="text" id="street1" class="form-control" value="280 An Dương Vương, Chung cư An Phú, Phòng 402" placeholder="Nhập số nhà, tên đường...">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ĐỊA CHỈ 2 -->
+          <div id="secondAddressContainer" class="form-field full" style="display: none;">
+            <div class="address-box">
+              <div class="address-box-header">
+                <div class="address-box-title">
+                  <svg class="icon" viewBox="0 0 24 24" style="color: var(--catalina);"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  <span>Địa chỉ nhận hàng 2</span>
+                </div>
+                <button type="button" class="btn-remove-address" onclick="hideSecondAddress()">Xóa địa chỉ</button>
+              </div>
+
+              <div class="form-grid-layout" style="gap: 12px 16px;">
+                <div class="form-field">
+                  <label class="field-label">Tỉnh / Thành phố</label>
+                  <select id="province2" class="form-control" onchange="onProvinceChange(2)">
+                    <option value="">Chọn Tỉnh / Thành phố</option>
+                  </select>
+                </div>
+
+                <div class="form-field">
+                  <label class="field-label">Phường / Xã</label>
+                  <select id="ward2" class="form-control">
+                    <option value="">Chọn Phường / Xã</option>
+                  </select>
+                </div>
+
+                <div class="form-field full">
+                  <label class="field-label">Số nhà, tên đường</label>
+                  <input type="text" id="street2" class="form-control" placeholder="Nhập số nhà, tên đường...">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- NÚT THÊM ĐỊA CHỈ 2 -->
+          <button type="button" id="btnAddSecondAddress" class="btn-add-second-address" onclick="showSecondAddress()">
+            <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Thêm địa chỉ nhận hàng thứ 2</span>
+          </button>
+
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-submit-action">Lưu thay đổi</button>
+          <button type="button" id="btnTogglePasswordPanel" class="btn-trigger-pwd" onclick="togglePasswordPanel()">
+            <svg class="icon" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+            <span>Đổi mật khẩu</span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- BIỂU MẪU: ĐỔI MẬT KHẨU -->
+    <section class="form-panel" id="pwd-form-section" style="display: none;">
+      <div class="panel-header">
+        <h2 class="panel-title">
+          <svg class="icon" viewBox="0 0 24 24" style="color: var(--catalina);"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          Đổi Mật Khẩu
+        </h2>
+        <button type="button" class="btn-remove-address" onclick="togglePasswordPanel()">Đóng</button>
+      </div>
+
+      <form id="changePasswordForm" onsubmit="handleChangePassword(event)" style="display: flex; flex-direction: column;">
+        <div class="form-grid-layout">
+          
+          <div class="form-field full">
+            <label class="field-label" for="inputCurrentPwd">Mật khẩu hiện tại</label>
+            <div class="input-wrapper">
+              <input type="password" id="inputCurrentPwd" class="form-control" placeholder="Nhập mật khẩu hiện tại">
+              <button type="button" class="toggle-pwd-btn" onclick="togglePasswordVisibility('inputCurrentPwd')">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <span class="field-error-msg" id="errorCurrentPwd">Mật khẩu hiện tại không chính xác</span>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label" for="inputNewPwd">Mật khẩu mới</label>
+            <div class="input-wrapper">
+              <input type="password" id="inputNewPwd" class="form-control" placeholder="Tối thiểu 6 ký tự">
+              <button type="button" class="toggle-pwd-btn" onclick="togglePasswordVisibility('inputNewPwd')">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <span class="field-error-msg" id="errorNewPwd">Mật khẩu phải từ 6 ký tự và khác mật khẩu cũ</span>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label" for="inputConfirmPwd">Xác nhận mật khẩu mới</label>
+            <div class="input-wrapper">
+              <input type="password" id="inputConfirmPwd" class="form-control" placeholder="Nhập lại mật khẩu mới">
+              <button type="button" class="toggle-pwd-btn" onclick="togglePasswordVisibility('inputConfirmPwd')">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <span class="field-error-msg" id="errorConfirmPwd">Mật khẩu xác nhận không khớp</span>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-submit-action">Cập nhật mật khẩu</button>
+        </div>
+      </form>
+    </section>
+
+  </main>
+
+  <div class="toast-stack" id="toastStack"></div>
+
+  <script>
+    const API_BASE_URL = 'https://vietnam-address.roooming.io.vn';
+    let currentDBPassword = "password123";
+    let cachedProvinces = [];
+
+    const fallbackHCMWards = [
+      "Phường Bến Nghé", "Phường Bến Thành", "Phường Tân Định", "Phường Đa Kao",
+      "Phường Võ Thị Sáu", "Phường 1 (Quận 3)", "Phường 4 (Quận 3)", "Phường 9 (Quận 3)",
+      "Phường 1 (Quận 5)", "Phường 2 (Quận 5)", "Phường 4 (Quận 5)", "Phường 5 (Quận 5)",
+      "Phường An Khánh (TP. Thủ Đức)", "Phường Thảo Điền (TP. Thủ Đức)"
+    ];
+
+    function togglePasswordPanel() {
+      const panel = document.getElementById('pwd-form-section');
+      const isHidden = (panel.style.display === 'none' || panel.style.display === '');
+      panel.style.display = isHidden ? 'block' : 'none';
+      if (isHidden) {
+        panel.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    async function fetchProvinces() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/provinces`);
+        if (!res.ok) throw new Error('API Error');
+        const data = await res.json();
+        cachedProvinces = Array.isArray(data) ? data : (data.data || data.provinces || []);
+        if (!cachedProvinces.length) throw new Error('Data empty');
+
+        populateProvinceSelect(1);
+        populateProvinceSelect(2);
+      } catch (err) {
+        cachedProvinces = [
+          { id: "79", code: "79", name: "Thành phố Hồ Chí Minh" },
+          { id: "01", code: "01", name: "Thành phố Hà Nội" },
+          { id: "48", code: "48", name: "Thành phố Đà Nẵng" },
+          { id: "92", code: "92", name: "Thành phố Cần Thơ" }
+        ];
+        populateProvinceSelect(1);
+        populateProvinceSelect(2);
+      }
+    }
+
+    function populateProvinceSelect(num) {
+      const select = document.getElementById(`province${num}`);
+      select.innerHTML = '<option value="">Chọn Tỉnh / Thành phố</option>';
+      
+      cachedProvinces.forEach(p => {
+        const idVal = p.id || p.code || p._id;
+        const nameVal = p.name;
+        const isSelected = '';
+        select.innerHTML += `<option value="${idVal}" ${isSelected}>${nameVal}</option>`;
+      });
+
+      if (num === 1) onProvinceChange(1);
+    }
+
+    async function onProvinceChange(num) {
+      const provinceSelect = document.getElementById(`province${num}`);
+      const provinceId = provinceSelect.value;
+      const wardSelect = document.getElementById(`ward${num}`);
+
+      if (!provinceId) {
+        wardSelect.innerHTML = '<option value="">Chọn Phường / Xã</option>';
+        return;
+      }
+
+      wardSelect.innerHTML = '<option value="">Chọn Phường / Xã</option>';
+
+      try {
+        let res = await fetch(`${API_BASE_URL}/api/provinces/${provinceId}/wards`);
+        if (!res.ok) {
+          res = await fetch(`${API_BASE_URL}/api/wards?provinceId=${provinceId}`);
+        }
+
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        const wardsList = Array.isArray(data) ? data : (data.data || data.wards || []);
+
+        let optionsHtml = '<option value="">Chọn Phường / Xã</option>';
+        wardsList.forEach(w => {
+          const wName = typeof w === 'string' ? w : (w.name || w.wardName);
+          const isSelected = (num === 1 && wName.includes("Phường 4")) ? 'selected' : '';
+          optionsHtml += `<option value="${wName}" ${isSelected}>${wName}</option>`;
+        });
+
+        wardSelect.innerHTML = optionsHtml;
+      } catch (err) {
+        let optionsHtml = '<option value="">Chọn Phường / Xã</option>';
+        fallbackHCMWards.forEach(wName => {
+          const isSelected = (num === 1 && wName.includes("Phường 4")) ? 'selected' : '';
+          optionsHtml += `<option value="${wName}" ${isSelected}>${wName}</option>`;
+        });
+        wardSelect.innerHTML = optionsHtml;
+      }
+    }
+
+    function showSecondAddress() {
+      document.getElementById('secondAddressContainer').style.display = 'block';
+      document.getElementById('btnAddSecondAddress').style.display = 'none';
+      onProvinceChange(2);
+    }
+
+    function hideSecondAddress() {
+      document.getElementById('secondAddressContainer').style.display = 'none';
+      document.getElementById('btnAddSecondAddress').style.display = 'flex';
+      document.getElementById('province2').value = '';
+      document.getElementById('ward2').innerHTML = '<option value="">Chọn Phường / Xã</option>';
+      document.getElementById('street2').value = '';
+    }
+
+    function showToast(message, type = 'success') {
+      const stack = document.getElementById('toastStack');
+      const item = document.createElement('div');
+      item.className = `toast-item ${type}`;
+      const iconPath = type === 'success' 
+        ? '<path d="M20 6 9 17l-5-5"/>' 
+        : '<path d="M12 8v5M12 16.5v.01"/><circle cx="12" cy="12" r="9"/>';
+      item.innerHTML = `<svg class="icon" viewBox="0 0 24 24">${iconPath}</svg><span>${message}</span>`;
+      stack.appendChild(item);
+      setTimeout(() => {
+        item.classList.add('leaving');
+        setTimeout(() => item.remove(), 220);
+      }, 3000);
+    }
+
+    function togglePasswordVisibility(fieldId) {
+      const input = document.getElementById(fieldId);
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    function handleUpdateInfo(e) {
+      e.preventDefault();
+      const fullNameInput = document.getElementById('inputFullName');
+      const phoneInput = document.getElementById('inputPhone');
+      const errName = document.getElementById('errorFullName');
+      const errPhone = document.getElementById('errorPhone');
+
+      let isValid = true;
+
+      if (!fullNameInput.value.trim()) {
+        fullNameInput.classList.add('error-state');
+        errName.style.display = 'block';
+        isValid = false;
+      } else {
+        fullNameInput.classList.remove('error-state');
+        errName.style.display = 'none';
+      }
+
+      const phoneRegex = /^(0|84)[3|5|7|8|9][0-9]{8}$/;
+      if (!phoneRegex.test(phoneInput.value.trim())) {
+        phoneInput.classList.add('error-state');
+        errPhone.style.display = 'block';
+        isValid = false;
+      } else {
+        phoneInput.classList.remove('error-state');
+        errPhone.style.display = 'none';
+      }
+
+      const street1 = document.getElementById('street1').value.trim();
+      const ward1 = document.getElementById('ward1').value;
+      if (!street1 || !ward1) {
+        showToast('Vui lòng hoàn tất địa chỉ nhận hàng', 'error');
+        isValid = false;
+      }
+
+      if (!isValid) return;
+
+      showToast('Đã lưu thay đổi thành công', 'success');
+    }
+
+    function handleChangePassword(e) {
+      e.preventDefault();
+      const currentPwd = document.getElementById('inputCurrentPwd');
+      const newPwd = document.getElementById('inputNewPwd');
+      const confirmPwd = document.getElementById('inputConfirmPwd');
+
+      const errCurrent = document.getElementById('errorCurrentPwd');
+      const errNew = document.getElementById('errorNewPwd');
+      const errConfirm = document.getElementById('errorConfirmPwd');
+
+      let isValid = true;
+
+      if (currentPwd.value !== currentDBPassword) {
+        currentPwd.classList.add('error-state');
+        errCurrent.style.display = 'block';
+        isValid = false;
+      } else {
+        currentPwd.classList.remove('error-state');
+        errCurrent.style.display = 'none';
+      }
+
+      if (newPwd.value.length < 6 || newPwd.value === currentDBPassword) {
+        newPwd.classList.add('error-state');
+        errNew.style.display = 'block';
+        isValid = false;
+      } else {
+        newPwd.classList.remove('error-state');
+        errNew.style.display = 'none';
+      }
+
+      if (!confirmPwd.value || confirmPwd.value !== newPwd.value) {
+        confirmPwd.classList.add('error-state');
+        errConfirm.style.display = 'block';
+        isValid = false;
+      } else {
+        confirmPwd.classList.remove('error-state');
+        errConfirm.style.display = 'none';
+      }
+
+      if (!isValid) return;
+
+      currentDBPassword = newPwd.value;
+      currentPwd.value = '';
+      newPwd.value = '';
+      confirmPwd.value = '';
+
+      showToast('Đổi mật khẩu thành công', 'success');
+      togglePasswordPanel();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchProvinces();
+    });
+  </script>
+
+</body>
+</html>
