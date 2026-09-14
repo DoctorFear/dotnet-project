@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sách Yêu Thích — ancientBOOK</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --alice: #F2F7FF;
+            --egyptian: #0B409C;
+            --catalina: #0D226B;
+            --ink: #071233;
+            --saffron: #FDBE34;
+            --muted: #5b6e99;
+            --hairline: #dce6f7;
+            --white: #ffffff;
+            --danger: #d93838;
+            --danger-bg: #fdf2f2;
+            --success: #15803d;
+            --success-bg: #ecfdf5;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--alice); color: var(--ink); min-height: 100vh; display: flex; flex-direction: column; }
+        .icon { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+        .top-bar { background: var(--ink); color: var(--alice); padding: 8px 48px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .top-bar strong { color: var(--saffron); font-weight: 600; }
+        
+        .store-header { background: var(--white); border-bottom: 1.5px solid var(--hairline); position: sticky; top: 0; z-index: 100; }
+        .navbar-main { max-width: 1200px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+        .brand-logo { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 800; color: var(--catalina); text-decoration: none; display: inline-flex; align-items: baseline; }
+        .brand-logo span.book-text { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 900; color: var(--egyptian); letter-spacing: 1.2px; margin-left: 2px; }
+        .brand-logo .accent-dot { display: inline-block; width: 6px; height: 6px; background-color: var(--saffron); border-radius: 50%; margin-left: 4px; }
+        
+        .search-container { flex: 1; max-width: 460px; position: relative; display: flex; align-items: center; }
+        .search-input { width: 100%; padding: 9px 40px 9px 14px; border: 1.5px solid var(--hairline); border-radius: 6px; font-size: 13.5px; outline: none; background: #fafcff; }
+        .search-btn { position: absolute; right: 5px; background: var(--egyptian); color: #fff; border: none; border-radius: 4px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+        .nav-actions { display: flex; align-items: center; gap: 12px; }
+        .nav-action-link { display: flex; align-items: center; gap: 6px; color: var(--catalina); text-decoration: none; font-size: 13px; font-weight: 600; padding: 7px 10px; border-radius: 6px; }
+        .badge-count { background: var(--egyptian); color: #fff; font-size: 10px; font-weight: 800; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 999px; display: flex; align-items: center; justify-content: center; }
+
+        /* USER PILL DROPDOWN */
+        .user-menu-wrapper {
+            position: relative;
+            padding: 4px 0;
+        }
+
+        .user-dropdown-trigger {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 3px 12px 3px 3px;
+            border-radius: 999px;
+            background: var(--alice);
+            border: 1px solid var(--hairline);
+            cursor: pointer;
+        }
+
+        .user-avatar-tiny {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1.5px solid var(--saffron);
+            background: #fff;
+        }
+
+        .user-name-text {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--catalina);
+        }
+
+        .user-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 250px;
+            background: var(--white);
+            border: 1px solid var(--hairline);
+            border-radius: 8px;
+            padding: 6px;
+            display: none;
+            z-index: 1000;
+            list-style: none;
+            box-shadow: 0 8px 24px -6px rgba(7, 18, 51, 0.12);
+        }
+
+        .user-menu-wrapper:hover .user-dropdown-menu {
+            display: block;
+        }
+
+        .dropdown-item-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ink);
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+
+            .dropdown-item-link:hover {
+                background: var(--alice);
+                color: var(--egyptian);
+            }
+
+            .dropdown-item-link.danger {
+                color: var(--danger);
+                border-top: 1px solid var(--hairline);
+                margin-top: 4px;
+                border-radius: 0 0 5px 5px;
+            }
+
+                .dropdown-item-link.danger:hover {
+                    background: var(--danger-bg);
+                }
+        
+        /* KHUNG WRAPPER ĐÃ ĐƯỢC CỐ ĐỊNH CHUẨN KÍCH THƯỚC VỚI TRANG CHỦ */
+        .container-wishlist { max-width: 1200px; margin: 24px auto; padding: 0 24px; flex: 1; width: 100%; }
+        .form-panel { background: var(--white); border: 1px solid var(--hairline); border-radius: 12px; padding: 24px; box-shadow: 0 4px 16px -4px rgba(7, 18, 51, 0.04); }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 14px; border-bottom: 1.5px solid var(--hairline); margin-bottom: 20px; }
+        .panel-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 800; color: var(--catalina); }
+
+        .wishlist-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .product-card { background: var(--white); border: 1px solid var(--hairline); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 8px; position: relative; cursor: pointer; transition: transform 0.15s ease; }
+        .product-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px -4px rgba(7,12,51,0.08); }
+        .remove-wish-btn { position: absolute; top: 12px; right: 12px; background: var(--danger-bg); border: 1px solid var(--hairline); width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--danger); z-index: 2; font-size: 14px; }
+        
+        .book-cover-wrapper { width: 100%; height: 180px; background: #fafcff; display: flex; align-items: center; justify-content: center; border-radius: 4px; overflow: hidden; }
+        .book-cover-img { max-height: 100%; max-width: 100%; object-fit: contain; }
+        .book-title-main { font-size: 13.5px; font-weight: 700; color: var(--catalina); line-height: 1.4; height: 38px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        .book-author-name { font-size: 12px; color: var(--muted); font-weight: 500; }
+        .stock-tag-warning { font-size: 11px; font-weight: 700; color: #b45309; background: #fffbeb; padding: 2px 6px; border-radius: 4px; align-self: flex-start; }
+        .stock-tag-ok { font-size: 11px; font-weight: 700; color: var(--success); background: var(--success-bg); padding: 2px 6px; border-radius: 4px; align-self: flex-start; }
+        .sale-price-text { font-size: 15px; font-weight: 800; color: var(--egyptian); margin-top: auto; }
+        .btn-add-to-cart-fast { width: 100%; padding: 8px; background: var(--alice); color: var(--egyptian); border: 1px solid var(--hairline); font-family: inherit; font-size: 12.5px; font-weight: 700; border-radius: 5px; cursor: pointer; z-index: 2; }
+        .btn-add-to-cart-fast:hover { background: var(--egyptian); color: #fff; border-color: var(--egyptian); }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div>Miễn phí giao hàng toàn quốc cho đơn từ <strong>250.000 đ</strong> • Cam kết 100% sách chính hãng</div>
+        <div>Hotline hỗ trợ: <strong>1900 636 467</strong></div>
+    </div>
+
+    <header class="store-header">
+        <div class="navbar-main">
+            <a href="trangchu.html" class="brand-logo">ancient<span class="book-text">BOOK</span><span class="accent-dot"></span></a>
+            
+            <div class="nav-actions">
+                <a href="wishlist.html" class="nav-action-link" style="background: var(--alice);">
+                    <svg class="icon" viewBox="0 0 24 24" style="fill: currentColor;"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>
+                    <span>Yêu thích</span>
+                    <span class="badge-count">2</span>
+                </a>
+                <a href="trangchu.html#view-cart" class="nav-action-link">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
+                    <span>Giỏ hàng</span>
+                    <span class="badge-count">2</span>
+                </a>
+                <div class="user-menu-wrapper">
+                    <div class="user-dropdown-trigger">
+                        <img src="https://media.istockphoto.com/id/2149922267/vector/user-icon.jpg?s=612x612&w=0&k=20&c=i6jYPfB1pWjK8pll6YRxAK9fgBmf65-w5wbKH9R1dyQ=" class="user-avatar-tiny" alt="Avatar">
+                        <span class="user-name-text">thaison_dev</span>
+                        <svg class="icon" viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="m6 9 6 6 6-6" /></svg>
+                    </div>
+                    <ul class="user-dropdown-menu">
+                        <li><a href="trangchu.html#view-profile" class="dropdown-item-link">Hồ sơ & Đổi mật khẩu</a></li>
+                        <li><a href="trangchu.html#view-orders" class="dropdown-item-link">Lịch sử đơn đặt sách</a></li>
+                        <li><a href="trangchu.html" class="dropdown-item-link danger" onclick="openAuthModal(); return false;">Đăng xuất tài khoản</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container-wishlist">
+        <div class="form-panel">
+            <div class="panel-header">
+                <h1 class="panel-title">Danh Sách Sách Yêu Thích</h1>
+                <span style="font-size: 13px; color: var(--muted);">Đang lưu <strong>2</strong> sản phẩm</span>
+            </div>
+
+            <div class="wishlist-grid">
+                <!-- Nhấp bất kỳ đâu trong Card đều điều hướng đến Chi tiết sách -->
+                <div class="product-card" onclick="window.location.href='chitietsach.html'">
+                    <button class="remove-wish-btn" title="Xóa khỏi yêu thích" onclick="event.stopPropagation(); this.parentElement.remove();">&times;</button>
+                    <div class="book-cover-wrapper">
+                        <img src="https://salt.tikicdn.com/ts/product/45/3e/2e/9f992ab2a5436d4f937d9fae16d47b53.jpg" class="book-cover-img" alt="Số Đỏ">
+                    </div>
+                    <h4 class="book-title-main">Số Đỏ (Tái bản khổ lớn nghệ thuật)</h4>
+                    <p class="book-author-name">Vũ Trọng Phụng</p>
+                    <span class="stock-tag-warning">Chỉ còn 3 cuốn</span>
+                    <span class="sale-price-text">85.000 đ</span>
+                    <button type="button" class="btn-add-to-cart-fast" onclick="event.stopPropagation(); alert('Đã chuyển vào giỏ hàng!')">Thêm vào giỏ</button>
+                </div>
+
+                <div class="product-card" onclick="window.location.href='chitietsach.html'">
+                    <button class="remove-wish-btn" title="Xóa khỏi yêu thích" onclick="event.stopPropagation(); this.parentElement.remove();">&times;</button>
+                    <div class="book-cover-wrapper">
+                        <img src="https://nhasachphuongnam.com/images/detailed/181/81yvSg0d7AL._AC_SL1500_.jpg" class="book-cover-img" alt="Tàu Tốc Hành">
+                    </div>
+                    <h4 class="book-title-main">Vụ Án Mạng Trên Chuyến Tàu Tốc Hành Phương Đông</h4>
+                    <p class="book-author-name">Agatha Christie</p>
+                    <span class="stock-tag-ok">Còn hàng</span>
+                    <span class="sale-price-text">98.000 đ</span>
+                    <button type="button" class="btn-add-to-cart-fast" onclick="event.stopPropagation(); alert('Đã chuyển vào giỏ hàng!')">Thêm vào giỏ</button>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

@@ -821,6 +821,492 @@
                 padding: 8px 16px;
             }
         }
+
+        .view-section {
+            display: none;
+        }
+
+            .view-section.active {
+                display: block;
+            }
+        /* View trang chủ */
+        .storefront-container.view-section.active {
+            display: grid;
+        }
+
+        .main-wrapper {
+            max-width: 1200px;
+            margin: 24px auto;
+            padding: 0 24px;
+            flex: 1;
+            width: 100%;
+        }
+        /* --- VIEW 2: CHI TIẾT SÁCH & GALLERY (UC06) --- */
+        .detail-panel {
+            background: #fff;
+            border-radius: 10px;
+            border: 1px solid var(--hairline);
+            padding: 28px;
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 32px;
+        }
+
+        .gallery-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .main-img-box {
+            width: 100%;
+            height: 380px;
+            border: 1px solid var(--hairline);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fafcff;
+        }
+
+        .main-img {
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: contain;
+        }
+
+        .thumb-list {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .thumb-item {
+            width: 64px;
+            height: 64px;
+            border: 1.5px solid var(--hairline);
+            border-radius: 6px;
+            overflow: hidden;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+            .thumb-item.active {
+                border-color: var(--egyptian);
+            }
+
+            .thumb-item img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        .detail-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-title {
+            font-family: 'Fraunces', serif;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--catalina);
+            margin-bottom: 8px;
+        }
+
+        .detail-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--hairline);
+            padding-bottom: 12px;
+        }
+
+        .detail-price-box {
+            background: var(--alice);
+            padding: 14px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .qty-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--hairline);
+            background: #fff;
+            border-radius: 4px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .qty-input {
+            width: 48px;
+            height: 32px;
+            text-align: center;
+            border: 1px solid var(--hairline);
+            border-radius: 4px;
+            outline: none;
+            font-weight: 600;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .btn-buy-now {
+            padding: 12px 28px;
+            background: var(--saffron);
+            color: var(--ink);
+            border: none;
+            border-radius: 6px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .btn-add-cart-lg {
+            padding: 12px 28px;
+            background: var(--egyptian);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .tab-nav {
+            display: flex;
+            border-bottom: 1.5px solid var(--hairline);
+            margin-top: 24px;
+            gap: 24px;
+        }
+
+        .tab-btn {
+            padding: 10px 0;
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--muted);
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+        }
+
+            .tab-btn.active {
+                color: var(--egyptian);
+                border-bottom-color: var(--egyptian);
+            }
+
+        .tab-content {
+            padding-top: 20px;
+            font-size: 13.5px;
+            line-height: 1.6;
+        }
+
+        /* --- VIEW 3: GIỎ HÀNG (UC16) & VIEW 4: CHECKOUT (UC17) --- */
+        .cart-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
+        }
+
+        .cart-panel {
+            background: #fff;
+            border-radius: 10px;
+            border: 1px solid var(--hairline);
+            padding: 24px;
+        }
+
+        .cart-item {
+            display: grid;
+            grid-template-columns: 24px 80px 1fr 120px 100px 32px;
+            gap: 16px;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--hairline);
+        }
+
+        .summary-card {
+            background: #fff;
+            border: 1px solid var(--hairline);
+            border-radius: 10px;
+            padding: 20px;
+            height: fit-content;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13.5px;
+            margin-bottom: 12px;
+        }
+
+            .summary-row.total {
+                font-size: 16px;
+                font-weight: 800;
+                color: var(--egyptian);
+                border-top: 1.5px solid var(--hairline);
+                padding-top: 12px;
+            }
+
+        .btn-checkout {
+            width: 100%;
+            padding: 12px;
+            background: var(--egyptian);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+
+        /* --- VIEW 5: ĐƠN HÀNG CỦA TÔI (UC18, UC19) & VIEW 6: HỒ SƠ (UC03) --- */
+        .form-panel {
+            background: var(--white);
+            border-radius: 10px;
+            border: 1px solid var(--hairline);
+            padding: 30px 36px;
+        }
+
+        .panel-header {
+            border-bottom: 1.5px solid var(--hairline);
+            padding-bottom: 14px;
+            margin-bottom: 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-family: 'Fraunces', serif;
+            font-size: 21px;
+            font-weight: 700;
+            color: var(--catalina);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px 20px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+            .form-field.full {
+                grid-column: span 2;
+            }
+
+        .field-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 13.5px;
+            font-family: inherit;
+            color: var(--ink);
+            border: 1.5px solid var(--hairline);
+            border-radius: 6px;
+            outline: none;
+            background: #fff;
+        }
+
+            .form-control[readonly] {
+                background-color: var(--alice);
+                color: #64748b;
+            }
+
+        .address-box {
+            background: #fafcff;
+            border: 1.5px solid var(--hairline);
+            border-radius: 8px;
+            padding: 18px 20px;
+            margin-top: 8px;
+        }
+
+        .order-card {
+            background: #fff;
+            border: 1px solid var(--hairline);
+            border-radius: 8px;
+            padding: 18px;
+            margin-bottom: 16px;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--hairline);
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .status-tag {
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+            .status-tag.pending {
+                background: #fef3c7;
+                color: #92400e;
+            }
+
+            .status-tag.success {
+                background: var(--success-bg);
+                color: var(--success);
+            }
+
+        /* LIVE CHAT WIDGET (UC23) */
+        .chat-widget-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--egyptian);
+            color: #fff;
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(11,64,156,0.3);
+            z-index: 999;
+        }
+
+        .chat-drawer {
+            position: fixed;
+            bottom: 90px;
+            right: 24px;
+            width: 340px;
+            height: 440px;
+            background: #fff;
+            border: 1px solid var(--hairline);
+            border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(7,18,51,0.15);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: var(--catalina);
+            color: #fff;
+            padding: 14px;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-body {
+            flex: 1;
+            padding: 12px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-size: 13px;
+            background: var(--alice);
+        }
+
+        .chat-msg {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            line-height: 1.4;
+        }
+
+            .chat-msg.staff {
+                background: #fff;
+                border: 1px solid var(--hairline);
+                align-self: flex-start;
+            }
+
+            .chat-msg.user {
+                background: var(--egyptian);
+                color: #fff;
+                align-self: flex-end;
+            }
+
+        .chat-footer {
+            padding: 10px;
+            border-top: 1px solid var(--hairline);
+            display: flex;
+            gap: 8px;
+            background: #fff;
+        }
+
+        /* MODAL DIALOGS */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(7,18,51,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 24px;
+            width: 100%;
+            max-width: 440px;
+        }
+
+        /* TOAST NOTIFICATION */
+        .toast-stack {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--ink);
+            color: #fff;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 4px 16px rgba(7, 18, 51, 0.15);
+        }
     </style>
 </head>
 <body>
@@ -836,25 +1322,25 @@
     <!-- 2. NAVBAR STOREFRONT -->
     <header class="store-header">
         <div class="navbar-main">
-            <a href="#" class="brand-logo">
+            <a href="#" class="brand-logo" onclick="switchView('view-search'); return false;">
                 ancient<span class="book-text">BOOK</span><span class="accent-dot"></span>
             </a>
             <div class="search-container">
-                <input type="text" class="search-input" placeholder="Tìm sách cổ điển, tác giả, NXB hoặc mã ISBN...">
-                <button class="search-btn" title="Tìm kiếm">
+                <input type="text" id="searchInputHeader" class="search-input" placeholder="Tìm sách cổ điển, tác giả, NXB hoặc mã ISBN..." onkeyup="handleHeaderSearch(event)">
+                <button class="search-btn" title="Tìm kiếm" onclick="triggerSearch()">
                     <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
                 </button>
             </div>
             <div class="nav-actions">
-                <a href="#" class="nav-action-link" title="Sách yêu thích">
+                <a href="wishlist.html" class="nav-action-link" title="Sách yêu thích">
                     <svg class="icon" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>
                     <span>Yêu thích</span>
-                    <span class="badge-count">3</span>
+                    <span class="badge-count" id="wishlistBadge">3</span>
                 </a>
-                <a href="#" class="nav-action-link" title="Giỏ hàng">
+                <a href="#" class="nav-action-link" title="Giỏ hàng" onclick="switchView('view-cart'); return false;">
                     <svg class="icon" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
                     <span>Giỏ hàng</span>
-                    <span class="badge-count">2</span>
+                    <span class="badge-count" id="cartBadge">2</span>
                 </a>
                 <div class="user-menu-wrapper">
                     <div class="user-dropdown-trigger">
@@ -863,9 +1349,9 @@
                         <svg class="icon icon-chevron-user" viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="m6 9 6 6 6-6" /></svg>
                     </div>
                     <ul class="user-dropdown-menu">
-                        <li><a href="#" class="dropdown-item-link">Hồ sơ & Đổi mật khẩu</a></li>
-                        <li><a href="#" class="dropdown-item-link">Lịch sử đơn đặt sách</a></li>
-                        <li><a href="#" class="dropdown-item-link danger">Đăng xuất tài khoản</a></li>
+                        <li><a href="#" class="dropdown-item-link" onclick="switchView('view-profile'); return false;">Hồ sơ & Đổi mật khẩu</a></li>
+                        <li><a href="#" class="dropdown-item-link" onclick="switchView('view-orders'); return false;">Lịch sử đơn đặt sách</a></li>
+                        <li><a href="#" class="dropdown-item-link danger" onclick="openAuthModal(); return false;">Đăng xuất tài khoản</a></li>
                     </ul>
                 </div>
             </div>
@@ -882,12 +1368,12 @@
                             <svg class="icon icon-chevron" viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="m6 9 6 6 6-6" /></svg>
                         </a>
                         <div class="mega-categories-menu">
-                            <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Văn học Việt Nam</a>
-                            <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Văn học Cổ điển</a>
-                            <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Tiểu thuyết Trinh thám</a>
-                            <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Khoa học Viễn tưởng</a>
-                            <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Triết học Phương Đông</a>
-                            <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Lịch sử & Khảo cổ</a>
+                            <a href="#" class="mega-category-item" onclick="filterByCategory('Văn học Việt Nam'); return false;"><span class="cat-bullet"></span>Văn học Việt Nam</a>
+                            <a href="#" class="mega-category-item" onclick="filterByCategory('Văn học Cổ điển'); return false;"><span class="cat-bullet"></span>Văn học Cổ điển</a>
+                            <a href="#" class="mega-category-item" onclick="filterByCategory('Tiểu thuyết Trinh thám'); return false;"><span class="cat-bullet"></span>Tiểu thuyết Trinh thám</a>
+                            <a href="#" class="mega-category-item" onclick="filterByCategory('Khoa học Viễn tưởng'); return false;"><span class="cat-bullet"></span>Khoa học Viễn tưởng</a>
+                            <a href="#" class="mega-category-item" onclick="filterByCategory('Triết học Phương Đông'); return false;"><span class="cat-bullet"></span>Triết học Phương Đông</a>
+                            <a href="#" class="mega-category-item" onclick="filterByCategory('Lịch sử & Khảo cổ'); return false;"><span class="cat-bullet"></span>Lịch sử & Khảo cổ</a>
                         </div>
                     </li>
                     <li class="category-dropdown-wrapper">
@@ -897,15 +1383,15 @@
                             <svg class="icon icon-chevron" viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="m6 9 6 6 6-6" /></svg>
                         </a>
                         <div class="mega-categories-menu" style="width: 420px;">
-                            <a href="#" class="mega-category-item"><span class="cat-bullet"></span>NXB Giáo dục</a>
-                            <a href="#" class="mega-category-item"><span class="cat-bullet"></span>NXB Trẻ</a>
-                            <a href="#" class="mega-category-item"><span class="cat-bullet"></span>NXB Kim Đồng</a>
-                            <a href="#" class="mega-category-item"><span class="cat-bullet"></span>NXB Hội Nhà Văn</a>
-                            <a href="#" class="mega-category-item"><span class="cat-bullet"></span>NXB Chính trị Quốc gia</a>
-                            <a href="#" class="mega-category-item"><span class="cat-bullet"></span>NXB Phụ Nữ</a>
+                            <a href="#" class="mega-category-item" onclick="filterByPublisher('NXB Giáo dục'); return false;"><span class="cat-bullet"></span>NXB Giáo dục</a>
+                            <a href="#" class="mega-category-item" onclick="filterByPublisher('NXB Trẻ'); return false;"><span class="cat-bullet"></span>NXB Trẻ</a>
+                            <a href="#" class="mega-category-item" onclick="filterByPublisher('NXB Kim Đồng'); return false;"><span class="cat-bullet"></span>NXB Kim Đồng</a>
+                            <a href="#" class="mega-category-item" onclick="filterByPublisher('NXB Hội Nhà Văn'); return false;"><span class="cat-bullet"></span>NXB Hội Nhà Văn</a>
+                            <a href="#" class="mega-category-item" onclick="filterByPublisher('NXB Chính trị Quốc gia'); return false;"><span class="cat-bullet"></span>NXB Chính trị Quốc gia</a>
+                            <a href="#" class="mega-category-item" onclick="filterByPublisher('NXB Phụ Nữ'); return false;"><span class="cat-bullet"></span>NXB Phụ Nữ</a>
                         </div>
                     </li>
-                    <li><a href="#">Khuyến mãi & Voucher<span class="badge-tag-voucher">Hot</span></a></li>
+                    <li><a href="#" onclick="filterByTag('KM'); return false;">Khuyến mãi & Voucher<span class="badge-tag-voucher">Hot</span></a></li>
                 </ul>
                 <div style="font-size: 12px; color: var(--muted);">
                     Thành viên: <strong style="color: var(--catalina);">Hạng Bạc (240 F-Points)</strong>
@@ -915,7 +1401,7 @@
     </header>
 
     <!-- 3. MAIN STOREFRONT LAYOUT -->
-    <main class="storefront-container">
+    <main id="view-search" class="view-section active storefront-container">
         <!-- SIDEBAR CỘT LỌC/TRA CỨU NÂNG CAO ĐẦY ĐỦ -->
         <aside class="search-sidebar">
             <div>
@@ -928,28 +1414,28 @@
             <!-- 1. Lọc thể loại sách (Khung cuộn tối ưu diện tích) -->
             <div class="filter-group">
                 <label class="filter-label">Thể loại sách</label>
-                <input type="text" class="sidebar-input" placeholder="Tìm nhanh thể loại..." style="padding: 5px 8px; font-size: 11.5px; margin-bottom: 5px;">
+
                 <div class="optimized-list-box">
-                    <label class="optimized-item"><input type="checkbox" checked> Văn học Việt Nam</label>
-                    <label class="optimized-item"><input type="checkbox" checked> Văn học Cổ điển</label>
-                    <label class="optimized-item"><input type="checkbox" checked> Tiểu thuyết Trinh thám</label>
-                    <label class="optimized-item"><input type="checkbox"> Khoa học Viễn tưởng</label>
-                    <label class="optimized-item"><input type="checkbox"> Triết học Phương Đông</label>
-                    <label class="optimized-item"><input type="checkbox"> Lịch sử & Khảo cổ</label>
+                    <label class="optimized-item"><input type="checkbox" onchange="applyFilters()"> Văn học Việt Nam</label>
+                    <label class="optimized-item"><input type="checkbox" onchange="applyFilters()"> Văn học Cổ điển</label>
+                    <label class="optimized-item"><input type="checkbox" onchange="applyFilters()"> Tiểu thuyết Trinh thám</label>
+                    <label class="optimized-item"><input type="checkbox" onchange="applyFilters()"> Khoa học Viễn tưởng</label>
+                    <label class="optimized-item"><input type="checkbox" onchange="applyFilters()"> Triết học Phương Đông</label>
+                    <label class="optimized-item"><input type="checkbox" onchange="applyFilters()"> Lịch sử & Khảo cổ</label>
                 </div>
             </div>
 
             <!-- Thêm Nhà xuất bản tương tự thể loại -->
             <div class="filter-group">
                 <label class="filter-label">Nhà xuất bản</label>
-                <input type="text" class="sidebar-input" placeholder="Tìm nhanh NXB..." style="padding: 5px 8px; font-size: 11.5px; margin-bottom: 5px;">
+
                 <div class="optimized-list-box">
-                    <label class="optimized-item"><input type="checkbox"> NXB Giáo dục</label>
-                    <label class="optimized-item"><input type="checkbox"> NXB Trẻ</label>
-                    <label class="optimized-item"><input type="checkbox"> NXB Kim Đồng</label>
-                    <label class="optimized-item"><input type="checkbox"> NXB Hội Nhà Văn</label>
-                    <label class="optimized-item"><input type="checkbox"> NXB Chính trị Quốc gia</label>
-                    <label class="optimized-item"><input type="checkbox"> NXB Phụ nữ</label>
+                    <label class="optimized-item"><input type="checkbox" onchange="applyFilters()"> NXB Giáo dục</label>
+                    <label class="optimized-item"><input type="checkbox" onchange="applyFilters()"> NXB Trẻ</label>
+                    <label class="optimized-item"><input type="checkbox" onchange="applyFilters()"> NXB Kim Đồng</label>
+                    <label class="optimized-item"><input type="checkbox" onchange="applyFilters()"> NXB Hội Nhà Văn</label>
+                    <label class="optimized-item"><input type="checkbox" onchange="applyFilters()"> NXB Chính trị Quốc gia</label>
+                    <label class="optimized-item"><input type="checkbox" onchange="applyFilters()"> NXB Phụ nữ</label>
                 </div>
             </div>
 
@@ -974,7 +1460,7 @@
             <!-- 3. Lọc theo năm xuất bản -->
             <div class="filter-group">
                 <label class="filter-label">Năm xuất bản</label>
-                <select class="sidebar-input">
+                <select class="sidebar-input" onchange="applyFilters()">
                     <option value="">Tất cả các năm</option>
                     <option value="2026">2026</option>
                     <option value="2025">2025</option>
@@ -987,15 +1473,15 @@
             <div class="filter-group">
                 <label class="filter-label">Đánh giá sao</label>
                 <div class="star-filter-option">
-                    <input type="radio" name="starFilter" id="starAll" checked>
+                    <input type="radio" name="starFilter" onchange="applyFilters()" id="starAll" checked>
                     <label for="starAll" style="cursor:pointer;">Tất cả đánh giá</label>
                 </div>
                 <div class="star-filter-option">
-                    <input type="radio" name="starFilter" id="star4">
+                    <input type="radio" name="starFilter" onchange="applyFilters()" id="star4">
                     <label for="star4" style="cursor:pointer;"><span class="stars-gold">★★★★☆</span> từ 4 sao trở lên</label>
                 </div>
                 <div class="star-filter-option">
-                    <input type="radio" name="starFilter" id="star5">
+                    <input type="radio" name="starFilter" onchange="applyFilters()" id="star5">
                     <label for="star5" style="cursor:pointer;"><span class="stars-gold">★★★★★</span> 5 sao tuyệt đối</label>
                 </div>
             </div>
@@ -1019,57 +1505,8 @@
             </div>
 
             <!-- GRID HIỂN THỊ SÁCH MẪU -->
-            <div class="products-grid">
-                <!-- Sách 1 -->
-                <div class="product-card">
-                    <button class="wishlist-btn-trigger active"><svg class="icon" viewBox="0 0 24 24" style="fill:currentColor;"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg></button>
-                    <div class="book-cover-wrapper">
-                        <img src="https://salt.tikicdn.com/ts/product/45/3e/2e/9f992ab2a5436d4f937d9fae16d47b53.jpg" class="book-cover-img" alt="Số Đỏ">
-                    </div>
-                    <h4 class="book-title-main">Số Đỏ (Tái bản khổ lớn nghệ thuật)</h4>
-                    <p class="book-author-name">Vũ Trọng Phụng</p>
-                    <div class="rating-info-mini"><span class="stars-gold">★</span> 4.8 (124 đánh giá)</div>
-                    <span class="stock-tag-warning">Chỉ còn 3 cuốn</span>
-                    <div class="price-layout-set">
-                        <span class="sale-price-text">85.000 đ</span>
-                        <span class="original-price-cross">110.000 đ</span>
-                    </div>
-                    <button type="button" class="btn-add-to-cart-fast">Thêm vào giỏ</button>
-                </div>
-
-                <!-- Sách 2 -->
-                <div class="product-card">
-                    <button class="wishlist-btn-trigger"><svg class="icon" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg></button>
-                    <div class="book-cover-wrapper">
-                        <img src="https://salt.tikicdn.com/ts/product/19/22/e0/aa29986348ef0eeab07ff83f99e3cae6.jpg" class="book-cover-img" alt="Tội Lỗi Và Hình Phạt">
-                    </div>
-                    <h4 class="book-title-main">Tội Lỗi Và Hình Phạt (Tập 1)</h4>
-                    <p class="book-author-name">Fyodor Dostoevsky</p>
-                    <div class="rating-info-mini"><span class="stars-gold">★</span> 4.9 (89 đánh giá)</div>
-                    <span class="stock-tag-ok">Còn hàng</span>
-                    <div class="price-layout-set">
-                        <span class="sale-price-text">145.000 đ</span>
-                        <span class="original-price-cross">180.000 đ</span>
-                    </div>
-                    <button type="button" class="btn-add-to-cart-fast">Thêm vào giỏ</button>
-                </div>
-
-                <!-- Sách 3 -->
-                <div class="product-card">
-                    <button class="wishlist-btn-trigger"><svg class="icon" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg></button>
-                    <div class="book-cover-wrapper">
-                        <img src="https://nhasachphuongnam.com/images/detailed/181/81yvSg0d7AL._AC_SL1500_.jpg" class="book-cover-img" alt="Vụ Án Mạng Trên Chuyến Tàu Tốc Hành">
-                    </div>
-                    <h4 class="book-title-main">Vụ Án Mạng Trên Chuyến Tàu Tốc Hành Phương Đông</h4>
-                    <p class="book-author-name">Agatha Christie</p>
-                    <div class="rating-info-mini"><span class="stars-gold">★</span> 4.7 (210 đánh giá)</div>
-                    <span class="stock-tag-warning">Chỉ còn 5 cuốn</span>
-                    <div class="price-layout-set">
-                        <span class="sale-price-text">98.000 đ</span>
-                        <span class="original-price-cross">120.000 đ</span>
-                    </div>
-                    <button type="button" class="btn-add-to-cart-fast">Thêm vào giỏ</button>
-                </div>
+            <div class="products-grid" id="homeProductsGrid">
+                <!-- Render sách qua JavaScript, giữ nguyên giao diện của File A -->
             </div>
         </section>
     </main>
@@ -1088,11 +1525,11 @@
             // Ràng buộc cố định ko để đầu bên trái đi lố qua bên phải
             if (valMin > valMax) {
                 if (triggerId === 0) {
-                    slideMin.value = valMax-10000;
-                    valMin = valMax-10000;
+                    slideMin.value = valMax - 10000;
+                    valMin = valMax - 10000;
                 } else {
-                    slideMax.value = valMin+10000;
-                    valMax = valMin+10000;
+                    slideMax.value = valMin + 10000;
+                    valMax = valMin + 10000;
                 }
             }
 
@@ -1112,6 +1549,718 @@
             updatePriceFilterState(0);
         });
     </script>
+
+    <!-- ================= VIEW 2: CHI TIẾT SÁCH (UC06) ================= -->
+    <main class="main-wrapper">
+        <section id="view-detail" class="view-section">
+            <div class="detail-panel">
+                <div class="gallery-wrap">
+                    <div class="main-img-box">
+                        <img src="" id="detailMainImg" class="main-img" alt="Book Cover Detail">
+                    </div>
+                    <div class="thumb-list" id="detailThumbList">
+                        <!-- Thumbnails -->
+                    </div>
+                </div>
+
+                <div class="detail-info">
+                    <h1 class="detail-title" id="detailTitle">Tên Sách</h1>
+                    <div class="detail-meta">
+                        <span>Tác giả: <strong id="detailAuthor" style="color: var(--ink);">—</strong></span>
+                        <span>NXB: <strong id="detailPublisher" style="color: var(--ink);">—</strong></span>
+                    </div>
+
+                    <div class="detail-price-box">
+                        <span class="current-price" id="detailPrice" style="font-size: 22px;">0 đ</span>
+                        <span class="old-price" id="detailOldPrice" style="font-size: 14px;">0 đ</span>
+                        <span class="stock-badge low" id="detailStockBadge">Chỉ còn 3 cuốn</span>
+                    </div>
+
+                    <div class="quantity-control">
+                        <span style="font-size: 13px; font-weight: 600;">Số lượng:</span>
+                        <button class="qty-btn" onclick="adjustDetailQty(-1)">-</button>
+                        <input type="text" id="detailQtyInput" class="qty-input" value="1" readonly>
+                        <button class="qty-btn" onclick="adjustDetailQty(1)">+</button>
+                    </div>
+
+                    <div class="detail-actions">
+                        <button class="btn-buy-now" onclick="buyNowFromDetail()">Mua Ngay</button>
+                        <button class="btn-add-cart-lg" onclick="addToCartFromDetail()">Thêm Vào Giỏ Hàng</button>
+                    </div>
+
+                    <div class="tab-nav">
+                        <div class="tab-btn active" onclick="switchDetailTab('desc')">Mô tả nội dung</div>
+                        <div class="tab-btn" onclick="switchDetailTab('specs')">Thông số kỹ thuật</div>
+                        <div class="tab-btn" onclick="switchDetailTab('reviews')">Đánh giá khách hàng</div>
+                    </div>
+
+                    <div class="tab-content" id="tabContentBox">
+                        <!-- Nội dung tab -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VIEW 3: GIỎ HÀNG (UC16) ================= -->
+        <section id="view-cart" class="view-section">
+            <div style="font-family:'Fraunces',serif; font-size: 22px; font-weight: 800; color: var(--catalina); margin-bottom: 20px;">Giỏ Hàng Của Bạn</div>
+            <div class="cart-layout">
+                <div class="cart-panel" id="cartItemList">
+                    <!-- Các dòng sản phẩm giỏ hàng -->
+                </div>
+
+                <div class="summary-card">
+                    <div style="font-weight: 700; font-size: 15px; margin-bottom: 16px; border-bottom: 1px solid var(--hairline); padding-bottom: 10px;">Tóm Tắt Đơn Hàng</div>
+                    <div class="summary-row"><span>Tạm tính</span><strong id="cartSubtotal">0 đ</strong></div>
+                    <div class="summary-row"><span>Phí vận chuyển</span><span id="cartShipping">Miễn phí</span></div>
+                    <div class="summary-row total"><span>Tổng thanh toán</span><strong id="cartTotal">0 đ</strong></div>
+                    <button class="btn-checkout" onclick="switchView('view-checkout')">Tiến Hành Đặt Hàng</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VIEW 4: ĐẶT HÀNG & THANH TOÁN (UC17) ================= -->
+        <section id="view-checkout" class="view-section">
+            <div class="form-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Xác Nhận Đặt Hàng & Thanh Toán</h2>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 340px; gap: 24px;">
+                    <div>
+                        <div class="address-box" style="margin-bottom: 20px;">
+                            <div style="font-weight: 700; margin-bottom: 10px;">Địa chỉ nhận hàng</div>
+                            <div style="font-size: 13.5px; color: var(--ink);"><strong>Hà Thái Sơn</strong> • 0909123456</div>
+                            <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">280 An Dương Vương, Phường 4, Quận 5, TP. Hồ Chí Minh</div>
+                        </div>
+
+                        <div class="address-box">
+                            <div style="font-weight: 700; margin-bottom: 10px;">Sử dụng điểm thưởng F-Point</div>
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                                <input type="checkbox" id="useFPointsCheckbox" onchange="toggleFPointsRedeem()">
+                                dùng <strong>240 F-Points</strong> (Quy đổi giảm 24.000 VNĐ)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="summary-card">
+                        <div style="font-weight: 700; margin-bottom: 12px;">Đơn hàng</div>
+                        <div class="summary-row"><span>Giảm giá điểm thưởng</span><strong id="redeemDiscountText" style="color: var(--danger);">-0 đ</strong></div>
+                        <div class="summary-row total"><span>Cần thanh toán</span><strong id="checkoutFinalTotal">0 đ</strong></div>
+                        <button class="btn-checkout" onclick="placeOrder()">Xác Nhận Đặt Hàng</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VIEW 5: ĐƠN HÀNG CỦA TÔI (UC18, UC19) ================= -->
+        <section id="view-orders" class="view-section">
+            <div class="form-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Lịch Sử Đơn Đặt Sách</h2>
+                </div>
+                <div id="orderHistoryList">
+                    <!-- Danh sách đơn hàng -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= VIEW 6: HỒ SƠ & ĐỔI MẬT KHẨU (UC03) ================= -->
+        <section id="view-profile" class="view-section">
+            <div class="form-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Thông Tin Cá Nhân</h2>
+                </div>
+                <form onsubmit="handleUpdateInfo(event)">
+                    <div class="form-grid-layout">
+                        <div class="form-field">
+                            <label class="field-label">Tên đăng nhập</label>
+                            <input type="text" class="form-control" value="thaison_dev" readonly>
+                        </div>
+                        <div class="form-field">
+                            <label class="field-label">Địa chỉ Email</label>
+                            <input type="email" class="form-control" value="thaison@example.com" readonly>
+                        </div>
+                        <div class="form-field">
+                            <label class="field-label">Họ và tên</label>
+                            <input type="text" class="form-control" value="Hà Thái Sơn">
+                        </div>
+                        <div class="form-field">
+                            <label class="field-label">Số điện thoại</label>
+                            <input type="text" class="form-control" value="0909123456">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-checkout" style="width: auto; padding: 10px 24px; margin-top: 20px;">Lưu Thay Đổi</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ================= VIEW 7: DANH SÁCH YÊU THÍCH (UC10) ================= -->
+        <section id="view-wishlist" class="view-section">
+            <div class="form-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Danh Sách Sách Yêu Thích</h2>
+                </div>
+                <div class="book-grid" id="wishlistGridContainer">
+                    <!-- Render sách yêu thích -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+    <!-- 4. LIVE CHAT WIDGET (UC23) -->
+    <div class="chat-widget-btn" onclick="toggleChatDrawer()">
+        <svg class="icon" viewBox="0 0 24 24" style="width:24px;height:24px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+    </div>
+    <div class="chat-drawer" id="chatDrawer">
+        <div class="chat-header">
+            <span>Tư vấn trực tuyến ancientBOOK</span>
+            <span style="cursor: pointer;" onclick="toggleChatDrawer()">✕</span>
+        </div>
+        <div class="chat-body" id="chatMsgBody">
+            <div class="chat-msg staff">Xin chào! Bạn cần tìm sách gì hôm nay ạ?</div>
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="chatInput" class="form-control" placeholder="Nhập tin nhắn..." onkeyup="if(event.key==='Enter') sendChatMessage()">
+            <button class="btn-buy-now" style="padding: 8px 14px;" onclick="sendChatMessage()">Gửi</button>
+        </div>
+    </div>
+
+    <!-- 5. TOAST STACK -->
+    <div class="toast-stack" id="toastStack"></div>
+
+
+    <!-- MODAL XÁC NHẬN ĐĂNG XUẤT -->
+    <div class="modal-overlay" id="authModal">
+        <div class="modal-card">
+            <h3 style="font-family:'Fraunces',serif; color:var(--catalina); margin-bottom:10px;">Đăng xuất tài khoản?</h3>
+            <p style="font-size:13.5px; color:var(--muted); line-height:1.5; margin-bottom:20px;">Bạn có chắc muốn đăng xuất khỏi tài khoản ancientBOOK không?</p>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn-add-cart-fast" style="width:auto; padding:9px 16px;" onclick="closeAuthModal()">Hủy</button>
+                <button class="btn-buy-now" style="padding:9px 16px;" onclick="logout()">Đăng xuất</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        // DỮ LIỆU MẪU SÁCH (BOOK DATASET)
+        const sampleBooks = [
+            {
+                id: "B01",
+                title: "Số Đỏ (Tái bản khổ lớn)",
+                author: "Vũ Trọng Phụng",
+                publisher: "NXB Văn Học",
+                category: "Văn học Việt Nam",
+                price: 85000,
+                oldPrice: 110000,
+                stock: 3,
+                rating: 4.8,
+                reviewsCount: 124,
+                coverImg: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=400&q=80",
+                description: "Kiệt tác trào phúng kinh điển của văn học Việt Nam hiện đại."
+            },
+            {
+                id: "B02",
+                title: "Tội Lỗi Và Hình Phạt (Tập 1)",
+                author: "Fyodor Dostoevsky",
+                publisher: "NXB Tri Thức",
+                category: "Văn học Cổ điển",
+                price: 145000,
+                oldPrice: 180000,
+                stock: 12,
+                rating: 4.9,
+                reviewsCount: 89,
+                coverImg: "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=400&q=80",
+                description: "Tác phẩm tâm lý tội phạm xuất sắc nhất thế giới mọi thời đại."
+            },
+            {
+                id: "B03",
+                title: "Vụ Án Mạng Trên Chuyến Tàu Tốc Hành Phương Đông",
+                author: "Agatha Christie",
+                publisher: "NXB Trẻ",
+                category: "Tiểu thuyết Trinh thám",
+                price: 98000,
+                oldPrice: 120000,
+                stock: 5,
+                rating: 4.7,
+                reviewsCount: 210,
+                coverImg: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&w=400&q=80",
+                description: "Hành trình phá án lôi cuốn của thám tử Hercule Poirot."
+            },
+            {
+                id: "B04",
+                title: "Sử Việt - 12 Khúc Tráng Ca",
+                author: "Dũng Phan",
+                publisher: "NXB Hội Nhà Văn",
+                category: "Lịch sử & Khảo cổ",
+                price: 115000,
+                oldPrice: 150000,
+                stock: 8,
+                rating: 4.9,
+                reviewsCount: 340,
+                coverImg: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=400&q=80",
+                description: "Tái hiện những trang sử hào hùng của dân tộc Việt Nam."
+            }
+        ];
+
+        // STATE QUẢN LÝ TỰ ĐỘNG
+        let cart = [{ bookId: "B01", qty: 1 }];
+        let wishlist = ["B01", "B03"];
+        let activeBook = sampleBooks;
+        let orders = [
+            { id: "ORD-9981", date: "2026-09-10", total: 85000, status: "Chờ xác nhận", bookTitle: "Số Đỏ (Tái bản khổ lớn)" }
+        ];
+
+        // KHỞI TẠO MEGA MENU 20 DANH MỤC THỂ LOẠI
+        const categoriesList = [
+            "Văn học Việt Nam", "Văn học Cổ điển", "Tiểu thuyết Trinh thám", "Khoa học Viễn tưởng",
+            "Triết học Phương Đông", "Triết học Phương Tây", "Lịch sử & Khảo cổ", "Văn hóa & Tôn giáo",
+            "Tâm lý học Ứng dụng", "Khoa học Tự nhiên", "Công nghệ & Lập trình", "Kinh tế & Đầu tư",
+            "Quản trị & Lãnh đạo", "Nghệ thuật & Kiến trúc", "Âm nhạc & Điện ảnh", "Y học & Sức khỏe",
+            "Văn học Thiếu nhi", "Tạp chí & Khảo luận", "Bản thảo & Sách cổ", "Ấn phẩm Giới hạn"
+        ];
+
+        function initMegaMenu() {
+            const container = document.getElementById('megaCategoriesMenu');
+            // File A không có megaCategoriesMenu dạng động, nên chỉ khởi tạo khi phần tử tồn tại.
+            if (!container) return;
+            container.innerHTML = categoriesList.map(c =>
+                `<a class="mega-category-item" onclick="filterByCategory('${c}')"><span class="cat-bullet"></span>${c}</a>`
+            ).join('');
+        }
+
+        // CHUYỂN MÀN HÌNH VIEW (SPA ROUTER)
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            if (viewId === 'view-cart') renderCart();
+            if (viewId === 'view-wishlist') renderWishlist();
+            if (viewId === 'view-orders') renderOrders();
+        }
+
+        // HIỂN THỊ LƯỚI SÁCH (UC05)
+        function renderBookGrid(books) {
+            const container = document.getElementById('bookGridContainer');
+            document.getElementById('searchResultCount').innerText = books.length;
+
+            if (!books.length) {
+                container.innerHTML = `<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--muted);">Rất tiếc, không tìm thấy sản phẩm phù hợp.</div>`;
+                return;
+            }
+
+            container.innerHTML = books.map(b => {
+                const isWished = wishlist.includes(b.id);
+                return `
+                            <div class="book-card">
+                                <div class="book-cover-wrap" onclick="openBookDetail('${b.id}')">
+                                    <img src="${b.coverImg}" class="book-cover" alt="${b.title}">
+                                    <button class="wishlist-btn ${isWished ? 'active' : ''}" onclick="event.stopPropagation(); toggleWishlist('${b.id}')">
+                                        <svg class="icon" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                                    </button>
+                                </div>
+                                <div class="book-title" onclick="openBookDetail('${b.id}')">${b.title}</div>
+                                <div class="book-author">${b.author}</div>
+                                <div class="rating-stars">★ ${b.rating} <span class="rating-count">(${b.reviewsCount})</span></div>
+                                <div class="price-row">
+                                    <span class="current-price">${b.price.toLocaleString('vi-VN')} đ</span>
+                                    <span class="old-price">${b.oldPrice.toLocaleString('vi-VN')} đ</span>
+                                </div>
+                                <div class="stock-badge ${b.stock <= 5 ? 'low' : 'in'}">
+                                    ${b.stock <= 5 ? `Chỉ còn ${b.stock} cuốn` : 'Còn hàng'}
+                                </div>
+                                <button class="btn-add-cart-fast" onclick="addToCart('${b.id}')">Thêm vào giỏ</button>
+                            </div>
+                        `;
+            }).join('');
+        }
+
+        // XEM CHI TIẾT SÁCH (UC06)
+        function openBookDetail(bookId) {
+            activeBook = sampleBooks.find(b => b.id === bookId) || sampleBooks;
+            document.getElementById('detailTitle').innerText = activeBook.title;
+            document.getElementById('detailAuthor').innerText = activeBook.author;
+            document.getElementById('detailPublisher').innerText = activeBook.publisher;
+            document.getElementById('detailPrice').innerText = activeBook.price.toLocaleString('vi-VN') + ' đ';
+            document.getElementById('detailOldPrice').innerText = activeBook.oldPrice.toLocaleString('vi-VN') + ' đ';
+            document.getElementById('detailMainImg').src = activeBook.coverImg;
+
+            document.getElementById('detailThumbList').innerHTML = `
+                        <div class="thumb-item active"><img src="${activeBook.coverImg}"></div>
+                        <div class="thumb-item"><img src="${activeBook.coverImg}"></div>
+                    `;
+
+            switchDetailTab('desc');
+            switchView('view-detail');
+        }
+
+        function switchDetailTab(tabKey) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            const box = document.getElementById('tabContentBox');
+            if (tabKey === 'desc') box.innerHTML = `<p>${activeBook.description}</p>`;
+            if (tabKey === 'specs') box.innerHTML = `<p><strong>Nhà xuất bản:</strong> ${activeBook.publisher}<br><strong>Thể loại:</strong> ${activeBook.category}</p>`;
+            if (tabKey === 'reviews') box.innerHTML = `<p><strong>Đánh giá trung bình:</strong> ★ ${activeBook.rating} / 5 (${activeBook.reviewsCount} bình luận)</p>`;
+        }
+
+        // QUẢN LÝ GIỎ HÀNG (UC16)
+        function addToCart(bookId) {
+            const item = cart.find(i => i.bookId === bookId);
+            if (item) item.qty += 1;
+            else cart.push({ bookId, qty: 1 });
+            updateBadges();
+            showToast('Đã thêm sản phẩm vào giỏ hàng');
+        }
+
+        function renderCart() {
+            const list = document.getElementById('cartItemList');
+            let subtotal = 0;
+
+            list.innerHTML = cart.map(item => {
+                const book = sampleBooks.find(b => b.id === item.bookId);
+                const lineTotal = book.price * item.qty;
+                subtotal += lineTotal;
+                return `
+                            <div class="cart-item">
+                                <input type="checkbox" checked>
+                                <img src="${book.coverImg}" style="width: 60px; height: 80px; object-fit: contain;">
+                                <div>
+                                    <div style="font-weight: 700;">${book.title}</div>
+                                    <div style="font-size: 12px; color: var(--muted);">${book.author}</div>
+                                </div>
+                                <div style="font-weight: 700;">${book.price.toLocaleString('vi-VN')} đ</div>
+                                <div>Số lượng: ${item.qty}</div>
+                                <button style="border:none; background:none; color:var(--danger); cursor:pointer;" onclick="removeFromCart('${item.bookId}')">✕</button>
+                            </div>
+                        `;
+            }).join('');
+
+            document.getElementById('cartSubtotal').innerText = subtotal.toLocaleString('vi-VN') + ' đ';
+            document.getElementById('cartTotal').innerText = subtotal.toLocaleString('vi-VN') + ' đ';
+            document.getElementById('checkoutFinalTotal').innerText = subtotal.toLocaleString('vi-VN') + ' đ';
+        }
+
+        function removeFromCart(bookId) {
+            cart = cart.filter(i => i.bookId !== bookId);
+            updateBadges();
+            renderCart();
+        }
+
+        // ĐẶT HÀNG & HOÀN TẤT (UC17)
+        function placeOrder() {
+            orders.unshift({
+                id: "ORD-" + Math.floor(1000 + Math.random() * 9000),
+                date: new Date().toISOString().split('T'),
+                total: 85000,
+                status: "Chờ xác nhận",
+                bookTitle: "Số Đỏ (Tái bản khổ lớn)"
+            });
+            cart = [];
+            updateBadges();
+            showToast('Đặt hàng thành công!');
+            switchView('view-orders');
+        }
+
+        // QUẢN LÝ ĐƠN HÀNG (UC18, UC19)
+        function renderOrders() {
+            const list = document.getElementById('orderHistoryList');
+            list.innerHTML = orders.map(o => `
+                        <div class="order-card">
+                            <div class="order-header">
+                                <span>Mã đơn: <strong>${o.id}</strong> (${o.date})</span>
+                                <span class="status-tag pending">${o.status}</span>
+                            </div>
+                            <div style="font-weight: 700; margin-bottom: 8px;">${o.bookTitle}</div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>Tổng tiền: <strong style="color: var(--egyptian);">${o.total.toLocaleString('vi-VN')} đ</strong></span>
+                                <button class="btn-add-cart-fast" style="width: auto; padding: 6px 14px;" onclick="cancelOrder('${o.id}')">Hủy đơn hàng</button>
+                            </div>
+                        </div>
+                    `).join('');
+        }
+
+        function cancelOrder(orderId) {
+            const o = orders.find(x => x.id === orderId);
+            if (o) {
+                o.status = "Đã hủy";
+                showToast('Đã gửi yêu cầu hủy đơn hàng');
+                renderOrders();
+            }
+        }
+
+        // WISHLIST (UC10)
+        function toggleWishlist(bookId) {
+            if (wishlist.includes(bookId)) {
+                wishlist = wishlist.filter(id => id !== bookId);
+                showToast('Đã xóa khỏi danh sách yêu thích');
+            } else {
+                wishlist.push(bookId);
+                showToast('Đã thêm vào danh sách yêu thích');
+            }
+            updateBadges();
+            renderBookGrid(sampleBooks);
+        }
+
+        function renderWishlist() {
+            const wishedBooks = sampleBooks.filter(b => wishlist.includes(b.id));
+            const container = document.getElementById('wishlistGridContainer');
+            if (!wishedBooks.length) {
+                container.innerHTML = `<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--muted);">Chưa có sản phẩm yêu thích.</div>`;
+                return;
+            }
+            renderBookGrid(wishedBooks);
+        }
+
+        // LIVE CHAT (UC23)
+        function toggleChatDrawer() {
+            const el = document.getElementById('chatDrawer');
+            el.style.display = (el.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const body = document.getElementById('chatMsgBody');
+            if (!input.value.trim()) return;
+
+            body.innerHTML += `<div class="chat-msg user">${input.value}</div>`;
+            const userTxt = input.value;
+            input.value = '';
+            body.scrollTop = body.scrollHeight;
+
+            setTimeout(() => {
+                body.innerHTML += `<div class="chat-msg staff">Tư vấn viên đã nhận thông tin: "${userTxt}". Chúng tôi sẽ phản hồi ngay!</div>`;
+                body.scrollTop = body.scrollHeight;
+            }, 1000);
+        }
+
+        // TOAST SYSTEM
+        function showToast(msg) {
+            const stack = document.getElementById('toastStack');
+            const item = document.createElement('div');
+            item.className = 'toast-item';
+            item.innerText = msg;
+            stack.appendChild(item);
+            setTimeout(() => item.remove(), 2500);
+        }
+
+        function updateBadges() {
+            document.getElementById('cartBadge').innerText = cart.reduce((a, b) => a + b.qty, 0);
+            document.getElementById('wishlistBadge').innerText = wishlist.length;
+        }
+
+        function applyFilters() {
+            renderBookGrid(sampleBooks);
+        }
+
+        // DOM LOADED INITIALIZATION
+        document.addEventListener('DOMContentLoaded', () => {
+            initMegaMenu();
+            renderBookGrid(sampleBooks);
+            updateBadges();
+        });
+
+        // ===== LOGIC TÍCH HỢP VỚI GIAO DIỆN FILE A =====
+        function formatMoney(value) {
+            return Number(value || 0).toLocaleString('vi-VN') + ' đ';
+        }
+
+        // Hiển thị sách bằng đúng class/giao diện của File A.
+        function renderHomeGrid(books) {
+            const container = document.getElementById('homeProductsGrid');
+            const countEl = document.querySelector('#view-search .results-sorting-bar strong');
+            if (!container) return;
+            if (countEl) countEl.innerText = books.length;
+
+            if (!books.length) {
+                container.innerHTML = '<div style="grid-column:1/-1; padding:40px; text-align:center; color:var(--muted);">Rất tiếc, không tìm thấy sản phẩm phù hợp.</div>';
+                return;
+            }
+
+            container.innerHTML = books.map(b => {
+                const isWished = wishlist.includes(b.id);
+                return `
+                    <div class="product-card">
+                        <button class="wishlist-btn-trigger ${isWished ? 'active' : ''}" onclick="toggleWishlist('${b.id}')" aria-label="Yêu thích">
+                            <svg class="icon" viewBox="0 0 24 24" ${isWished ? 'style="fill:currentColor;"' : ''}><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>
+                        </button>
+                        <div class="book-cover-wrapper" onclick="openBookDetail('${b.id}')" style="cursor:pointer;">
+                            <img src="${b.coverImg}" class="book-cover-img" alt="${b.title}">
+                        </div>
+                        <h4 class="book-title-main" onclick="openBookDetail('${b.id}')" style="cursor:pointer;">${b.title}</h4>
+                        <p class="book-author-name">${b.author}</p>
+                        <div class="rating-info-mini"><span class="stars-gold">★</span> ${b.rating} (${b.reviewsCount} đánh giá)</div>
+                        <span class="${b.stock <= 5 ? 'stock-tag-warning' : 'stock-tag-ok'}">${b.stock <= 5 ? 'Chỉ còn ' + b.stock + ' cuốn' : 'Còn hàng'}</span>
+                        <div class="price-layout-set">
+                            <span class="sale-price-text">${formatMoney(b.price)}</span>
+                            <span class="original-price-cross">${formatMoney(b.oldPrice)}</span>
+                        </div>
+                        <button type="button" class="btn-add-to-cart-fast" onclick="addToCart('${b.id}')">Thêm vào giỏ</button>
+                    </div>`;
+            }).join('');
+        }
+
+        function renderBookGrid(books) {
+            const wishlistView = document.getElementById('view-wishlist');
+            const wishlistContainer = document.getElementById('wishlistGridContainer');
+            if (wishlistView?.classList.contains('active') && wishlistContainer) {
+                const oldId = wishlistContainer.id;
+                wishlistContainer.id = 'homeProductsGrid';
+                renderHomeGrid(books);
+                wishlistContainer.id = oldId;
+                return;
+            }
+            renderHomeGrid(books);
+        }
+
+        function applyFilters() {
+            let result = [...sampleBooks];
+            const keyword = (document.getElementById('searchInputHeader')?.value || '').trim().toLowerCase();
+            if (keyword) {
+                result = result.filter(b =>
+                    b.title.toLowerCase().includes(keyword) ||
+                    b.author.toLowerCase().includes(keyword) ||
+                    b.publisher.toLowerCase().includes(keyword)
+                );
+            }
+
+            const boxes = [...document.querySelectorAll('#view-search .search-sidebar .optimized-list-box')];
+            if (boxes[0]) {
+                const checked = [...boxes[0].querySelectorAll('input:checked')].map(x => x.parentElement.textContent.trim());
+                if (checked.length) result = result.filter(b => checked.includes(b.category));
+            }
+            if (boxes[1]) {
+                const checked = [...boxes[1].querySelectorAll('input:checked')].map(x => x.parentElement.textContent.trim());
+                if (checked.length) result = result.filter(b => checked.includes(b.publisher));
+            }
+
+            const min = Number(document.getElementById('sliderMin')?.value || 0);
+            const max = Number(document.getElementById('sliderMax')?.value || 1000000);
+            result = result.filter(b => b.price >= min && b.price <= max);
+
+            const year = document.querySelector('#view-search .search-sidebar select.sidebar-input')?.value;
+            if (year) result = result.filter(b => year === 'before_2020' ? b.year < 2020 : String(b.year) === year);
+
+            if (document.getElementById('star5')?.checked) result = result.filter(b => b.rating >= 5);
+            else if (document.getElementById('star4')?.checked) result = result.filter(b => b.rating >= 4);
+
+            const sort = document.querySelector('#view-search .sort-dropdown')?.value;
+            if (sort === 'price_asc') result.sort((a, b) => a.price - b.price);
+            if (sort === 'price_desc') result.sort((a, b) => b.price - a.price);
+            if (sort === 'bestseller') result.sort((a, b) => b.reviewsCount - a.reviewsCount);
+
+            renderHomeGrid(result);
+        }
+
+        function triggerSearch() { switchView('view-search'); applyFilters(); }
+        function handleHeaderSearch(event) { if (event.key === 'Enter') triggerSearch(); else applyFilters(); }
+
+        function filterByCategory(category) {
+            switchView('view-search');
+            const box = document.querySelectorAll('#view-search .optimized-list-box')[0];
+            if (box) box.querySelectorAll('input').forEach(x => x.checked = x.parentElement.textContent.trim() === category);
+            applyFilters();
+            showToast('Đã lọc theo thể loại: ' + category);
+        }
+        function filterByPublisher(publisher) {
+            switchView('view-search');
+            const box = document.querySelectorAll('#view-search .optimized-list-box')[1];
+            if (box) box.querySelectorAll('input').forEach(x => x.checked = x.parentElement.textContent.trim() === publisher);
+            applyFilters();
+            showToast('Đã lọc theo nhà xuất bản: ' + publisher);
+        }
+        function filterByTag(tag) {
+            switchView('view-search');
+            if (tag === 'KM') {
+                document.querySelectorAll('#view-search .optimized-list-box input').forEach(x => x.checked = false);
+                const min = document.getElementById('sliderMin'), max = document.getElementById('sliderMax');
+                if (min) min.value = 0;
+                if (max) max.value = 150000;
+                updatePriceFilterState(0);
+                applyFilters();
+                showToast('Đã hiển thị sách khuyến mãi');
+            }
+        }
+
+        function openAuthModal() { const m = document.getElementById('authModal'); if (m) m.style.display = 'flex'; }
+        function closeAuthModal() { const m = document.getElementById('authModal'); if (m) m.style.display = 'none'; }
+        function logout() { closeAuthModal(); showToast('Đã đăng xuất tài khoản'); setTimeout(() => switchView('view-search'), 500); }
+
+        function buyNowFromDetail() {
+            if (!activeBook?.id) return;
+            const qty = Math.max(1, Number(document.getElementById('detailQtyInput')?.value || 1));
+            cart = [{ bookId: activeBook.id, qty }];
+            updateBadges(); renderCart(); switchView('view-checkout'); renderCheckout();
+        }
+        function toggleFPointsRedeem() { renderCheckout(); }
+        function renderCheckout() {
+            const subtotal = cart.reduce((sum, item) => {
+                const book = sampleBooks.find(b => b.id === item.bookId);
+                return sum + (book ? book.price * item.qty : 0);
+            }, 0);
+            const discount = document.getElementById('useFPointsCheckbox')?.checked ? Math.min(24000, subtotal) : 0;
+            document.getElementById('redeemDiscountText').innerText = '-' + formatMoney(discount);
+            document.getElementById('checkoutFinalTotal').innerText = formatMoney(Math.max(0, subtotal - discount));
+        }
+        function handleUpdateInfo(event) {
+            event.preventDefault();
+            const name = event.target.querySelectorAll('input')[2]?.value?.trim();
+            if (name) document.querySelector('.user-name-text').innerText = name;
+            showToast('Đã lưu thay đổi thông tin cá nhân');
+        }
+        function adjustDetailQty(delta) {
+            const input = document.getElementById('detailQtyInput');
+            if (!input || !activeBook) return;
+            input.value = Math.min(activeBook.stock, Math.max(1, Number(input.value || 1) + delta));
+        }
+        function addToCartFromDetail() {
+            if (!activeBook?.id) return;
+            const qty = Math.max(1, Number(document.getElementById('detailQtyInput')?.value || 1));
+            cart = cart.filter(i => i.bookId !== activeBook.id);
+            cart.push({ bookId: activeBook.id, qty });
+            updateBadges(); renderCart(); showToast('Đã cập nhật giỏ hàng');
+        }
+
+        // Ghi đè router B để điều hướng đúng giữa trang A và các view của B.
+        switchView = function (viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById(viewId);
+            if (!target) return;
+            target.classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (viewId === 'view-cart') renderCart();
+            if (viewId === 'view-wishlist') renderWishlist();
+            if (viewId === 'view-orders') renderOrders();
+            if (viewId === 'view-checkout') renderCheckout();
+            if (viewId === 'view-search') applyFilters();
+        };
+
+        // Khởi tạo sau khi DOM sẵn sàng.
+        document.addEventListener('DOMContentLoaded', () => {
+            sampleBooks.forEach((b, i) => { if (!b.year) b.year = [2025, 2024, 2023, 2022][i] || 2024; });
+
+            const sort = document.querySelector('#view-search .sort-dropdown');
+            if (sort) sort.addEventListener('change', applyFilters);
+
+            const reset = document.querySelector('#view-search .btn-reset-filters');
+            if (reset) reset.addEventListener('click', () => {
+                document.querySelectorAll('#view-search .search-sidebar input[type="checkbox"]').forEach(x => x.checked = false);
+                document.getElementById('starAll').checked = true;
+                const year = document.querySelector('#view-search .search-sidebar select.sidebar-input'); if (year) year.value = '';
+                const min = document.getElementById('sliderMin'), max = document.getElementById('sliderMax');
+                if (min) min.value = 0; if (max) max.value = 1000000; updatePriceFilterState(0);
+                const header = document.getElementById('searchInputHeader'); if (header) header.value = '';
+                renderHomeGrid(sampleBooks); showToast('Đã xóa tất cả bộ lọc');
+            });
+
+            const min = document.getElementById('sliderMin'), max = document.getElementById('sliderMax');
+            if (min) min.addEventListener('input', () => { updatePriceFilterState(0); applyFilters(); });
+            if (max) max.addEventListener('input', () => { updatePriceFilterState(1); applyFilters(); });
+
+            initMegaMenu(); renderHomeGrid(sampleBooks); updateBadges();
+        });
+    </script>
+
 </body>
 </html>
+
 
