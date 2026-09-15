@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ancientBOOK — Thanh toán đơn hàng</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --alice: #F2F7FF;
+            --egyptian: #0B409C;
+            --catalina: #0D226B;
+            --ink: #071233;
+            --saffron: #FDBE34;
+            --muted: #5b6e99;
+            --hairline: #dce6f7;
+            --white: #ffffff;
+            --danger: #d93838;
+            --danger-bg: #fdf2f2;
+            --success: #15803d;
+            --success-bg: #ecfdf5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--alice);
+            color: var(--ink);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .icon {
+            width: 17px;
+            height: 17px;
+            flex-shrink: 0;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* TOP UTILITY BAR */
+        .top-bar {
+            background: var(--ink);
+            color: var(--alice);
+            padding: 8px 48px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            letter-spacing: 0.2px;
+        }
+        .top-bar strong {
+            color: var(--saffron);
+            font-weight: 600;
+        }
+
+        /* NAVBAR STOREFRONT */
+        .store-header {
+            background: var(--white);
+            border-bottom: 1.5px solid var(--hairline);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .brand-logo {
+            font-family: 'Fraunces', serif;
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--catalina);
+            letter-spacing: -0.6px;
+            display: inline-flex;
+            align-items: baseline;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .brand-logo span.book-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--egyptian);
+            letter-spacing: 1.2px;
+            margin-left: 2px;
+        }
+
+        .brand-logo .accent-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background-color: var(--saffron);
+            border-radius: 50%;
+            margin-left: 4px;
+        }
+
+        .checkout-secure-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--success);
+            background: var(--success-bg);
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid #bbf7d0;
+        }
+
+        /* CHECKOUT LAYOUT CONTAINER: TRÁI (SẢN PHẨM + THÔNG TIN), PHẢI (THANH TOÁN) */
+        .checkout-container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 32px auto;
+            padding: 0 24px;
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 28px;
+            align-items: start;
+        }
+
+        .checkout-card {
+            background: var(--white);
+            border: 1px solid var(--hairline);
+            border-radius: 10px;
+            padding: 24px;
+            padding-top: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px -2px rgba(7, 12, 51, 0.04);
+        }
+
+        .checkout-card-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--catalina);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--hairline);
+            padding-bottom: 10px;
+            margin: 16px 0;
+        }
+
+        .back-to-shop {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--egyptian);
+            text-decoration: none;
+            margin-bottom: 16px;
+        }
+        .back-to-shop:hover {
+            text-decoration: underline;
+        }
+
+        /* THÔNG TIN CÁ NHÂN DROPDOWN & CARD */
+        .user-profile-box {
+            background: #fafcff;
+            border: 1.5px solid var(--hairline);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .user-profile-header-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .user-mini-bio {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar-img {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px solid var(--saffron);
+            object-fit: cover;
+        }
+
+        .user-text-details h4 {
+            font-size: 14.5px;
+            font-weight: 700;
+            color: var(--catalina);
+        }
+
+        .user-text-details p {
+            font-size: 12.5px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        .btn-edit-toggle {
+            background: var(--alice);
+            color: var(--egyptian);
+            border: 1px solid var(--hairline);
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-edit-toggle:hover {
+            background: var(--egyptian);
+            color: #fff;
+        }
+
+        /* CHỌN ĐỊA CHỈ */
+        .address-options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .address-card-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px;
+            background: #fafcff;
+            border: 1.5px solid var(--hairline);
+            border-radius: 8px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.15s ease;
+        }
+        .address-card-item:hover {
+            border-color: var(--egyptian);
+            background: #fff;
+        }
+        .address-card-item.active {
+            border-color: var(--egyptian);
+            background: #f4f8ff;
+        }
+
+        .address-card-item input[type="radio"] {
+            margin-top: 3px;
+            accent-color: var(--egyptian);
+            cursor: pointer;
+        }
+
+        .address-card-content {
+            flex: 1;
+        }
+
+        .address-card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 2px;
+        }
+        .address-card-header strong {
+            font-size: 14px;
+            color: var(--catalina);
+        }
+
+        .default-badge {
+            background: var(--success-bg);
+            color: var(--success);
+            font-size: 10.5px;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 4px;
+        }
+
+        .address-phone {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .address-text {
+            font-size: 13px;
+            color: var(--ink);
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .btn-icon-edit {
+            background: #fff;
+            border: 1px solid var(--hairline);
+            color: var(--muted);
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+        }
+        .btn-icon-edit:hover {
+            background: var(--egyptian);
+            color: #fff;
+            border-color: var(--egyptian);
+        }
+
+        .btn-add-new-address {
+            background: var(--alice);
+            color: var(--egyptian);
+            border: 1px solid var(--hairline);
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .btn-add-new-address:hover {
+            background: var(--egyptian);
+            color: #fff;
+        }
+
+        /* PHẦN FORM CHỈNH SỬA / THÊM THÔNG TIN CÁ NHÂN (TOGGLE) */
+        .edit-profile-form-area {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            border-top: 1px dashed var(--hairline);
+            padding-top: 12px;
+            margin-top: 4px;
+        }
+        .edit-profile-form-area.active {
+            display: flex;
+        }
+
+        .form-group-mini {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .form-group-mini label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+        .form-input-mini {
+            padding: 8px 10px;
+            font-size: 13px;
+            border: 1.5px solid var(--hairline);
+            border-radius: 6px;
+            outline: none;
+            background: #fff;
+        }
+        .form-input-mini:focus {
+            border-color: var(--egyptian);
+        }
+
+        /* DANH SÁCH SẢN PHẨM MUA Ở BÊN TRÁI */
+        .cart-items-full-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .cart-item-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px;
+            background: #fafcff;
+            border: 1px solid var(--hairline);
+            border-radius: 8px;
+        }
+
+        .cart-item-img {
+            width: 60px;
+            height: 75px;
+            object-fit: contain;
+            background: #fff;
+            border: 1px solid var(--hairline);
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--catalina);
+            margin-bottom: 4px;
+        }
+
+        .cart-item-author {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .cart-item-qty-price {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        /* PHƯƠNG THỨC THANH TOÁN & TỔNG TIỀN Ở BÊN PHẢI */
+        .payment-options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .payment-option-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            border: 1.5px solid var(--hairline);
+            border-radius: 8px;
+            cursor: pointer;
+            background: #fafcff;
+            transition: all 0.15s ease;
+        }
+        .payment-option-item:hover {
+            border-color: var(--egyptian);
+            background: #fff;
+        }
+        .payment-option-item input[type="radio"] {
+            margin-top: 3px;
+            accent-color: var(--egyptian);
+            cursor: pointer;
+        }
+        .payment-details-text h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--catalina);
+            margin-bottom: 2px;
+        }
+        .payment-details-text p {
+            font-size: 11.5px;
+            color: var(--muted);
+        }
+
+        /* VOUCHER / DISCOUNT BOX */
+        .voucher-box {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .voucher-input {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 13px;
+            border: 1.5px solid var(--hairline);
+            border-radius: 6px;
+            outline: none;
+            text-transform: uppercase;
+        }
+        .voucher-btn {
+            padding: 0 14px;
+            background: var(--alice);
+            color: var(--egyptian);
+            border: 1.5px solid var(--egyptian);
+            font-weight: 700;
+            font-size: 12.5px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .voucher-btn:hover {
+            background: var(--egyptian);
+            color: #fff;
+        }
+
+        /* BILLING CALCULATION ROWS */
+        .calc-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+        .calc-row.total {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--catalina);
+            border-top: 1.5px solid var(--hairline);
+            padding-top: 12px;
+            margin-top: 10px;
+            margin-bottom: 16px;
+        }
+        .calc-row.total .total-price-val {
+            color: var(--egyptian);
+            font-size: 19px;
+        }
+
+        .btn-complete-order {
+            width: 100%;
+            padding: 13px;
+            background: var(--egyptian);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14.5px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.1s ease;
+            box-shadow: 0 4px 12px rgba(11, 64, 156, 0.25);
+        }
+        .btn-complete-order:hover {
+            background: var(--catalina);
+        }
+        .btn-complete-order:active {
+            transform: scale(0.98);
+        }
+
+        /* MODAL SUCCESS OVERLAY */
+        .success-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(7, 18, 51, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .success-modal-box {
+            background: #fff;
+            width: 100%;
+            max-width: 440px;
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            box-shadow: 0 20px 40px -10px rgba(7,18,51,0.25);
+            animation: modalPopUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes modalPopUp {
+            from { transform: scale(0.85); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .success-icon-wrap {
+            width: 64px;
+            height: 64px;
+            background: var(--success-bg);
+            color: var(--success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+        .success-icon-wrap svg {
+            width: 32px;
+            height: 32px;
+        }
+        .success-modal-box h3 {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--catalina);
+            margin-bottom: 8px;
+        }
+        .success-modal-box p {
+            font-size: 13.5px;
+            color: var(--muted);
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+        .btn-close-success {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: var(--egyptian);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        @media (max-width: 1024px) {
+            .checkout-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP UTILITY BAR -->
+    <div class="top-bar">
+        <div>Miễn phí giao hàng toàn quốc cho đơn từ <strong>250.000 đ</strong> • Cam kết 100% sách chính hãng</div>
+        <ul style="list-style:none;">
+            <span>Hotline hỗ trợ: <strong>1900 636 467</strong></span>
+        </ul>
+    </div>
+
+    <!-- NAVBAR STOREFRONT -->
+    <header class="store-header">
+        <div class="navbar-main">
+            <a href="trangchu.html" class="brand-logo">
+                ancient<span class="book-text">BOOK</span><span class="accent-dot"></span>
+            </a>
+            <div class="checkout-secure-badge">
+                <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                <span>Thanh toán bảo mật SSL 256-bit</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="checkout-container">
+        
+        <div class="checkout-left-column">
+            <a href="trangchu.html" class="back-to-shop">
+                <svg class="icon" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
+                <span>Quay lại trang cửa hàng</span>
+            </a>
+
+            <!-- Thông tin cá nhân người nhận -->
+            <section class="checkout-card">
+                <div class="checkout-card-title">
+                    <span>Thông tin người nhận sách</span>
+                    <span style="font-size: 11.5px; color: var(--success); font-weight: 600;" id="profileStatusBadge">Đã có thông tin</span>
+                </div>
+
+                <!-- Danh sách các địa chỉ -->
+                <div class="address-options-list" id="addressListContainer">
+                    <!-- Địa chỉ 1 (Mặc định chọn) -->
+                    <label class="address-card-item active" id="addr-1">
+                        <input type="radio" name="selectedAddress" checked onchange="selectAddress(1)">
+                        <div class="address-card-content">
+                            <div class="address-card-header">
+                                <strong>Thanh Sang</strong>
+                                <span class="default-badge">Mặc định</span>
+                            </div>
+                            <p class="address-phone">0912345678 • thansang@dev.com</p>
+                            <p class="address-text">128 Nguyễn Thị Minh Khai, Quận 1, TP. Hồ Chí Minh</p>
+                        </div>
+                        <button type="button" class="btn-icon-edit" onclick="event.preventDefault(); openAddressModal('edit', 1)" title="Sửa địa chỉ">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                    </label>
+
+                    <!-- Địa chỉ 2 -->
+                    <label class="address-card-item" id="addr-2">
+                        <input type="radio" name="selectedAddress" onchange="selectAddress(2)">
+                        <div class="address-card-content">
+                            <div class="address-card-header">
+                                <strong>Thanh Sang (Văn phòng công ty)</strong>
+                            </div>
+                            <p class="address-phone">0988765432 • thansang@dev.com</p>
+                            <p class="address-text">Khu Công Nghệ Hiệu Quả, Phường Tân Phú, Thành phố Thủ Đức, TP. Hồ Chí Minh</p>
+                        </div>
+                        <button type="button" class="btn-icon-edit" onclick="event.preventDefault(); openAddressModal('edit', 2)" title="Sửa địa chỉ">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                    </label>
+                </div>
+
+                <!-- Danh sách sản phẩm mua -->
+                <div class="checkout-card-title">
+                    <span>Danh sách sản phẩm trong đơn</span>
+                    <span style="font-size: 12px; color: var(--muted); font-weight: 500;">(2 cuốn sách)</span>
+                </div>
+
+                <div class="cart-items-full-list">
+                    <div class="cart-item-card">
+                        <img src="https://salt.tikicdn.com/ts/product/45/3e/2e/9f992ab2a5436d4f937d9fae16d47b53.jpg" class="cart-item-img" alt="Số Đỏ">
+                        <div class="cart-item-info">
+                            <h4 class="cart-item-title">Số Đỏ (Tái bản khổ lớn nghệ thuật)</h4>
+                            <p class="cart-item-author">Tác giả: Vũ Trọng Phụng</p>
+                            <div class="cart-item-qty-price">
+                                <span style="color: var(--muted); font-size: 12px;">Số lượng: <strong>1</strong></span>
+                                <strong style="color: var(--egyptian);">85.000 đ</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cart-item-card">
+                        <img src="https://salt.tikicdn.com/ts/product/19/22/e0/aa29986348ef0eeab07ff83f99e3cae6.jpg" class="cart-item-img" alt="Tội Lỗi Và Hình Phạt">
+                        <div class="cart-item-info">
+                            <h4 class="cart-item-title">Tội Lỗi Và Hình Phạt (Tập 1)</h4>
+                            <p class="cart-item-author">Tác giả: Fyodor Dostoevsky</p>
+                            <div class="cart-item-qty-price">
+                                <span style="color: var(--muted); font-size: 12px;">Số lượng: <strong>1</strong></span>
+                                <strong style="color: var(--egyptian);">145.000 đ</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- PHƯƠNG THỨC THANH TOÁN + TỔNG THANH TOÁN -->
+        <div class="checkout-right-column">
+            <section class="checkout-card">
+                <div class="checkout-card-title">
+                    <span>Phương thức thanh toán</span>
+                </div>
+
+                <div class="payment-options-list">
+                    <label class="payment-option-item">
+                        <input type="radio" name="paymentMethod" value="cod" checked>
+                        <div class="payment-details-text">
+                            <h4>Thanh toán khi nhận hàng (COD)</h4>
+                            <p>Thanh toán bằng tiền mặt trực tiếp cho nhân viên chuyển phát.</p>
+                        </div>
+                    </label>
+
+                    <label class="payment-option-item">
+                        <input type="radio" name="paymentMethod" value="momo">
+                        <div class="payment-details-text">
+                            <h4>Ví điện tử MoMo</h4>
+                            <p>Mở ứng dụng ví điện tử trên thiết bị di động để thanh toán.</p>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Khung Nhập Mã Giảm Giá/Sử dụng điểm khách hàng -->
+                <div class="checkout-card-title" style="margin-bottom: 12px; font-size: 14px;">
+                    <!-- <span>Mã giảm giá / Voucher</span> -->
+                    <span>Sử dụng điểm khách hàng</span>
+                </div>
+                <div class="voucher-box">
+                    <!-- <input type="text" class="voucher-input" id="voucherCodeInput" placeholder="Nhập mã (VD: ANCIENT20)..."> -->
+                    <input type="text" class="voucher-input" id="voucherCodeInput" placeholder="Nhập số lượng điểm muốn dùng">
+                    <button type="button" class="voucher-btn" onclick="applyVoucherCode()">Áp dụng</button>
+                </div>
+                <div id="voucherMsg" style="font-size: 11.5px; margin-bottom: 14px; font-weight: 600;"></div>
+
+                <!-- Chi tiết hóa đơn thanh toán -->
+                <div class="checkout-card-title" style="margin-bottom: 12px; font-size: 14px;">
+                    <span>Tổng thanh toán đơn hàng</span>
+                </div>
+                <div class="calc-row">
+                    <span>Tạm tính tiền sách:</span>
+                    <strong id="subTotalDisplay" style="color:var(--catalina);">230.000 đ</strong>
+                </div>
+                <div class="calc-row">
+                    <span>Phí vận chuyển:</span>
+                    <strong id="shippingFeeDisplay" style="color:var(--catalina);">15.000 đ</strong>
+                </div>
+                <div class="calc-row" id="discountRow" style="display: none; color: var(--success);">
+                    <span>Mã giảm giá áp dụng:</span>
+                    <strong id="discountDisplay">- 20.000 đ</strong>
+                </div>
+
+                <div class="calc-row total">
+                    <span>Tổng cộng:</span>
+                    <span class="total-price-val" id="finalTotalDisplay">245.000 đ</span>
+                </div>
+
+                <button type="button" class="btn-complete-order" onclick="handleProcessCheckout()">Đặt mua đơn hàng ngay</button>
+            </section>
+        </div>
+    </main>
+
+    <!-- MODAL ĐẶT HÀNG THÀNH CÔNG -->
+    <div class="success-modal-overlay" id="successModal">
+        <div class="success-modal-box">
+            <div class="success-icon-wrap">
+                <svg class="icon" viewBox="0 0 24 24" style="stroke-width: 2.5;"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <h3>Đặt hàng thành công!</h3>
+            <p>Cảm ơn bạn đã đặt sách tại <strong>ancientBOOK</strong>. Mã đơn hàng của bạn là <strong style="color:var(--egyptian);" id="orderCodeGenerated">#AB9824</strong>. Chúng tôi đã gửi email xác nhận chi tiết về hòm thư của bạn.</p>
+            <a href="trangchu.html" class="btn-close-success">Quay lại trang chủ cửa hàng</a>
+        </div>
+    </div>
+
+    <!-- MODAL SỬA / THÊM ĐỊA CHỈ -->
+    <div class="success-modal-overlay" id="addressModal" style="display: none;">
+        <div class="success-modal-box" style="text-align: left; max-width: 480px;">
+            <h3 id="modalTitleText" style="margin-bottom: 16px; font-size: 18px;">Chỉnh sửa địa chỉ nhận hàng</h3>
+            <input type="hidden" id="editingAddressId" value="">
+            
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+                <div class="form-group-mini">
+                    <label>Họ và tên người nhận</label>
+                    <input type="text" class="form-input-mini" id="modalName" placeholder="Nhập họ tên...">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div class="form-group-mini">
+                        <label>Số điện thoại</label>
+                        <input type="tel" class="form-input-mini" id="modalPhone" placeholder="Nhập số điện thoại...">
+                    </div>
+                    <div class="form-group-mini">
+                        <label>Email liên hệ</label>
+                        <input type="email" class="form-input-mini" id="modalEmail" placeholder="Nhập email...">
+                    </div>
+                </div>
+                <div class="form-group-mini">
+                    <label>Địa chỉ giao hàng chi tiết</label>
+                    <input type="text" class="form-input-mini" id="modalAddress" placeholder="Số nhà, đường, phường/xã, quận/huyện...">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="voucher-btn" style="flex: 1; padding: 10px;" onclick="closeAddressModal()">Hủy bỏ</button>
+                <button type="button" class="btn-complete-order" style="flex: 1; padding: 10px; font-size: 14px; box-shadow: none;" onclick="saveAddressModalData()">Lưu thông tin</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let subTotal = 230000;
+        let shippingFee = 15000;
+        let discountVal = 0;
+
+        // Bật/tắt khu vực chỉnh sửa thông tin cá nhân
+        function toggleEditProfileForm() {
+            const area = document.getElementById('editProfileFormArea');
+            area.classList.toggle('active');
+        }
+
+        // Lưu thông tin cá nhân sau khi sửa đổi hoặc thêm mới
+        function saveProfileChanges() {
+            const name = document.getElementById('inputName').value.trim();
+            const phone = document.getElementById('inputPhone').value.trim();
+            const email = document.getElementById('inputEmail').value.trim();
+            const address = document.getElementById('inputAddress').value.trim();
+
+            if (!name || !phone || !address) {
+                alert('Vui lòng điền đầy đủ họ tên, số điện thoại và địa chỉ nhận hàng!');
+                return;
+            }
+
+            // Cập nhật lại giao diện hiển thị dropdown
+            document.getElementById('displayName').innerText = name;
+            document.getElementById('displayPhoneEmail').innerText = phone + ' • ' + email;
+            document.getElementById('displayAddress').innerText = address;
+            document.getElementById('profileStatusBadge').innerText = 'Đã cập nhật';
+            document.getElementById('profileStatusBadge').style.color = 'var(--success)';
+
+            // Đóng khung form sửa đổi
+            document.getElementById('editProfileFormArea').classList.remove('active');
+        }
+
+        function applyVoucherCode() {
+            const code = document.getElementById('voucherCodeInput').value.trim().toUpperCase();
+            const msg = document.getElementById('voucherMsg');
+            const discountRow = document.getElementById('discountRow');
+            const discountDisplay = document.getElementById('discountDisplay');
+
+            if (code === 'ANCIENT20') {
+                discountVal = 20000;
+                msg.style.color = 'var(--success)';
+                msg.innerText = '✔ Áp dụng mã giảm giá thành công (-20.000 đ)';
+                discountRow.style.display = 'flex';
+                discountDisplay.innerText = '- 20.000 đ';
+            } else if (code === 'FREESHIP') {
+                shippingFee = 0;
+                msg.style.color = 'var(--success)';
+                msg.innerText = '✔ Miễn phí vận chuyển thành công!';
+            } else {
+                discountVal = 0;
+                msg.style.color = 'var(--danger)';
+                msg.innerText = '✖ Mã giảm giá không tồn tại hoặc đã hết hạn.';
+                discountRow.style.display = 'none';
+            }
+            renderCalculation();
+        }
+
+        function renderCalculation() {
+            document.getElementById('subTotalDisplay').innerText = subTotal.toLocaleString('vi-VN') + ' đ';
+            document.getElementById('shippingFeeDisplay').innerText = shippingFee === 0 ? 'Miễn phí' : shippingFee.toLocaleString('vi-VN') + ' đ';
+            
+            const final = subTotal + shippingFee - discountVal;
+            document.getElementById('finalTotalDisplay').innerText = final.toLocaleString('vi-VN') + ' đ';
+        }
+
+        function handleProcessCheckout() {
+            // Kiểm tra xem người dùng có thông tin chưa
+            const name = document.getElementById('displayName').innerText;
+            if (!name) {
+                alert('Vui lòng cập nhật thông tin người nhận trước khi đặt hàng!');
+                toggleEditProfileForm();
+                return;
+            }
+
+            // Tạo mã đơn hàng ngẫu nhiên
+            const randomId = '#AB' + Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('orderCodeGenerated').innerText = randomId;
+
+            // Hiển thị modal thành công
+            document.getElementById('successModal').style.display = 'flex';
+        }
+
+        // Chạy tính toán ban đầu
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCalculation();
+        });
+
+        // Xử lý chọn địa chỉ active đổi màu viền
+        function selectAddress(id) {
+            document.querySelectorAll('.address-card-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('addr-' + id).classList.add('active');
+        }
+
+        // Mở Modal Sửa hoặc Thêm Địa Chỉ
+        function openAddressModal(mode, id) {
+            const modal = document.getElementById('addressModal');
+            const title = document.getElementById('modalTitleText');
+            document.getElementById('editingAddressId').value = id || '';
+
+            if (mode === 'edit') {
+                title.innerText = 'Chỉnh sửa thông tin địa chỉ';
+                // Lấy dữ liệu tạm từ card hiện tại bỏ vào modal để sửa
+                const card = document.getElementById('addr-' + id);
+                const name = card.querySelector('.address-card-header strong').innerText;
+                const phoneEmail = card.querySelector('.address-phone').innerText.split(' • ');
+                const addressText = card.querySelector('.address-text').innerText;
+
+                document.getElementById('modalName').value = name;
+                document.getElementById('modalPhone').value = phoneEmail[0] || '';
+                document.getElementById('modalEmail').value = phoneEmail[1] || '';
+                document.getElementById('modalAddress').value = addressText;
+            } else {
+                title.innerText = 'Thêm địa chỉ giao hàng mới';
+                document.getElementById('modalName').value = '';
+                document.getElementById('modalPhone').value = '';
+                document.getElementById('modalEmail').value = '';
+                document.getElementById('modalAddress').value = '';
+            }
+            modal.style.display = 'flex';
+        }
+
+        // Đóng Modal
+        function closeAddressModal() {
+            document.getElementById('addressModal').style.display = 'none';
+        }
+
+        // Lưu thông tin từ Modal vào Card tương ứng
+        function saveAddressModalData() {
+            const id = document.getElementById('editingAddressId').value;
+            const name = document.getElementById('modalName').value.trim();
+            const phone = document.getElementById('modalPhone').value.trim();
+            const email = document.getElementById('modalEmail').value.trim();
+            const address = document.getElementById('modalAddress').value.trim();
+
+            if (!name || !phone || !address) {
+                alert('Vui lòng điền đầy đủ họ tên, số điện thoại và địa chỉ nhận hàng!');
+                return;
+            }
+
+            if (id) {
+                // Cập nhật lại card cũ
+                const card = document.getElementById('addr-' + id);
+                card.querySelector('.address-card-header strong').innerText = name;
+                card.querySelector('.address-phone').innerText = phone + ' • ' + email;
+                card.querySelector('.address-text').innerText = address;
+            } else {
+                // Thêm địa chỉ mới vào danh sách (dành cho ví dụ minh họa)
+                alert('Đã thêm địa chỉ mới thành công!');
+            }
+            closeAddressModal();
+        }
+    </script>
+</body>
+</html>
