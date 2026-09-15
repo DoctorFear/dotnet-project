@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ancientBOOK — Giỏ hàng & Chọn sản phẩm thanh toán</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --alice: #F2F7FF;
+            --egyptian: #0B409C;
+            --catalina: #0D226B;
+            --ink: #071233;
+            --saffron: #FDBE34;
+            --muted: #5b6e99;
+            --hairline: #dce6f7;
+            --white: #ffffff;
+            --danger: #d93838;
+            --danger-bg: #fdf2f2;
+            --success: #15803d;
+            --success-bg: #ecfdf5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--alice);
+            color: var(--ink);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .icon {
+            width: 17px;
+            height: 17px;
+            flex-shrink: 0;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* 1. TOP UTILITY BAR */
+        .top-bar {
+            background: var(--ink);
+            color: var(--alice);
+            padding: 8px 48px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            letter-spacing: 0.2px;
+        }
+        .top-bar strong {
+            color: var(--saffron);
+            font-weight: 600;
+        }
+
+        /* 2. NAVBAR STOREFRONT (HEADER) */
+        .store-header {
+            background: var(--white);
+            border-bottom: 1.5px solid var(--hairline);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .brand-logo {
+            font-family: 'Fraunces', serif;
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--catalina);
+            letter-spacing: -0.6px;
+            display: inline-flex;
+            align-items: baseline;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .brand-logo span.book-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--egyptian);
+            letter-spacing: 1.2px;
+            margin-left: 2px;
+        }
+
+        .brand-logo .accent-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background-color: var(--saffron);
+            border-radius: 50%;
+            margin-left: 4px;
+        }
+
+        .header-title-page {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--catalina);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 3. MAIN CART SELECTOR LAYOUT */
+        .cart-page-container {
+            max-width: 1000px;
+            width: 100%;
+            margin: 32px auto;
+            padding: 0 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .back-to-shop {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--egyptian);
+            text-decoration: none;
+            align-self: flex-start;
+        }
+        .back-to-shop:hover {
+            text-decoration: underline;
+        }
+
+        /* MAIN CONTENT BOX OF SAVED ITEMS */
+        .cart-main-box {
+            background: var(--white);
+            border: 1px solid var(--hairline);
+            border-radius: 10px;
+            padding: 24px;
+            box-shadow: 0 4px 12px -2px rgba(7, 12, 51, 0.04);
+        }
+
+        .cart-box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--hairline);
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--catalina);
+        }
+
+        .select-all-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--ink);
+        }
+        .select-all-label input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--egyptian);
+            cursor: pointer;
+        }
+
+        /* DANH SÁCH CÁC MỤC ĐÃ LƯU */
+        .cart-items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .cart-item-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 14px;
+            background: #fafcff;
+            border: 1px solid var(--hairline);
+            border-radius: 8px;
+            transition: border-color 0.15s ease;
+        }
+        .cart-item-row:hover {
+            border-color: var(--egyptian);
+        }
+
+        .cart-item-checkbox {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--egyptian);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .cart-item-img {
+            width: 65px;
+            height: 85px;
+            object-fit: contain;
+            background: #fff;
+            border: 1px solid var(--hairline);
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .cart-item-details {
+            flex: 1;
+        }
+
+        .cart-item-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--catalina);
+            margin-bottom: 3px;
+        }
+
+        .cart-item-author {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .cart-item-price-set {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .item-sale-price {
+            font-size: 14.5px;
+            font-weight: 800;
+            color: var(--egyptian);
+        }
+
+        .item-orig-price {
+            font-size: 12px;
+            color: var(--muted);
+            text-decoration: line-through;
+        }
+
+        /* THAY ĐỔI SỐ LƯỢNG & NÚT XÓA */
+        .cart-item-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .qty-selector {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--hairline);
+            border-radius: 6px;
+            background: #fff;
+            overflow: hidden;
+        }
+        .qty-btn {
+            background: #f4f7fc;
+            border: none;
+            padding: 4px 10px;
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--catalina);
+            transition: background 0.1s;
+        }
+        .qty-btn:hover {
+            background: var(--hairline);
+        }
+        .qty-input {
+            width: 36px;
+            text-align: center;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            outline: none;
+        }
+
+        .btn-remove-item {
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            transition: color 0.15s, background 0.15s;
+        }
+        .btn-remove-item:hover {
+            color: var(--danger);
+            background: var(--danger-bg);
+        }
+
+        /* PHẦN DƯỚI: TỔNG KẾT & PAY BUTTON */
+        .cart-summary-footer {
+            background: var(--white);
+            border: 1px solid var(--hairline);
+            border-radius: 10px;
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px -2px rgba(7, 12, 51, 0.04);
+        }
+
+        .summary-left-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 13.5px;
+        }
+        .summary-left-info strong {
+            color: var(--egyptian);
+            font-size: 18px;
+        }
+
+        .btn-proceed-checkout {
+            background: var(--egyptian);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 14px 32px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.1s ease;
+            box-shadow: 0 4px 12px rgba(11, 64, 156, 0.25);
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-proceed-checkout:hover {
+            background: var(--catalina);
+        }
+        .btn-proceed-checkout:active {
+            transform: scale(0.98);
+        }
+        .btn-proceed-checkout.disabled {
+            background: var(--hairline);
+            color: var(--muted);
+            cursor: not-allowed;
+            box-shadow: none;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .cart-item-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .cart-summary-footer {
+                flex-direction: column;
+                gap: 16px;
+                align-items: stretch;
+            }
+            .btn-proceed-checkout {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. TOP UTILITY BAR -->
+    <div class="top-bar">
+        <div>Miễn phí giao hàng toàn quốc cho đơn từ <strong>250.000 đ</strong> • Cam kết 100% sách chính hãng</div>
+        <ul style="list-style:none;">
+            <span>Hotline hỗ trợ: <strong>1900 636 467</strong></span>
+        </ul>
+    </div>
+
+    <!-- 2. NAVBAR STOREFRONT (HEADER) -->
+    <header class="store-header">
+        <div class="navbar-main">
+            <a href="trangchu.html" class="brand-logo">
+                ancient<span class="book-text">BOOK</span><span class="accent-dot"></span>
+            </a>
+            <div class="header-title-page">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <span>Giỏ hàng của bạn</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 3. MAIN CART SELECTOR CONTAINER -->
+    <main class="cart-page-container">
+        <a href="trangchu.html" class="back-to-shop">
+            <svg class="icon" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
+            <span>Tiếp tục mua sắm sách khác</span>
+        </a>
+
+        <!-- Hộp chứa chính các sản phẩm đã lưu kèm checkbox -->
+        <section class="cart-main-box">
+            <div class="cart-box-header">
+                <label class="select-all-label">
+                    <input type="checkbox" id="selectAllCheckbox" checked onchange="toggleSelectAll(this)">
+                    <span>Chọn tất cả sản phẩm (<span id="totalItemsCount">3</span> cuốn)</span>
+                </label>
+                <span style="font-size: 12px; color: var(--muted);">Đơn giá & Tùy chọn</span>
+            </div>
+
+            <div class="cart-items-list" id="cartItemsContainer">
+                <!-- Sản phẩm 1 -->
+                <div class="cart-item-row" data-price="85000" data-id="1">
+                    <input type="checkbox" class="cart-item-checkbox" checked onchange="updateCartCalculation()">
+                    <img src="https://salt.tikicdn.com/ts/product/45/3e/2e/9f992ab2a5436d4f937d9fae16d47b53.jpg" class="cart-item-img" alt="Số Đỏ">
+                    <div class="cart-item-details">
+                        <h4 class="cart-item-title">Số Đỏ (Tái bản khổ lớn nghệ thuật)</h4>
+                        <p class="cart-item-author">Tác giả: Vũ Trọng Phụng</p>
+                        <div class="cart-item-price-set">
+                            <span class="item-sale-price">85.000 đ</span>
+                            <span class="item-orig-price">110.000 đ</span>
+                        </div>
+                    </div>
+                    <div class="cart-item-actions">
+                        <div class="qty-selector">
+                            <button type="button" class="qty-btn" onclick="adjustQty(this, -1)">-</button>
+                            <input type="text" class="qty-input" value="1" readonly>
+                            <button type="button" class="qty-btn" onclick="adjustQty(this, 1)">+</button>
+                        </div>
+                        <button type="button" class="btn-remove-item" onclick="removeItem(this)" title="Xóa sản phẩm">
+                            <svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sản phẩm 2 -->
+                <div class="cart-item-row" data-price="145000" data-id="2">
+                    <input type="checkbox" class="cart-item-checkbox" checked onchange="updateCartCalculation()">
+                    <img src="https://salt.tikicdn.com/ts/product/19/22/e0/aa29986348ef0eeab07ff83f99e3cae6.jpg" class="cart-item-img" alt="Tội Lỗi Và Hình Phạt">
+                    <div class="cart-item-details">
+                        <h4 class="cart-item-title">Tội Lỗi Và Hình Phạt (Tập 1)</h4>
+                        <p class="cart-item-author">Tác giả: Fyodor Dostoevsky</p>
+                        <div class="cart-item-price-set">
+                            <span class="item-sale-price">145.000 đ</span>
+                            <span class="item-orig-price">180.000 đ</span>
+                        </div>
+                    </div>
+                    <div class="cart-item-actions">
+                        <div class="qty-selector">
+                            <button type="button" class="qty-btn" onclick="adjustQty(this, -1)">-</button>
+                            <input type="text" class="qty-input" value="1" readonly>
+                            <button type="button" class="qty-btn" onclick="adjustQty(this, 1)">+</button>
+                        </div>
+                        <button type="button" class="btn-remove-item" onclick="removeItem(this)" title="Xóa sản phẩm">
+                            <svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sản phẩm 3 -->
+                <div class="cart-item-row" data-price="98000" data-id="3">
+                    <input type="checkbox" class="cart-item-checkbox" checked onchange="updateCartCalculation()">
+                    <img src="https://nhasachphuongnam.com/images/detailed/181/81yvSg0d7AL._AC_SL1500_.jpg" class="cart-item-img" alt="Vụ Án Mạng">
+                    <div class="cart-item-details">
+                        <h4 class="cart-item-title">Vụ Án Mạng Trên Chuyến Tàu Tốc Hành Phương Đông</h4>
+                        <p class="cart-item-author">Tác giả: Agatha Christie</p>
+                        <div class="cart-item-price-set">
+                            <span class="item-sale-price">98.000 đ</span>
+                            <span class="item-orig-price">120.000 đ</span>
+                        </div>
+                    </div>
+                    <div class="cart-item-actions">
+                        <div class="qty-selector">
+                            <button type="button" class="qty-btn" onclick="adjustQty(this, -1)">-</button>
+                            <input type="text" class="qty-input" value="1" readonly>
+                            <button type="button" class="qty-btn" onclick="adjustQty(this, 1)">+</button>
+                        </div>
+                        <button type="button" class="btn-remove-item" onclick="removeItem(this)" title="Xóa sản phẩm">
+                            <svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- BÊN DƯỚI: TỔNG KẾT & PAY BUTTON -->
+        <section class="cart-summary-footer">
+            <div class="summary-left-info">
+                <span>Đã chọn <strong id="selectedCount">3</strong> sản phẩm thanh toán</span>
+                <div>Tổng tiền tạm tính: <strong id="totalPriceDisplay">328.000 đ</strong></div>
+            </div>
+            <a href="thanhtoan.html" class="btn-proceed-checkout" id="payButton">Tiến hành đặt mua (Thanh toán)</a>
+        </section>
+    </main>
+
+    <script>
+        // Chọn/Bỏ chọn tất cả checkbox
+        function toggleSelectAll(masterCheckbox) {
+            const checkboxes = document.querySelectorAll('.cart-item-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = masterCheckbox.checked;
+            });
+            updateCartCalculation();
+        }
+
+        // Tăng giảm số lượng sản phẩm
+        function adjustQty(btn, delta) {
+            const qtyInput = btn.parentElement.querySelector('.qty-input');
+            let currentQty = parseInt(qtyInput.value) + delta;
+            if (currentQty < 1) currentQty = 1;
+            qtyInput.value = currentQty;
+            updateCartCalculation();
+        }
+
+        // Xóa một sản phẩm khỏi danh sách
+        function removeItem(btn) {
+            const row = btn.closest('.cart-item-row');
+            row.remove();
+            
+            // Cập nhật lại số lượng tổng trên tiêu đề
+            const remainingRows = document.querySelectorAll('.cart-item-row');
+            document.getElementById('totalItemsCount').innerText = remainingRows.length;
+
+            if (remainingRows.length === 0) {
+                document.getElementById('cartItemsContainer').innerHTML = '<div style="text-align:center; padding: 24px; color: var(--muted);">Giỏ hàng của bạn đang trống!</div>';
+                document.getElementById('selectAllCheckbox').checked = false;
+                document.getElementById('selectAllCheckbox').disabled = true;
+            }
+            updateCartCalculation();
+        }
+
+        // Tính toán lại tổng tiền dựa trên các sản phẩm được tích chọn checkbox
+        function updateCartCalculation() {
+            const rows = document.querySelectorAll('.cart-item-row');
+            let selectedCount = 0;
+            let totalPrice = 0;
+
+            rows.forEach(row => {
+                const checkbox = row.querySelector('.cart-item-checkbox');
+                if (checkbox && checkbox.checked) {
+                    selectedCount++;
+                    const price = parseInt(row.getAttribute('data-price'));
+                    const qty = parseInt(row.querySelector('.qty-input').value);
+                    totalPrice += price * qty;
+                }
+            });
+
+            document.getElementById('selectedCount').innerText = selectedCount;
+            document.getElementById('totalPriceDisplay').innerText = totalPrice.toLocaleString('vi-VN') + ' đ';
+
+            // Kích hoạt hoặc vô hiệu hóa nút thanh toán nếu không chọn sản phẩm nào
+            const payBtn = document.getElementById('payButton');
+            if (selectedCount === 0) {
+                payBtn.classList.add('disabled');
+                payBtn.innerText = 'Vui lòng chọn sản phẩm';
+            } else {
+                payBtn.classList.remove('disabled');
+                payBtn.innerText = 'Tiến hành đặt mua (' + selectedCount + ' sản phẩm)';
+            }
+        }
+
+        // Chạy lần đầu khi load trang
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCartCalculation();
+        });
+    </script>
+</body>
+</html>
