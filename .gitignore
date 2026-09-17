@@ -480,3 +480,42 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+# ==============================================================================
+# ASP.NET Core / Security / Local AppSettings
+# ==============================================================================
+appsettings.Development.json
+secrets.json
+
+# ==============================================================================
+# Node.js / Vite / React Frontend
+# ==============================================================================
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs (Vite / React dist)
+dist/
+dist-ssr/
+build/
+
+# Vite / Testing cache
+.vite/
+coverage/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment local overrides
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vite / Rollup temporary files
+*.tsbuildinfo
+.eslintcache
