@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="AncientBook.API/AncientBook.API.csproj" />
+  <Project Path="AncientBook.Application/AncientBook.Application.csproj" />
+  <Project Path="AncientBook.Domain/AncientBook.Domain.csproj" />
+  <Project Path="AncientBook.Infrastructure/AncientBook.Infrastructure.csproj" />
+</Solution>

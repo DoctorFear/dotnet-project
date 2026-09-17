@@ -1,0 +1,6 @@
+@AncientBook.API_HostAddress = http://localhost:5036
+
+GET {{AncientBook.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
