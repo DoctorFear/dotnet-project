@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ancientBOOK — Đánh giá &amp; Ví F-Point</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --alice: #F2F7FF;
+      --egyptian: #0B409C;
+      --catalina: #0D226B;
+      --ink: #071233;
+      --saffron: #FDBE34;
+      --muted: #5b6e99;
+      --hairline: #dce6f7;
+      --green: #15803d;
+      --green-bg: #ecfdf5;
+      --yellow: #956000;
+      --yellow-bg: #fff7df;
+      --red: #c93434;
+      --red-bg: #fdf2f2;
+      --shadow: 0 8px 24px rgba(13, 34, 107, .07);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--alice);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    button, input, textarea, select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      border: 0;
+    }
+
+    /* ---------- NAVBAR ---------- */
+    .navbar {
+      height: 76px;
+      background: #fff;
+      border-bottom: 1px solid var(--hairline);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 7%;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .brand-logo {
+      display: inline-flex;
+      align-items: baseline;
+      text-decoration: none;
+      color: var(--ink);
+    }
+
+    .brand-name {
+      font-family: 'Fraunces', serif;
+      font-size: 25px;
+      font-weight: 800;
+      letter-spacing: -.5px;
+    }
+
+    .brand-book {
+      font-family: 'Inter', sans-serif;
+      color: var(--saffron);
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .brand-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--saffron);
+      border-radius: 50%;
+      display: inline-block;
+      margin-left: 4px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 30px;
+      align-items: center;
+    }
+
+    .nav-links a {
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .nav-links a:hover,
+    .nav-links a.active {
+      color: var(--egyptian);
+      font-weight: 800;
+    }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--egyptian);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    /* ---------- CONTAINER & PAGE INTRO ---------- */
+    .container {
+      max-width: 1180px;
+      margin: auto;
+      padding: 34px 22px 70px;
+    }
+
+    .page-intro {
+      margin-bottom: 22px;
+    }
+
+    .page-intro h1 {
+      font-family: 'Fraunces', serif;
+      color: var(--catalina);
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -.5px;
+    }
+
+    .page-intro p {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 7px;
+    }
+
+    /* ---------- STATS ---------- */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .stat {
+      background: #fff;
+      border: 1px solid var(--hairline);
+      border-radius: 10px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--muted);
+      letter-spacing: .4px;
+    }
+
+    .stat-number {
+      font-size: 27px;
+      font-weight: 900;
+      color: var(--egyptian);
+      margin-top: 5px;
+    }
+
+    .stat-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    /* ---------- MAIN GRID & CARDS ---------- */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--hairline);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+
+    .card-header {
+      padding: 17px 20px;
+      border-bottom: 1px solid var(--hairline);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .card-header h2 {
+      font-size: 16px;
+      color: var(--catalina);
+    }
+
+    .card-header p {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ---------- BOOK LIST ---------- */
+    .book-list {
+      padding: 0;
+    }
+
+    .book-item {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--hairline);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .book-item:last-child {
+      border-bottom: 0;
+    }
+
+    .book-item.selected {
+      background: var(--alice);
+      border-left: 4px solid var(--egyptian);
+      padding-left: 14px;
+    }
+
+    .cover {
+      width: 58px;
+      height: 78px;
+      border-radius: 5px;
+      background: linear-gradient(145deg, var(--egyptian), var(--catalina));
+      color: #fff;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-size: 9px;
+      font-weight: 900;
+      line-height: 1.15;
+      flex: none;
+    }
+
+    .book-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .book-info h3 {
+      font-size: 14px;
+      color: var(--catalina);
+      margin-bottom: 5px;
+    }
+
+    .book-info p {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .book-price {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--egyptian);
+      margin-top: 5px;
+    }
+
+    .book-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 7px;
+    }
+
+    .badge {
+      display: inline-flex;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .b-wait { background: var(--yellow-bg); color: var(--yellow); }
+    .b-reviewed { background: var(--green-bg); color: var(--green); }
+
+    .btn {
+      padding: 9px 13px;
+      border-radius: 6px;
+      background: var(--egyptian);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .btn:hover { background: var(--catalina); }
+
+    .btn-light {
+      background: #fff;
+      color: var(--egyptian);
+      border: 1px solid var(--hairline);
+    }
+
+    /* ---------- REVIEW PANEL ---------- */
+    .review-panel {
+      padding: 20px;
+    }
+
+    .selected-book {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 13px;
+      background: var(--alice);
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+    }
+
+    .selected-book .cover {
+      width: 50px;
+      height: 67px;
+    }
+
+    .selected-book h3 {
+      font-size: 15px;
+      color: var(--catalina);
+    }
+
+    .selected-book p {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--catalina);
+      margin: 17px 0 8px;
+    }
+
+    /* RATING STARS */
+    .rating {
+      display: flex;
+      flex-direction: row-reverse;
+      justify-content: flex-end;
+      gap: 2px;
+      width: max-content;
+    }
+
+    .rating input { display: none; }
+
+    .rating label {
+      font-size: 31px;
+      color: #d6dce7;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .rating input:checked ~ label,
+    .rating label:hover,
+    .rating label:hover ~ label {
+      color: var(--saffron);
+    }
+
+    .textarea {
+      width: 100%;
+      min-height: 110px;
+      resize: vertical;
+      border: 1px solid var(--hairline);
+      border-radius: 7px;
+      padding: 11px 12px;
+      outline: none;
+      color: var(--ink);
+    }
+
+    .review-note {
+      padding: 11px 13px;
+      background: #eaf2ff;
+      color: #174d91;
+      border-radius: 7px;
+      font-size: 11px;
+      line-height: 1.55;
+      margin-top: 15px;
+    }
+
+    .message {
+      font-size: 12px;
+      margin-top: 12px;
+    }
+
+    .success {
+      background: var(--green-bg);
+      color: var(--green);
+      padding: 10px;
+      border-radius: 7px;
+    }
+
+    .error {
+      background: var(--red-bg);
+      color: var(--red);
+      padding: 10px;
+      border-radius: 7px;
+    }
+
+    .review-footer {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 13px;
+    }
+
+    /* ---------- SIDEBAR WALLET & REWARDS ---------- */
+    .wallet {
+      background: linear-gradient(145deg, var(--catalina), var(--egyptian));
+      color: #fff;
+      border-radius: 10px;
+      padding: 21px;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+    }
+
+    .wallet-label {
+      font-size: 11px;
+      opacity: .8;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    .points {
+      font-size: 38px;
+      font-weight: 900;
+      margin-top: 5px;
+    }
+
+    .points small {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .wallet-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 17px;
+      padding-top: 13px;
+      border-top: 1px solid rgba(255, 255, 255, .2);
+      font-size: 11px;
+      opacity: .9;
+    }
+
+    .reward-list { padding: 14px; }
+
+    .reward {
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+
+    .reward:last-child { margin-bottom: 0; }
+
+    .reward-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .reward h3 {
+      font-size: 13px;
+      color: var(--catalina);
+    }
+
+    .reward p {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    .cost {
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--egyptian);
+      margin: 10px 0;
+    }
+
+    /* ---------- HISTORY TABLE ---------- */
+    .table-wrap { overflow: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 620px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px 15px;
+      border-bottom: 1px solid #edf1f7;
+      font-size: 12px;
+    }
+
+    th {
+      background: #f8fafe;
+      color: var(--catalina);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    .plus { color: var(--green); font-weight: 900; }
+    .minus { color: var(--red); font-weight: 900; }
+
+    /* ---------- RESPONSIVE ---------- */
+    @media(max-width:950px) {
+      .main-grid { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media(max-width:650px) {
+      .navbar { padding: 0 18px; }
+      .nav-links { display: none; }
+      .container { padding: 24px 14px; }
+      .stats { grid-template-columns: 1fr; }
+      .book-item { align-items: flex-start; }
+      .book-actions { align-items: flex-end; }
+      .page-intro h1 { font-size: 27px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <a href="#" class="brand-logo">
+      <span class="brand-name">ancient</span><span class="brand-book">BOOK</span><span class="brand-dot"></span>
+    </a>
+    <div class="nav-links">
+      <a href="#">Trang chủ</a>
+      <a href="#">Sách</a>
+      <a href="trang2.html">Đơn hàng</a>
+      <a href="#" class="active">Tài khoản</a>
+    </div>
+    <div class="avatar">HA</div>
+  </nav>
+
+  <!-- MAIN CONTAINER -->
+  <main class="container">
+    <div class="page-intro">
+      <h1>Đánh giá &amp; Ví F-Point</h1>
+      <p>Đánh giá từng cuốn sách đã nhận thành công và sử dụng F-Point để đổi phần thưởng.</p>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-title">F-POINT HIỆN CÓ</div>
+        <div class="stat-number" id="statPoints">1.250</div>
+        <div class="stat-note">Có thể sử dụng để đổi quà</div>
+      </div>
+      <div class="stat">
+        <div class="stat-title">CHỜ ĐÁNH GIÁ</div>
+        <div class="stat-number" id="pendingCount">03</div>
+        <div class="stat-note">Sách đã mua và nhận thành công</div>
+      </div>
+      <div class="stat">
+        <div class="stat-title">ĐÃ ĐÁNH GIÁ</div>
+        <div class="stat-number" id="reviewedCount">01</div>
+        <div class="stat-note">Mỗi sách chỉ nhận điểm lần đầu</div>
+      </div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="main-grid">
+      <section>
+        <!-- DANH SÁCH SÁCH -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2>Sách đã mua &amp; có thể đánh giá</h2>
+              <p>Chọn từng cuốn sách để gửi hoặc cập nhật đánh giá.</p>
+            </div>
+            <span class="badge b-wait" id="listBadge">03 sách chờ đánh giá</span>
+          </div>
+
+          <div class="book-list" id="bookList">
+            <div class="book-item selected" data-book="kim" onclick="selectBook('kim', this)">
+              <div class="cover">NHÀ<br>GIẢ<br>KIM</div>
+              <div class="book-info">
+                <h3>Nhà giả kim</h3>
+                <p>Đơn hàng #DH1012 · Giao thành công</p>
+                <div class="book-price">120.000đ</div>
+              </div>
+              <div class="book-actions">
+                <span class="badge b-wait">Chưa đánh giá</span>
+                <button class="btn" onclick="event.stopPropagation(); selectBook('kim', this.closest('.book-item'))">Đánh giá</button>
+              </div>
+            </div>
+
+            <div class="book-item" data-book="dacnhantam" onclick="selectBook('dacnhantam', this)">
+              <div class="cover">ĐẮC<br>NHÂN<br>TÂM</div>
+              <div class="book-info">
+                <h3>Đắc nhân tâm</h3>
+                <p>Đơn hàng #DH1012 · Giao thành công</p>
+                <div class="book-price">180.000đ</div>
+              </div>
+              <div class="book-actions">
+                <span class="badge b-wait">Chưa đánh giá</span>
+                <button class="btn" onclick="event.stopPropagation(); selectBook('dacnhantam', this.closest('.book-item'))">Đánh giá</button>
+              </div>
+            </div>
+
+            <div class="book-item" data-book="tuoitre" onclick="selectBook('tuoitre', this)">
+              <div class="cover">TUỔI<br>TRẺ<br>ĐÁNG GIÁ</div>
+              <div class="book-info">
+                <h3>Tuổi trẻ đáng giá bao nhiêu</h3>
+                <p>Đơn hàng #DH1012 · Giao thành công</p>
+                <div class="book-price">180.000đ</div>
+              </div>
+              <div class="book-actions">
+                <span class="badge b-wait">Chưa đánh giá</span>
+                <button class="btn" onclick="event.stopPropagation(); selectBook('tuoitre', this.closest('.book-item'))">Đánh giá</button>
+              </div>
+            </div>
+
+            <div class="book-item" data-book="doremon" onclick="selectBook('doremon', this)">
+              <div class="cover">DORA<br>EMON</div>
+              <div class="book-info">
+                <h3>Doraemon — Tập 1</h3>
+                <p>Đơn hàng #DH1008 · Giao thành công</p>
+                <div class="book-price">50.000đ</div>
+              </div>
+              <div class="book-actions">
+                <span class="badge b-reviewed">Đã đánh giá</span>
+                <button class="btn btn-light" onclick="event.stopPropagation(); selectBook('doremon', this.closest('.book-item'))">Xem / sửa</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FORM VIẾT ĐÁNH GIÁ -->
+        <div class="card" id="reviewCard">
+          <div class="card-header">
+            <div>
+              <h2>Viết đánh giá</h2>
+              <p>Đánh giá riêng cho từng cuốn sách trong đơn hàng.</p>
+            </div>
+            <span class="badge b-completed">Đơn hàng đã hoàn thành</span>
+          </div>
+          <div class="review-panel">
+            <div class="selected-book">
+              <div class="cover" id="selectedCover">NHÀ<br>GIẢ<br>KIM</div>
+              <div>
+                <h3 id="selectedTitle">Nhà giả kim</h3>
+                <p id="selectedOrder">Đơn hàng #DH1012 · Bạn đã mua và nhận sách thành công.</p>
+              </div>
+            </div>
+
+            <label class="field-label">Chọn mức đánh giá</label>
+            <div class="rating">
+              <input id="star5" name="star" type="radio" value="5"><label for="star5">★</label>
+              <input id="star4" name="star" type="radio" value="4"><label for="star4">★</label>
+              <input id="star3" name="star" type="radio" value="3"><label for="star3">★</label>
+              <input id="star2" name="star" type="radio" value="2"><label for="star2">★</label>
+              <input id="star1" name="star" type="radio" value="1"><label for="star1">★</label>
+            </div>
+
+            <label class="field-label" for="comment">Nhận xét</label>
+            <textarea id="comment" class="textarea" placeholder="Chia sẻ nhận xét của bạn về cuốn sách..."></textarea>
+
+            <div class="review-note">
+              <b>Quy tắc đánh giá:</b> chỉ đánh giá được sách đã mua và nhận thành công. Mỗi khách hàng chỉ có một đánh giá cho mỗi cuốn sách. Nếu cập nhật đánh giá cũ thì không được cộng thêm F-Point.
+            </div>
+            <div id="reviewMsg" class="message"></div>
+            <div class="review-footer">
+              <button class="btn" onclick="sendReview()">Gửi đánh giá</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SIDEBAR (VÍ & ĐỔI QUÀ) -->
+      <aside>
+        <div class="wallet">
+          <div class="wallet-label">Số dư F-Point</div>
+          <div class="points" id="points">1.250 <small>điểm</small></div>
+          <div class="wallet-meta">
+            <span>Điểm tích lũy từ đánh giá &amp; đơn hàng</span>
+            <span>ancientBOOK</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2>Đổi quà F-Point</h2>
+              <p>Chọn phần thưởng khi đủ điểm.</p>
+            </div>
+          </div>
+          <div class="reward-list">
+            <div class="reward">
+              <div class="reward-top">
+                <h3>Voucher 50.000đ</h3>
+                <span class="badge b-wait">500 điểm</span>
+              </div>
+              <p>Giảm trực tiếp cho đơn hàng tiếp theo.</p>
+              <div class="cost">500 F-Point</div>
+              <button class="btn" onclick="redeem(500, 'Voucher 50.000đ')">Đổi quà</button>
+            </div>
+            <div class="reward">
+              <div class="reward-top">
+                <h3>Túi vải ancientBOOK</h3>
+                <span class="badge b-prepared">1.000 điểm</span>
+              </div>
+              <p>Phần quà giới hạn theo số lượng còn lại.</p>
+              <div class="cost">1.000 F-Point</div>
+              <button class="btn" onclick="redeem(1000, 'Túi vải ancientBOOK')">Đổi quà</button>
+            </div>
+            <div id="redeemMsg"></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- LỊCH SỬ F-POINT -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2>Lịch sử F-Point</h2>
+          <p>Các lần cộng và sử dụng điểm của tài khoản.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Thời gian</th>
+              <th>Nội dung</th>
+              <th>Biến động</th>
+              <th>Số dư</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <tr>
+              <td>14/09/2026 15:12</td>
+              <td>Đơn hàng #DH1012 hoàn thành</td>
+              <td class="plus">+250</td>
+              <td>1.250</td>
+            </tr>
+            <tr>
+              <td>10/09/2026 10:30</td>
+              <td>Đổi Voucher 50.000đ</td>
+              <td class="minus">-500</td>
+              <td>1.000</td>
+            </tr>
+            <tr>
+              <td>08/09/2026 16:20</td>
+              <td>Đánh giá sách "Doraemon — Tập 1"</td>
+              <td class="plus">+100</td>
+              <td>1.500</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    const books = {
+      kim: {
+        title: 'Nhà giả kim',
+        cover: 'NHÀ<br>GIẢ<br>KIM',
+        order: '#DH1012',
+        price: '120.000đ',
+        reviewed: false
+      },
+      dacnhantam: {
+        title: 'Đắc nhân tâm',
+        cover: 'ĐẮC<br>NHÂN<br>TÂM',
+        order: '#DH1012',
+        price: '180.000đ',
+        reviewed: false
+      },
+      tuoitre: {
+        title: 'Tuổi trẻ đáng giá bao nhiêu',
+        cover: 'TUỔI<br>TRẺ<br>ĐÁNG GIÁ',
+        order: '#DH1012',
+        price: '180.000đ',
+        reviewed: false
+      },
+      doremon: {
+        title: 'Doraemon — Tập 1',
+        cover: 'DORA<br>EMON',
+        order: '#DH1008',
+        price: '50.000đ',
+        reviewed: true,
+        stars: 4,
+        comment: 'Sách hay, nội dung dễ đọc.'
+      }
+    };
+
+    let currentBook = 'kim';
+    let points = 1250;
+
+    function selectBook(id, el) {
+      currentBook = id;
+      document.querySelectorAll('.book-item').forEach(x => x.classList.remove('selected'));
+      el.classList.add('selected');
+
+      const b = books[id];
+      document.getElementById('selectedCover').innerHTML = b.cover;
+      document.getElementById('selectedTitle').textContent = b.title;
+      document.getElementById('selectedOrder').textContent = `Đơn hàng ${b.order} · Bạn đã mua và nhận sách thành công.`;
+      
+      document.querySelectorAll('input[name="star"]').forEach(x => x.checked = false);
+      document.getElementById('comment').value = '';
+
+      if (b.reviewed) {
+        document.querySelector(`input[name="star"][value="${b.stars}"]`).checked = true;
+        document.getElementById('comment').value = b.comment;
+        document.querySelector('.review-note').innerHTML = '<b>Đã đánh giá:</b> Bạn có thể cập nhật nội dung đánh giá. Việc cập nhật không cộng thêm F-Point.';
+      } else {
+        document.querySelector('.review-note').innerHTML = '<b>Quy tắc đánh giá:</b> chỉ đánh giá được sách đã mua và nhận thành công. Mỗi khách hàng chỉ có một đánh giá cho mỗi cuốn sách. Nếu cập nhật đánh giá cũ thì không được cộng thêm F-Point.';
+      }
+      document.getElementById('reviewMsg').innerHTML = '';
+    }
+
+    function sendReview() {
+      const star = document.querySelector('input[name="star"]:checked');
+      const comment = document.getElementById('comment').value.trim();
+      const msg = document.getElementById('reviewMsg');
+      const b = books[currentBook];
+
+      if (!star || !comment) {
+        msg.innerHTML = '<div class="error">Vui lòng chọn mức sao và nhập nhận xét trước khi gửi.</div>';
+        return;
+      }
+
+      if (!b.reviewed) {
+        b.reviewed = true;
+        b.stars = Number(star.value);
+        b.comment = comment;
+        points += 100;
+        updatePointsUI();
+        msg.innerHTML = '<div class="success">Đã gửi đánh giá thành công. Bạn được cộng +100 F-Point.</div>';
+        updateBookBadge(currentBook, true);
+      } else {
+        b.stars = Number(star.value);
+        b.comment = comment;
+        msg.innerHTML = '<div class="success">Đã cập nhật đánh giá. Không cộng thêm F-Point.</div>';
+      }
+    }
+
+    function updateBookBadge(id, reviewed) {
+      const item = document.querySelector(`[data-book="${id}"]`);
+      if (!item) return;
+
+      const badge = item.querySelector('.badge');
+      const btn = item.querySelector('.btn');
+
+      badge.className = 'badge b-reviewed';
+      badge.textContent = 'Đã đánh giá';
+      btn.className = 'btn btn-light';
+      btn.textContent = 'Xem / sửa';
+
+      const unreviewedCount = Object.values(books).filter(b => !b.reviewed).length;
+      const reviewedCount = Object.values(books).filter(b => b.reviewed).length;
+
+      document.getElementById('pendingCount').textContent = String(unreviewedCount).padStart(2, '0');
+      document.getElementById('reviewedCount').textContent = String(reviewedCount).padStart(2, '0');
+      document.getElementById('listBadge').textContent = String(unreviewedCount).padStart(2, '0') + ' sách chờ đánh giá';
+    }
+
+    function updatePointsUI() {
+      const f = points.toLocaleString('vi-VN');
+      document.getElementById('points').innerHTML = f + ' <small>điểm</small>';
+      document.getElementById('statPoints').textContent = f;
+    }
+
+    function redeem(cost, name) {
+      const box = document.getElementById('redeemMsg');
+
+      if (points < cost) {
+        box.innerHTML = '<div class="error">Bạn chưa đủ F-Point để đổi phần thưởng này.</div>';
+        return;
+      }
+
+      points -= cost;
+      updatePointsUI();
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>Vừa xong</td><td>Đổi ${name}</td><td class="minus">-${cost}</td><td>${points.toLocaleString('vi-VN')}</td>`;
+      document.getElementById('historyBody').prepend(tr);
+
+      box.innerHTML = `<div class="success">Đổi "${name}" thành công.</div>`;
+    }
+
+    // Khởi tạo hiển thị ban đầu
+    updatePointsUI();
+  </script>
+</body>
+</html>

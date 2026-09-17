@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ancientBOOK — Lịch sử đơn hàng</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --alice: #F2F7FF;
+      --egyptian: #0B409C;
+      --catalina: #0D226B;
+      --ink: #071233;
+      --saffron: #FDBE34;
+      --muted: #5b6e99;
+      --hairline: #dce6f7;
+      --green: #15803d;
+      --green-bg: #ecfdf5;
+      --yellow: #956000;
+      --yellow-bg: #fff7df;
+      --red: #c93434;
+      --red-bg: #fdf2f2;
+      --shadow: 0 8px 24px rgba(13, 34, 107, .07);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--alice);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    button, input, select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      border: 0;
+    }
+
+    /* ---------- NAVBAR ---------- */
+    .navbar {
+      height: 76px;
+      background: #fff;
+      border-bottom: 1px solid var(--hairline);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 7%;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .brand-logo {
+      display: inline-flex;
+      align-items: baseline;
+      text-decoration: none;
+      color: var(--ink);
+    }
+
+    .brand-name {
+      font-family: 'Fraunces', serif;
+      font-size: 25px;
+      font-weight: 800;
+      letter-spacing: -.5px;
+    }
+
+    .brand-book {
+      font-family: 'Inter', sans-serif;
+      color: var(--saffron);
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .brand-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--saffron);
+      border-radius: 50%;
+      display: inline-block;
+      margin-left: 4px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+    }
+
+    .nav-links a {
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .nav-links a:hover,
+    .nav-links a.active {
+      color: var(--egyptian);
+      font-weight: 800;
+    }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--egyptian);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    /* ---------- CONTAINER & PAGE INTRO ---------- */
+    .container {
+      max-width: 1180px;
+      margin: auto;
+      padding: 34px 22px 70px;
+    }
+
+    .page-intro {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 22px;
+    }
+
+    .page-intro h1 {
+      font-family: 'Fraunces', serif;
+      color: var(--catalina);
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -.5px;
+    }
+
+    .page-intro p {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 7px;
+    }
+
+    /* ---------- STATS ---------- */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .stat {
+      background: #fff;
+      border: 1px solid var(--hairline);
+      border-radius: 10px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--muted);
+      letter-spacing: .4px;
+      text-transform: uppercase;
+    }
+
+    .stat-number {
+      font-size: 27px;
+      font-weight: 900;
+      color: var(--egyptian);
+      margin-top: 5px;
+    }
+
+    .stat-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    /* ---------- TOOLBAR & CARD ---------- */
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      padding: 15px 0;
+    }
+
+    .search, 
+    .select {
+      height: 42px;
+      border: 1px solid var(--hairline);
+      background: #fff;
+      border-radius: 7px;
+      padding: 0 14px;
+      outline: none;
+      color: var(--ink);
+    }
+
+    .search { width: 260px; }
+    .select { min-width: 165px; }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--hairline);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .card-header {
+      padding: 17px 20px;
+      border-bottom: 1px solid var(--hairline);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .card-header h2 {
+      font-size: 16px;
+      color: var(--catalina);
+    }
+
+    .card-header p {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ---------- ORDER LAYOUT & LIST ---------- */
+    .order-layout {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 18px;
+    }
+
+    .order-list {
+      padding: 0;
+    }
+
+    .order-item {
+      padding: 18px 18px;
+      border-bottom: 1px solid var(--hairline);
+      cursor: pointer;
+      transition: .15s;
+    }
+
+    .order-item:last-child {
+      border-bottom: 0;
+    }
+
+    .order-item:hover {
+      background: #f8fbff;
+    }
+
+    .order-item.active {
+      background: var(--alice);
+      border-left: 4px solid var(--egyptian);
+      padding-left: 14px;
+    }
+
+    .order-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .order-id {
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--catalina);
+    }
+
+    .order-date {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 7px;
+    }
+
+    .order-money {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--egyptian);
+      margin-top: 10px;
+    }
+
+    .badge {
+      display: inline-flex;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .b-shipping { background: var(--green-bg); color: var(--green); }
+    .b-completed { background: #e7f7ee; color: #167344; }
+    .b-retry { background: #fff1dd; color: #9a5b00; }
+    .b-prepared { background: #e8f1ff; color: var(--egyptian); }
+
+    /* ---------- ORDER DETAIL ---------- */
+    .detail {
+      padding: 22px;
+    }
+
+    .detail-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start;
+    }
+
+    .detail-head h2 {
+      font-family: 'Fraunces', serif;
+      color: var(--catalina);
+      font-size: 25px;
+    }
+
+    .detail-head p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    .tracking-box {
+      margin-top: 15px;
+      background: var(--alice);
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .tracking-label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .tracking-code {
+      font-size: 14px;
+      color: var(--catalina);
+      font-weight: 900;
+      margin-top: 3px;
+    }
+
+    .copy-btn {
+      background: #fff;
+      color: var(--egyptian);
+      border: 1px solid var(--hairline);
+      padding: 7px 11px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    /* ---------- TIMELINE ---------- */
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      margin: 28px 0 25px;
+      position: relative;
+    }
+
+    .timeline:before {
+      content: "";
+      position: absolute;
+      top: 13px;
+      left: 12.5%;
+      right: 12.5%;
+      height: 3px;
+      background: var(--hairline);
+    }
+
+    .step {
+      position: relative;
+      text-align: center;
+      font-size: 11px;
+      color: #9aa7bf;
+      z-index: 1;
+    }
+
+    .step.done,
+    .step.current {
+      color: var(--catalina);
+      font-weight: 800;
+    }
+
+    .dot {
+      width: 27px;
+      height: 27px;
+      border-radius: 50%;
+      background: #dce6f7;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 7px;
+      font-size: 12px;
+      font-weight: 900;
+      border: 3px solid #fff;
+    }
+
+    .step.done .dot { background: var(--egyptian); }
+    .step.current .dot { background: var(--saffron); color: var(--catalina); }
+
+    /* ---------- INFO GRID & TABLES ---------- */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .info-panel {
+      border-top: 1px solid var(--hairline);
+      padding-top: 17px;
+    }
+
+    .info-panel h3 {
+      font-size: 15px;
+      color: var(--catalina);
+      margin-bottom: 12px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 9px 0;
+      border-bottom: 1px dashed var(--hairline);
+      font-size: 13px;
+    }
+
+    .info-row span { color: var(--muted); }
+
+    .product-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 9px 0;
+      border-bottom: 1px dashed var(--hairline);
+      font-size: 13px;
+    }
+
+    .product-name { color: var(--ink); }
+
+    .product-price {
+      font-weight: 800;
+      color: var(--catalina);
+      white-space: nowrap;
+    }
+
+    .alert {
+      padding: 12px 14px;
+      border-radius: 7px;
+      font-size: 12px;
+      margin-top: 18px;
+    }
+
+    .alert-info { background: #eaf2ff; color: #174d91; }
+    .alert-retry { background: var(--yellow-bg); color: var(--yellow); border: 1px solid #f5dfad; }
+
+    .total {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 14px;
+      padding-top: 13px;
+      border-top: 1px solid var(--hairline);
+      font-size: 14px;
+    }
+
+    .total strong {
+      color: var(--egyptian);
+      font-size: 16px;
+    }
+
+    .review-link {
+      display: inline-block;
+      margin-top: 18px;
+      padding: 10px 16px;
+      background: var(--egyptian);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .review-link:hover { background: var(--catalina); }
+
+    /* ---------- RESPONSIVE ---------- */
+    @media(max-width:950px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .order-layout { grid-template-columns: 1fr; }
+      .nav-links { gap: 15px; }
+    }
+
+    @media(max-width:650px) {
+      .navbar { padding: 0 18px; }
+      .nav-links { display: none; }
+      .container { padding: 24px 14px; }
+      .stats { grid-template-columns: 1fr; }
+      .info-grid { grid-template-columns: 1fr; }
+      .timeline { min-width: 600px; overflow: auto; }
+      .detail { overflow-x: auto; }
+      .page-intro h1 { font-size: 27px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <a href="#" class="brand-logo">
+      <span class="brand-name">ancient</span><span class="brand-book">BOOK</span><span class="brand-dot"></span>
+    </a>
+    <div class="nav-links">
+      <a href="#">Trang chủ</a>
+      <a href="#">Sách</a>
+      <a href="#" class="active">Đơn hàng</a>
+      <a href="trang3.html">Tài khoản</a>
+    </div>
+    <div class="avatar">HA</div>
+  </nav>
+
+  <!-- MAIN CONTAINER -->
+  <main class="container">
+    <div class="page-intro">
+      <div>
+        <h1>Lịch sử đơn hàng &amp; Tiến trình</h1>
+        <p>Theo dõi trạng thái, mã vận đơn và hành trình giao hàng của từng đơn.</p>
+      </div>
+    </div>
+
+    <!-- THỐNG KÊ (STATS) -->
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-title">TẤT CẢ ĐƠN</div>
+        <div class="stat-number">12</div>
+        <div class="stat-note">Đơn hàng đã đặt</div>
+      </div>
+      <div class="stat">
+        <div class="stat-title">ĐANG GIAO</div>
+        <div class="stat-number">02</div>
+        <div class="stat-note">Đang được vận chuyển</div>
+      </div>
+      <div class="stat">
+        <div class="stat-title">HOÀN THÀNH</div>
+        <div class="stat-number">09</div>
+        <div class="stat-note">Đã nhận thành công</div>
+      </div>
+      <div class="stat">
+        <div class="stat-title">CHỜ GIAO LẠI</div>
+        <div class="stat-number">01</div>
+        <div class="stat-note">Đang trong thời gian giao lại</div>
+      </div>
+    </div>
+
+    <!-- MAIN CARD -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2>Danh sách đơn hàng</h2>
+          <p>Chọn một đơn để xem chi tiết và tiến trình vận chuyển.</p>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <input class="search" id="orderSearch" placeholder="Tìm mã đơn..." oninput="filterOrders()">
+        <select class="select" id="statusFilter" onchange="filterOrders()">
+          <option value="">Tất cả trạng thái</option>
+          <option value="Đang giao">Đang giao</option>
+          <option value="Hoàn thành">Hoàn thành</option>
+          <option value="Chờ giao lại">Chờ giao lại</option>
+        </select>
+      </div>
+
+      <div class="order-layout">
+        <!-- DANH SÁCH ĐƠN -->
+        <div class="order-list" id="orders">
+          <div class="order-item active" data-status="Đang giao" onclick="showOrder('DH1023', this)">
+            <div class="order-top">
+              <span class="order-id">#DH1023</span>
+              <span class="badge b-shipping">Đang giao</span>
+            </div>
+            <div class="order-date">14/09/2026 · 2 sản phẩm</div>
+            <div class="order-money">325.000đ</div>
+          </div>
+
+          <div class="order-item" data-status="Hoàn thành" onclick="showOrder('DH1012', this)">
+            <div class="order-top">
+              <span class="order-id">#DH1012</span>
+              <span class="badge b-completed">Hoàn thành</span>
+            </div>
+            <div class="order-date">11/09/2026 · 3 sản phẩm</div>
+            <div class="order-money">480.000đ</div>
+          </div>
+
+          <div class="order-item" data-status="Chờ giao lại" onclick="showOrder('DH1005', this)">
+            <div class="order-top">
+              <span class="order-id">#DH1005</span>
+              <span class="badge b-retry">Chờ giao lại</span>
+            </div>
+            <div class="order-date">06/09/2026 · 2 sản phẩm</div>
+            <div class="order-money">210.000đ</div>
+          </div>
+        </div>
+
+        <!-- CHI TIẾT ĐƠN -->
+        <div class="detail" id="detail"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    const orders = {
+      DH1023: {
+        date: '14/09/2026', 
+        status: 'Đang giao', 
+        cls: 'b-shipping', 
+        step: 3, 
+        tracking: 'ANB10230045',
+        receiver: 'Nguyễn Minh Anh', 
+        address: 'Quận 1, TP.HCM', 
+        shipper: 'Nguyễn Văn Nam',
+        products: [
+          ['Nhà giả kim ×1', '120.000đ'],
+          ['Đắc nhân tâm ×1', '95.000đ'],
+          ['Phí giao hàng', '110.000đ']
+        ],
+        note: 'Đơn hàng đang được Shipper vận chuyển đến địa chỉ nhận. Bạn có thể theo dõi tiến trình tại đây.'
+      },
+      DH1012: {
+        date: '11/09/2026', 
+        status: 'Hoàn thành', 
+        cls: 'b-completed', 
+        step: 4, 
+        tracking: 'ANB10120032',
+        receiver: 'Nguyễn Minh Anh', 
+        address: 'Quận 1, TP.HCM', 
+        shipper: 'Nguyễn Văn Nam',
+        products: [
+          ['Nhà giả kim ×1', '120.000đ'],
+          ['Tuổi trẻ đáng giá bao nhiêu ×1', '180.000đ'],
+          ['Đắc nhân tâm ×1', '180.000đ']
+        ],
+        note: 'Đơn hàng đã được giao thành công. Bạn có thể đánh giá từng cuốn sách đã mua.'
+      },
+      DH1005: {
+        date: '06/09/2026', 
+        status: 'Chờ giao lại', 
+        cls: 'b-retry', 
+        step: 3, 
+        tracking: 'ANB10050018',
+        receiver: 'Nguyễn Minh Anh', 
+        address: 'Quận 1, TP.HCM', 
+        shipper: 'Nguyễn Văn Nam',
+        products: [
+          ['Nhà giả kim ×1', '120.000đ'],
+          ['Đắc nhân tâm ×1', '90.000đ']
+        ],
+        note: 'Lần giao trước chưa thành công. Đơn đang trong thời gian giao lại; Shipper có thể thực hiện giao lại trong thời hạn quy định.'
+      }
+    };
+
+    function showOrder(id, el) {
+      document.querySelectorAll('.order-item').forEach(x => x.classList.remove('active'));
+      if (el) el.classList.add('active');
+
+      const o = orders[id];
+      const done = o.step === 4;
+      const retry = o.status === 'Chờ giao lại';
+
+      const steps = [
+        ['✓', 'Đặt hàng'],
+        ['✓', 'Chuẩn bị'],
+        [done ? '✓' : '3', 'Đang giao'],
+        [done ? '✓' : '4', 'Hoàn thành']
+      ];
+
+      const timeline = steps.map((s, i) => {
+        let c = i < o.step - 1 ? 'done' : (i === o.step - 1 ? 'current' : '');
+        if (done) c = 'done';
+        return `<div class="step ${c}"><div class="dot">${s[0]}</div>${s[1]}</div>`;
+      }).join('');
+
+      const products = o.products.map(p => `
+        <div class="product-row">
+          <span class="product-name">${p[0]}</span>
+          <span class="product-price">${p[1]}</span>
+        </div>
+      `).join('');
+
+      const total = o.status === 'Đang giao' ? '325.000đ' : o.status === 'Hoàn thành' ? '480.000đ' : '210.000đ';
+
+      document.getElementById('detail').innerHTML = `
+        <div class="detail-head">
+          <div>
+            <h2>Đơn hàng #${id}</h2>
+            <p>Ngày đặt: ${o.date}</p>
+          </div>
+          <span class="badge ${o.cls}">${o.status}</span>
+        </div>
+
+        <div class="tracking-box">
+          <div>
+            <div class="tracking-label">Mã vận đơn</div>
+            <div class="tracking-code">${o.tracking}</div>
+          </div>
+          <button class="copy-btn" onclick="copyTracking('${o.tracking}')">Sao chép mã</button>
+        </div>
+
+        <div class="timeline">${timeline}</div>
+
+        <div class="info-grid">
+          <div class="info-panel">
+            <h3>Thông tin giao hàng</h3>
+            <div class="info-row"><span>Người nhận</span><b>${o.receiver}</b></div>
+            <div class="info-row"><span>Địa chỉ</span><b>${o.address}</b></div>
+            <div class="info-row"><span>Shipper</span><b>${o.shipper}</b></div>
+          </div>
+          <div class="info-panel">
+            <h3>Sản phẩm</h3>
+            ${products}
+            <div class="total"><span>Tổng thanh toán</span><strong>${total}</strong></div>
+          </div>
+        </div>
+
+        <div class="alert ${retry ? 'alert-retry' : 'alert-info'}">
+          <b>${retry ? 'Giao hàng chưa thành công:' : 'Trạng thái đơn hàng:'}</b> ${o.note}
+        </div>
+
+        ${done ? '<a class="review-link" href="trang3.html">Đánh giá sách đã mua →</a>' : ''}
+      `;
+    }
+
+    function copyTracking(code) {
+      navigator.clipboard?.writeText(code);
+      alert('Đã sao chép mã vận đơn: ' + code);
+    }
+
+    function filterOrders() {
+      const q = document.getElementById('orderSearch').value.toLowerCase();
+      const st = document.getElementById('statusFilter').value;
+
+      document.querySelectorAll('.order-item').forEach(item => {
+        const okText = item.textContent.toLowerCase().includes(q);
+        const okStatus = !st || item.dataset.status === st;
+        item.style.display = okText && okStatus ? 'block' : 'none';
+      });
+    }
+
+    // Khởi tạo hiển thị đơn hàng mặc định đầu tiên
+    showOrder('DH1023', document.querySelector('.order-item.active'));
+  </script>
+</body>
+</html>
