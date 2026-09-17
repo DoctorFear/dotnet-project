@@ -18,7 +18,7 @@
     --white: #ffffff;
     --danger: #d93838;
     --danger-bg: #fdf2f2;
-    --success: #15803d;
+    --success: #1e8e3e;
     --success-bg: #ecfdf5;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -99,7 +99,7 @@
   .menu-link.active { background: var(--egyptian); color: var(--white); font-weight: 700; }
   .menu-link.active .icon { color: var(--saffron); }
   
-  /* CẬP NHẬT FOOTER: HỖ TRỢ AVATAR ẢNH & NÚT ĐĂNG XUẤT */
+  /* FOOTER SIDEBAR */
   .sidebar-footer {
     padding: 14px 16px; border-top: 1px solid rgba(242, 247, 255, 0.1);
     display: flex; align-items: center; justify-content: space-between;
@@ -119,12 +119,14 @@
   .user-name { font-weight: 700; color: #fff; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
   .user-role { color: var(--saffron); font-size: 11px; }
 
-  .btn-logout {
-    background: transparent; border: none; color: rgba(242, 247, 255, 0.65);
-    cursor: pointer; padding: 7px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+  .footer-actions { display: flex; align-items: center; gap: 2px; }
+  .btn-sidebar-icon {
+    background: transparent; border: none; color: rgba(242, 247, 255, 0.7);
+    cursor: pointer; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
     transition: all 0.15s ease;
   }
-  .btn-logout:hover { background: rgba(217, 56, 56, 0.25); color: #fca5a5; }
+  .btn-sidebar-icon:hover { background: rgba(242, 247, 255, 0.12); color: var(--saffron); }
+  .btn-sidebar-icon.logout:hover { background: rgba(217, 56, 56, 0.25); color: #fca5a5; }
 
   /* ---------- MAIN ---------- */
   .admin-main { flex: 1; display: flex; flex-direction: column; overflow-x: hidden; }
@@ -149,15 +151,6 @@
   }
 
   .content-body { padding: 28px 36px; display: flex; flex-direction: column; gap: 24px; }
-
-  /* 4 THẺ THỐNG KÊ (ĐÃ BỎ Ô TỔNG TÀI KHOẢN) */
-  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-  .stat-box {
-    background: var(--white); padding: 18px 20px; border-radius: 8px;
-    border: 1px solid var(--hairline); display: flex; flex-direction: column; gap: 4px;
-  }
-  .stat-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; }
-  .stat-value { font-size: 24px; font-weight: 800; color: var(--catalina); }
 
   .table-panel {
     background: var(--white); border-radius: 8px; border: 1px solid var(--hairline);
@@ -189,7 +182,7 @@
     padding: 12px 20px; border-bottom: 1.5px solid var(--hairline);
     font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;
   }
-  .data-table td { padding: 14px 20px; border-bottom: 1px solid var(--hairline); vertical-align: middle; }
+  .data-table td { padding: 13px 20px; border-bottom: 1px solid var(--hairline); vertical-align: middle; }
   .data-table tr:hover td { background: #fafcff; }
   .user-cell { display: flex; align-items: center; gap: 12px; }
   .avatar-small {
@@ -252,10 +245,11 @@
   }
   .overlay.open { display: flex; }
   .modal {
-    background: var(--white); border-radius: 10px; width: 440px; max-width: 100%;
+    background: var(--white); border-radius: 10px; width: 450px; max-width: 100%;
     box-shadow: 0 30px 60px -20px rgba(7,18,51,0.35);
     animation: pop 0.18s ease;
   }
+  .modal.modal-large { width: 500px; }
   @keyframes pop { from { opacity: 0; transform: translateY(6px) scale(0.98); } to { opacity: 1; transform: none; } }
   .modal-header {
     padding: 18px 22px; border-bottom: 1px solid var(--hairline);
@@ -268,7 +262,7 @@
     padding: 2px; border-radius: 4px; line-height: 0;
   }
   .modal-close:hover { color: var(--ink); }
-  .modal-body { padding: 20px 22px; }
+  .modal-body { padding: 20px 22px; max-height: 78vh; overflow-y: auto; }
   .modal-footer { padding: 16px 22px; border-top: 1px solid var(--hairline); display: flex; justify-content: flex-end; gap: 10px; }
   .btn-secondary {
     padding: 9px 16px; border-radius: 6px; font-size: 13px; font-weight: 600;
@@ -283,14 +277,51 @@
   .btn-danger { background: var(--danger); }
   .btn-danger:hover { background: #b52d2d; }
 
-  /* FORM TẠO TÀI KHOẢN MỚI */
-  .form-group-modal { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+  /* FORM CONTROLS TRONG MODAL */
+  .form-group-modal { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; position: relative; }
   .form-group-modal label { font-size: 12.5px; font-weight: 600; color: var(--ink); }
+  .form-group-modal label .req { color: var(--danger); margin-left: 2px; }
   .form-control-modal {
     width: 100%; padding: 8px 12px; border: 1.5px solid var(--hairline); border-radius: 6px;
-    font-size: 13px; outline: none; font-family: inherit; color: var(--ink);
+    font-size: 13px; outline: none; font-family: inherit; color: var(--ink); background: #fff;
+    transition: border-color 0.15s ease;
   }
   .form-control-modal:focus { border-color: var(--egyptian); }
+  .form-control-modal.is-invalid { border-color: var(--danger); background: var(--danger-bg); }
+  .form-control-modal[readonly] {
+    background-color: var(--alice);
+    color: #64748b;
+    cursor: not-allowed;
+  }
+  .modal-field-error { font-size: 11px; color: var(--danger); font-weight: 600; display: none; margin-top: 3px; line-height: 1.3; }
+
+  /* ACCORDION ĐỔI MẬT KHẨU TRONG MODAL */
+  .password-sub-box {
+    margin-top: 14px;
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .password-sub-header {
+    background: #fafcff;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--catalina);
+  }
+  .password-sub-header:hover { background: #f1f6ff; }
+  .password-sub-body {
+    padding: 14px;
+    background: #fff;
+    border-top: 1px solid var(--hairline);
+    display: none;
+  }
+  .password-sub-body.open { display: block; }
 
   /* RADIO CHỌN ROLE */
   .role-option {
@@ -321,34 +352,52 @@
   .confirm-text { font-size: 13.5px; color: var(--ink); line-height: 1.55; }
   .confirm-text b { color: var(--catalina); }
 
-  /* ---------- TOAST ---------- */
-  .toast-stack {
-    position: fixed; top: 20px; right: 20px; z-index: 200;
-    display: flex; flex-direction: column; gap: 10px; align-items: flex-end;
+  /* TOAST MÀU XANH Ở GÓC BÊN TRÁI DƯỚI */
+  .toast-success-bottom {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 9999;
+    background: var(--success);
+    color: #ffffff;
+    padding: 12px 20px;
+    border-radius: 6px;
+    box-shadow: 0 6px 20px rgba(30, 142, 62, 0.35);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    transform: translateY(140%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
   }
-  .toast {
-    display: flex; align-items: center; gap: 10px;
-    background: var(--ink); color: #fff; padding: 12px 16px; border-radius: 8px;
-    font-size: 13px; font-weight: 500; box-shadow: 0 12px 24px -8px rgba(7,18,51,0.4);
-    animation: toast-in 0.25s ease; max-width: 340px;
+  .toast-success-bottom.show {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
   }
-  .toast.error { background: var(--danger); }
-  .toast.success .icon { color: #4ade80; }
-  .toast.error .icon { color: #fff; }
-  @keyframes toast-in { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
-  .toast.leaving { animation: toast-out 0.2s ease forwards; }
-  @keyframes toast-out { to { opacity: 0; transform: translateX(16px); } }
+  .toast-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .toast-icon svg { width: 12px; height: 12px; }
 
-  @media (prefers-reduced-motion: reduce) {
-    .modal, .toast { animation: none; }
+  @media (max-width: 860px) {
+    .top-bar, .admin-topbar, .content-body { padding-left: 16px; padding-right: 16px; }
   }
 </style>
 </head>
 <body>
 
-  <!-- ======================================================== -->
-  <!-- SIDEBAR ĐÃ SỬA: ICON PHÙ HỢP, AVATAR MỚI, NÚT ĐĂNG XUẤT  -->
-  <!-- ======================================================== -->
+  <!-- SIDEBAR -->
   <aside class="admin-sidebar">
     <div class="sidebar-header">
       <a href="#" class="brand-name">
@@ -360,68 +409,66 @@
     <ul class="sidebar-menu">
       <li class="menu-item">
         <a href="#" class="menu-link">
-          <!-- Icon Tổng quan: Bar chart -->
           <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
           Tổng quan
         </a>
       </li>
       <li class="menu-item">
         <a href="#" class="menu-link active">
-          <!-- Icon Quản lý & Phân quyền: Users -->
           <svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           Quản lý & Phân quyền
         </a>
       </li>
       <li class="menu-item">
         <a href="#" class="menu-link">
-          <!-- Icon Quản lý kho sách: Package plus / Box -->
           <svg class="icon" viewBox="0 0 24 24"><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" y1="22" x2="12" y2="12"/><line x1="19" y1="13" x2="19" y2="19"/><line x1="16" y1="16" x2="22" y2="16"/></svg>
           Quản lý kho sách
         </a>
       </li>
       <li class="menu-item">
         <a href="#" class="menu-link">
-          <!-- Icon Quản lý đơn hàng: Package -->
           <svg class="icon" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
           Quản lý đơn hàng
         </a>
       </li>
       <li class="menu-item">
         <a href="#" class="menu-link">
-          <!-- Icon Live Chat: Message square -->
           <svg class="icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="12" y1="7" x2="12" y2="13"/></svg>
           Live Chat Console
         </a>
       </li>
       <li class="menu-item">
         <a href="#" class="menu-link">
-          <!-- Icon Khuyến mãi: Discount Tag -->
           <svg class="icon" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
           Quản lý Khuyến mãi
         </a>
       </li>
     </ul>
 
-    <!-- FOOTER: AVATAR MỚI + THÔNG TIN + NÚT ĐĂNG XUẤT -->
+    <!-- FOOTER: AVATAR + NÚT SỬA + NÚT ĐĂNG XUẤT -->
     <div class="sidebar-footer">
       <div class="user-badge-left">
         <img src="https://media.istockphoto.com/id/2149922267/vector/user-icon.jpg?s=612x612&w=0&k=20&c=i6jYPfB1pWjK8pll6YRxAK9fgBmf65-w5wbKH9R1dyQ=" class="user-avatar-tiny" alt="User Avatar">
         <div class="user-info">
-          <div class="user-name">@thaison_dev</div>
-          <div class="user-role">Quản trị viên</div>
+          <div class="user-name" id="sidebarAdminName">@thaison_dev</div>
+          <div class="user-role">Super Admin</div>
         </div>
       </div>
-      <button type="button" class="btn-logout" title="Đăng xuất khỏi hệ thống" onclick="handleLogout()">
-        <svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      </button>
+
+      <div class="footer-actions">
+        <button type="button" class="btn-sidebar-icon" id="btnEditProfile" title="Chỉnh sửa thông tin tài khoản" onclick="openSelfEditModal()">
+          <svg class="icon" viewBox="0 0 24 24" style="width:17px;height:17px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </button>
+
+        <button type="button" class="btn-sidebar-icon logout" title="Đăng xuất khỏi hệ thống" onclick="handleLogout()">
+          <svg class="icon" viewBox="0 0 24 24" style="width:17px;height:17px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
     </div>
   </aside>
 
-  <!-- ======================================================== -->
-  <!-- MAIN WORKSPACE                                           -->
-  <!-- ======================================================== -->
+  <!-- MAIN WORKSPACE -->
   <main class="admin-main">
-
     <header class="admin-topbar">
       <div class="topbar-title">
         <h1>Quản lý & Phân quyền tài khoản</h1>
@@ -437,10 +484,6 @@
     </header>
 
     <div class="content-body">
-
-      <!-- 4 THẺ THỐNG KÊ 4 ROLE ĐỘC LẬP (ĐÃ BỎ Ô TỔNG TÀI KHOẢN) -->
-      <section class="stats-grid" id="statsGrid"></section>
-
       <section class="table-panel">
         <div class="panel-header">
           <div class="search-wrap">
@@ -479,22 +522,94 @@
           <tbody id="tableBody"></tbody>
         </table>
 
+        <!-- PHÂN TRANG (8 TÀI KHOẢN / TRANG) -->
         <div class="pagination-bar">
           <span id="paginationSummary"></span>
           <div class="page-btns" id="pageBtns"></div>
         </div>
       </section>
-
     </div>
   </main>
 
-  <!-- Modal 1: chỉnh sửa vai trò (Radio chọn 1 Role duy nhất) -->
+  <!-- MODAL CHỈNH SỬA THÔNG TIN CÁ NHÂN ADMIN -->
+  <div class="overlay" id="selfEditOverlay">
+    <div class="modal modal-large">
+      <div class="modal-header">
+        <div>
+          <h3>Chỉnh sửa thông tin tài khoản</h3>
+          <p>Cập nhật hồ sơ và mật khẩu bảo mật</p>
+        </div>
+        <button class="modal-close" id="selfEditModalClose" aria-label="Đóng">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <form id="selfEditForm" onsubmit="handleSaveSelfEdit(event)">
+          <div class="form-group-modal">
+            <label>Tên đăng nhập (Đóng băng)</label>
+            <input type="text" id="selfUsername" class="form-control-modal" readonly>
+          </div>
+
+          <div class="form-group-modal">
+            <label>Địa chỉ Email (Đóng băng)</label>
+            <input type="email" id="selfEmail" class="form-control-modal" readonly>
+          </div>
+
+          <div class="form-group-modal">
+            <label for="selfFullName">Họ và tên *</label>
+            <input type="text" id="selfFullName" class="form-control-modal" placeholder="Nhập họ và tên">
+            <span class="modal-field-error" id="errSelfFullName">Vui lòng nhập họ và tên</span>
+          </div>
+
+          <div class="form-group-modal">
+            <label for="selfPhone">Số điện thoại *</label>
+            <input type="text" id="selfPhone" class="form-control-modal" placeholder="09xx xxx xxx" maxlength="10">
+            <span class="modal-field-error" id="errSelfPhone">Số điện thoại phải gồm đúng 10 chữ số (bắt đầu bằng 03, 05, 07, 08, 09)</span>
+          </div>
+
+          <div class="password-sub-box">
+            <div class="password-sub-header" onclick="togglePasswordSection()">
+              <span>Đổi mật khẩu tài khoản</span>
+              <svg class="icon" id="pwdSubIcon" viewBox="0 0 24 24" style="width:14px;height:14px;transition:transform 0.2s;"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+            <div class="password-sub-body" id="passwordSubBody">
+              <div class="form-group-modal">
+                <label for="selfCurrentPwd">Mật khẩu hiện tại</label>
+                <input type="password" id="selfCurrentPwd" class="form-control-modal" placeholder="Nhập mật khẩu hiện tại">
+                <span class="modal-field-error" id="errSelfCurrentPwd">Mật khẩu hiện tại không chính xác</span>
+              </div>
+
+              <div class="form-group-modal">
+                <label for="selfNewPwd">Mật khẩu mới</label>
+                <input type="password" id="selfNewPwd" class="form-control-modal" placeholder="Tối thiểu 6 ký tự">
+                <span class="modal-field-error" id="errSelfNewPwd">Mật khẩu mới phải từ 6 ký tự và khác mật khẩu cũ</span>
+              </div>
+
+              <div class="form-group-modal" style="margin-bottom:0;">
+                <label for="selfConfirmPwd">Xác nhận mật khẩu mới</label>
+                <input type="password" id="selfConfirmPwd" class="form-control-modal" placeholder="Nhập lại mật khẩu mới">
+                <span class="modal-field-error" id="errSelfConfirmPwd">Mật khẩu xác nhận không trùng khớp</span>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" id="selfEditCancelBtn">Hủy</button>
+        <button type="submit" form="selfEditForm" class="btn-primary">Lưu thay đổi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PHÂN VAI TRÒ (3 ROLE NỘI BỘ: ADMIN, STAFF, SHIPPER) -->
   <div class="overlay" id="roleOverlay">
     <div class="modal">
       <div class="modal-header">
         <div>
-          <h3 id="roleModalTitle">Chỉnh sửa quyền hạn</h3>
-          <p id="roleModalSubtitle">Chọn 1 vai trò duy nhất áp dụng cho tài khoản này</p>
+          <h3 id="roleModalTitle">Chỉnh sửa vai trò nội bộ</h3>
+          <p id="roleModalSubtitle">Chọn 1 vai trò duy nhất áp dụng cho nhân sự này</p>
         </div>
         <button class="modal-close" id="roleModalClose" aria-label="Đóng">
           <svg class="icon" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
@@ -503,7 +618,9 @@
       <div class="modal-body">
         <div id="roleOptionsList"></div>
         <div class="form-warn" id="roleWarn"></div>
-        <p class="form-note">Mỗi tài khoản chỉ giữ đúng 1 vai trò tại một thời điểm. Hệ thống luôn duy trì tối thiểu một Quản trị viên đang hoạt động (BR02, BR03).</p>
+        <p class="form-note">
+          <strong>Lưu ý:</strong> Thành viên (Member) là khách hàng mua sắm ngoài Storefront, không nằm trong danh mục phân quyền nhân sự nội bộ.
+        </p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-secondary" id="roleCancelBtn">Hủy</button>
@@ -512,47 +629,57 @@
     </div>
   </div>
 
-  <!-- Modal 2: Tạo tài khoản mới -->
+  <!-- MODAL TẠO TÀI KHOẢN MỚI (CHỈ 3 VAI TRÒ NỘI BỘ: ADMIN, STAFF, SHIPPER - KHÔNG CÓ MEMBER) -->
   <div class="overlay" id="createOverlay">
     <div class="modal">
       <div class="modal-header">
         <div>
-          <h3>Tạo tài khoản mới</h3>
-          <p>Cấp tài khoản nhân sự hoặc khách hàng trên hệ thống</p>
+          <h3>Tạo tài khoản nhân sự mới</h3>
+          <p>Cấp tài khoản nhân sự quản trị hoặc vận hành trên hệ thống</p>
         </div>
         <button class="modal-close" id="createModalClose" aria-label="Đóng">
           <svg class="icon" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
       </div>
       <div class="modal-body">
-        <form id="createAccountForm" onsubmit="handleCreateAccount(event)">
+        <form id="createAccountForm" novalidate onsubmit="handleCreateAccount(event)">
           <div class="form-group-modal">
-            <label for="newUsername">Tên đăng nhập *</label>
-            <input type="text" id="newUsername" class="form-control-modal" placeholder="vd: lehoang_staff" required>
+            <label for="newUsername">Tên đăng nhập <span class="req">*</span></label>
+            <input type="text" id="newUsername" class="form-control-modal" placeholder="vd: lehoang_staff">
+            <span class="modal-field-error" id="errNewUsername"></span>
           </div>
+          
           <div class="form-group-modal">
-            <label for="newEmail">Địa chỉ Email *</label>
-            <input type="email" id="newEmail" class="form-control-modal" placeholder="vd: lehoang@ancientbook.vn" required>
+            <label for="newEmail">Địa chỉ Email <span class="req">*</span></label>
+            <input type="email" id="newEmail" class="form-control-modal" placeholder="vd: lehoang@ancientbook.vn">
+            <span class="modal-field-error" id="errNewEmail"></span>
           </div>
+
           <div class="form-group-modal">
-            <label for="newFullName">Họ và tên *</label>
-            <input type="text" id="newFullName" class="form-control-modal" placeholder="vd: Lê Hoàng Khoa" required>
+            <label for="newFullName">Họ và tên <span class="req">*</span></label>
+            <input type="text" id="newFullName" class="form-control-modal" placeholder="vd: Lê Hoàng Khoa">
+            <span class="modal-field-error" id="errNewFullName"></span>
           </div>
+
           <div class="form-group-modal">
-            <label for="newPhone">Số điện thoại</label>
-            <input type="text" id="newPhone" class="form-control-modal" placeholder="vd: 0909123456">
+            <label for="newPhone">Số điện thoại <span class="req">*</span></label>
+            <input type="text" id="newPhone" class="form-control-modal" placeholder="vd: 0909123456" maxlength="10">
+            <span class="modal-field-error" id="errNewPhone"></span>
           </div>
+
+          <!-- 3 VAI TRÒ NỘI BỘ (ADMIN, STAFF, SHIPPER - KHÔNG CÓ MEMBER) -->
           <div class="form-group-modal">
-            <label for="newRole">Vai trò ban đầu (1 Role duy nhất) *</label>
-            <select id="newRole" class="form-control-modal" required>
-              <option value="member">Khách hàng thành viên (Member)</option>
+            <label for="newRole">Vai trò nội bộ (1 Role duy nhất) <span class="req">*</span></label>
+            <select id="newRole" class="form-control-modal">
+              <option value="admin">Quản trị viên (Admin)</option>
               <option value="staff">Nhân viên hệ thống (Staff)</option>
               <option value="shipper">Nhân viên giao hàng (Shipper)</option>
-              <option value="admin">Quản trị viên (Admin)</option>
             </select>
+            <span class="modal-field-error" id="errNewRole"></span>
           </div>
+
           <div class="form-note">
-            Tài khoản mới sẽ được tự động kích hoạt. Link đặt mật khẩu sẽ được gửi đến email người dùng.
+            Tài khoản mới sẽ được kích hoạt mặc định. Đường dẫn thiết lập mật khẩu sẽ được gửi đến email nhân sự.
           </div>
         </form>
       </div>
@@ -563,7 +690,7 @@
     </div>
   </div>
 
-  <!-- Modal 3: xác nhận khóa/mở khóa -->
+  <!-- MODAL KHÓA/MỞ KHÓA -->
   <div class="overlay" id="statusOverlay">
     <div class="modal">
       <div class="modal-body" style="padding-top: 24px;">
@@ -580,19 +707,31 @@
     </div>
   </div>
 
-  <div class="toast-stack" id="toastStack"></div>
+  <!-- TOAST THÀNH CÔNG GÓC TRÁI DƯỚI -->
+  <div id="toastSuccessBottom" class="toast-success-bottom">
+    <div class="toast-icon">
+      <svg viewBox="0 0 16 16" fill="none">
+        <path d="M3 8.5L6.5 12L13 4.5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <span id="toastSuccessText">Thành công!</span>
+  </div>
 
 <script>
   const ROLE_META = {
-    admin:   { label: 'Quản trị viên',          badgeClass: 'role-admin',    optionDesc: 'Toàn quyền quản trị hệ thống, cấu hình và phân quyền.' },
-    staff:   { label: 'Nhân viên hệ thống',     badgeClass: 'role-staff',    optionDesc: 'Vận hành kho sách, xử lý đơn hàng và phản hồi chat khách hàng.' },
-    shipper: { label: 'Nhân viên giao hàng',     badgeClass: 'role-shipper',  optionDesc: 'Nhận vận đơn, giao hàng và đối soát thu hộ COD.' },
-    member:  { label: 'Khách hàng thành viên',  badgeClass: 'role-customer', optionDesc: 'Tài khoản mua sắm và tích lũy điểm thưởng F-Point.' },
+    admin:   { label: 'Quản trị viên',          badgeClass: 'role-admin',    optionDesc: 'Toàn quyền cấu hình, vận hành và phân quyền nhân sự.' },
+    staff:   { label: 'Nhân viên hệ thống',     badgeClass: 'role-staff',    optionDesc: 'Quản lý kho sách, tiếp nhận đơn và tư vấn Live Chat.' },
+    shipper: { label: 'Nhân viên giao hàng',     badgeClass: 'role-shipper',  optionDesc: 'Nhận vận đơn giao hàng và đối soát tiền thu hộ COD.' },
+    member:  { label: 'Khách hàng thành viên',  badgeClass: 'role-customer', optionDesc: 'Tài khoản mua sách (Storefront).' }
   };
-  const ROLE_ORDER = ['admin', 'staff', 'shipper', 'member'];
-  const PAGE_SIZE = 5;
+  
+  // Chỉ 3 vai trò nội bộ được gán hoặc tạo
+  const INTERNAL_ROLES = ['admin', 'staff', 'shipper'];
+  const PAGE_SIZE = 7 ; // Cố định hiển thị 8 tài khoản / trang
 
-  // Dữ liệu chuẩn: Mỗi tài khoản giữ duy nhất 1 role tại 1 thời điểm
+  let currentAdminPassword = "password123";
+
+  // Dữ liệu mẫu (12 tài khoản)
   let users = [
     { id: 1, fullname: 'Hà Thái Sơn',     username: 'thaison_dev',  email: 'thaison@ancientbook.vn',   phone: '0909123456', role: 'admin',   status: 'active', isCurrentUser: true,  isSuperAdmin: true,  initials: 'HT' },
     { id: 2, fullname: 'Phạm Minh Đức',   username: 'duc_admin2',   email: 'duc.pham@ancientbook.vn',  phone: '0977001122', role: 'admin',   status: 'active', isCurrentUser: false, isSuperAdmin: false, initials: 'PĐ' },
@@ -603,6 +742,9 @@
     { id: 7, fullname: 'Lê Tuấn Kiệt',    username: 'kiet_le99',    email: 'kiet.le@gmail.com',        phone: '0988776655', role: 'member',  status: 'locked', isCurrentUser: false, isSuperAdmin: false, initials: 'LK' },
     { id: 8, fullname: 'Ngô Thanh Trúc',  username: 'truc_ngo',     email: 'truc.ngo@gmail.com',       phone: '0977889900', role: 'member',  status: 'active', isCurrentUser: false, isSuperAdmin: false, initials: 'NT' },
     { id: 9, fullname: 'Vũ Hải Nam',      username: 'nam_vu',       email: 'nam.vu@gmail.com',         phone: '0911223344', role: 'member',  status: 'active', isCurrentUser: false, isSuperAdmin: false, initials: 'VN' },
+    { id: 10, fullname: 'Hoàng Lan Anh',  username: 'lananh_staff', email: 'lananh@ancientbook.vn',    phone: '0944556677', role: 'staff',   status: 'active', isCurrentUser: false, isSuperAdmin: false, initials: 'LA' },
+    { id: 11, fullname: 'Đặng Minh Khôi', username: 'khoi_ship',    email: 'khoi.dang@ancientbook.vn', phone: '0934123789', role: 'shipper', status: 'active', isCurrentUser: false, isSuperAdmin: false, initials: 'MK' },
+    { id: 12, fullname: 'Trương Gia Huy', username: 'giahuy_mb',    email: 'giahuy@gmail.com',         phone: '0981223344', role: 'member',  status: 'active', isCurrentUser: false, isSuperAdmin: false, initials: 'GH' }
   ];
 
   let currentPage = 1;
@@ -611,6 +753,19 @@
 
   const $ = (sel) => document.querySelector(sel);
   const tableBody = $('#tableBody');
+
+  const toastSuccessBottom = $('#toastSuccessBottom');
+  const toastSuccessText = $('#toastSuccessText');
+  let toastTimeout = null;
+
+  function showSuccessToast(message) {
+    if (toastTimeout) clearTimeout(toastTimeout);
+    toastSuccessText.textContent = message;
+    toastSuccessBottom.classList.add('show');
+    toastTimeout = setTimeout(() => {
+      toastSuccessBottom.classList.remove('show');
+    }, 2800);
+  }
 
   function getFilteredUsers() {
     const q = $('#searchInput').value.trim().toLowerCase();
@@ -622,21 +777,6 @@
       const matchesStatus = !statusF || u.status === statusF;
       return matchesQ && matchesRole && matchesStatus;
     });
-  }
-
-  // 4 Ô THỐNG KÊ (ĐÃ BỎ Ô TỔNG TÀI KHOẢN)
-  function renderStats() {
-    const admins = users.filter(u => u.role === 'admin').length;
-    const staff = users.filter(u => u.role === 'staff').length;
-    const shippers = users.filter(u => u.role === 'shipper').length;
-    const members = users.filter(u => u.role === 'member').length;
-
-    $('#statsGrid').innerHTML = `
-      <div class="stat-box"><span class="stat-label">Quản trị viên (Admin)</span><span class="stat-value" style="color:#991b1b;">${admins}</span></div>
-      <div class="stat-box"><span class="stat-label">Nhân viên hệ thống (Staff)</span><span class="stat-value" style="color:var(--egyptian);">${staff}</span></div>
-      <div class="stat-box"><span class="stat-label">Nhân viên giao hàng (Shipper)</span><span class="stat-value" style="color:#b45309;">${shippers}</span></div>
-      <div class="stat-box"><span class="stat-label">Khách hàng thành viên (Member)</span><span class="stat-value" style="color:var(--success);">${members}</span></div>
-    `;
   }
 
   function roleBadgeHtml(role, isSuperAdmin) {
@@ -652,6 +792,9 @@
     const start = (currentPage - 1) * PAGE_SIZE;
     const pageItems = filtered.slice(start, start + PAGE_SIZE);
 
+    const currentUser = users.find(u => u.isCurrentUser);
+    const currentUserIsSuper = currentUser ? currentUser.isSuperAdmin : false;
+
     if (pageItems.length === 0) {
       tableBody.innerHTML = `
         <tr class="empty-row"><td colspan="6">
@@ -662,9 +805,24 @@
       tableBody.innerHTML = pageItems.map(u => {
         const isSelf = u.isCurrentUser;
         const isSuper = u.isSuperAdmin;
+        const isMember = u.role === 'member';
 
-        const editDisabled = isSuper || isSelf;
-        const editTitle = isSuper ? 'Tài khoản Super Admin bất khả xâm phạm' : (isSelf ? 'Không thể tự đổi vai trò của chính mình' : 'Phân vai trò');
+        let editDisabled = false;
+        let editTitle = "Phân lại vai trò nội bộ";
+
+        if (isMember) {
+          editDisabled = true;
+          editTitle = "Tài khoản Khách hàng (Member) thuộc Storefront, không thể gán quyền nội bộ";
+        } else if (isSuper) {
+          editDisabled = true;
+          editTitle = "Tài khoản Super Admin bất khả xâm phạm";
+        } else if (isSelf) {
+          editDisabled = true;
+          editTitle = "Không thể tự đổi vai trò của chính mình (Self-Demotion Guard)";
+        } else if (u.role === 'admin' && !currentUserIsSuper) {
+          editDisabled = true;
+          editTitle = "Chỉ Super Admin mới có quyền đổi vai trò của Quản trị viên khác";
+        }
 
         const lockDisabled = isSuper || isSelf;
         const lockTitle = isSuper ? 'Không thể khóa Super Admin' : (isSelf ? 'Không thể tự khóa tài khoản của chính mình' : '');
@@ -702,7 +860,7 @@
 
     $('#paginationSummary').textContent = filtered.length === 0
       ? 'Không có tài khoản nào'
-      : `Hiển thị ${start + 1} - ${Math.min(start + PAGE_SIZE, filtered.length)} trên tổng số ${filtered.length} tài khoản`;
+      : `Hiển thị ${start + 1} - ${Math.min(start + PAGE_SIZE, filtered.length)} trên tổng số ${filtered.length} tài khoản (8 tài khoản/trang)`;
 
     const pageBtns = $('#pageBtns');
     let btns = `<button class="page-btn" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
@@ -713,44 +871,27 @@
     pageBtns.innerHTML = btns;
   }
 
-  function renderAll() { renderStats(); renderTable(); }
+  function renderAll() { renderTable(); }
 
-  // ---------- Toast Notification ----------
-  function showToast(message, type = 'success') {
-    const stack = $('#toastStack');
-    const el = document.createElement('div');
-    el.className = `toast ${type}`;
-    const iconPath = type === 'success'
-      ? '<path d="M20 6 9 17l-5-5"/>'
-      : '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>';
-    el.innerHTML = `<svg class="icon" viewBox="0 0 24 24">${iconPath}</svg><span>${message}</span>`;
-    stack.appendChild(el);
-    setTimeout(() => {
-      el.classList.add('leaving');
-      setTimeout(() => el.remove(), 220);
-    }, 3200);
-  }
-
-  // ---------- Role Modal (Radio 1 Role duy nhất) ----------
+  /* ========================================================
+     MODAL PHÂN VAI TRÒ (CHỈ 3 VAI TRÒ NỘI BỘ: ADMIN, STAFF, SHIPPER)
+     ======================================================== */
   function openRoleModal(userId) {
     pendingRoleUserId = userId;
     const u = users.find(x => x.id === userId);
     if (!u) return;
 
-    if (u.isSuperAdmin) {
-      showToast('Tài khoản Super Admin là bất khả xâm phạm!', 'error');
-      return;
-    }
-    if (u.isCurrentUser) {
-      showToast('Bạn không thể tự đổi vai trò của chính mình!', 'error');
+    if (u.role === 'member') {
+      alert("Tài khoản Member là khách hàng mua sắm ngoài Storefront, không thể phân quyền nội bộ!");
       return;
     }
 
-    $('#roleModalTitle').textContent = `Chỉnh sửa vai trò — ${u.fullname}`;
+    $('#roleModalTitle').textContent = `Chỉnh sửa vai trò nội bộ — ${u.fullname}`;
     $('#roleModalSubtitle').textContent = `@${u.username} · ${u.email}`;
     $('#roleWarn').classList.remove('show');
 
-    $('#roleOptionsList').innerHTML = ROLE_ORDER.map(r => {
+    // Chỉ render 3 role nội bộ
+    $('#roleOptionsList').innerHTML = INTERNAL_ROLES.map(r => {
       const meta = ROLE_META[r];
       const checked = (u.role === r) ? 'checked' : '';
       return `
@@ -779,57 +920,239 @@
     const warnEl = $('#roleWarn');
 
     if (!selectedRadio) {
-      warnEl.textContent = 'Mỗi tài khoản bắt buộc phải chọn 1 vai trò duy nhất.';
+      warnEl.textContent = 'Mỗi nhân sự bắt buộc phải chọn 1 vai trò nội bộ.';
       warnEl.classList.add('show');
       return;
     }
 
     const newRole = selectedRadio.value;
+    const oldRole = u.role;
 
-    // BR03 / Last Admin Guard: Không thể hạ quyền nếu là Admin hoạt động cuối cùng
     const losesAdmin = (u.role === 'admin' && newRole !== 'admin');
     if (losesAdmin) {
       const otherActiveAdmins = users.filter(x => x.id !== u.id && x.status === 'active' && x.role === 'admin').length;
       if (otherActiveAdmins === 0) {
-        warnEl.textContent = 'Không thể gỡ quyền Quản trị viên: hệ thống phải luôn duy trì ít nhất một Quản trị viên đang hoạt động (BR03).';
+        warnEl.textContent = 'Hệ thống bắt buộc duy trì tối thiểu 01 Quản trị viên hoạt động. Không thể hạ quyền tài khoản này!';
         warnEl.classList.add('show');
         return;
       }
     }
 
     u.role = newRole;
+    console.log(`[Audit Log]: Super Admin đã đổi vai trò của @${u.username} từ ${oldRole.toUpperCase()} -> ${newRole.toUpperCase()} lúc ${new Date().toISOString()}. Đã thu hồi Token cũ.`);
+
     closeRoleModal();
     renderAll();
-    showToast(`Đã chuyển @${u.username} sang vai trò: ${ROLE_META[newRole].label} (Hủy Token cũ)`, 'success');
+    showSuccessToast(`Đã chuyển @${u.username} sang vai trò: ${ROLE_META[newRole].label} (Đã thu hồi token phiên cũ)`);
   }
 
-  // ---------- Modal Tạo Tài Khoản Mới ----------
+  /* ========================================================
+     MODAL CHỈNH SỬA THÔNG TIN CÁ NHÂN ADMIN
+     ======================================================== */
+  function openSelfEditModal() {
+    const currentUser = users.find(u => u.isCurrentUser);
+    if (!currentUser) return;
+
+    $('#selfUsername').value = currentUser.username;
+    $('#selfEmail').value = currentUser.email;
+    $('#selfFullName').value = currentUser.fullname;
+    $('#selfPhone').value = (currentUser.phone && currentUser.phone !== '—') ? currentUser.phone : '';
+
+    $('#selfCurrentPwd').value = '';
+    $('#selfNewPwd').value = '';
+    $('#selfConfirmPwd').value = '';
+
+    $('#passwordSubBody').classList.remove('open');
+    $('#pwdSubIcon').style.transform = 'rotate(0deg)';
+    clearSelfEditErrors();
+
+    $('#selfEditOverlay').classList.add('open');
+  }
+
+  function closeSelfEditModal() {
+    $('#selfEditOverlay').classList.remove('open');
+  }
+
+  function togglePasswordSection() {
+    const body = $('#passwordSubBody');
+    const icon = $('#pwdSubIcon');
+    const isOpen = body.classList.toggle('open');
+    icon.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+  }
+
+  function clearSelfEditErrors() {
+    ['selfFullName', 'selfPhone', 'selfCurrentPwd', 'selfNewPwd', 'selfConfirmPwd'].forEach(id => {
+      const input = $(`#${id}`);
+      const err = $(`#err${id.charAt(0).toUpperCase() + id.slice(1)}`);
+      if (input) input.classList.remove('is-invalid');
+      if (err) err.style.display = 'none';
+    });
+  }
+
+  function setSelfEditError(fieldId, isError) {
+    const input = $(`#${fieldId}`);
+    const err = $(`#err${fieldId.charAt(0).toUpperCase() + fieldId.slice(1)}`);
+    if (isError) {
+      input.classList.add('is-invalid');
+      if (err) err.style.display = 'block';
+    } else {
+      input.classList.remove('is-invalid');
+      if (err) err.style.display = 'none';
+    }
+  }
+
+  function handleSaveSelfEdit(e) {
+    e.preventDefault();
+    clearSelfEditErrors();
+
+    const fullName = $('#selfFullName').value.trim();
+    const phone = $('#selfPhone').value.trim();
+    const currentPwd = $('#selfCurrentPwd').value;
+    const newPwd = $('#selfNewPwd').value;
+    const confirmPwd = $('#selfConfirmPwd').value;
+
+    let hasError = false;
+
+    if (!fullName) {
+      setSelfEditError('selfFullName', true);
+      hasError = true;
+    }
+
+    const phoneRegex = /^0(3[2-9]|5[6|8|9]|7[0|6-9]|8[1-6|8|9]|9[0-4|6-9])[0-9]{7}$/;
+    if (!phoneRegex.test(phone)) {
+      setSelfEditError('selfPhone', true);
+      hasError = true;
+    }
+
+    const isChangingPwd = (currentPwd || newPwd || confirmPwd);
+    if (isChangingPwd) {
+      if (currentPwd !== currentAdminPassword) {
+        setSelfEditError('selfCurrentPwd', true);
+        hasError = true;
+      }
+      if (newPwd.length < 6 || newPwd === currentAdminPassword) {
+        setSelfEditError('selfNewPwd', true);
+        hasError = true;
+      }
+      if (!confirmPwd || confirmPwd !== newPwd) {
+        setSelfEditError('selfConfirmPwd', true);
+        hasError = true;
+      }
+    }
+
+    if (hasError) return;
+
+    const currentUser = users.find(u => u.isCurrentUser);
+    if (currentUser) {
+      currentUser.fullname = fullName;
+      currentUser.phone = phone;
+      currentUser.initials = fullName.split(' ').map(n => n[0]).slice(-2).join('').toUpperCase() || 'AD';
+      if (isChangingPwd) {
+        currentAdminPassword = newPwd;
+      }
+    }
+
+    closeSelfEditModal();
+    renderAll();
+    showSuccessToast('Đã lưu thay đổi thông tin cá nhân thành công!');
+  }
+
+  /* ========================================================
+     MODAL TẠO TÀI KHOẢN MỚI (CHỈ 3 VAI TRÒ NỘI BỘ)
+     ======================================================== */
   function openCreateModal() {
     $('#createAccountForm').reset();
+    clearCreateErrors();
     $('#createOverlay').classList.add('open');
   }
 
   function closeCreateModal() {
     $('#createOverlay').classList.remove('open');
+    clearCreateErrors();
+  }
+
+  function clearCreateErrors() {
+    ['newUsername', 'newEmail', 'newFullName', 'newPhone', 'newRole'].forEach(id => {
+      const input = $(`#${id}`);
+      const err = $(`#err${id.charAt(0).toUpperCase() + id.slice(1)}`);
+      if (input) input.classList.remove('is-invalid');
+      if (err) {
+        err.style.display = 'none';
+        err.textContent = '';
+      }
+    });
+  }
+
+  function setCreateError(id, msg) {
+    const input = $(`#${id}`);
+    const err = $(`#err${id.charAt(0).toUpperCase() + id.slice(1)}`);
+    if (input) input.classList.add('is-invalid');
+    if (err) {
+      err.style.display = 'block';
+      err.textContent = msg;
+    }
   }
 
   function handleCreateAccount(e) {
     e.preventDefault();
+    clearCreateErrors();
+
     const username = $('#newUsername').value.trim();
     const email = $('#newEmail').value.trim();
     const fullname = $('#newFullName').value.trim();
     const phone = $('#newPhone').value.trim();
     const role = $('#newRole').value;
 
-    // Kiểm tra trùng username hoặc email
-    if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
-      showToast('Tên đăng nhập này đã tồn tại!', 'error');
-      return;
+    let hasError = false;
+
+    // Ràng buộc Tên đăng nhập
+    if (!username) {
+      setCreateError('newUsername', 'Vui lòng nhập tên đăng nhập.');
+      hasError = true;
+    } else if (/\s/.test(username)) {
+      setCreateError('newUsername', 'Tên đăng nhập không được chứa khoảng trắng.');
+      hasError = true;
+    } else if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
+      setCreateError('newUsername', 'Tên đăng nhập này đã tồn tại trên toàn hệ thống.');
+      hasError = true;
     }
-    if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
-      showToast('Địa chỉ email này đã được sử dụng!', 'error');
-      return;
+
+    // Ràng buộc Email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+      setCreateError('newEmail', 'Vui lòng nhập địa chỉ email.');
+      hasError = true;
+    } else if (!emailRegex.test(email)) {
+      setCreateError('newEmail', 'Email không đúng định dạng thư điện tử chuẩn.');
+      hasError = true;
+    } else if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+      setCreateError('newEmail', 'Địa chỉ email này đã được sử dụng.');
+      hasError = true;
     }
+
+    // Ràng buộc Họ và tên
+    if (!fullname) {
+      setCreateError('newFullName', 'Vui lòng nhập họ và tên.');
+      hasError = true;
+    }
+
+    // Ràng buộc Số điện thoại
+    const phoneRegex = /^0(3[2-9]|5[6|8|9]|7[0|6-9]|8[1-6|8|9]|9[0-4|6-9])[0-9]{7}$/;
+    if (!phone) {
+      setCreateError('newPhone', 'Vui lòng nhập số điện thoại.');
+      hasError = true;
+    } else if (!phoneRegex.test(phone)) {
+      setCreateError('newPhone', 'Số điện thoại phải gồm đúng 10 chữ số (đầu số 03, 05, 07, 08, 09).');
+      hasError = true;
+    }
+
+    // Ràng buộc vai trò nội bộ (Chỉ Admin, Staff, Shipper - không có Member)
+    if (!role || !INTERNAL_ROLES.includes(role)) {
+      setCreateError('newRole', 'Vui lòng chọn vai trò nội bộ hợp lệ.');
+      hasError = true;
+    }
+
+    if (hasError) return;
 
     const nextId = users.length ? Math.max(...users.map(u => u.id)) + 1 : 1;
     const initials = fullname.split(' ').map(n => n[0]).slice(-2).join('').toUpperCase() || 'U';
@@ -851,21 +1174,23 @@
     closeCreateModal();
     currentPage = 1;
     renderAll();
-    showToast(`Đã tạo tài khoản @${username} với vai trò ${ROLE_META[role].label}`, 'success');
+    showSuccessToast(`Đã tạo thành công tài khoản @${username} (${ROLE_META[role].label})`);
   }
 
-  // ---------- Status (Khóa/Mở khóa) Modal ----------
+  /* ========================================================
+     MODAL KHÓA / MỞ KHÓA
+     ======================================================== */
   function openStatusModal(userId) {
     pendingStatusUserId = userId;
     const u = users.find(x => x.id === userId);
     if (!u) return;
 
     if (u.isSuperAdmin) {
-      showToast('Không thể khóa tài khoản Super Admin!', 'error');
+      alert('Không thể khóa tài khoản Super Admin!');
       return;
     }
     if (u.isCurrentUser) {
-      showToast('Bạn không thể tự khóa tài khoản của chính mình!', 'error');
+      alert('Bạn không thể tự khóa tài khoản của chính mình!');
       return;
     }
 
@@ -881,8 +1206,8 @@
       : '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.4-2.1"/>';
 
     $('#confirmText').innerHTML = locking
-      ? `Bạn có chắc chắn muốn khóa tài khoản <b>${u.fullname}</b> (@${u.username})? Người dùng sẽ bị hủy phiên đăng nhập ngay lập tức.`
-      : `Mở khóa tài khoản <b>${u.fullname}</b> (@${u.username})? Người dùng có thể đăng nhập trở lại ngay sau khi xác nhận.`;
+      ? `Bạn có chắc chắn muốn khóa tài khoản <b>${u.fullname}</b> (@${u.username})? Phiên đăng nhập sẽ bị thu hồi ngay lập tức.`
+      : `Mở khóa tài khoản <b>${u.fullname}</b> (@${u.username})? Người dùng có thể đăng nhập trở lại bình thường.`;
 
     $('#statusConfirmBtn').className = locking ? 'btn-primary btn-danger' : 'btn-primary';
     $('#statusOverlay').classList.add('open');
@@ -901,15 +1226,10 @@
     const warnEl = $('#statusWarn');
 
     if (locking) {
-      if (u.isCurrentUser) {
-        warnEl.textContent = 'Bạn không thể tự khóa tài khoản của chính mình.';
-        warnEl.classList.add('show');
-        return;
-      }
       if (u.role === 'admin') {
         const otherActiveAdmins = users.filter(x => x.id !== u.id && x.status === 'active' && x.role === 'admin').length;
         if (otherActiveAdmins === 0) {
-          warnEl.textContent = 'Không thể khóa: đây là Quản trị viên đang hoạt động cuối cùng trong hệ thống (BR03).';
+          warnEl.textContent = 'Không thể khóa: đây là Quản trị viên đang hoạt động cuối cùng!';
           warnEl.classList.add('show');
           return;
         }
@@ -919,20 +1239,19 @@
     u.status = locking ? 'locked' : 'active';
     closeStatusModal();
     renderAll();
-    showToast(locking ? `Đã khóa tài khoản @${u.username}` : `Đã mở khóa tài khoản @${u.username}`, locking ? 'error' : 'success');
+    showSuccessToast(locking ? `Đã khóa tài khoản @${u.username}!` : `Đã mở khóa tài khoản @${u.username}!`);
   }
 
-  // Xử lý Đăng xuất
   function handleLogout() {
-    if (confirm("Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?")) {
-      showToast("Đang đăng xuất và hủy phiên làm việc...", "error");
+    if (confirm("Bạn có chắc chắn muốn đăng xuất khỏi hệ thống quản trị?")) {
+      showSuccessToast("Đang đăng xuất an toàn...");
       setTimeout(() => {
         window.location.reload();
-      }, 900);
+      }, 700);
     }
   }
 
-  // ---------- Gán sự kiện ----------
+  // Sự kiện
   $('#searchInput').addEventListener('input', () => { currentPage = 1; renderTable(); });
   $('#roleFilter').addEventListener('change', () => { currentPage = 1; renderTable(); });
   $('#statusFilter').addEventListener('change', () => { currentPage = 1; renderTable(); });
@@ -952,25 +1271,32 @@
     renderTable();
   });
 
-  // Modal Phân quyền
+  // Modal Events
+  $('#selfEditModalClose').addEventListener('click', closeSelfEditModal);
+  $('#selfEditCancelBtn').addEventListener('click', closeSelfEditModal);
+  $('#selfEditOverlay').addEventListener('click', (e) => { if (e.target.id === 'selfEditOverlay') closeSelfEditModal(); });
+
   $('#roleModalClose').addEventListener('click', closeRoleModal);
   $('#roleCancelBtn').addEventListener('click', closeRoleModal);
   $('#roleSaveBtn').addEventListener('click', saveRoleModal);
   $('#roleOverlay').addEventListener('click', (e) => { if (e.target.id === 'roleOverlay') closeRoleModal(); });
 
-  // Modal Tạo mới
   $('#btnOpenCreateModal').addEventListener('click', openCreateModal);
   $('#createModalClose').addEventListener('click', closeCreateModal);
   $('#createCancelBtn').addEventListener('click', closeCreateModal);
   $('#createOverlay').addEventListener('click', (e) => { if (e.target.id === 'createOverlay') closeCreateModal(); });
 
-  // Modal Trạng thái
   $('#statusCancelBtn').addEventListener('click', closeStatusModal);
   $('#statusConfirmBtn').addEventListener('click', confirmStatusToggle);
   $('#statusOverlay').addEventListener('click', (e) => { if (e.target.id === 'statusOverlay') closeStatusModal(); });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { closeRoleModal(); closeStatusModal(); closeCreateModal(); }
+    if (e.key === 'Escape') {
+      closeSelfEditModal();
+      closeRoleModal();
+      closeStatusModal();
+      closeCreateModal();
+    }
   });
 
   renderAll();

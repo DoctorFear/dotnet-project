@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ancientBOOK — Khôi phục mật khẩu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,500&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --alice: #F2F7FF;
+    --egyptian: #0B409C;
+    --catalina: #0D226B;
+    --ink: #071233;
+    --saffron: #FDBE34;
+    --muted: #5b6e99;
+    --hairline: #dce6f7;
+    --error: #d93025;
+    --error-bg: #fde8e7;
+    --error-border: #f5c2c0;
+    --success: #1e8e3e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--alice);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Top Bar */
+  .top-bar {
+    background: var(--ink);
+    color: var(--alice);
+    padding: 9px 48px;
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    letter-spacing: 0.2px;
+  }
+  .top-bar strong { color: var(--saffron); font-weight: 600; }
+
+  /* Header */
+  .header {
+    background: #fff;
+    border-bottom: 2px solid var(--hairline);
+    padding: 16px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .brand-name {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--catalina);
+    letter-spacing: -0.6px;
+    display: inline-flex;
+    align-items: baseline;
+    user-select: none;
+    text-decoration: none;
+  }
+  .brand-name span.book-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--egyptian);
+    letter-spacing: 1.2px;
+    margin-left: 2px;
+  }
+  .brand-name .accent-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    background-color: var(--saffron);
+    border-radius: 50%;
+    margin-left: 4px;
+    box-shadow: 0 0 6px rgba(253, 190, 52, 0.7);
+  }
+
+  /* Layout */
+  .main-wrapper {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 24px;
+  }
+  .book-card {
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid var(--hairline);
+    box-shadow: 0 24px 48px -20px rgba(7, 18, 51, 0.25);
+    display: flex;
+    width: 980px;
+    max-width: 100%;
+    min-height: 560px;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(14px);
+    animation: settle 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes settle {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Left Column */
+  .visual-column {
+    flex: 0 0 42%;
+    position: relative;
+    background: var(--catalina);
+    color: var(--alice);
+    padding: 44px 38px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+  .visual-column::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(90deg, rgba(242,247,255,0.04) 0px, rgba(242,247,255,0.04) 2px, transparent 2px, transparent 26px),
+      repeating-linear-gradient(90deg, rgba(253,190,52,0.06) 0px, rgba(253,190,52,0.06) 1px, transparent 1px, transparent 91px);
+    pointer-events: none;
+  }
+  .visual-inner { position: relative; z-index: 1; }
+
+  .panel-kicker {
+    font-size: 13px;
+    color: var(--saffron);
+    font-weight: 600;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+  }
+  .quote-text {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 21px;
+    line-height: 1.5;
+    color: var(--alice);
+    margin-top: 16px;
+    max-width: 32ch;
+  }
+  .quote-author {
+    font-size: 12px;
+    color: rgba(242,247,255,0.65);
+    margin-top: 14px;
+    font-weight: 500;
+  }
+  .quote-author::before { content: "— "; }
+
+  .security-box {
+    background: rgba(242,247,255,0.07);
+    border: 1px solid rgba(242,247,255,0.12);
+    border-radius: 6px;
+    padding: 16px;
+    font-size: 12.5px;
+    color: rgba(242,247,255,0.9);
+    line-height: 1.6;
+  }
+  .security-box strong { color: var(--saffron); display: block; margin-bottom: 4px; }
+
+  /* Right Column */
+  .form-column {
+    flex: 1;
+    padding: 44px 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .form-title {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--catalina);
+    letter-spacing: -0.3px;
+  }
+  .form-subtitle {
+    font-size: 13.5px;
+    color: var(--muted);
+    margin-top: 6px;
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  .banner-alert {
+    display: none;
+    padding: 11px 14px;
+    border-radius: 5px;
+    font-size: 13px;
+    margin-bottom: 18px;
+    line-height: 1.4;
+  }
+  .banner-alert.show { display: block; }
+  .banner-alert.error {
+    background: var(--error-bg);
+    color: var(--error);
+    border: 1px solid var(--error-border);
+  }
+
+  .form-group { margin-bottom: 18px; }
+  .form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .form-input {
+    width: 100%;
+    padding: 10px 4px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid var(--hairline);
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  .form-input:focus { border-bottom-color: var(--egyptian); }
+  .form-input.is-invalid { border-bottom-color: var(--error); }
+  .form-input::placeholder { color: #a8b6d6; }
+
+  .error-text {
+    display: block;
+    color: var(--error);
+    font-size: 11.5px;
+    margin-top: 4px;
+    min-height: 14px;
+  }
+
+  .btn-submit {
+    width: 100%;
+    padding: 13px;
+    background: var(--egyptian);
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background-color 0.2s ease;
+  }
+  .btn-submit:hover { background: var(--catalina); }
+
+  .form-bottom-row {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-top: 22px;
+    font-size: 13px;
+  }
+  .back-link {
+    color: var(--egyptian);
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .back-link:hover { text-decoration: underline; }
+
+  /* Mock Email Box Simulation (Bước 8) */
+  .inbox-simulation {
+    display: none;
+    margin-top: 20px;
+    padding: 14px;
+    background: #eef4ff;
+    border: 1px dashed var(--egyptian);
+    border-radius: 6px;
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+  .inbox-simulation.show { display: block; }
+  .inbox-simulation strong { color: var(--catalina); display: block; margin-bottom: 4px; }
+  .btn-reset-link {
+    display: inline-block;
+    margin-top: 8px;
+    color: #fff;
+    background: var(--catalina);
+    padding: 6px 12px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  /* Toast Notification */
+  .toast-success {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 9999;
+    background: #1e8e3e;
+    color: #ffffff;
+    padding: 12px 20px;
+    border-radius: 6px;
+    box-shadow: 0 6px 20px rgba(30, 142, 62, 0.35);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    transform: translateY(140%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+  }
+  .toast-success.show {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .toast-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .toast-icon svg { width: 12px; height: 12px; }
+
+  @media (max-width: 768px) {
+    .book-card { flex-direction: column; width: 100%; min-height: 0; }
+    .visual-column { flex: none; padding: 32px 24px; }
+    .form-column { padding: 32px 24px; }
+    .top-bar, .header { padding-left: 20px; padding-right: 20px; }
+    .toast-success { left: 16px; bottom: 16px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <span>Miễn phí vận chuyển cho đơn hàng từ <strong>250.000 đ</strong></span>
+    <span>Hotline <strong>1900 636 467</strong></span>
+  </div>
+
+  <header class="header">
+    <a href="#" class="brand-name">
+      ancient<span class="book-text">BOOK</span><span class="accent-dot"></span>
+    </a>
+  </header>
+
+  <main class="main-wrapper">
+    <div class="book-card">
+
+      <!-- Left Column -->
+      <div class="visual-column">
+        <div class="visual-inner">
+          <span class="panel-kicker">Bảo mật tài khoản</span>
+          <p class="quote-text">Sách là tài sản của tâm hồn, và sự an toàn của độc giả luôn là ưu tiên hàng đầu tại ancientBOOK.</p>
+          <p class="quote-author">ancientBOOK Security</p>
+        </div>
+
+        <div class="visual-inner">
+          <div class="security-box">
+            <strong>Quy tắc bảo mật khôi phục:</strong>
+            • Mật khẩu cũ được giữ nguyên cho đến khi xác nhận mật khẩu mới (BR01).<br>
+            • Liên kết chỉ có giá trị dùng 01 lần trong 15 phút (BR02).<br>
+            • Toàn bộ phiên đăng nhập cũ trên các thiết bị khác sẽ bị thu hồi ngay lập tức (BR03).
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="form-column">
+        <div id="bannerAlert" class="banner-alert"></div>
+
+        <!-- MÀN HÌNH 1: GỬI LIÊN KẾT XÁC NHẬN (Bước 2 - 7) -->
+        <div id="stepRequestView">
+          <h2 class="form-title">Quên mật khẩu?</h2>
+          <p class="form-subtitle">Nhập Tên đăng nhập và Email đã đăng ký để nhận liên kết xác thực đặt lại mật khẩu.</p>
+
+          <form id="forgotForm" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="forgotUsername">Tên đăng nhập</label>
+              <input type="text" id="forgotUsername" class="form-input" placeholder="Nhập tên đăng nhập của bạn">
+              <span class="error-text" id="err-forgotUsername"></span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="forgotEmail">Email đăng ký</label>
+              <input type="email" id="forgotEmail" class="form-input" placeholder="name@domain.com">
+              <span class="error-text" id="err-forgotEmail"></span>
+            </div>
+
+            <button type="submit" class="btn-submit" id="btnSendLink">Gửi liên kết xác nhận</button>
+          </form>
+
+          <div class="form-bottom-row">
+            <a href="javascript:void(0)" class="back-link" id="linkBackLogin">
+              Quay lại Đăng nhập
+            </a>
+          </div>
+
+          <!-- Khối mô phỏng hộp thư Email người dùng (để test liên kết) -->
+          <div id="inboxSimulation" class="inbox-simulation">
+            <strong>Hộp thư giả lập ancientBOOK:</strong>
+            <span>Đã tạo mã xác thực tạm thời (thời hạn 15 phút).</span><br>
+            <a href="javascript:void(0)" class="btn-reset-link" id="btnClickResetEmail">Nhấn vào đây để đặt lại mật khẩu</a>
+          </div>
+        </div>
+
+        <!-- MÀN HÌNH 2: ĐẶT LẠI MẬT KHẨU MỚI (Bước 9 - 14) -->
+        <div id="stepResetView" style="display: none;">
+          <h2 class="form-title">Đặt lại mật khẩu mới</h2>
+          <p class="form-subtitle">Mật khẩu mới phải có tối thiểu 6 ký tự. Sau khi hoàn tất, mọi phiên đăng nhập cũ sẽ bị thu hồi.</p>
+
+          <form id="resetPasswordForm" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="newPassword">Mật khẩu mới</label>
+              <input type="password" id="newPassword" class="form-input" placeholder="Tối thiểu 6 ký tự">
+              <span class="error-text" id="err-newPassword"></span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="confirmNewPassword">Xác nhận mật khẩu</label>
+              <input type="password" id="confirmNewPassword" class="form-input" placeholder="Nhập lại mật khẩu mới">
+              <span class="error-text" id="err-confirmNewPassword"></span>
+            </div>
+
+            <button type="submit" class="btn-submit" id="btnConfirmReset">Xác nhận</button>
+          </form>
+
+          <div class="form-bottom-row">
+            <a href="javascript:void(0)" class="back-link" id="linkCancelReset">
+              &larr; Hủy và quay lại Đăng nhập
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <div id="toastSuccess" class="toast-success">
+    <div class="toast-icon">
+      <svg viewBox="0 0 16 16" fill="none">
+        <path d="M3 8.5L6.5 12L13 4.5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <span id="toastSuccessMsg">Thành công!</span>
+  </div>
+
+  <script>
+    const userDatabase = [
+      { username: "admin", email: "admin@ancientbook.vn", password: "password123" },
+      { username: "sonha", email: "thaison@example.com", password: "password123" }
+    ];
+
+    // Trạng thái token liên kết xác thực (BR02: 15 phút, 1 lần dùng)
+    let resetTokenState = {
+      token: null,
+      username: null,
+      createdAt: null,
+      isUsed: false
+    };
+
+    const stepRequestView = document.getElementById('stepRequestView');
+    const stepResetView = document.getElementById('stepResetView');
+    const bannerAlert = document.getElementById('bannerAlert');
+    const toastSuccess = document.getElementById('toastSuccess');
+    const toastSuccessMsg = document.getElementById('toastSuccessMsg');
+    const inboxSimulation = document.getElementById('inboxSimulation');
+
+    function showBannerError(message) {
+      bannerAlert.className = 'banner-alert show error';
+      bannerAlert.textContent = message;
+    }
+
+    function clearBanner() {
+      bannerAlert.className = 'banner-alert';
+      bannerAlert.textContent = '';
+    }
+
+    function showToast(message) {
+      toastSuccessMsg.textContent = message;
+      toastSuccess.classList.add('show');
+      setTimeout(() => toastSuccess.classList.remove('show'), 3000);
+    }
+
+    function setFieldError(id, msg) {
+      const el = document.getElementById(id);
+      const err = document.getElementById(`err-${id}`);
+      if (el) el.classList.add('is-invalid');
+      if (err) err.textContent = msg;
+    }
+
+    function clearFieldError(id) {
+      const el = document.getElementById(id);
+      const err = document.getElementById(`err-${id}`);
+      if (el) el.classList.remove('is-invalid');
+      if (err) err.textContent = '';
+    }
+
+    // 1. Luồng chính Bước 3 - 7: Gửi liên kết xác nhận
+    document.getElementById('forgotForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      clearBanner();
+      clearFieldError('forgotUsername');
+      clearFieldError('forgotEmail');
+
+      const username = document.getElementById('forgotUsername').value.trim();
+      const email = document.getElementById('forgotEmail').value.trim();
+
+      let hasEmpty = false;
+
+      // E1: Bỏ trống hoặc sai định dạng
+      if (!username) {
+        setFieldError('forgotUsername', 'Vui lòng nhập Tên đăng nhập.');
+        hasEmpty = true;
+      }
+      if (!email) {
+        setFieldError('forgotEmail', 'Vui lòng nhập Email.');
+        hasEmpty = true;
+      } else {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          setFieldError('forgotEmail', 'Email không đúng định dạng chuẩn.');
+          hasEmpty = true;
+        }
+      }
+      if (hasEmpty) return;
+
+      // A1: Kiểm tra tài khoản khớp hay không
+      const matchedUser = userDatabase.find(u => 
+        u.username.toLowerCase() === username.toLowerCase() && 
+        u.email.toLowerCase() === email.toLowerCase()
+      );
+
+      // Bước 7 & A1: Luôn hiển thị thông báo thành công chung để chống dò quét tài khoản
+      showToast("Liên kết đặt lại mật khẩu đã được gửi về email của bạn. Vui lòng kiểm tra hộp thư.");
+
+      if (matchedUser) {
+        // Bước 6: Tạo mã xác thực tạm thời hạn 15 phút
+        resetTokenState = {
+          token: "token_" + Math.random().toString(36).substring(2),
+          username: matchedUser.username,
+          createdAt: Date.now(),
+          isUsed: false
+        };
+        inboxSimulation.classList.add('show');
+      } else {
+        // A1: Không tồn tại hoặc không khớp -> không gửi email, không đổi token
+        inboxSimulation.classList.remove('show');
+      }
+    });
+
+    // 2. Bước 8 - 9: Người dùng mở email nhấn vào liên kết xác nhận
+    document.getElementById('btnClickResetEmail').addEventListener('click', function() {
+      clearBanner();
+
+      // E3: Kiểm tra tính hợp lệ và thời hạn (15 phút = 900.000 ms)
+      const now = Date.now();
+      const isExpired = (now - resetTokenState.createdAt) > (15 * 60 * 1000);
+
+      if (!resetTokenState.token || resetTokenState.isUsed || isExpired) {
+        showBannerError("Liên kết đã hết hạn hoặc không hợp lệ. Vui lòng gửi lại yêu cầu mới.");
+        return;
+      }
+
+      // Mở màn hình Đặt lại mật khẩu mới
+      stepRequestView.style.display = 'none';
+      stepResetView.style.display = 'block';
+    });
+
+    // 3. Bước 10 - 14: Xác nhận đặt lại mật khẩu mới
+    document.getElementById('resetPasswordForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      clearBanner();
+      clearFieldError('newPassword');
+      clearFieldError('confirmNewPassword');
+
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+      let hasError = false;
+
+      // E4 / BR04: Kiểm tra quy tắc mật khẩu
+      if (!newPassword) {
+        setFieldError('newPassword', 'Vui lòng nhập mật khẩu mới.');
+        hasError = true;
+      } else if (newPassword.length < 6) {
+        setFieldError('newPassword', 'Mật khẩu phải có độ dài tối thiểu từ 6 ký tự.');
+        hasError = true;
+      }
+
+      if (!confirmNewPassword) {
+        setFieldError('confirmNewPassword', 'Vui lòng xác nhận lại mật khẩu mới.');
+        hasError = true;
+      } else if (newPassword && newPassword !== confirmNewPassword) {
+        setFieldError('confirmNewPassword', 'Mật khẩu xác nhận không trùng khớp.');
+        hasError = true;
+      }
+
+      if (hasError) return;
+
+      // Bước 12 & BR03: Cập nhật mật khẩu, hủy mật khẩu cũ, vô hiệu hóa liên kết
+      const targetUser = userDatabase.find(u => u.username === resetTokenState.username);
+      if (targetUser) {
+        targetUser.password = newPassword;
+      }
+      resetTokenState.isUsed = true;
+      resetTokenState.token = null;
+
+      // Bước 14: Thông báo thành công và chuyển hướng về Đăng nhập
+      showToast("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.");
+
+      const btnConfirm = document.getElementById('btnConfirmReset');
+      btnConfirm.disabled = true;
+      btnConfirm.innerText = "Đang chuyển về Đăng nhập...";
+
+      setTimeout(() => {
+        alert("Chuyển hướng thành công về màn hình Đăng nhập (UC02). Mọi phiên đăng nhập cũ trên thiết bị khác đã được thu hồi.");
+        stepResetView.style.display = 'none';
+        stepRequestView.style.display = 'block';
+        btnConfirm.disabled = false;
+        btnConfirm.innerText = "Xác nhận";
+        document.getElementById('resetPasswordForm').reset();
+        document.getElementById('forgotForm').reset();
+        inboxSimulation.classList.remove('show');
+      }, 1500);
+    });
+
+    // Luồng nhánh A2: Quay lại Đăng nhập
+    document.getElementById('linkBackLogin').addEventListener('click', function() {
+      alert("Đóng form Quên mật khẩu và chuyển về giao diện Đăng nhập (UC02).");
+    });
+    document.getElementById('linkCancelReset').addEventListener('click', function() {
+      alert("Hủy thao tác và chuyển về giao diện Đăng nhập (UC02).");
+    });
+  </script>
+</body>
+</html>

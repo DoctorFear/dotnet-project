@@ -19,8 +19,7 @@
     --white: #ffffff;
     --danger: #d93838;
     --danger-bg: #fdf2f2;
-    --success: #15803d;
-    --success-bg: #ecfdf5;
+    --success: #1e8e3e;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -167,12 +166,10 @@
     justify-content: center;
   }
 
-  /* ======================================================== */
-  /* ---------- USER DROPDOWN KHI HOVER & ICON XOAY --------- */
-  /* ======================================================== */
+  /* USER DROPDOWN */
   .user-menu-wrapper { 
     position: relative;
-    padding: 4px 0; /* Vùng đệm tránh bị mất hover khi rê chuột */
+    padding: 4px 0;
   }
   .user-dropdown-trigger {
     display: flex;
@@ -186,13 +183,9 @@
     user-select: none;
     transition: border-color 0.15s ease, background 0.15s ease;
   }
-  
-  /* Hiệu ứng xoay icon chevron mượt mà */
   .icon-chevron-user {
     transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   }
-
-  /* Khi hover vào wrapper: đổi màu nút, xoay icon 180 độ */
   .user-menu-wrapper:hover .user-dropdown-trigger {
     border-color: var(--egyptian);
     background: #e8f0fe;
@@ -216,7 +209,6 @@
     color: var(--catalina);
   }
 
-  /* Dropdown Menu tự động hiện khi hover */
   .user-dropdown-menu {
     position: absolute;
     top: 100%;
@@ -245,6 +237,7 @@
     color: var(--ink);
     text-decoration: none;
     border-radius: 5px;
+    cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease;
   }
   .dropdown-item-link:hover {
@@ -306,20 +299,14 @@
     margin-left: 2px;
   }
 
-  .category-dropdown-wrapper {
-    position: relative;
-  }
+  .category-dropdown-wrapper { position: relative; }
   .category-trigger {
     cursor: pointer;
     font-weight: 700 !important;
     color: var(--catalina) !important;
   }
-  .category-trigger .icon-chevron {
-    transition: transform 0.2s ease;
-  }
-  .category-dropdown-wrapper:hover .category-trigger .icon-chevron {
-    transform: rotate(180deg);
-  }
+  .category-trigger .icon-chevron { transition: transform 0.2s ease; }
+  .category-dropdown-wrapper:hover .category-trigger .icon-chevron { transform: rotate(180deg); }
 
   .mega-categories-menu {
     position: absolute;
@@ -336,9 +323,7 @@
     grid-template-columns: repeat(4, 1fr);
     gap: 4px 6px;
   }
-  .category-dropdown-wrapper:hover .mega-categories-menu {
-    display: grid;
-  }
+  .category-dropdown-wrapper:hover .mega-categories-menu { display: grid; }
 
   .mega-category-item {
     display: flex;
@@ -353,20 +338,14 @@
     transition: background 0.15s ease, color 0.15s ease;
   }
   .cat-bullet {
-    width: 5px;
-    height: 5px;
+    width: 5px; height: 5px;
     border-radius: 50%;
     background: var(--hairline);
     flex-shrink: 0;
     transition: background 0.15s ease;
   }
-  .mega-category-item:hover {
-    background: var(--alice);
-    color: var(--egyptian);
-  }
-  .mega-category-item:hover .cat-bullet {
-    background: var(--saffron);
-  }
+  .mega-category-item:hover { background: var(--alice); color: var(--egyptian); }
+  .mega-category-item:hover .cat-bullet { background: var(--saffron); }
 
   /* ---------- 3. LAYOUT GIAO DIỆN CHÍNH ---------- */
   .main-container-single {
@@ -438,9 +417,7 @@
     background: #fff;
     transition: border-color 0.15s ease;
   }
-  .form-control:focus {
-    border-color: var(--egyptian);
-  }
+  .form-control:focus { border-color: var(--egyptian); }
   .form-control.error-state {
     border-color: var(--danger);
     background: var(--danger-bg);
@@ -453,7 +430,7 @@
   select.form-control { cursor: pointer; }
   .field-error-msg { font-size: 11px; color: var(--danger); font-weight: 600; display: none; }
 
-  /* KHỐI ĐỊA CHỈ */
+  /* ĐỊA CHỈ */
   .address-section-divider {
     grid-column: span 2;
     margin-top: 6px;
@@ -570,19 +547,135 @@
     background: var(--alice);
   }
 
-  /* Toast */
-  .toast-stack {
-    position: fixed; top: 20px; right: 20px; z-index: 2000;
-    display: flex; flex-direction: column; gap: 10px;
+  /* MODAL XÁC NHẬN ĐĂNG XUẤT */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 18, 51, 0.45);
+    backdrop-filter: blur(2px);
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
   }
-  .toast-item {
-    display: flex; align-items: center; gap: 10px;
-    background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 8px;
-    font-size: 13px; font-weight: 500;
-    box-shadow: 0 4px 16px rgba(7, 18, 51, 0.15);
+  .modal-backdrop.show {
+    opacity: 1;
+    visibility: visible;
   }
-  .toast-item.success .icon { color: #4ade80; }
-  .toast-item.error { background: var(--danger); }
+  .modal-box {
+    background: #fff;
+    width: 100%;
+    max-width: 420px;
+    border-radius: 10px;
+    box-shadow: 0 20px 40px -10px rgba(7, 18, 51, 0.28);
+    padding: 24px 26px;
+    transform: scale(0.95);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .modal-backdrop.show .modal-box { transform: scale(1); }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .modal-title {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--catalina);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .modal-close-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px;
+    line-height: 1;
+  }
+  .modal-close-btn:hover { color: var(--ink); }
+  .modal-body {
+    font-size: 13.5px;
+    color: var(--ink);
+    line-height: 1.5;
+    margin-bottom: 22px;
+  }
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  .btn-modal-cancel {
+    padding: 9px 16px;
+    background: #fff;
+    color: var(--ink);
+    border: 1.5px solid var(--hairline);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-modal-cancel:hover { background: var(--alice); }
+  .btn-modal-confirm {
+    padding: 9px 18px;
+    background: var(--danger);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.15s ease;
+  }
+  .btn-modal-confirm:hover { opacity: 0.9; }
+
+  /* ---------- Toast Thành Công Góc Trái Dưới ---------- */
+  .toast-success-bottom {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 9999;
+    background: var(--success);
+    color: #ffffff;
+    padding: 12px 20px;
+    border-radius: 6px;
+    box-shadow: 0 6px 20px rgba(30, 142, 62, 0.35);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    transform: translateY(140%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+  }
+  .toast-success-bottom.show {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .toast-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .toast-icon svg { width: 12px; height: 12px; }
 
   @media (max-width: 860px) {
     .form-grid-layout { grid-template-columns: 1fr; }
@@ -592,6 +685,7 @@
     .form-panel { padding: 22px 18px; }
     .form-actions { flex-direction: column; align-items: stretch; }
     .mega-categories-menu { width: 100%; grid-template-columns: repeat(2, 1fr); left: 0; }
+    .toast-success-bottom { left: 16px; bottom: 16px; }
   }
 </style>
 </head>
@@ -632,8 +726,8 @@
           <span class="badge-count">2</span>
         </a>
 
-        <!-- USER PILL: HIỂN THỊ TÊN ĐĂNG NHẬP + HOVER MỞ DROPDOWN + ICON XOAY -->
-        <div class="user-menu-wrapper">
+        <!-- USER PILL VÀ DROPDOWN ĐĂNG XUẤT -->
+        <div class="user-menu-wrapper" id="userMenuWrapper">
           <div class="user-dropdown-trigger" id="userDropdownTrigger">
             <img src="https://media.istockphoto.com/id/2149922267/vector/user-icon.jpg?s=612x612&w=0&k=20&c=i6jYPfB1pWjK8pll6YRxAK9fgBmf65-w5wbKH9R1dyQ=" class="user-avatar-tiny" alt="User Avatar">
             <span class="user-name-text" id="navUserName">thaison_dev</span>
@@ -654,7 +748,7 @@
               </a>
             </li>
             <li>
-              <a href="#" class="dropdown-item-link danger">
+              <a href="javascript:void(0)" class="dropdown-item-link danger" id="btnLogoutTrigger" onclick="openLogoutModal()">
                 <svg class="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
                 <span>Đăng xuất tài khoản</span>
               </a>
@@ -668,7 +762,6 @@
     <div class="navbar-sub">
       <div class="sub-nav-content">
         <ul class="nav-categories">
-          
           <li class="category-dropdown-wrapper">
             <a href="#" class="category-trigger">
               <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -676,7 +769,6 @@
               <svg class="icon icon-chevron" viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="m6 9 6 6 6-6"/></svg>
             </a>
 
-            <!-- 20 DANH MỤC -->
             <div class="mega-categories-menu">
               <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Văn học Việt Nam</a>
               <a href="#" class="mega-category-item"><span class="cat-bullet"></span>Văn học Cổ điển</a>
@@ -708,7 +800,7 @@
             </a>
           </li>
         </ul>
-        <div style="font-size: 12px; color: var(--muted);">
+        <div style="font-size: 12px; color: var(--muted);" id="userPointsDisplay">
           Thành viên: <strong style="color: var(--catalina);">Hạng Bạc (240 F-Points)</strong>
         </div>
       </div>
@@ -729,9 +821,7 @@
 
       <form id="profileInfoForm" onsubmit="handleUpdateInfo(event)" style="display: flex; flex-direction: column;">
         <div class="form-grid-layout">
-          
-
-           <div class="form-field">
+          <div class="form-field">
             <label class="field-label" for="inputUsername">Tên đăng nhập</label>
             <div class="input-wrapper">
               <input type="text" id="inputUsername" class="form-control" value="thaison_dev" readonly>
@@ -744,6 +834,7 @@
               <input type="email" id="inputEmail" class="form-control" value="thaison@example.com" readonly>
             </div>
           </div>
+
           <div class="form-field">
             <label class="field-label" for="inputFullName">Họ và tên</label>
             <div class="input-wrapper">
@@ -755,12 +846,10 @@
           <div class="form-field">
             <label class="field-label" for="inputPhone">Số điện thoại</label>
             <div class="input-wrapper">
-              <input type="text" id="inputPhone" class="form-control" value="0909123456" placeholder="Nhập số điện thoại">
+              <input type="text" id="inputPhone" class="form-control" value="0909123456" placeholder="Nhập số điện thoại" maxlength="10">
             </div>
-            <span class="field-error-msg" id="errorPhone">Số điện thoại không hợp lệ</span>
+            <span class="field-error-msg" id="errorPhone">Số điện thoại phải gồm đúng 10 chữ số (bắt đầu bằng 03, 05, 07, 08, 09)</span>
           </div>
-
-
 
           <!-- ĐỊA CHỈ 1 -->
           <div class="address-section-divider">
@@ -778,6 +867,7 @@
                   <select id="province1" class="form-control" onchange="onProvinceChange(1)">
                     <option value="">Chọn Tỉnh / Thành phố</option>
                   </select>
+                  <span class="field-error-msg" id="errorProvince1">Vui lòng chọn Tỉnh / Thành phố</span>
                 </div>
 
                 <div class="form-field">
@@ -785,11 +875,13 @@
                   <select id="ward1" class="form-control">
                     <option value="">Chọn Phường / Xã</option>
                   </select>
+                  <span class="field-error-msg" id="errorWard1">Vui lòng chọn Phường / Xã</span>
                 </div>
 
                 <div class="form-field full">
                   <label class="field-label">Số nhà, tên đường</label>
-                  <input type="text" id="street1" class="form-control" value="280 An Dương Vương, Chung cư An Phú, Phòng 402" placeholder="Nhập số nhà, tên đường...">
+                  <input type="text" id="street1" class="form-control" value="280 An Dương Vương, Phường 4, Quận 5" placeholder="Nhập số nhà, tên đường...">
+                  <span class="field-error-msg" id="errorStreet1">Vui lòng nhập số nhà, tên đường</span>
                 </div>
               </div>
             </div>
@@ -812,6 +904,7 @@
                   <select id="province2" class="form-control" onchange="onProvinceChange(2)">
                     <option value="">Chọn Tỉnh / Thành phố</option>
                   </select>
+                  <span class="field-error-msg" id="errorProvince2">Vui lòng chọn Tỉnh / Thành phố</span>
                 </div>
 
                 <div class="form-field">
@@ -819,11 +912,13 @@
                   <select id="ward2" class="form-control">
                     <option value="">Chọn Phường / Xã</option>
                   </select>
+                  <span class="field-error-msg" id="errorWard2">Vui lòng chọn Phường / Xã</span>
                 </div>
 
                 <div class="form-field full">
                   <label class="field-label">Số nhà, tên đường</label>
                   <input type="text" id="street2" class="form-control" placeholder="Nhập số nhà, tên đường...">
+                  <span class="field-error-msg" id="errorStreet2">Vui lòng nhập số nhà, tên đường</span>
                 </div>
               </div>
             </div>
@@ -859,7 +954,6 @@
 
       <form id="changePasswordForm" onsubmit="handleChangePassword(event)" style="display: flex; flex-direction: column;">
         <div class="form-grid-layout">
-          
           <div class="form-field full">
             <label class="field-label" for="inputCurrentPwd">Mật khẩu hiện tại</label>
             <div class="input-wrapper">
@@ -879,7 +973,7 @@
                 <svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
             </div>
-            <span class="field-error-msg" id="errorNewPwd">Mật khẩu phải từ 6 ký tự và khác mật khẩu cũ</span>
+            <span class="field-error-msg" id="errorNewPwd">Mật khẩu phải từ 6 ký tự trở lên và phải khác mật khẩu hiện tại</span>
           </div>
 
           <div class="form-field">
@@ -890,7 +984,7 @@
                 <svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
             </div>
-            <span class="field-error-msg" id="errorConfirmPwd">Mật khẩu xác nhận không khớp</span>
+            <span class="field-error-msg" id="errorConfirmPwd">Mật khẩu xác nhận không trùng khớp</span>
           </div>
         </div>
 
@@ -902,7 +996,35 @@
 
   </main>
 
-  <div class="toast-stack" id="toastStack"></div>
+  <!-- HỘP THOẠI XÁC NHẬN ĐĂNG XUẤT -->
+  <div class="modal-backdrop" id="logoutModal" onclick="handleBackdropClick(event)">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <svg class="icon" viewBox="0 0 24 24" style="color: var(--danger);"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+          Xác nhận Đăng xuất
+        </h3>
+        <button type="button" class="modal-close-btn" onclick="closeLogoutModal()" title="Đóng">&times;</button>
+      </div>
+      <div class="modal-body">
+        Bạn có chắc chắn muốn đăng xuất khỏi hệ thống? Phiên làm việc trên thiết bị này sẽ được đóng lại an toàn.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-modal-cancel" onclick="closeLogoutModal()">Hủy</button>
+        <button type="button" class="btn-modal-confirm" id="btnConfirmLogout" onclick="executeLogout()">Đăng xuất</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST THÔNG BÁO MÀU XANH Ở GÓC BÊN TRÁI DƯỚI -->
+  <div id="toastSuccessBottom" class="toast-success-bottom">
+    <div class="toast-icon">
+      <svg viewBox="0 0 16 16" fill="none">
+        <path d="M3 8.5L6.5 12L13 4.5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <span id="toastSuccessText">Thành công!</span>
+  </div>
 
   <script>
     const API_BASE_URL = 'https://vietnam-address.roooming.io.vn';
@@ -916,6 +1038,75 @@
       "Phường An Khánh (TP. Thủ Đức)", "Phường Thảo Điền (TP. Thủ Đức)"
     ];
 
+    /* ========================================================
+       TOAST MÀU XANH GÓC TRÁI DƯỚI
+       ======================================================== */
+    const toastSuccessBottom = document.getElementById('toastSuccessBottom');
+    const toastSuccessText = document.getElementById('toastSuccessText');
+    let toastTimeout = null;
+
+    function showSuccessToast(message) {
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastSuccessText.textContent = message;
+      toastSuccessBottom.classList.add('show');
+      toastTimeout = setTimeout(() => {
+        toastSuccessBottom.classList.remove('show');
+      }, 2500);
+    }
+
+    /* ========================================================
+       USE CASE: ĐĂNG XUẤT HỆ THỐNG
+       ======================================================== */
+    const logoutModal = document.getElementById('logoutModal');
+
+    function openLogoutModal() {
+      logoutModal.classList.add('show');
+    }
+
+    function closeLogoutModal() {
+      logoutModal.classList.remove('show');
+    }
+
+    function handleBackdropClick(event) {
+      if (event.target === logoutModal) {
+        closeLogoutModal();
+      }
+    }
+
+    function executeLogout() {
+      const isOnline = navigator.onLine;
+
+      // Xóa sạch phiên đăng nhập trên client
+      localStorage.removeItem('userToken');
+      localStorage.removeItem('userData');
+      sessionStorage.clear();
+
+      console.log(`[Audit Log]: Người dùng thaison_dev đã đăng xuất thành công lúc ${new Date().toISOString()}`);
+
+      closeLogoutModal();
+
+      // Hiển thị thông báo thành công màu xanh góc trái dưới
+      showSuccessToast(isOnline ? 'Đăng xuất thành công!' : 'Đã đăng xuất cục bộ (Mất kết nối mạng)!');
+
+      // Chuyển sang trạng thái khách vãng lai
+      setTimeout(() => {
+        const userPill = document.getElementById('userMenuWrapper');
+        if (userPill) {
+          userPill.innerHTML = `
+            <a href="#" class="nav-action-link" style="color: var(--egyptian); font-weight: 700;">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span>Đăng nhập</span>
+            </a>
+          `;
+        }
+        document.getElementById('userPointsDisplay').innerHTML = 'Chào mừng bạn đến với ancientBOOK!';
+        alert('Hệ thống đã kết thúc phiên làm việc an toàn và điều hướng bạn về Trang chủ (Trạng thái: Khách vãng lai).');
+      }, 700);
+    }
+
+    /* ========================================================
+       CÁC HÀM XỬ LÝ HỒ SƠ & ĐỔI MẬT KHẨU
+       ======================================================== */
     function togglePasswordPanel() {
       const panel = document.getElementById('pwd-form-section');
       const isHidden = (panel.style.display === 'none' || panel.style.display === '');
@@ -954,7 +1145,7 @@
       cachedProvinces.forEach(p => {
         const idVal = p.id || p.code || p._id;
         const nameVal = p.name;
-        const isSelected = '';
+        const isSelected = (num === 1 && nameVal.includes("Hồ Chí Minh")) ? 'selected' : '';
         select.innerHTML += `<option value="${idVal}" ${isSelected}>${nameVal}</option>`;
       });
 
@@ -1013,21 +1204,14 @@
       document.getElementById('province2').value = '';
       document.getElementById('ward2').innerHTML = '<option value="">Chọn Phường / Xã</option>';
       document.getElementById('street2').value = '';
-    }
 
-    function showToast(message, type = 'success') {
-      const stack = document.getElementById('toastStack');
-      const item = document.createElement('div');
-      item.className = `toast-item ${type}`;
-      const iconPath = type === 'success' 
-        ? '<path d="M20 6 9 17l-5-5"/>' 
-        : '<path d="M12 8v5M12 16.5v.01"/><circle cx="12" cy="12" r="9"/>';
-      item.innerHTML = `<svg class="icon" viewBox="0 0 24 24">${iconPath}</svg><span>${message}</span>`;
-      stack.appendChild(item);
-      setTimeout(() => {
-        item.classList.add('leaving');
-        setTimeout(() => item.remove(), 220);
-      }, 3000);
+      // Xóa lỗi nếu có khi đóng địa chỉ 2
+      ['province2', 'ward2', 'street2'].forEach(id => {
+        const el = document.getElementById(id);
+        const err = document.getElementById(`error${id.charAt(0).toUpperCase() + id.slice(1)}`);
+        if (el) el.classList.remove('error-state');
+        if (err) err.style.display = 'none';
+      });
     }
 
     function togglePasswordVisibility(fieldId) {
@@ -1035,46 +1219,62 @@
       input.type = input.type === 'password' ? 'text' : 'password';
     }
 
-    function handleUpdateInfo(e) {
-      e.preventDefault();
-      const fullNameInput = document.getElementById('inputFullName');
-      const phoneInput = document.getElementById('inputPhone');
-      const errName = document.getElementById('errorFullName');
-      const errPhone = document.getElementById('errorPhone');
-
-      let isValid = true;
-
-      if (!fullNameInput.value.trim()) {
-        fullNameInput.classList.add('error-state');
-        errName.style.display = 'block';
-        isValid = false;
+    /* Kiểm tra trường đơn lẻ */
+    function checkField(inputId, errorId, condition) {
+      const input = document.getElementById(inputId);
+      const error = document.getElementById(errorId);
+      if (condition) {
+        input.classList.remove('error-state');
+        if (error) error.style.display = 'none';
+        return true;
       } else {
-        fullNameInput.classList.remove('error-state');
-        errName.style.display = 'none';
+        input.classList.add('error-state');
+        if (error) error.style.display = 'block';
+        return false;
       }
-
-      const phoneRegex = /^(0|84)[3|5|7|8|9][0-9]{8}$/;
-      if (!phoneRegex.test(phoneInput.value.trim())) {
-        phoneInput.classList.add('error-state');
-        errPhone.style.display = 'block';
-        isValid = false;
-      } else {
-        phoneInput.classList.remove('error-state');
-        errPhone.style.display = 'none';
-      }
-
-      const street1 = document.getElementById('street1').value.trim();
-      const ward1 = document.getElementById('ward1').value;
-      if (!street1 || !ward1) {
-        showToast('Vui lòng hoàn tất địa chỉ nhận hàng', 'error');
-        isValid = false;
-      }
-
-      if (!isValid) return;
-
-      showToast('Đã lưu thay đổi thành công', 'success');
     }
 
+    // Cập nhật thông tin cá nhân & hiển thị lỗi từng ô thiếu
+    function handleUpdateInfo(e) {
+      e.preventDefault();
+
+      const fullName = document.getElementById('inputFullName').value.trim();
+      const phone = document.getElementById('inputPhone').value.trim();
+      const phoneRegex = /^0(3[2-9]|5[6|8|9]|7[0|6-9]|8[1-6|8|9]|9[0-4|6-9])[0-9]{7}$/;
+
+      let v1 = checkField('inputFullName', 'errorFullName', fullName.length > 0);
+      let v2 = checkField('inputPhone', 'errorPhone', phoneRegex.test(phone));
+
+      // Kiểm tra lỗi riêng lẻ từng ô của Địa chỉ 1
+      const p1 = document.getElementById('province1').value;
+      const w1 = document.getElementById('ward1').value;
+      const s1 = document.getElementById('street1').value.trim();
+
+      let v3 = checkField('province1', 'errorProvince1', p1 !== "");
+      let v4 = checkField('ward1', 'errorWard1', w1 !== "");
+      let v5 = checkField('street1', 'errorStreet1', s1.length > 0);
+
+      // Kiểm tra lỗi riêng lẻ từng ô của Địa chỉ 2 (nếu đang mở)
+      let v6 = true, v7 = true, v8 = true;
+      const secondAddr = document.getElementById('secondAddressContainer');
+      if (secondAddr.style.display !== 'none') {
+        const p2 = document.getElementById('province2').value;
+        const w2 = document.getElementById('ward2').value;
+        const s2 = document.getElementById('street2').value.trim();
+
+        v6 = checkField('province2', 'errorProvince2', p2 !== "");
+        v7 = checkField('ward2', 'errorWard2', w2 !== "");
+        v8 = checkField('street2', 'errorStreet2', s2.length > 0);
+      }
+
+      if (!v1 || !v2 || !v3 || !v4 || !v5 || !v6 || !v7 || !v8) {
+        return;
+      }
+
+      showSuccessToast('Đã lưu thay đổi thông tin cá nhân thành công!');
+    }
+
+    // Ràng buộc đổi mật khẩu
     function handleChangePassword(e) {
       e.preventDefault();
       const currentPwd = document.getElementById('inputCurrentPwd');
@@ -1087,6 +1287,7 @@
 
       let isValid = true;
 
+      // Mật khẩu hiện tại
       if (currentPwd.value !== currentDBPassword) {
         currentPwd.classList.add('error-state');
         errCurrent.style.display = 'block';
@@ -1096,6 +1297,7 @@
         errCurrent.style.display = 'none';
       }
 
+      // Mật khẩu mới
       if (newPwd.value.length < 6 || newPwd.value === currentDBPassword) {
         newPwd.classList.add('error-state');
         errNew.style.display = 'block';
@@ -1105,6 +1307,7 @@
         errNew.style.display = 'none';
       }
 
+      // Mật khẩu xác nhận
       if (!confirmPwd.value || confirmPwd.value !== newPwd.value) {
         confirmPwd.classList.add('error-state');
         errConfirm.style.display = 'block';
@@ -1121,7 +1324,7 @@
       newPwd.value = '';
       confirmPwd.value = '';
 
-      showToast('Đổi mật khẩu thành công', 'success');
+      showSuccessToast('Đổi mật khẩu thành công!');
       togglePasswordPanel();
     }
 
@@ -1129,6 +1332,5 @@
       fetchProvinces();
     });
   </script>
-
 </body>
 </html>

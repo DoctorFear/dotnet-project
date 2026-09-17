@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ancientBOOK Admin — Nhật ký kiểm toán</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,800&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --alice: #F2F7FF;
+    --egyptian: #0B409C;
+    --catalina: #0D226B;
+    --ink: #071233;
+    --saffron: #FDBE34;
+    --muted: #5b6e99;
+    --hairline: #dce6f7;
+    --white: #ffffff;
+    --danger: #d93838;
+    --danger-bg: #fdf2f2;
+    --success: #1e8e3e;
+    --success-bg: #ecfdf5;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--alice);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+  }
+  .icon { width: 17px; height: 17px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* SIDEBAR */
+  .admin-sidebar {
+    width: 260px;
+    background: var(--catalina);
+    color: var(--alice);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    min-height: 100vh;
+    border-right: 1px solid rgba(242, 247, 255, 0.1);
+  }
+  .sidebar-header { padding: 24px 20px; border-bottom: 1px solid rgba(242, 247, 255, 0.1); }
+  .brand-name {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+    display: inline-flex;
+    align-items: baseline;
+    user-select: none;
+    text-decoration: none;
+  }
+  .brand-name span.book-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 19px;
+    font-weight: 900;
+    color: var(--saffron);
+    letter-spacing: 1px;
+    margin-left: 2px;
+  }
+  .brand-name .accent-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background-color: var(--saffron);
+    border-radius: 50%;
+    margin-left: 3px;
+  }
+  .admin-badge {
+    display: inline-block;
+    background: rgba(253, 190, 52, 0.2);
+    color: var(--saffron);
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-top: 6px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .sidebar-menu { list-style: none; padding: 20px 12px; flex: 1; }
+  .menu-item { margin-bottom: 4px; }
+  .menu-link {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; border-radius: 6px;
+    font-size: 13.5px; font-weight: 500; color: #dce6f7;
+    text-decoration: none; transition: all 0.2s;
+  }
+  .menu-link .icon { color: rgba(242,247,255,0.55); }
+  .menu-link:hover { background: rgba(242, 247, 255, 0.08); color: var(--white); }
+  .menu-link:hover .icon { color: rgba(242,247,255,0.9); }
+  .menu-link.active { background: var(--egyptian); color: var(--white); font-weight: 700; }
+  .menu-link.active .icon { color: var(--saffron); }
+  
+  .sidebar-footer {
+    padding: 14px 16px; border-top: 1px solid rgba(242, 247, 255, 0.1);
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(7, 18, 51, 0.25);
+  }
+  .user-badge-left { display: flex; align-items: center; gap: 10px; overflow: hidden; }
+  .user-avatar-tiny {
+    width: 36px; height: 36px; border-radius: 50%; object-fit: cover;
+    border: 1.5px solid var(--saffron); background: #fff; flex-shrink: 0;
+  }
+  .user-info { font-size: 12px; line-height: 1.3; overflow: hidden; }
+  .user-name { font-weight: 700; color: #fff; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+  .user-role { color: var(--saffron); font-size: 11px; }
+
+  .footer-actions { display: flex; align-items: center; gap: 2px; }
+  .btn-sidebar-icon {
+    background: transparent; border: none; color: rgba(242, 247, 255, 0.7);
+    cursor: pointer; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s ease;
+  }
+  .btn-sidebar-icon:hover { background: rgba(242, 247, 255, 0.12); color: var(--saffron); }
+  .btn-sidebar-icon.logout:hover { background: rgba(217, 56, 56, 0.25); color: #fca5a5; }
+
+  /* MAIN WORKSPACE */
+  .admin-main { flex: 1; display: flex; flex-direction: column; overflow-x: hidden; }
+  .admin-topbar {
+    background: var(--white); border-bottom: 1px solid var(--hairline);
+    padding: 14px 36px; display: flex; justify-content: space-between; align-items: center;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .topbar-title h1 { font-size: 18px; font-weight: 800; color: var(--catalina); }
+  .topbar-title span { font-size: 12px; color: var(--muted); }
+  .topbar-actions { display: flex; align-items: center; gap: 12px; }
+  .badge-uc {
+    background: var(--alice); color: var(--egyptian); border: 1px solid var(--hairline);
+    padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700;
+  }
+  .btn-action-refresh {
+    background: #fff; color: var(--catalina); border: 1.5px solid var(--hairline);
+    padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center; gap: 6px; font-family: inherit;
+    transition: all 0.15s ease;
+  }
+  .btn-action-refresh:hover { background: var(--alice); border-color: var(--egyptian); color: var(--egyptian); }
+
+  .content-body { padding: 24px 36px; display: flex; flex-direction: column; gap: 20px; }
+
+  /* BẢNG LOG VÀ BỘ LỌC TÌM KIẾM */
+  .table-panel {
+    background: var(--white); border-radius: 8px; border: 1px solid var(--hairline);
+    box-shadow: 0 4px 20px rgba(7, 18, 51, 0.04); overflow: hidden;
+  }
+  .panel-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--hairline);
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .filter-row-primary {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .search-wrap { position: relative; flex: 1; max-width: 340px; }
+  .search-wrap .icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+  .search-input {
+    width: 100%; padding: 8.5px 14px 8.5px 34px; border: 1.5px solid var(--hairline);
+    border-radius: 6px; font-size: 13px; outline: none; color: var(--ink); font-family: inherit;
+    background: #fafcff;
+  }
+  .search-input:focus { border-color: var(--egyptian); background: #fff; }
+
+  .filter-group-wrap { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .filter-select {
+    padding: 7.5px 12px; border: 1.5px solid var(--hairline); border-radius: 6px;
+    font-size: 12.5px; color: var(--ink); outline: none; background: var(--white); font-family: inherit;
+    cursor: pointer;
+  }
+  .filter-select:focus { border-color: var(--egyptian); }
+
+  .filter-date-group {
+    display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); font-weight: 600;
+  }
+  .filter-date-input {
+    padding: 6.5px 8px; border: 1.5px solid var(--hairline); border-radius: 6px;
+    font-size: 12px; color: var(--ink); outline: none; font-family: inherit; background: #fff;
+    cursor: pointer;
+  }
+  .filter-date-input:focus { border-color: var(--egyptian); }
+
+  /* BẢNG DỮ LIỆU CÓ THẲNG 2 CỘT TRƯỚC VÀ SAU */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .data-table th {
+    background: #f8faff; color: var(--catalina); font-weight: 700; text-align: left;
+    padding: 12px 16px; border-bottom: 1.5px solid var(--hairline);
+    font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .data-table td { padding: 12px 16px; border-bottom: 1px solid var(--hairline); vertical-align: middle; }
+  .data-table tr:hover td { background: #fafcff; }
+
+  .time-cell { font-family: var(--mono); font-size: 12px; color: var(--ink); font-weight: 700; }
+  .time-sub { font-size: 11px; color: var(--muted); display: block; font-family: 'Inter', sans-serif; }
+
+  .actor-cell { display: flex; flex-direction: column; gap: 2px; }
+  .actor-email { font-weight: 700; color: var(--catalina); }
+  .actor-role-tag { font-size: 11px; color: var(--muted); font-weight: 600; }
+
+  .badge-action-unified {
+    display: inline-block; padding: 4px 9px; border-radius: 4px;
+    font-size: 11.5px; font-weight: 700; line-height: 1.3;
+    background: var(--alice); color: var(--egyptian);
+    border: 1px solid var(--hairline); white-space: nowrap;
+  }
+
+  .target-cell { display: flex; flex-direction: column; gap: 2px; }
+  .target-table-vn { font-weight: 700; color: var(--ink); font-size: 12.5px; }
+  .target-id-vn {
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    background: var(--alice); padding: 1px 6px; border-radius: 4px;
+    border: 1px solid var(--hairline); width: fit-content;
+  }
+
+  /* THẺ GIÁ TRỊ TRỰC TIẾP TRÊN BẢNG */
+  .val-old {
+    color: #991b1b; background: #fee2e2; padding: 2px 7px; border-radius: 4px;
+    display: inline-block; font-size: 12px; font-family: var(--mono);
+  }
+  .val-new {
+    color: #065f46; background: #ecfdf5; padding: 2px 7px; border-radius: 4px;
+    display: inline-block; font-weight: 700; font-size: 12px; font-family: var(--mono);
+  }
+  .val-security {
+    color: var(--muted); background: #f1f5f9; padding: 2px 7px; border-radius: 4px;
+    display: inline-block; font-size: 11.5px; font-style: italic;
+  }
+
+  .ip-badge {
+    font-family: var(--mono); font-size: 11.5px; color: #475569;
+    background: #f1f5f9; padding: 2px 6px; border-radius: 4px;
+  }
+
+  .pagination-bar {
+    padding: 12px 20px; display: flex; justify-content: space-between; align-items: center;
+    font-size: 12.5px; color: var(--muted); flex-wrap: wrap; gap: 10px;
+    background: #fafcff; border-top: 1px solid var(--hairline);
+  }
+  .page-btns { display: flex; gap: 4px; }
+  .page-btn {
+    min-width: 30px; height: 30px; padding: 0 6px; display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--hairline); background: var(--white); border-radius: 4px;
+    font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; color: var(--ink);
+  }
+  .page-btn.active { background: var(--egyptian); color: var(--white); border-color: var(--egyptian); }
+  .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+  <!-- 1. SIDEBAR -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-header">
+      <a href="#" class="brand-name">ancient<span class="book-text">BOOK</span><span class="accent-dot"></span></a>
+      <div><span class="admin-badge">Admin Portal</span></div>
+    </div>
+    <ul class="sidebar-menu">
+      <li class="menu-item"><a href="#" class="menu-link"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Tổng quan</a></li>
+      <li class="menu-item"><a href="#" class="menu-link"><svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Quản lý & Phân quyền</a></li>
+      <li class="menu-item"><a href="#" class="menu-link active"><svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Nhật ký hoạt động</a></li>
+      <li class="menu-item"><a href="#" class="menu-link"><svg class="icon" viewBox="0 0 24 24"><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/></svg>Quản lý kho sách</a></li>
+      <li class="menu-item"><a href="#" class="menu-link"><svg class="icon" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/></svg>Quản lý đơn hàng</a></li>
+      <li class="menu-item"><a href="#" class="menu-link"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Cài đặt hệ thống</a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <div class="user-badge-left">
+        <img src="https://media.istockphoto.com/id/2149922267/vector/user-icon.jpg?s=612x612&w=0&k=20&c=i6jYPfB1pWjK8pll6YRxAK9fgBmf65-w5wbKH9R1dyQ=" class="user-avatar-tiny" alt="Avatar">
+        <div class="user-info">
+          <div class="user-name">@thaison_dev</div>
+          <div class="user-role">Super Admin</div>
+        </div>
+      </div>
+      <div class="footer-actions">
+        <button type="button" class="btn-sidebar-icon logout" title="Đăng xuất" onclick="alert('Đăng xuất an toàn!')"><svg class="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 2. MAIN -->
+  <main class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-title">
+        <h1>Nhật ký hoạt động hệ thống (Audit Log)</h1>
+        <span>Theo dõi trực quan mọi biến động dữ liệu, tài chính, kho hàng và bảo mật</span>
+      </div>
+      <div class="topbar-actions">
+        <span class="badge-uc">UC22 • Kiểm toán hệ thống</span>
+        <button type="button" class="btn-action-refresh" onclick="resetFilters()">
+          <svg class="icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Làm mới bộ lọc
+        </button>
+      </div>
+    </header>
+
+    <div class="content-body">
+      <section class="table-panel">
+        <div class="panel-header">
+          <div class="filter-row-primary">
+            <!-- Ô TÌM KIẾM -->
+            <div class="search-wrap">
+              <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input type="text" id="searchInput" class="search-input" placeholder="Tìm theo Email, Mã đối tượng, Hành động...">
+            </div>
+
+            <!-- BỘ LỌC ĐẦY ĐỦ: VAI TRÒ, NGHIỆP VỤ & THỜI GIAN -->
+            <div class="filter-group-wrap">
+              <select id="roleFilter" class="filter-select">
+                <option value="">Tất cả vai trò</option>
+                <option value="Admin">Admin</option>
+                <option value="Staff">Nhân viên (Staff)</option>
+                <option value="Shipper">Giao hàng (Shipper)</option>
+                <option value="Customer">Khách hàng</option>
+                <option value="System">Hệ thống</option>
+              </select>
+
+              <select id="categoryFilter" class="filter-select">
+                <option value="">Tất cả nghiệp vụ</option>
+                <option value="AUTH">Bảo mật & Tài khoản</option>
+                <option value="SETTING">Cài đặt hệ thống</option>
+                <option value="INVENTORY">Kho hàng & Sách</option>
+                <option value="ORDER">Đơn hàng & Giao vận</option>
+              </select>
+
+              <div class="filter-date-group">
+                <span>Từ:</span>
+                <input type="date" id="dateFrom" class="filter-date-input" title="Từ ngày">
+                <span>Đến:</span>
+                <input type="date" id="dateTo" class="filter-date-input" title="Đến ngày">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BẢNG HIỂN THỊ ĐẦY ĐỦ 2 CỘT TRƯỚC VÀ SAU (KHÔNG CẦN NÚT XEM CHI TIẾT) -->
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 13%;">Thời gian</th>
+              <th style="width: 17%;">Người thực hiện</th>
+              <th style="width: 16%;">Hành động</th>
+              <th style="width: 14%;">Tác động đến</th>
+              <th style="width: 14%;">Trước cập nhật</th>
+              <th style="width: 14%;">Sau cập nhật</th>
+              <th style="width: 12%;">Địa chỉ IP</th>
+            </tr>
+          </thead>
+          <tbody id="auditTableBody"></tbody>
+        </table>
+
+        <div class="pagination-bar">
+          <span id="paginationSummary">Đang tải...</span>
+          <div class="page-btns" id="pageBtns"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+<script>
+  /* ========================================================
+     DANH SÁCH 23 VÍ DỤ CHUẨN NGHIỆP VỤ BẮT BUỘC / NÊN GHI LOG
+     - Staff gom thành 1 vai trò duy nhất
+     - Riêng Đổi mật khẩu: oldValue/newValue bảo mật
+     - Hiển thị trực tiếp lên bảng
+     ======================================================== */
+  const auditLogs = [
+    // 1. Đổi mật khẩu
+    {
+      logId: 104825,
+      createdAt: "2026-09-16 21:30:15",
+      actorEmail: "kiet_le99@gmail.com",
+      actorRole: "Customer",
+      actionText: "Đổi mật khẩu",
+      category: "AUTH",
+      tableNameVn: "Người dùng",
+      recordId: "USR-007",
+      ipAddress: "14.169.88.21",
+      oldValue: "******",
+      newValue: "******",
+      isPasswordChange: true
+    },
+    // 2. Đăng nhập nhân sự
+    {
+      logId: 104824,
+      createdAt: "2026-09-16 21:15:00",
+      actorEmail: "huong_staff@ancientbook.vn",
+      actorRole: "Staff",
+      actionText: "Đăng nhập hệ thống",
+      category: "AUTH",
+      tableNameVn: "Phiên làm việc",
+      recordId: "SESS-1049",
+      ipAddress: "14.241.218.88",
+      oldValue: "offline",
+      newValue: "online"
+    },
+    // 3. Đăng nhập sai
+    {
+      logId: 104823,
+      createdAt: "2026-09-16 20:50:30",
+      actorEmail: "intruder@bot.net",
+      actorRole: "Customer",
+      actionText: "Đăng nhập thất bại",
+      category: "AUTH",
+      tableNameVn: "Xác thực",
+      recordId: "thaison_dev",
+      ipAddress: "185.220.101.5",
+      oldValue: "0",
+      newValue: "5"
+    },
+    // 4. Phân quyền người dùng
+    {
+      logId: 104822,
+      createdAt: "2026-09-16 20:30:00",
+      actorEmail: "thaison@ancientbook.vn",
+      actorRole: "Admin",
+      actionText: "Phân quyền người dùng",
+      category: "AUTH",
+      tableNameVn: "Người dùng",
+      recordId: "an_nv",
+      ipAddress: "113.161.72.15",
+      oldValue: "Shipper",
+      newValue: "Staff"
+    },
+    // 5. Cài đặt: Ngưỡng cảnh báo kho
+    {
+      logId: 104821,
+      createdAt: "2026-09-16 20:10:10",
+      actorEmail: "huy_admin@ancientbook.vn",
+      actorRole: "Admin",
+      actionText: "Đổi ngưỡng cảnh báo kho",
+      category: "SETTING",
+      tableNameVn: "Cài đặt",
+      recordId: "LOW_STOCK_THRESHOLD",
+      ipAddress: "113.161.72.15",
+      oldValue: "5",
+      newValue: "8"
+    },
+    // 6. Cài đặt: Tỉ lệ tích điểm
+    {
+      logId: 104820,
+      createdAt: "2026-09-16 19:45:00",
+      actorEmail: "mphuong@ancientbook.vn",
+      actorRole: "Admin",
+      actionText: "Đổi tỉ lệ tích điểm",
+      category: "SETTING",
+      tableNameVn: "Cài đặt",
+      recordId: "POINT_GOLD",
+      ipAddress: "118.69.182.20",
+      oldValue: "12%",
+      newValue: "15%"
+    },
+    // 7. Cài đặt: Mức điểm dùng tối đa
+    {
+      logId: 104819,
+      createdAt: "2026-09-16 19:20:00",
+      actorEmail: "mphuong@ancientbook.vn",
+      actorRole: "Admin",
+      actionText: "Đổi mức điểm dùng tối đa",
+      category: "SETTING",
+      tableNameVn: "Cài đặt",
+      recordId: "MAX_POINTS_USAGE",
+      ipAddress: "118.69.182.20",
+      oldValue: "50000",
+      newValue: "100000"
+    },
+    // 8. Cài đặt: Hạn gửi hoàn hàng
+    {
+      logId: 104818,
+      createdAt: "2026-09-16 18:55:22",
+      actorEmail: "thaison@ancientbook.vn",
+      actorRole: "Admin",
+      actionText: "Đổi hạn gửi hoàn hàng",
+      category: "SETTING",
+      tableNameVn: "Cài đặt",
+      recordId: "RETURN_DAYS",
+      ipAddress: "113.161.72.15",
+      oldValue: "3",
+      newValue: "7"
+    },
+    // 9. Quản lý danh mục thể loại
+    {
+      logId: 104817,
+      createdAt: "2026-09-16 18:30:00",
+      actorEmail: "lananh_staff@ancientbook.vn",
+      actorRole: "Staff",
+      actionText: "Thêm danh mục thể loại",
+      category: "INVENTORY",
+      tableNameVn: "Danh mục",
+      recordId: "CAT-09",
+      ipAddress: "14.241.218.88",
+      oldValue: "—",
+      newValue: "Manga & Comic"
+    },
+    // 10. Quản lý nhà xuất bản
+    {
+      logId: 104816,
+      createdAt: "2026-09-16 18:10:00",
+      actorEmail: "lananh_staff@ancientbook.vn",
+      actorRole: "Staff",
+      actionText: "Sửa nhà xuất bản",
+      category: "INVENTORY",
+      tableNameVn: "Nhà xuất bản",
+      recordId: "NXB-02",
+      ipAddress: "14.241.218.88",
+      oldValue: "NXB Trẻ",
+      newValue: "NXB Trẻ (HN)"
+    },
+    // 11. Quản lý thông tin đầu sách
+    {
+      logId: 104815,
+      createdAt: "2026-09-16 17:50:00",
+      actorEmail: "lananh_staff@ancientbook.vn",
+      actorRole: "Staff",
+      actionText: "Đổi trạng thái đầu sách",
+      category: "INVENTORY",
+      tableNameVn: "Sách",
+      recordId: "BOOK-55",
+      ipAddress: "14.241.218.88",
+      oldValue: "Sắp bán",
+      newValue: "Đang bán"
+    },
+    // 12. Quản lý nhà cung cấp
+    {
+      logId: 104814,
+      createdAt: "2026-09-16 17:30:10",
+      actorEmail: "sang_staff@ancientbook.vn",
+      actorRole: "Staff",
+      actionText: "Sửa nhà cung cấp",
+      category: "INVENTORY",
+      tableNameVn: "Nhà cung cấp",
+      recordId: "NCC-01",
+      ipAddress: "14.241.218.88",
+      oldValue: "0909111222",
+      newValue: "0909888999"
+    },
+    // 13. Duyệt phiếu nhập & tăng tồn kho
+    {
+      logId: 104813,
+      createdAt: "2026-09-16 17:15:30",
+      actorEmail: "sang_staff@ancientbook.vn",
+      actorRole: "Staff",
+      actionText: "Duyệt phiếu nhập kho",
+      category: "INVENTORY",
+      tableNameVn: "Tồn kho",
+      recordId: "PNK-009",
+      ipAddress: "14.241.218.88",
+      oldValue: "14",
+      newValue: "114"
+    },
+    // 14. Tự động chuyển Tạm ngưng bán
+    {
+      logId: 104812,
+      createdAt: "2026-09-16 16:55:00",
+      actorEmail: "system@ancientbook.vn",
+      actorRole: "System",
+      actionText: "Tự động ngưng bán",
+      category: "INVENTORY",
+      tableNameVn: "Sách",
+      recordId: "BOOK-102",
+      ipAddress: "127.0.0.1",
+      oldValue: "Đang bán",
+      newValue: "Tạm ngưng bán"
+    },
+    // 15. Kiểm kê & Cân bằng kho
+    {
+      logId: 104811,
+      createdAt: "2026-09-16 16:30:10",
+      actorEmail: "sang_staff@ancientbook.vn",
+      actorRole: "Staff",
+      actionText: "Cân bằng kho kiểm kê",
+      category: "INVENTORY",
+      tableNameVn: "Tồn kho",
+      recordId: "BOOK-772",
+      ipAddress: "14.241.218.88",
+      oldValue: "28",
+      newValue: "25"
+    },
+    // 16. Xác nhận đơn hàng
+    {
+      logId: 104810,
+      createdAt: "2026-09-16 16:10:05",
+      actorEmail: "an_staff@ancientbook.vn",
+      actorRole: "Staff",
+      actionText: "Xác nhận đơn hàng",
+      category: "ORDER",
+      tableNameVn: "Đơn hàng",
+      recordId: "DH-99120",
+      ipAddress: "115.79.138.6",
+      oldValue: "Chờ xác nhận",
+      newValue: "Đã xác nhận"
+    },
+    // 17. Cấu hình gói thuê & E-Book
+    {
+      logId: 104809,
+      createdAt: "2026-09-16 15:50:00",
+      actorEmail: "an_staff@ancientbook.vn",
+      actorRole: "Staff",
+      actionText: "Đổi giá gói thuê E-Book",
+      category: "ORDER",
+      tableNameVn: "Gói thuê",
+      recordId: "RENT-M01",
+      ipAddress: "115.79.138.6",
+      oldValue: "29000",
+      newValue: "35000"
+    },
+    // 18. Tự động tích điểm
+    {
+      logId: 104808,
+      createdAt: "2026-09-16 15:30:00",
+      actorEmail: "system@ancientbook.vn",
+      actorRole: "System",
+      actionText: "Tự động tích điểm",
+      category: "ORDER",
+      tableNameVn: "Ví điểm",
+      recordId: "USR-008",
+      ipAddress: "127.0.0.1",
+      oldValue: "120",
+      newValue: "148"
+    },
+    // 19. Tự động nâng hạng thành viên
+    {
+      logId: 104807,
+      createdAt: "2026-09-16 15:10:00",
+      actorEmail: "system@ancientbook.vn",
+      actorRole: "System",
+      actionText: "Nâng hạng thành viên",
+      category: "ORDER",
+      tableNameVn: "Khách hàng",
+      recordId: "USR-008",
+      ipAddress: "127.0.0.1",
+      oldValue: "Bạc",
+      newValue: "Vàng"
+    },
+    // 20. Phân công đơn cho Shipper
+    {
+      logId: 104806,
+      createdAt: "2026-09-16 14:50:00",
+      actorEmail: "sang_staff@ancientbook.vn",
+      actorRole: "Staff",
+      actionText: "Phân công shipper giao",
+      category: "ORDER",
+      tableNameVn: "Đơn hàng",
+      recordId: "DH-99120",
+      ipAddress: "14.241.218.88",
+      oldValue: "Đã xác nhận",
+      newValue: "Đã chuẩn bị xong"
+    },
+    // 21. Duyệt / Từ chối đơn hoàn trả
+    {
+      logId: 104805,
+      createdAt: "2026-09-16 14:30:00",
+      actorEmail: "an_staff@ancientbook.vn",
+      actorRole: "Staff",
+      actionText: "Duyệt đơn hoàn trả",
+      category: "ORDER",
+      tableNameVn: "Yêu cầu trả",
+      recordId: "HT-04",
+      ipAddress: "115.79.138.6",
+      oldValue: "Chờ duyệt",
+      newValue: "Đã duyệt hoàn trả"
+    },
+    // 22. Phân công đơn hoàn cho Shipper
+    {
+      logId: 104804,
+      createdAt: "2026-09-16 14:10:00",
+      actorEmail: "sang_staff@ancientbook.vn",
+      actorRole: "Staff",
+      actionText: "Phân công lấy hàng hoàn",
+      category: "ORDER",
+      tableNameVn: "Đơn hàng",
+      recordId: "DH-99012",
+      ipAddress: "14.241.218.88",
+      oldValue: "—",
+      newValue: "long_shipper"
+    },
+    // 23. Shipper: Đang giao
+    {
+      logId: 104803,
+      createdAt: "2026-09-15 13:50:00",
+      actorEmail: "long_shipper@ancientbook.vn",
+      actorRole: "Shipper",
+      actionText: "Cập nhật đang giao",
+      category: "ORDER",
+      tableNameVn: "Đơn hàng",
+      recordId: "DH-99120",
+      ipAddress: "42.118.112.4",
+      oldValue: "Đã chuẩn bị xong",
+      newValue: "Đang giao"
+    },
+    // 24. Shipper: Giao hoàn thành
+    {
+      logId: 104802,
+      createdAt: "2026-09-15 13:20:00",
+      actorEmail: "long_shipper@ancientbook.vn",
+      actorRole: "Shipper",
+      actionText: "Cập nhật giao thành công",
+      category: "ORDER",
+      tableNameVn: "Đơn hàng",
+      recordId: "DH-99105",
+      ipAddress: "42.118.112.4",
+      oldValue: "Đang giao",
+      newValue: "Hoàn thành"
+    },
+    // 25. Shipper: Giao thất bại
+    {
+      logId: 104801,
+      createdAt: "2026-09-14 12:50:00",
+      actorEmail: "huy_giao@ancientbook.vn",
+      actorRole: "Shipper",
+      actionText: "Cập nhật giao thất bại",
+      category: "ORDER",
+      tableNameVn: "Đơn hàng",
+      recordId: "DH-99088",
+      ipAddress: "42.118.112.4",
+      oldValue: "Đang giao",
+      newValue: "Thất bại"
+    },
+    // 26. Shipper: Hoàn trả thành công
+    {
+      logId: 104800,
+      createdAt: "2026-09-14 12:20:00",
+      actorEmail: "long_shipper@ancientbook.vn",
+      actorRole: "Shipper",
+      actionText: "Lấy hàng hoàn trả thành công",
+      category: "ORDER",
+      tableNameVn: "Đơn hàng",
+      recordId: "DH-99012",
+      ipAddress: "42.118.112.4",
+      oldValue: "Đã duyệt hoàn trả",
+      newValue: "Hoàn trả thành công"
+    },
+    // 27. Khách đặt hàng: Mua vật lý
+    {
+      logId: 104799,
+      createdAt: "2026-09-13 11:45:00",
+      actorEmail: "giahuy@gmail.com",
+      actorRole: "Customer",
+      actionText: "Đặt mua sách vật lý",
+      category: "ORDER",
+      tableNameVn: "Đơn hàng",
+      recordId: "DH-99150",
+      ipAddress: "14.169.88.21",
+      oldValue: "—",
+      newValue: "Chờ xác nhận"
+    },
+    // 28. Khách đặt hàng: Mua E-Book
+    {
+      logId: 104798,
+      createdAt: "2026-09-13 11:20:00",
+      actorEmail: "giahuy@gmail.com",
+      actorRole: "Customer",
+      actionText: "Mua bản E-Book",
+      category: "ORDER",
+      tableNameVn: "Tủ sách số",
+      recordId: "EB-204",
+      ipAddress: "14.169.88.21",
+      oldValue: "—",
+      newValue: "Sở hữu vĩnh viễn"
+    },
+    // 29. Khách đặt hàng: Thuê E-Book
+    {
+      logId: 104797,
+      createdAt: "2026-09-12 10:55:00",
+      actorEmail: "nam_vu@gmail.com",
+      actorRole: "Customer",
+      actionText: "Thuê sách Online",
+      category: "ORDER",
+      tableNameVn: "Tủ sách số",
+      recordId: "EB-108",
+      ipAddress: "14.169.88.21",
+      oldValue: "—",
+      newValue: "Thuê 1 tháng"
+    },
+    // 30. Khách hủy đơn vật lý
+    {
+      logId: 104796,
+      createdAt: "2026-09-12 10:30:00",
+      actorEmail: "truc_ngo@gmail.com",
+      actorRole: "Customer",
+      actionText: "Khách hủy đơn hàng",
+      category: "ORDER",
+      tableNameVn: "Đơn hàng",
+      recordId: "DH-99135",
+      ipAddress: "113.161.72.15",
+      oldValue: "Chờ xác nhận",
+      newValue: "Thất bại"
+    },
+    // 31. Khách gửi yêu cầu hoàn hàng
+    {
+      logId: 104795,
+      createdAt: "2026-09-11 10:05:00",
+      actorEmail: "nam_vu@gmail.com",
+      actorRole: "Customer",
+      actionText: "Gửi yêu cầu hoàn hàng",
+      category: "ORDER",
+      tableNameVn: "Đơn hàng",
+      recordId: "DH-99012",
+      ipAddress: "14.169.88.21",
+      oldValue: "Hoàn thành",
+      newValue: "Chờ duyệt hoàn trả"
+    },
+    // 32. Khách dùng điểm tích lũy giảm giá
+    {
+      logId: 104794,
+      createdAt: "2026-09-10 09:40:00",
+      actorEmail: "kiet_le99@gmail.com",
+      actorRole: "Customer",
+      actionText: "Dùng điểm tích lũy",
+      category: "ORDER",
+      tableNameVn: "Ví điểm",
+      recordId: "DH-99140",
+      ipAddress: "14.169.88.21",
+      oldValue: "150",
+      newValue: "100"
+    }
+  ];
+
+  const PAGE_SIZE = 8;
+  let currentPage = 1;
+
+  const $ = (sel) => document.querySelector(sel);
+  const tableBody = $('#auditTableBody');
+
+  function getFilteredLogs() {
+    const q = $('#searchInput').value.trim().toLowerCase();
+    const role = $('#roleFilter').value;
+    const cat = $('#categoryFilter').value;
+    const from = $('#dateFrom').value;
+    const to = $('#dateTo').value;
+
+    return auditLogs.filter(item => {
+      const matchText = !q || 
+        item.actorEmail.toLowerCase().includes(q) ||
+        item.actionText.toLowerCase().includes(q) ||
+        item.tableNameVn.toLowerCase().includes(q) ||
+        item.recordId.toLowerCase().includes(q) ||
+        item.ipAddress.includes(q);
+
+      const matchRole = !role || item.actorRole === role;
+      const matchCat = !cat || item.category === cat;
+
+      let matchDate = true;
+      const itemDate = item.createdAt.split(' ')[0];
+      if (from) matchDate = matchDate && (itemDate >= from);
+      if (to) matchDate = matchDate && (itemDate <= to);
+
+      return matchText && matchRole && matchCat && matchDate;
+    });
+  }
+
+  function renderTable() {
+    const filtered = getFilteredLogs();
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = filtered.slice(start, start + PAGE_SIZE);
+
+    if (pageItems.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="7" style="padding:32px; text-align:center; color:var(--muted);">Không có nhật ký nào phù hợp với bộ lọc.</td></tr>`;
+    } else {
+      tableBody.innerHTML = pageItems.map(log => {
+        const [datePart, timePart] = log.createdAt.split(' ');
+
+        // Xử lý hiển thị Trước và Sau trực tiếp
+        let oldHtml = `<span class="val-old">${log.oldValue}</span>`;
+        let newHtml = `<span class="val-new">${log.newValue}</span>`;
+
+        if (log.isPasswordChange) {
+          oldHtml = `<span class="val-security">*** (Bảo mật)</span>`;
+          newHtml = `<span class="val-security">*** (Đã đổi mới)</span>`;
+        }
+
+        return `
+          <tr>
+            <td>
+              <div class="time-cell">${timePart}</div>
+              <span class="time-sub">${datePart}</span>
+            </td>
+            <td>
+              <div class="actor-cell">
+                <span class="actor-email">${log.actorEmail}</span>
+                <span class="actor-role-tag">${log.actorRole}</span>
+              </div>
+            </td>
+            <td>
+              <span class="badge-action-unified">
+                ${log.actionText}
+              </span>
+            </td>
+            <td>
+              <div class="target-cell">
+                <span class="target-table-vn">${log.tableNameVn}</span>
+                <span class="target-id-vn">${log.recordId}</span>
+              </div>
+            </td>
+            <td>${oldHtml}</td>
+            <td>${newHtml}</td>
+            <td>
+              <span class="ip-badge">${log.ipAddress}</span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    $('#paginationSummary').textContent = filtered.length === 0
+      ? '0 bản ghi'
+      : `Trang ${currentPage} / ${totalPages} (${filtered.length} sự kiện)`;
+
+    const pageBtns = $('#pageBtns');
+    let btns = `<button class="page-btn" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
+    for (let p = 1; p <= totalPages; p++) {
+      btns += `<button class="page-btn ${p === currentPage ? 'active' : ''}" data-page="${p}">${p}</button>`;
+    }
+    btns += `<button class="page-btn" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}>›</button>`;
+    pageBtns.innerHTML = btns;
+  }
+
+  function resetFilters() {
+    $('#searchInput').value = '';
+    $('#roleFilter').value = '';
+    $('#categoryFilter').value = '';
+    $('#dateFrom').value = '';
+    $('#dateTo').value = '';
+    currentPage = 1;
+    renderTable();
+  }
+
+  // Sự kiện lọc đa chiều
+  $('#searchInput').addEventListener('input', () => { currentPage = 1; renderTable(); });
+  $('#roleFilter').addEventListener('change', () => { currentPage = 1; renderTable(); });
+  $('#categoryFilter').addEventListener('change', () => { currentPage = 1; renderTable(); });
+  $('#dateFrom').addEventListener('change', () => { currentPage = 1; renderTable(); });
+  $('#dateTo').addEventListener('change', () => { currentPage = 1; renderTable(); });
+
+  $('#pageBtns').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-page]');
+    if (!btn || btn.disabled) return;
+    currentPage = Number(btn.dataset.page);
+    renderTable();
+  });
+
+  renderTable();
+</script>
+</body>
+</html>

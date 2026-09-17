@@ -2,7 +2,8 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>ancientBOOK — Đăng nhập</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ancientBOOK — Đăng nhập hệ thống</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,500&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -15,6 +16,10 @@
     --saffron: #FDBE34;
     --muted: #5b6e99;
     --hairline: #dce6f7;
+    --error: #d93025;
+    --error-bg: #fde8e7;
+    --error-border: #f5c2c0;
+    --success: #1e8e3e;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -38,11 +43,11 @@
   }
   .top-bar strong { color: var(--saffron); font-weight: 600; }
 
-  /* ---------- header & LOGO ĐẬM DÀY ---------- */
+  /* ---------- header & brand ---------- */
   .header {
     background: #fff;
     border-bottom: 2px solid var(--hairline);
-    padding: 18px 48px;
+    padding: 16px 48px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -82,36 +87,33 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 48px 24px;
+    padding: 40px 24px;
   }
   .book-card {
     background: #fff;
     border-radius: 8px;
     border: 1px solid var(--hairline);
-    box-shadow: 0 24px 48px -20px rgba(7, 18, 51, 0.28);
+    box-shadow: 0 24px 48px -20px rgba(7, 18, 51, 0.25);
     display: flex;
     width: 980px;
     max-width: 100%;
-    min-height: 560px;
+    min-height: 580px;
     overflow: hidden;
     opacity: 0;
     transform: translateY(14px);
-    animation: settle 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+    animation: settle 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
   @keyframes settle {
     to { opacity: 1; transform: translateY(0); }
   }
-  @media (prefers-reduced-motion: reduce) {
-    .book-card { animation: none; opacity: 1; transform: none; }
-  }
 
-  /* ---------- left panel: the "shelf" ---------- */
+  /* ---------- left panel ---------- */
   .visual-column {
     flex: 0 0 42%;
     position: relative;
     background: var(--catalina);
     color: var(--alice);
-    padding: 48px 42px;
+    padding: 44px 38px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -122,28 +124,9 @@
     position: absolute;
     inset: 0;
     background:
-      repeating-linear-gradient(
-        90deg,
-        rgba(242,247,255,0.05) 0px,
-        rgba(242,247,255,0.05) 2px,
-        transparent 2px,
-        transparent 26px
-      ),
-      repeating-linear-gradient(
-        90deg,
-        rgba(253,190,52,0.07) 0px,
-        rgba(253,190,52,0.07) 1px,
-        transparent 1px,
-        transparent 91px
-      );
+      repeating-linear-gradient(90deg, rgba(242,247,255,0.04) 0px, rgba(242,247,255,0.04) 2px, transparent 2px, transparent 26px),
+      repeating-linear-gradient(90deg, rgba(253,190,52,0.06) 0px, rgba(253,190,52,0.06) 1px, transparent 1px, transparent 91px);
     pointer-events: none;
-  }
-  .visual-column::after{
-    content:"";
-    position:absolute;
-    left:0; right:0; bottom:0;
-    height:1px;
-    background: linear-gradient(90deg, transparent, rgba(253,190,52,0.5), transparent);
   }
   .visual-inner { position: relative; z-index: 1; }
 
@@ -158,42 +141,35 @@
     font-family: 'Fraunces', serif;
     font-style: italic;
     font-weight: 500;
-    font-size: 22px;
+    font-size: 21px;
     line-height: 1.5;
     color: var(--alice);
-    margin-top: 18px;
+    margin-top: 16px;
     max-width: 32ch;
   }
   .quote-author {
     font-size: 12px;
     color: rgba(242,247,255,0.65);
-    margin-top: 16px;
+    margin-top: 14px;
     font-weight: 500;
   }
   .quote-author::before { content: "— "; }
 
-  .login-highlight-box {
-    background: rgba(242,247,255,0.06);
+  .account-hints {
+    background: rgba(242,247,255,0.07);
     border: 1px solid rgba(242,247,255,0.12);
     border-radius: 6px;
-    padding: 18px 20px;
+    padding: 16px;
+    font-size: 12px;
+    color: rgba(242,247,255,0.9);
   }
-  .login-highlight-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--saffron);
-    margin-bottom: 6px;
-  }
-  .login-highlight-desc {
-    font-size: 12.5px;
-    color: rgba(242,247,255,0.85);
-    line-height: 1.5;
-  }
+  .account-hints strong { color: var(--saffron); display: block; margin-bottom: 6px; }
+  .account-hints code { background: rgba(0,0,0,0.25); padding: 2px 5px; border-radius: 3px; color: #fff; }
 
-  /* ---------- right panel: the form ---------- */
+  /* ---------- right panel ---------- */
   .form-column {
     flex: 1;
-    padding: 56px 52px;
+    padding: 44px 50px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -206,25 +182,85 @@
     letter-spacing: -0.3px;
   }
   .form-subtitle {
-    font-size: 14px;
+    font-size: 13.5px;
     color: var(--muted);
-    margin-top: 6px;
-    margin-bottom: 34px;
+    margin-top: 4px;
+    margin-bottom: 20px;
   }
 
-  .form-group { margin-bottom: 24px; }
+  /* Banner Alert Lỗi */
+  .banner-alert {
+    display: none;
+    padding: 11px 14px;
+    border-radius: 5px;
+    font-size: 13px;
+    margin-bottom: 18px;
+    line-height: 1.4;
+  }
+  .banner-alert.show { display: block; }
+  .banner-alert.error {
+    background: var(--error-bg);
+    color: var(--error);
+    border: 1px solid var(--error-border);
+  }
 
+  /* A1: Google button */
+  .btn-google {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 11px 16px;
+    border: 1.5px solid var(--hairline);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ink);
+    font-size: 13.5px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .btn-google:hover {
+    background: var(--alice);
+    border-color: #b9cee8;
+  }
+  .btn-google svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  /* Divider */
+  .form-divider {
+    display: flex;
+    align-items: center;
+    margin: 18px 0;
+    text-align: center;
+  }
+  .form-divider::before, .form-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .form-divider span {
+    padding: 0 12px;
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Input fields */
+  .form-group { margin-bottom: 16px; }
   .form-label {
     display: block;
     font-size: 12px;
-    font-weight: 500;
-    color: var(--muted);
-    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 6px;
   }
   .form-input {
     width: 100%;
-    padding: 10px 2px;
-    font-size: 15px;
+    padding: 10px 4px;
+    font-size: 14px;
     font-family: inherit;
     color: var(--ink);
     background: transparent;
@@ -234,15 +270,24 @@
     transition: border-color 0.15s ease;
   }
   .form-input:focus { border-bottom-color: var(--egyptian); }
+  .form-input.is-invalid { border-bottom-color: var(--error); }
   .form-input::placeholder { color: #a8b6d6; }
+
+  .error-text {
+    display: block;
+    color: var(--error);
+    font-size: 11.5px;
+    margin-top: 4px;
+    min-height: 14px;
+  }
 
   .form-options {
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 13px;
-    margin-top: 4px;
-    margin-bottom: 24px;
+    margin-top: 2px;
+    margin-bottom: 20px;
   }
   .remember-me {
     display: inline-flex;
@@ -256,23 +301,46 @@
     accent-color: var(--egyptian);
     width: 15px;
     height: 15px;
-    cursor: pointer;
   }
   .forgot-link {
     color: var(--egyptian);
     text-decoration: none;
     font-weight: 500;
-    border-bottom: 1px solid transparent;
   }
-  .forgot-link:hover { border-bottom-color: var(--egyptian); }
+  .forgot-link:hover { text-decoration: underline; }
+/* Hàng điều hướng chân trang */
+  .form-bottom-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    font-size: 13px;
+  }
 
+  .forgot-link {
+    color: var(--egyptian);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .forgot-link:hover { text-decoration: underline; }
+
+  .register-hint {
+    color: var(--muted);
+  }
+
+  .form-link {
+    color: var(--egyptian);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .form-link:hover { text-decoration: underline; }
   .btn-login {
     width: 100%;
     padding: 13px;
     background: var(--egyptian);
     color: #fff;
     border: none;
-    border-radius: 4px;
+    border-radius: 5px;
     font-size: 14px;
     font-weight: 600;
     font-family: inherit;
@@ -280,13 +348,9 @@
     transition: background-color 0.2s ease;
   }
   .btn-login:hover { background: var(--catalina); }
-  .btn-login:focus-visible {
-    outline: 2px solid var(--saffron);
-    outline-offset: 2px;
-  }
 
   .form-footer {
-    margin-top: 24px;
+    margin-top: 20px;
     font-size: 13px;
     color: var(--muted);
     text-align: center;
@@ -295,16 +359,53 @@
     color: var(--egyptian);
     font-weight: 600;
     text-decoration: none;
-    border-bottom: 1px solid transparent;
   }
-  .form-link:hover { border-bottom-color: var(--egyptian); }
+  .form-link:hover { text-decoration: underline; }
 
-  @media (max-width: 720px) {
+  /* ---------- Toast Thành Công Góc Trái Dưới (Gọn gàng) ---------- */
+  .toast-success {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 9999;
+    background: #1e8e3e;
+    color: #ffffff;
+    padding: 12px 20px;
+    border-radius: 6px;
+    box-shadow: 0 6px 20px rgba(30, 142, 62, 0.35);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    transform: translateY(140%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+  }
+  .toast-success.show {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .toast-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .toast-icon svg { width: 12px; height: 12px; }
+
+  @media (max-width: 768px) {
     .book-card { flex-direction: column; width: 100%; min-height: 0; }
-    .visual-column { flex: none; padding: 36px 28px; }
-    .quote-text { font-size: 19px; }
-    .form-column { padding: 36px 28px; }
-    .top-bar, .header { padding-left: 24px; padding-right: 24px; }
+    .visual-column { flex: none; padding: 32px 24px; }
+    .form-column { padding: 32px 24px; }
+    .top-bar, .header { padding-left: 20px; padding-right: 20px; }
+    .toast-success { left: 16px; bottom: 16px; }
   }
 </style>
 </head>
@@ -316,61 +417,270 @@
   </div>
 
   <header class="header">
-    <div class="brand-name">
+    <a href="#" class="brand-name">
       ancient<span class="book-text">BOOK</span><span class="accent-dot"></span>
-    </div>
+    </a>
   </header>
 
   <main class="main-wrapper">
     <div class="book-card">
 
-      <!-- Left Panel: Quote & Reader Space -->
+      <!-- Left Column -->
       <div class="visual-column">
         <div class="visual-inner">
           <span class="panel-kicker">Chào mừng trở lại</span>
           <p class="quote-text">Sách là nguồn tri thức bất tận, mỗi lần mở trang sách là một lần bước vào một chân trời mới.</p>
-          <p class="quote-author">ancientBOOK Editorial</p>
+          <p class="quote-author">Hà Thái Sơn</p>
         </div>
 
         <div class="visual-inner">
-          <div class="login-highlight-box">
-            <div class="login-highlight-title">Độc giả thân thiết</div>
-            <p class="login-highlight-desc">Đăng nhập để xem lại lịch sử mua sách, điểm tích lũy F-Point và tiếp tục nhận các voucher độc quyền từ giỏ hàng của bạn.</p>
+          <div class="account-hints">
+            <strong>Tài khoản thử nghiệm (Mật khẩu: <code>123456</code>):</strong>
+            • <code>admin</code> (Admin)<br>
+            • <code>staff</code> (Staff)<br>
+            • <code>shipper</code> (Shipper)<br>
+            • <code>sonha</code> (Member)<br>
+            • <code>locked_user</code> (Tài khoản bị khóa)
           </div>
         </div>
       </div>
 
-      <!-- Right Panel: Login Form -->
+      <!-- Right Column: Login Form -->
       <div class="form-column">
         <h2 class="form-title">Đăng nhập</h2>
-        <p class="form-subtitle">Nhập thông tin tài khoản để tiếp tục khám phá tri thức</p>
+        <p class="form-subtitle">Cổng đăng nhập tập trung cho toàn bộ hệ thống ancientBOOK</p>
 
-        <form action="#" method="POST" onsubmit="return false;">
+        <!-- Banner cảnh báo lỗi E2, E3 -->
+        <div id="bannerAlert" class="banner-alert"></div>
+
+        <!-- A1: Đăng nhập nhanh bằng tài khoản Google -->
+        <button type="button" class="btn-google" id="btnGoogleLogin">
+          <svg viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          Đăng nhập bằng Google
+        </button>
+
+        <div class="form-divider">
+          <span>hoặc dùng tài khoản hệ thống</span>
+        </div>
+
+        <form id="loginForm" novalidate>
           <div class="form-group">
-            <label class="form-label">Tên đăng nhập hoặc Email</label>
-            <input type="text" class="form-input" value="thaison_dev" placeholder="username hoặc name@domain.com" required>
+            <label class="form-label" for="loginIdentifier">Tên đăng nhập</label>
+            <input type="text" id="loginIdentifier" class="form-input" placeholder="Nhập tên đăng nhập của bạn">
+            <span class="error-text" id="err-loginIdentifier"></span>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Mật khẩu</label>
-            <input type="password" class="form-input" value="••••••••" placeholder="Nhập mật khẩu của bạn" required>
+            <label class="form-label" for="loginPassword">Mật khẩu</label>
+            <input type="password" id="loginPassword" class="form-input" placeholder="Nhập mật khẩu của bạn">
+            <span class="error-text" id="err-loginPassword"></span>
           </div>
 
-          <div class="form-options">
-            <label class="remember-me">
-              <input type="checkbox" checked> Ghi nhớ đăng nhập
-            </label>
-            <a href="#" class="forgot-link">Quên mật khẩu?</a>
-          </div>
 
-          <button type="submit" class="btn-login">Đăng nhập tài khoản</button>
+          <button type="submit" class="btn-login" id="btnLogin">Đăng nhập</button>
         </form>
 
-        <p class="form-footer">Chưa có tài khoản độc giả? <a href="#" class="form-link">Đăng ký ngay</a></p>
+<div class="form-bottom-row">
+          <a href="javascript:void(0)" class="forgot-link" id="linkForgotPassword">Quên mật khẩu?</a>
+          <span class="register-hint">Chưa có tài khoản độc giả? <a href="javascript:void(0)" class="form-link" id="linkRegister">Đăng ký ngay</a></span>
+        </div>
       </div>
 
     </div>
   </main>
 
+  <!-- Hộp thông báo thành công màu xanh ở góc trái dưới -->
+  <div id="toastSuccess" class="toast-success">
+    <div class="toast-icon">
+      <svg viewBox="0 0 16 16" fill="none">
+        <path d="M3 8.5L6.5 12L13 4.5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <span>Đăng nhập thành công!</span>
+  </div>
+
+  <script>
+    const userDatabase = [
+      {
+        username: "admin",
+        email: "admin@ancientbook.vn",
+        password: "123456",
+        role: "Admin",
+        status: "Active",
+        name: "Quản trị viên Hệ thống"
+      },
+      {
+        username: "staff",
+        email: "staff@ancientbook.vn",
+        password: "123456",
+        role: "Staff",
+        status: "Active",
+        name: "Nguyễn Văn Kho"
+      },
+      {
+        username: "shipper",
+        email: "shipper@ancientbook.vn",
+        password: "123456",
+        role: "Shipper",
+        status: "Active",
+        name: "Trần Giao Hàng"
+      },
+      {
+        username: "sonha",
+        email: "thaison@example.com",
+        password: "123456",
+        role: "Member",
+        status: "Active",
+        name: "Hà Thái Sơn"
+      },
+      {
+        username: "locked_user",
+        email: "locked@example.com",
+        password: "123456",
+        role: "Member",
+        status: "Locked",
+        name: "Người dùng bị khóa"
+      }
+    ];
+
+    const form = document.getElementById('loginForm');
+    const bannerAlert = document.getElementById('bannerAlert');
+    const btnLogin = document.getElementById('btnLogin');
+    const toastSuccess = document.getElementById('toastSuccess');
+
+    function showBannerError(message) {
+      bannerAlert.className = 'banner-alert show error';
+      bannerAlert.textContent = message;
+    }
+
+    function clearBanner() {
+      bannerAlert.className = 'banner-alert';
+      bannerAlert.textContent = '';
+    }
+
+    function showToastSuccess() {
+      toastSuccess.classList.add('show');
+    }
+
+    function hideToastSuccess() {
+      toastSuccess.classList.remove('show');
+    }
+
+    function setFieldError(id, msg) {
+      const el = document.getElementById(id);
+      const err = document.getElementById(`err-${id}`);
+      if (el) el.classList.add('is-invalid');
+      if (err) err.textContent = msg;
+    }
+
+    function clearFieldError(id) {
+      const el = document.getElementById(id);
+      const err = document.getElementById(`err-${id}`);
+      if (el) el.classList.remove('is-invalid');
+      if (err) err.textContent = '';
+    }
+
+    // 1. Luồng chính & Xử lý đăng nhập
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      clearBanner();
+      hideToastSuccess();
+      clearFieldError('loginIdentifier');
+      clearFieldError('loginPassword');
+
+      const identifier = document.getElementById('loginIdentifier').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+
+      let hasEmpty = false;
+
+      // E1: Kiểm tra bỏ trống
+      if (!identifier) {
+        setFieldError('loginIdentifier', 'Vui lòng nhập Tên đăng nhập hoặc Email.');
+        hasEmpty = true;
+      }
+      if (!password) {
+        setFieldError('loginPassword', 'Vui lòng nhập Mật khẩu.');
+        hasEmpty = true;
+      }
+      if (hasEmpty) return;
+
+      // E2 / BR01: Kiểm tra tài khoản & mật khẩu
+      const user = userDatabase.find(u => 
+        (u.username.toLowerCase() === identifier.toLowerCase() || u.email.toLowerCase() === identifier.toLowerCase())
+      );
+
+      if (!user || user.password !== password) {
+        showBannerError('Tên đăng nhập hoặc mật khẩu không chính xác.');
+        return;
+      }
+
+      // E3 / BR03: Kiểm tra trạng thái tài khoản
+      if (user.status !== 'Active') {
+        showBannerError('Tài khoản của bạn hiện đang bị khóa. Vui lòng liên hệ hotline để được hỗ trợ.');
+        return;
+      }
+
+      handleSuccessfulLogin();
+    });
+
+    // Thông báo góc trái dưới & hoàn tất đăng nhập
+    function handleSuccessfulLogin() {
+      btnLogin.disabled = true;
+      btnLogin.innerText = 'Đang chuyển hướng...';
+
+      // Kích hoạt toast màu xanh ở góc dưới bên trái
+      showToastSuccess();
+
+      setTimeout(() => {
+        btnLogin.disabled = false;
+        btnLogin.innerText = 'Đăng nhập';
+        hideToastSuccess();
+      }, 2500);
+    }
+
+    // 2. Luồng A1: Google Login
+    document.getElementById('btnGoogleLogin').addEventListener('click', function() {
+      clearBanner();
+      hideToastSuccess();
+      const mockEmail = prompt("Giả lập đăng nhập qua Google:\nNhập email Google của bạn (hoặc nhấn OK để dùng mặc định):", "thaison@example.com");
+      if (!mockEmail) return;
+
+      const cleanEmail = mockEmail.trim().toLowerCase();
+      let user = userDatabase.find(u => u.email.toLowerCase() === cleanEmail);
+
+      if (user) {
+        if (user.status !== 'Active') {
+          showBannerError('Tài khoản của bạn hiện đang bị khóa. Vui lòng liên hệ hotline để được hỗ trợ.');
+          return;
+        }
+        handleSuccessfulLogin();
+      } else {
+        const newUser = {
+          username: cleanEmail.split('@')[0],
+          email: cleanEmail,
+          password: '123456',
+          role: 'Member',
+          status: 'Active',
+          name: cleanEmail.split('@')[0],
+          fPoint: 0
+        };
+        userDatabase.push(newUser);
+        handleSuccessfulLogin();
+      }
+    });
+
+    // 3. Luồng A2 & A3
+    document.getElementById('linkRegister').addEventListener('click', function() {
+      alert("Chuyển hướng sang màn hình Đăng ký tài khoản mới (UC01).");
+    });
+    document.getElementById('linkForgotPassword').addEventListener('click', function() {
+      alert("Chuyển sang luồng Khôi phục mật khẩu (Gửi liên kết xác minh qua Email).");
+    });
+  </script>
 </body>
 </html>
