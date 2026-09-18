@@ -870,8 +870,8 @@
         let newHtml = `<span class="val-new">${log.newValue}</span>`;
 
         if (log.isPasswordChange) {
-          oldHtml = `<span class="val-security">*** (Bảo mật)</span>`;
-          newHtml = `<span class="val-security">*** (Đã đổi mới)</span>`;
+          oldHtml = `<span class="val-security">***</span>`;
+          newHtml = `<span class="val-security">***</span>`;
         }
 
         return `

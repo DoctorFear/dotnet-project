@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ancientBOOK — E-Reader Toán 3, Giọng đọc AI & Copilot</title>
+<title>ancientBOOK — E-Reader, Giọng đọc AI & Copilot</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,800;1,9..144,700&family=Inter:wght@400;500;600;700;800;900&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,800;1,9..144,700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --alice: #F2F7FF;
@@ -20,6 +20,7 @@
     --danger: #d93838;
     --danger-bg: #fdf2f2;
     --success: #1e8e3e;
+    --mono: 'JetBrains Mono', monospace;
 
     --reader-workspace: #c5d2e8;
     --dock-bg: rgba(255, 255, 255, 0.96);
@@ -322,7 +323,7 @@
   }
   .spread-page.left { border-right: 1px solid #f1f5f9; }
 
-  /* Đoạn văn đọc được khi click chuột */
+  /* Khối văn bản hỗ trợ đọc âm thanh khi click */
   .tts-block {
     cursor: pointer;
     border-radius: 4px;
@@ -426,7 +427,7 @@
   .credits-block strong { color: #0f172a; }
 
   /* ========================================================
-     3. THANH ĐIỀU KHIỂN ĐÁY NỔI (BOTTOM DOCK) ĐA NĂNG
+     3. THANH ĐIỀU KHIỂN ĐÁY NỔI (BOTTOM DOCK)
      ======================================================== */
   .bottom-dock {
     position: fixed;
@@ -462,45 +463,75 @@
   .btn-dock-tool:hover { background: var(--alice); color: var(--egyptian); }
   .btn-dock-tool.active { background: #dbeafe; color: var(--egyptian); }
 
-  /* Ô Nhập số trang & Đi đến trang */
+  /* Cải tiến giao diện: Ô Nhập số trang & Nút Đến */
   .page-jump-box {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 4px;
-    background: var(--alice);
-    padding: 2px 8px 2px 10px;
+    gap: 6px;
+    background: #ffffff;
+    padding: 3px 6px 3px 12px;
     border-radius: 999px;
     border: 1px solid var(--hairline);
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--catalina);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
   }
   .page-input-num {
-    width: 38px;
+    width: 44px;
+    height: 26px;
     text-align: center;
-    border: 1px solid var(--hairline);
-    border-radius: 4px;
-    padding: 3px 2px;
+    border: 1.5px solid var(--hairline);
+    border-radius: 6px;
+    padding: 0 4px;
     font-size: 12px;
     font-weight: 800;
-    font-family: inherit;
+    font-family: var(--mono);
     color: var(--egyptian);
-    background: #fff;
+    background: #fafcff;
     outline: none;
+    transition: all 0.15s ease;
   }
-  .page-input-num:focus { border-color: var(--egyptian); }
+  .page-input-num:focus {
+    border-color: var(--egyptian);
+    background: #ffffff;
+    box-shadow: 0 0 0 2px rgba(11, 64, 156, 0.15);
+  }
+  .page-input-num::-webkit-outer-spin-button,
+  .page-input-num::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .page-total-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 4px;
+    user-select: none;
+  }
   .btn-jump-go {
     background: var(--egyptian);
-    color: #fff;
+    color: #ffffff;
     border: none;
-    border-radius: 4px;
-    padding: 3px 7px;
-    font-size: 11px;
+    border-radius: 999px;
+    height: 26px;
+    padding: 0 12px;
+    font-size: 11.5px;
     font-weight: 700;
     cursor: pointer;
     font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, transform 0.1s ease;
   }
-  .btn-jump-go:hover { background: var(--catalina); }
+  .btn-jump-go:hover {
+    background: var(--catalina);
+    transform: translateY(-0.5px);
+  }
+  .btn-jump-go:active {
+    transform: translateY(0);
+  }
 
   /* Khối Giọng đọc Audio AI trên Dock */
   .audio-dock-group {
@@ -629,7 +660,7 @@
     text-align: left;
     background: #fff;
     border: 1px solid var(--hairline);
-    padding: 6px 10px;
+    padding: 8px 10px;
     border-radius: 6px;
     font-size: 11.5px;
     font-weight: 600;
@@ -735,7 +766,7 @@
 </head>
 <body>
 
-  <!-- 1. TOP UTILITY BAR (GIỮ NGUYÊN) -->
+  <!-- 1. TOP UTILITY BAR -->
   <div class="top-bar">
     <div>Miễn phí giao hàng toàn quốc cho đơn từ <strong>250.000 đ</strong> • Cam kết 100% sách chính hãng</div>
     <ul class="top-links">
@@ -743,7 +774,7 @@
     </ul>
   </div>
 
-  <!-- 2. NAVBAR STOREFRONT (GIỮ NGUYÊN HOÀN TOÀN NHƯ CŨ) -->
+  <!-- 2. NAVBAR STOREFRONT -->
   <header class="store-header">
     <div class="navbar-main">
       <a href="#" class="brand-logo">
@@ -802,7 +833,7 @@
       </div>
     </div>
 
-    <!-- SUB-NAVBAR KÈM MEGA MENU (GIỮ NGUYÊN) -->
+    <!-- SUB-NAVBAR KÈM MEGA MENU -->
     <div class="navbar-sub">
       <div class="sub-nav-content">
         <ul class="nav-categories">
@@ -844,7 +875,7 @@
        ======================================================== -->
   <main class="hybrid-reading-workspace">
 
-    <!-- KHỐI GIỮA (CENTER): SÁCH MỞ ĐÔI -->
+    <!-- KHỐI GIỮA: SÁCH MỞ ĐÔI -->
     <section class="book-center-stage" id="bookCenterStage">
 
       <!-- Nút Lùi trang nổi mép trái -->
@@ -860,7 +891,7 @@
       <!-- KHUNG HAI TRANG SÁCH MỞ ĐÔI -->
       <div class="book-double-spread" id="bookSpreadElement">
         
-        <!-- TRANG TRÁI (Trang 2: Bìa Lót) -->
+        <!-- TRANG TRÁI (Bìa Lót) -->
         <div class="spread-page left">
           <div>
             <div class="math-authors tts-block" onclick="playTtsFromElement(this)">
@@ -879,7 +910,7 @@
           </div>
         </div>
 
-        <!-- TRANG PHẢI (Trang 3: Ký hiệu quy ước) -->
+        <!-- TRANG PHẢI (Ký hiệu quy ước) -->
         <div class="spread-page right">
           <div>
             <div class="symbol-box">
@@ -923,7 +954,7 @@
 
       <!-- THANH ĐIỀU KHIỂN NỔI DƯỚI ĐÁY -->
       <div class="bottom-dock">
-        <!-- 1. Nút Lùi trang (Trước) -->
+        <!-- 1. Nút Lùi trang -->
         <button type="button" class="btn-dock-tool" onclick="prevSpread()" title="Trang trước">
           <svg class="icon" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
@@ -932,25 +963,23 @@
         <div class="page-jump-box">
           <span>Trang</span>
           <input type="number" id="inputPageTarget" class="page-input-num" value="2" min="1" max="184" onkeypress="if(event.key==='Enter') executePageJump()">
-          <span style="color:var(--muted); font-size:11px;">/ 184</span>
+          <span class="page-total-label">/ 184</span>
           <button type="button" class="btn-jump-go" onclick="executePageJump()" title="Đến trang">Đến</button>
         </div>
 
-        <!-- 3. Nút Tiến trang (Sau) -->
+        <!-- 3. Nút Tiến trang -->
         <button type="button" class="btn-dock-tool" onclick="nextSpread()" title="Trang sau">
           <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
 
         <div class="dock-sep"></div>
 
-        <!-- 4. KHỐI GIỌNG ĐỌC AUDIO AI (Play/Pause, Tốc độ, Giọng Nam/Nữ) -->
+        <!-- 4. KHỐI GIỌNG ĐỌC AUDIO AI -->
         <div class="audio-dock-group">
-          <!-- Nút Play / Pause Giọng đọc -->
           <button type="button" class="btn-play-speech-main" id="btnPlaySpeech" onclick="toggleTtsSpeech()" title="Nghe sách / Tạm dừng">
             <svg class="icon" id="iconSpeechPlay" viewBox="0 0 24 24" style="fill:currentColor; width:13px; height:13px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
           </button>
 
-          <!-- Tốc độ đọc -->
           <select id="selectTtsRate" class="select-dock-tts" onchange="changeTtsRate(this.value)" title="Tốc độ đọc">
             <option value="0.85">0.85x</option>
             <option value="1.0" selected>1.0x</option>
@@ -958,7 +987,6 @@
             <option value="1.5">1.5x</option>
           </select>
 
-          <!-- Giọng Nam / Nữ -->
           <select id="selectTtsVoice" class="select-dock-tts" onchange="changeTtsGender(this.value)" title="Chọn giọng đọc">
             <option value="female" selected>Nữ AI</option>
             <option value="male">Nam AI</option>
@@ -967,7 +995,7 @@
 
         <div class="dock-sep"></div>
 
-        <!-- Thu nhỏ / Phóng to / Fullscreen -->
+        <!-- Thu nhỏ / Phóng to / Toàn màn hình -->
         <button type="button" class="btn-dock-tool" onclick="zoomSpread(-0.1)" title="Thu nhỏ">
           <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
         </button>
@@ -993,14 +1021,14 @@
 
     </section>
 
-    <!-- CỘT PHẢI: SLIDEBAR COPILOT TRỢ LÝ AI -->
+    <!-- CỘT PHẢI: SLIDEBAR COPILOT TRỢ LÝ AI ĐỌC SÁCH TỔNG QUÁT -->
     <aside class="copilot-sidebar" id="copilotSidebar">
       <div class="copilot-header">
         <div class="copilot-identity">
           <div class="copilot-avatar">AI</div>
           <div>
             <div class="copilot-title-text">ancientBOOK Copilot</div>
-            <div class="copilot-status">Gia sư giải Toán & Phân tích</div>
+            <div class="copilot-status">Trợ lý Đọc & Nghiên cứu Sách</div>
           </div>
         </div>
         <button type="button" onclick="toggleCopilot()" style="border:none;background:none;cursor:pointer;color:var(--muted);font-size:16px;">✕</button>
@@ -1009,17 +1037,17 @@
       <div class="copilot-chat-body" id="copilotChatBody">
         <div class="chat-msg bot">
           <div class="msg-bubble">
-            Xin chào Sơn! Tôi là trợ lý AI học tập. Cuốn sách đang mở là <b>Toán Lớp 3</b>. Bạn có thể bôi đen bất kỳ bài tập, công thức nào trên trang sách hoặc chọn câu hỏi nhanh dưới đây để tôi hướng dẫn từng bước:
+            Xin chào Sơn! Tôi là trợ lý đồng hành đọc sách thông minh. Bạn có thể <b>bôi đen bất kỳ câu văn, thuật ngữ hoặc đoạn trích</b> trên trang để tra cứu nhanh, hoặc bấm chọn các tác vụ hỗ trợ bên dưới:
             
             <div class="preset-query-chips">
-              <button class="btn-query-chip" onclick="askCopilotPreset('Giải thích quy ước ký hiệu: Số ? và Đ S ?')">
-                <span>📌</span> Giải thích ký hiệu quy ước sách
+              <button class="btn-query-chip" onclick="askCopilotPreset('Tóm tắt ý chính và thông điệp của trang sách đang mở')">
+                <span>📝</span> Tóm tắt nội dung trang này
               </button>
-              <button class="btn-query-chip" onclick="askCopilotPreset('Tóm tắt chương trình trọng tâm của môn Toán 3')">
-                <span>📐</span> Trọng tâm kiến thức Toán 3
+              <button class="btn-query-chip" onclick="askCopilotPreset('Giải thích bối cảnh lịch sử và thuật ngữ khó trong sách')">
+                <span>🔍</span> Giải thích thuật ngữ & bối cảnh
               </button>
-              <button class="btn-query-chip" onclick="askCopilotPreset('Phương pháp hướng dẫn bé học bảng nhân và chia hiệu quả')">
-                <span>💡</span> Mẹo học bảng nhân, chia
+              <button class="btn-query-chip" onclick="askCopilotPreset('Gợi ý câu hỏi đào sâu tư duy và thảo luận về tác phẩm này')">
+                <span>💡</span> Gợi ý câu hỏi suy ngẫm
               </button>
             </div>
           </div>
@@ -1027,7 +1055,7 @@
       </div>
 
       <div class="copilot-input-box">
-        <input type="text" id="copilotInput" class="copilot-input" placeholder="Hỏi AI về bài toán trên trang..." onkeypress="if(event.key==='Enter') submitCopilotMessage()">
+        <input type="text" id="copilotInput" class="copilot-input" placeholder="Hỏi AI về nội dung, nhân vật, ý nghĩa..." onkeypress="if(event.key==='Enter') submitCopilotMessage()">
         <button type="button" class="btn-copilot-send" onclick="submitCopilotMessage()">
           <svg class="icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
@@ -1036,7 +1064,7 @@
 
   </main>
 
-  <!-- 4. MODAL XÁC NHẬN ĐĂNG XUẤT (GIỮ NGUYÊN) -->
+  <!-- 4. MODAL XÁC NHẬN ĐĂNG XUẤT -->
   <div class="modal-backdrop" id="logoutModal" onclick="handleBackdropClick(event)">
     <div class="modal-box">
       <div class="modal-header">
@@ -1056,7 +1084,7 @@
     </div>
   </div>
 
-  <!-- TOAST THÔNG BÁO MÀU XANH Ở GÓC BÊN TRÁI DƯỚI (GIỮ NGUYÊN) -->
+  <!-- TOAST THÔNG BÁO THÀNH CÔNG -->
   <div id="toastSuccessBottom" class="toast-success-bottom">
     <div class="toast-icon">
       <svg viewBox="0 0 16 16" fill="none">
@@ -1071,7 +1099,7 @@
     let currentScale = 1.0;
     let selectedTextBuffer = '';
 
-    // Trạng thái giọng đọc AI (TTS)
+    // Quản lý trạng thái Giọng đọc AI (TTS)
     let isTtsPlaying = false;
     let currentSpeechRate = 1.0;
     let selectedVoiceGender = 'female';
@@ -1091,7 +1119,6 @@
       window.speechSynthesis.onvoiceschanged = loadVoices;
     }
 
-    // Chọn giọng tiếng Việt phù hợp theo Giới tính Nam / Nữ
     function getMatchedVoice(gender) {
       const viVoices = availableVoices.filter(v => v.lang && v.lang.toLowerCase().includes('vi'));
       if (viVoices.length === 0) return null;
@@ -1105,7 +1132,6 @@
       }
     }
 
-    // Bấm vào bất kỳ đoạn nào trong sách để bắt đầu nghe từ đoạn đó
     function playTtsFromElement(el) {
       stopTtsSpeech();
       currentReadingElement = el;
@@ -1128,8 +1154,6 @@
         const utter = new SpeechSynthesisUtterance(textToRead);
         utter.lang = 'vi-VN';
         utter.rate = currentSpeechRate;
-
-        // Giả lập cao độ pitch để phân biệt Nam (trầm) và Nữ (trong)
         utter.pitch = (selectedVoiceGender === 'female') ? 1.15 : 0.82;
 
         const voice = getMatchedVoice(selectedVoiceGender);
@@ -1137,7 +1161,6 @@
 
         utter.onend = () => {
           clearTtsHighlight();
-          // Tự động đọc tiếp đoạn kế tiếp nếu có
           const allBlocks = Array.from(document.querySelectorAll('.tts-block'));
           const curIdx = allBlocks.indexOf(currentReadingElement);
           if (curIdx !== -1 && curIdx < allBlocks.length - 1 && isTtsPlaying) {
@@ -1156,7 +1179,6 @@
       }
     }
 
-    // Bật / Tắt nút Nghe sách trên thanh Dock
     function toggleTtsSpeech() {
       if (isTtsPlaying) {
         stopTtsSpeech();
@@ -1214,7 +1236,6 @@
       if (isNaN(targetPage) || targetPage < 1) targetPage = 1;
       if (targetPage > 184) targetPage = 184;
 
-      // Trang đôi: Nếu nhập số lẻ, đưa về số chẵn liền trước để hiển thị cặp
       let left = (targetPage % 2 === 0) ? targetPage : (targetPage > 1 ? targetPage - 1 : 1);
       let right = left + 1;
 
@@ -1242,7 +1263,7 @@
     }
 
     /* ========================================================
-       C. ẨN / HIỆN NAVBAR & COPILOT & ZOOM
+       C. ẨN / HIỆN NAVBAR, COPILOT & ZOOM
        ======================================================== */
     function toggleNavbarVisibility() {
       document.body.classList.toggle('navbar-hidden');
@@ -1281,7 +1302,7 @@
     }
 
     /* ========================================================
-       D. COPILOT AI
+       D. COPILOT TRỢ LÝ ĐỌC SÁCH THÔNG MINH
        ======================================================== */
     document.addEventListener('mouseup', function(e) {
       const sel = window.getSelection();
@@ -1305,28 +1326,29 @@
       const copilot = document.getElementById('copilotSidebar');
       if (copilot.classList.contains('collapsed')) toggleCopilot();
 
-      askCopilotPreset(`Hướng dẫn và giải thích nội dung: "${selectedTextBuffer}"`);
+      askCopilotPreset(`Giải thích và làm rõ trích đoạn: "${selectedTextBuffer}"`);
     }
 
     function askCopilotPreset(question) {
       appendChatMessage('user', question);
       setTimeout(() => {
         let answer = '';
-        if (question.includes('ký hiệu')) {
-          answer = `<b>Hướng dẫn giải thích quy ước:</b><br>
-          1. <b>[Số ?]</b>: Yêu cầu học sinh tính toán nhẩm hoặc đặt tính rồi điền số kết quả đúng vào ô trống.<br>
-          2. <b>[&gt; &lt; = ?]</b>: So sánh giá trị 2 vế của phép tính để điền dấu tương ứng.<br>
-          3. <b>[Đ S ?]</b>: Kiểm tra từng mệnh đề xem đúng (ghi Đ) hay sai (ghi S).`;
-        } else if (question.includes('Trọng tâm')) {
-          answer = `<b>Kiến thức trọng tâm Toán 3 bao gồm:</b><br>
-          • Bảng nhân và chia từ 6 đến 9.<br>
-          • Các số trong phạm vi 10.000 và 100.000.<br>
-          • Khái niệm ban đầu về diện tích (xăng-ti-mét vuông), chu vi hình chữ nhật và hình vuông.`;
+        if (question.includes('Tóm tắt')) {
+          answer = `<b>Tóm tắt cốt lõi:</b><br>
+          • <b>Chủ đề:</b> Phần mở đầu tập trung chuẩn hóa các quy ước nhận diện và danh mục biên soạn của ấn phẩm.<br>
+          • <b>Ý chính:</b> Cung cấp nền tảng ký hiệu và cấu trúc giúp bạn theo dõi toàn bộ các chương tiếp theo dễ dàng hơn.`;
+        } else if (question.includes('thuật ngữ')) {
+          answer = `<b>Phân tích thuật ngữ & Bối cảnh:</b><br>
+          Hệ thống đang hỗ trợ rà soát các từ vựng chuyên ngành, ngữ cảnh xuất bản và hệ thống ký hiệu chuẩn. Bạn có thể bôi đen trực tiếp từ hoặc câu trên trang để nhận định nghĩa tức thì.`;
+        } else if (question.includes('câu hỏi')) {
+          answer = `<b>Gợi ý câu hỏi suy ngẫm & Đào sâu:</b><br>
+          1. Các quy ước ký hiệu này giúp người học tự học hiệu quả hơn như thế nào?<br>
+          2. Nội dung mở đầu này tạo tiền đề gì cho các phần kiến thức cốt lõi tiếp theo?`;
         } else {
-          answer = `Đang phân tích dữ liệu trang sách Toán 3. Yêu cầu: <i>"${question}"</i> đã được tiếp nhận. AI sẵn sàng hướng dẫn giải bài mẫu từng bước!`;
+          answer = `Tôi đã tiếp nhận nội dung: <i>"${question}"</i>. Dựa trên trang sách đang mở, tôi sẵn sàng phân tích ngữ cảnh và hướng dẫn chi tiết theo yêu cầu của bạn!`;
         }
         appendChatMessage('bot', answer);
-      }, 600);
+      }, 500);
     }
 
     function submitCopilotMessage() {
@@ -1338,8 +1360,8 @@
       input.value = '';
 
       setTimeout(() => {
-        appendChatMessage('bot', `Hệ thống ghi nhận câu hỏi: <i>"${text}"</i>. Theo chương trình chuẩn SGK Toán 3, ta thực hiện tính toán từ trái sang phải hoặc nhân chia trước, cộng trừ sau.`);
-      }, 600);
+        appendChatMessage('bot', `Tôi đã ghi nhận câu hỏi: <i>"${text}"</i>. Dựa trên ngữ cảnh của cuốn sách, tôi đang phân tích các luận điểm để đưa ra câu trả lời phù hợp nhất.`);
+      }, 500);
     }
 
     function appendChatMessage(role, html) {
