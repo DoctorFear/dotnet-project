@@ -1,0 +1,165 @@
+.navbarSub {
+    border-top: 1px solid var(--hairline, #dce6f7);
+    background: var(--white, #ffffff);
+    position: relative;
+    width: 100%;
+}
+
+.subNavContent {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.navCategories {
+    display: flex;
+    list-style: none;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+}
+
+.categoryDropdownWrapper {
+    position: relative;
+}
+
+.categoryTrigger {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 12px;
+    font-weight: 700;
+    color: var(--catalina, #0D226B);
+    text-decoration: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+    .categoryTrigger:hover {
+        background: var(--alice, #F2F7FF);
+    }
+
+.iconChevron {
+    transition: transform 0.2s ease;
+}
+
+.categoryDropdownWrapper:hover .iconChevron {
+    transform: rotate(180deg);
+}
+
+.megaCategoriesMenu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 560px;
+    background: var(--white, #ffffff);
+    border: 1px solid var(--hairline, #dce6f7);
+    border-radius: 8px;
+    box-shadow: 0 12px 32px -8px rgba(7, 18, 51, 0.15);
+    padding: 14px 16px;
+    display: none;
+    z-index: 1000;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px 6px;
+}
+
+.megaPublisherMenu {
+    width: 420px;
+}
+
+.categoryDropdownWrapper:hover .megaCategoriesMenu {
+    display: grid;
+}
+
+.megaCategoryItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 5px;
+    text-decoration: none;
+    color: var(--ink, #071233);
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+    .megaCategoryItem:hover {
+        background: var(--alice, #F2F7FF);
+        color: var(--egyptian, #0B409C);
+    }
+
+.catBullet {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--hairline, #dce6f7);
+    flex-shrink: 0;
+}
+
+.megaCategoryItem:hover .catBullet {
+    background: var(--saffron, #FDBE34);
+}
+
+.navLinkPromos {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 12px;
+    color: var(--muted, #5b6e99);
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+    .navLinkPromos:hover {
+        color: var(--egyptian, #0B409C);
+        background: var(--alice, #F2F7FF);
+    }
+
+.badgeTagVoucher {
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 2px;
+}
+
+.icon {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.membershipInfo {
+    font-size: 12px;
+    color: var(--muted, #5b6e99);
+}
+
+.membershipRankText {
+    color: var(--catalina, #0D226B);
+}
+
+@media (max-width: 640px) {
+    .subNavContent {
+        padding: 0 16px;
+    }
+
+    .membershipInfo {
+        display: none;
+    }
+}

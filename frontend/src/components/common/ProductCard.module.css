@@ -1,0 +1,141 @@
+.productCard {
+    background: #ffffff;
+    border: 1px solid var(--hairline, #dce6f7);
+    border-radius: 8px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+    .productCard:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px -4px rgba(7, 12, 51, 0.08);
+    }
+
+.cardTopAction {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+}
+
+.removeWishBtn {
+    background: var(--danger-bg, #fdf2f2);
+    border: 1px solid var(--hairline, #dce6f7);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--danger, #d93838);
+    font-size: 14px;
+}
+
+.bookCoverWrap {
+    width: 100%;
+    height: 190px;
+    background: #fafcff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    overflow: hidden;
+    padding: 6px;
+}
+
+.bookCoverImg {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+.categoriesRow {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    min-height: 20px;
+}
+
+.categoryChip {
+    background: #eef2ff;
+    color: #3730a3;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.formatBadges {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.bookTitle {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--catalina, #0D226B);
+    line-height: 1.4;
+    height: 38px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    margin: 0;
+}
+
+.bookAuthor {
+    font-size: 12px;
+    color: var(--muted, #5b6e99);
+    font-weight: 500;
+    margin: 0;
+}
+
+.priceRow {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: auto;
+    padding-top: 4px;
+}
+
+.salePrice {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--egyptian, #0B409C);
+}
+
+.subPriceInfo {
+    font-size: 11px;
+    color: var(--muted, #5b6e99);
+}
+
+.btnAddCartFast {
+    width: 100%;
+    padding: 8px;
+    background: var(--alice, #F2F7FF);
+    color: var(--egyptian, #0B409C);
+    border: 1px solid var(--hairline, #dce6f7);
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-top: 4px;
+}
+
+    .btnAddCartFast:hover {
+        background: var(--egyptian, #0B409C);
+        color: #ffffff;
+        border-color: var(--egyptian, #0B409C);
+    }

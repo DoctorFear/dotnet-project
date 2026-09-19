@@ -163,6 +163,9 @@ src/
 │       └── audit-log/
 │           ├── AuditTable.tsx
 │           └── AuditTable.module.css
+├── pages/                   # Giao diện tổng thể của từng màn hình/trang hoàn chỉnh
+│   ├── HomePage.tsx         
+│   └── BookDetailPage.tsx           
 ├── App.tsx                  # Root View kết nối Controller Hook & Component
 ├── App.module.css           # Bố cục trang chính
 ├── index.css                # Biến CSS toàn cục (:root) & Reset CSS

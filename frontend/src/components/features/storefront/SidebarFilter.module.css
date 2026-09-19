@@ -1,0 +1,126 @@
+.searchSidebar {
+    background: var(--white, #ffffff);
+    border: 1px solid var(--hairline, #dce6f7);
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.sidebarSectionTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--catalina, #0D226B);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--hairline, #dce6f7);
+    padding-bottom: 8px;
+}
+
+.icon {
+    width: 17px;
+    height: 17px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.filterGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filterLabel {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink, #071233);
+}
+
+.sidebarInput {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    border: 1.5px solid var(--hairline, #dce6f7);
+    border-radius: 5px;
+    outline: none;
+    background: #fafcff;
+    color: var(--ink, #071233);
+}
+
+    .sidebarInput:focus {
+        border-color: var(--egyptian, #0B409C);
+        background: #ffffff;
+    }
+
+.optimizedListBox {
+    max-height: 140px;
+    overflow-y: auto;
+    border: 1px solid var(--hairline, #dce6f7);
+    border-radius: 5px;
+    padding: 6px;
+    background: #fafcff;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.optimizedItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    cursor: pointer;
+    padding: 2px 4px;
+    color: var(--ink, #071233);
+}
+
+    .optimizedItem input[type="checkbox"] {
+        accent-color: var(--egyptian, #0B409C);
+        cursor: pointer;
+    }
+
+.starFilterOption {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+    .starFilterOption:hover {
+        background: var(--alice, #F2F7FF);
+    }
+
+.starsGold {
+    color: var(--saffron, #FDBE34);
+    font-size: 14px;
+}
+
+.btnResetFilters {
+    width: 100%;
+    padding: 9px;
+    background: var(--alice, #F2F7FF);
+    color: var(--egyptian, #0B409C);
+    border: 1px dashed var(--egyptian, #0B409C);
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s ease;
+}
+
+    .btnResetFilters:hover {
+        background: var(--danger-bg, #fdf2f2);
+        color: var(--danger, #d93838);
+        border-color: var(--danger, #d93838);
+    }
