@@ -7,6 +7,7 @@ import WishListPage from './pages/WishListPage';
 import MyLibraryPage from './pages/MyLibraryPage';
 import { CartPage } from './pages/CartPage';
 import { CheckoutPage } from './pages/CheckoutPage';
+import RefundPage from './pages/RefundPage';
 
 export const App: React.FC = () => {
     return (
@@ -29,7 +30,10 @@ export const App: React.FC = () => {
                     <Route path="/cart" element={<CartPage />} />
                     
                     {/* Trang thanh toán*/}
-                    <Route path="/check-out" element={<CheckoutPage />} />
+                    <Route path="/checkout" element={<CheckoutPage />} />
+                    
+                    {/* Trang form hoàn tiền*/}
+                    <Route path="/refund" element={<RefundPage />} />
                 </Routes>
             </Router>
         </UserProvider>
