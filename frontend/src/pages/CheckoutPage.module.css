@@ -1,0 +1,406 @@
+:root {
+    --alice: #F2F7FF;
+    --egyptian: #0B409C;
+    --catalina: #0D226B;
+    --ink: #071233;
+    --saffron: #FDBE34;
+    --muted: #5b6e99;
+    --hairline: #dce6f7;
+    --white: #ffffff;
+    --danger: #d93838;
+    --danger-bg: #fdf2f2;
+    --success: #15803d;
+    --success-bg: #ecfdf5;
+}
+
+.checkoutBody {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--alice);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.checkoutBody button, 
+.checkoutBody input, 
+.checkoutBody select, 
+.checkoutBody textarea {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.icon {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* CHECKOUT LAYOUT CONTAINER */
+.checkoutContainer {
+    max-width: 1300px;
+    width: 100%;
+    margin: 32px auto;
+    padding: 0 24px;
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 28px;
+}
+
+.checkoutRightColumn {
+    align-self: self-end;
+}
+
+.checkoutCard {
+    background: var(--white);
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    padding: 24px;
+    padding-top: 8px;
+    box-shadow: 0 4px 12px -2px rgba(7, 12, 51, 0.04);
+}
+
+.checkoutCardTitle {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--catalina);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--hairline);
+    padding-bottom: 10px;
+    margin: 16px 0;
+}
+
+.backToShop {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--egyptian);
+    text-decoration: none;
+    margin-bottom: 16px;
+}
+.backToShop:hover {
+    text-decoration: underline;
+}
+
+/* CHỌN ĐỊA CHỈ */
+.addressOptionsList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.addressCardItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    background: #fafcff;
+    border: 1.5px solid var(--hairline);
+    border-radius: 8px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s ease;
+}
+.addressCardItem:hover {
+    border-color: var(--egyptian);
+    background: #fff;
+}
+.addressCardItem.active {
+    border-color: var(--egyptian);
+    background: #f4f8ff;
+}
+
+.addressCardItem input[type="radio"] {
+    margin-top: 3px;
+    accent-color: var(--egyptian);
+    cursor: pointer;
+}
+
+.addressCardContent {
+    flex: 1;
+}
+
+.addressCardHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+.addressCardHeader strong {
+    font-size: 14px;
+    color: var(--catalina);
+}
+
+.defaultBadge {
+    background: var(--success-bg);
+    color: var(--success);
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+.addressPhone {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 4px;
+}
+
+.addressText {
+    font-size: 13px;
+    color: var(--ink);
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.btnIconEdit {
+    background: #fff;
+    border: 1px solid var(--hairline);
+    color: var(--muted);
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+.btnIconEdit:hover {
+    background: var(--egyptian);
+    color: #fff;
+    border-color: var(--egyptian);
+}
+
+/* DANH SÁCH SẢN PHẨM */
+.cartItemsFullList {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.cartItemCard {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px;
+    background: #fafcff;
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+}
+
+.cartItemImg {
+    width: 60px;
+    height: 75px;
+    object-fit: contain;
+    background: #fff;
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.cartItemInfo {
+    flex: 1;
+}
+
+.cartItemTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--catalina);
+    margin-bottom: 4px;
+}
+
+.cartItemAuthor {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+}
+
+.cartItemQtyPrice {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+}
+
+/* PHƯƠNG THỨC THANH TOÁN */
+.paymentOptionsList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.paymentOptionItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border: 1.5px solid var(--hairline);
+    border-radius: 8px;
+    cursor: pointer;
+    background: #fafcff;
+    transition: all 0.15s ease;
+}
+.paymentOptionItem:hover {
+    border-color: var(--egyptian);
+    background: #fff;
+}
+.paymentOptionItem input[type="radio"] {
+    margin-top: 3px;
+    accent-color: var(--egyptian);
+    cursor: pointer;
+}
+.paymentDetailsText h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--catalina);
+    margin-bottom: 2px;
+}
+.paymentDetailsText p {
+    font-size: 11.5px;
+    color: var(--muted);
+}
+
+/* VOUCHER / DISCOUNT BOX */
+.voucherBox {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.voucherInput {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 13px;
+    border: 1.5px solid var(--hairline);
+    border-radius: 6px;
+    outline: none;
+    text-transform: uppercase;
+}
+.voucherBtn {
+    padding: 0 14px;
+    background: var(--alice);
+    color: var(--egyptian);
+    border: 1.5px solid var(--egyptian);
+    font-weight: 700;
+    font-size: 12.5px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.voucherBtn:hover {
+    background: var(--egyptian);
+    color: #fff;
+}
+
+/* BILLING CALCULATION ROWS */
+.calcRow {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+}
+.calcRow.total {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--catalina);
+    border-top: 1.5px solid var(--hairline);
+    padding-top: 12px;
+    margin-top: 10px;
+    margin-bottom: 16px;
+}
+.calcRow.total .totalPriceVal {
+    color: var(--egyptian);
+    font-size: 19px;
+}
+
+.btnCompleteOrder {
+    width: 100%;
+    padding: 13px;
+    background: var(--egyptian);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14.5px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+    box-shadow: 0 4px 12px rgba(11, 64, 156, 0.25);
+}
+.btnCompleteOrder:hover {
+    background: var(--catalina);
+}
+.btnCompleteOrder:active {
+    transform: scale(0.98);
+}
+
+/* MODAL SUCCESS OVERLAY */
+.successModalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(7, 18, 51, 0.6);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+.successModalBox {
+    background: #fff;
+    width: 100%;
+    max-width: 440px;
+    border-radius: 12px;
+    padding: 32px;
+    text-align: center;
+    box-shadow: 0 20px 40px -10px rgba(7,18,51,0.25);
+    animation: modalPopUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes modalPopUp {
+    from { transform: scale(0.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+.successModalBox h3 {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--catalina);
+    margin-bottom: 8px;
+}
+.successModalBox p {
+    font-size: 13.5px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 24px;
+}
+.btnCloseSuccess {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background: var(--egyptian);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+@media (max-width: 1024px) {
+    .checkoutContainer {
+        grid-template-columns: 1fr;
+    }
+}
