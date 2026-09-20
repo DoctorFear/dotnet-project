@@ -27,9 +27,13 @@ export const Navbar: React.FC<NavbarProps> = ({
         { id: '1', name: 'Văn học Việt Nam' },
         { id: '2', name: 'Văn học Cổ điển' },
         { id: '3', name: 'Tiểu thuyết Trinh thám' },
-        { id: '4', name: 'Khoa học Viễn tưởng' },
-        { id: '5', name: 'Triết học Phương Đông' },
-        { id: '6', name: 'Lịch sử & Khảo cổ' },
+        { id: '4', name: 'Tiểu thuyết Thiếu niên' },
+        { id: '5', name: 'Khoa học Viễn tưởng' },
+        { id: '6', name: 'Triết học Phương Đông' },
+        { id: '7', name: 'Lịch sử & Khảo cổ' },
+        { id: '8', name: 'Bí ẩn' },
+        { id: '9', name: 'Truyện tâm linh' },
+        { id: '10', name: 'Sách Kỹ năng sống' } 
     ],
     publishers = [
         { id: '1', name: 'NXB Giáo dục' },
@@ -38,6 +42,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         { id: '4', name: 'NXB Hội Nhà Văn' },
         { id: '5', name: 'NXB Chính trị Quốc gia' },
         { id: '6', name: 'NXB Phụ Nữ' },
+        { id: '7', name: 'NXB Văn Học' },
+        { id: '8', name: 'NXB Tổng Hợp' }
     ],
     membershipRank = 'Hạng Bạc',
     fPoints = 240,

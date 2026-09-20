@@ -481,3 +481,79 @@ textarea.formControl {
         grid-template-columns: 1fr;
     }
 }
+/* Styling cho Dropdown Checkbox đa thể loại và Input bị Khóa */
+.dropdownCheckboxTrigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border: 1.5px solid var(--hairline, #dce6f7);
+    border-radius: 6px;
+    background: #fafcff;
+    font-size: 13.5px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.dropdownCheckboxValue {
+    color: var(--ink, #071233);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 220px;
+}
+
+.dropdownCheckboxMenu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: #ffffff;
+    border: 1.5px solid var(--hairline, #dce6f7);
+    border-radius: 6px;
+    padding: 8px;
+    margin-top: 4px;
+    box-shadow: 0 8px 20px rgba(7, 18, 51, 0.12);
+    max-height: 180px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.checkboxOption {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink, #071233);
+    padding: 4px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+    .checkboxOption:hover {
+        background: var(--alice, #F2F7FF);
+    }
+
+.lockedLabel {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--muted, #5b6e99);
+}
+
+.disabledInput {
+    background: #f1f5f9 !important;
+    color: #64748b !important;
+    cursor: not-allowed;
+    border-color: #cbd5e1 !important;
+}
+
+.inputHelpText {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 3px;
+    line-height: 1.3;
+}

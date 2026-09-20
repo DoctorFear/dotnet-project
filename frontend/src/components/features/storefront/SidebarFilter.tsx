@@ -23,8 +23,8 @@ interface SidebarFilterProps {
 }
 
 export const SidebarFilter: React.FC<SidebarFilterProps> = ({
-    categoriesList = ['Văn học Việt Nam', 'Văn học Cổ điển', 'Tiểu thuyết Trinh thám', 'Khoa học Viễn tưởng', 'Triết học Phương Đông'],
-    publishersList = ['NXB Giáo dục', 'NXB Trẻ', 'NXB Kim Đồng', 'NXB Hội Nhà Văn', 'NXB Phụ Nữ'],
+    categoriesList = ['Văn học Việt Nam', 'Văn học Cổ điển', 'Tiểu thuyết Trinh thám', 'Tiểu thuyết Thiếu niên', 'Khoa học Viễn tưởng', 'Triết học Phương Đông', 'Lịch sử khảo cổ', 'Bí ẩn', 'Truyện tâm linh', 'Sách Kỹ năng sống'],
+    publishersList = ['NXB Giáo dục', 'NXB Trẻ', 'NXB Kim Đồng', 'NXB Hội Nhà Văn', 'NXB Phụ Nữ', 'NXB Văn Học', 'NXB Tổng Hợp', 'NXB Chính trị Quốc Gia'],
     onFilterChange,
     onResetFilters,
     className = '',
@@ -32,10 +32,43 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
     const [minPrice, setMinPrice] = useState<number>(0);
     const [maxPrice, setMaxPrice] = useState<number>(1000000);
 
+    // State lưu danh sách các thể loại và NXB được tích chọn (hỗ trợ nhiều item khi lấy từ DB)
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [selectedPublishers, setSelectedPublishers] = useState<string[]>([]);
+
     const handlePriceChange = (min: number, max: number) => {
         setMinPrice(min);
         setMaxPrice(max);
         onFilterChange({ minPrice: min, maxPrice: max });
+    };
+
+    // Logic xử lý tích/bỏ tích chọn nhiều Thể loại
+    const handleCategoryToggle = (category: string) => {
+        const nextCategories = selectedCategories.includes(category)
+            ? selectedCategories.filter((c) => c !== category)
+            : [...selectedCategories, category];
+
+        setSelectedCategories(nextCategories);
+        onFilterChange({ categories: nextCategories });
+    };
+
+    // Logic xử lý tích/bỏ tích chọn nhiều Nhà xuất bản
+    const handlePublisherToggle = (publisher: string) => {
+        const nextPublishers = selectedPublishers.includes(publisher)
+            ? selectedPublishers.filter((p) => p !== publisher)
+            : [...selectedPublishers, publisher];
+
+        setSelectedPublishers(nextPublishers);
+        onFilterChange({ publishers: nextPublishers });
+    };
+
+    // Xóa sạch trạng thái chọn khi Reset bộ lọc
+    const handleResetAll = () => {
+        setSelectedCategories([]);
+        setSelectedPublishers([]);
+        setMinPrice(0);
+        setMaxPrice(1000000);
+        onResetFilters();
     };
 
     return (
@@ -53,7 +86,11 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
                 <div className={styles.optimizedListBox}>
                     {categoriesList.map((cat, idx) => (
                         <label key={idx} className={styles.optimizedItem}>
-                            <input type="checkbox" onChange={() => onFilterChange({ categories: [cat] })} />
+                            <input
+                                type="checkbox"
+                                checked={selectedCategories.includes(cat)}
+                                onChange={() => handleCategoryToggle(cat)}
+                            />
                             {cat}
                         </label>
                     ))}
@@ -66,7 +103,11 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
                 <div className={styles.optimizedListBox}>
                     {publishersList.map((pub, idx) => (
                         <label key={idx} className={styles.optimizedItem}>
-                            <input type="checkbox" onChange={() => onFilterChange({ publishers: [pub] })} />
+                            <input
+                                type="checkbox"
+                                checked={selectedPublishers.includes(pub)}
+                                onChange={() => handlePublisherToggle(pub)}
+                            />
                             {pub}
                         </label>
                     ))}
@@ -106,7 +147,7 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
                 </label>
             </div>
 
-            <button type="button" className={styles.btnResetFilters} onClick={onResetFilters}>
+            <button type="button" className={styles.btnResetFilters} onClick={handleResetAll}>
                 Xóa tất cả bộ lọc
             </button>
         </aside>

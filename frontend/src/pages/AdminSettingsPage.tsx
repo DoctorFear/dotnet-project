@@ -7,8 +7,8 @@ export const AdminSettingsPage: React.FC = () => {
         <AdminLayout
             activePage="settings"
             title="Quản lý cài đặt"
-            subtitle="Cấu hình tỉ lệ tích điểm và mức điểm sử dụng tối đa cho đơn hàng"
-            badge="Admin Settings Management"
+            subtitle="Cấu hình các tham số vận hành chung trên toàn hệ thống"
+            badge="Admin System Settings"
         >
             <AdminSettingsManagement />
         </AdminLayout>

@@ -1,0 +1,90 @@
+/* Khung thông báo dùng chung toàn hệ thống (Admin & Customer Storefront) */
+.toastStack {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.toastItem {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 280px;
+    max-width: 420px;
+    padding: 12px 16px;
+    background: var(--ink, #071233);
+    color: #ffffff;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    box-shadow: 0 10px 25px -5px rgba(7, 18, 51, 0.25);
+    animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    border-left: 4px solid var(--egyptian, #0B409C);
+}
+
+    .toastItem.success {
+        border-left-color: #22c55e;
+    }
+
+    .toastItem.error {
+        border-left-color: var(--danger, #d93838);
+    }
+
+    .toastItem.info {
+        border-left-color: var(--saffron, #FDBE34);
+    }
+
+.iconSuccess {
+    color: #22c55e;
+    flex-shrink: 0;
+}
+
+.iconError {
+    color: var(--danger, #d93838);
+    flex-shrink: 0;
+}
+
+.iconInfo {
+    color: var(--saffron, #FDBE34);
+    flex-shrink: 0;
+}
+
+.toastText {
+    flex: 1;
+    line-height: 1.4;
+}
+
+.btnClose {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: color 0.15s ease;
+}
+
+    .btnClose:hover {
+        color: #ffffff;
+    }
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}

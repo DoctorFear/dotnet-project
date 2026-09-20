@@ -1,23 +1,31 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import {
     BookOpen,
     Building2,
     ChevronLeft,
     ChevronRight,
+    ChevronDown,
     FolderTree,
     Pencil,
     Plus,
     Search,
     Trash2,
     X,
+    Lock,
+    Ban,
 } from 'lucide-react';
 import type { AdminBookData, AdminBookStatus } from '../../../types/adminBook';
 import type { CategoryData } from '../../../types/category';
 import type { PublisherData } from '../../../types/publisher';
+import ToastNotification from '../../common/ToastNotification';
+import type { ToastMessage } from '../../common/ToastNotification';
 import styles from './AdminBookManagement.module.css';
 
 type AdminBookTab = 'books' | 'categories' | 'publishers';
 type ModalKind = AdminBookTab | null;
+
+type DraftValue = string | number | number[] | AdminBookStatus | null | undefined;
+type DraftFormState = Record<string, DraftValue>;
 
 interface ConfirmState {
     kind: AdminBookTab;
@@ -27,6 +35,7 @@ interface ConfirmState {
 
 const PAGE_SIZE = 5;
 
+// <Dữ liệu mẫu Thể loại>
 const initialCategories: CategoryData[] = [
     { id: 1, name: 'Văn học', parentId: null, description: 'Nhóm danh mục văn học tổng hợp', bookCount: 5 },
     { id: 2, name: 'Tiểu thuyết', parentId: 1, description: 'Tiểu thuyết trong và ngoài nước', bookCount: 3 },
@@ -34,12 +43,14 @@ const initialCategories: CategoryData[] = [
     { id: 4, name: 'Kinh tế', parentId: null, description: 'Sách kinh tế và quản trị', bookCount: 0 },
 ];
 
+// <Dữ liệu mẫu Nhà xuất bản>
 const initialPublishers: PublisherData[] = [
-    { id: 1, name: 'NXB Văn Học', address: '18 Nguyễn Trường Tộ, Hà Nội', phone: '02438221435', email: 'contact@vanhoc.vn', description: 'Đối tác sách văn học', bookCount: 1 },
-    { id: 2, name: 'NXB Tri Thức', address: '53 Nguyễn Du, Hà Nội', phone: '02439421219', email: 'info@trithuc.vn', description: 'Đối tác sách tri thức', bookCount: 1 },
-    { id: 3, name: 'NXB Trẻ', address: '161B Lý Chính Thắng, TP.HCM', phone: '02839316289', email: 'nxbtre@tre.vn', description: 'Đối tác sách trẻ', bookCount: 1 },
+    { id: 1, name: 'NXB Văn Học', address: '18 Nguyễn Trường Tộ, Hà Nội', phone: '02438221435', email: 'contact@vanhoc.vn', bookCount: 1 },
+    { id: 2, name: 'NXB Tri Thức', address: '53 Nguyễn Du, Hà Nội', phone: '02439421219', email: 'info@trithuc.vn', bookCount: 1 },
+    { id: 3, name: 'NXB Trẻ', address: '161B Lý Chính Thắng, TP.HCM', phone: '02839316289', email: 'nxbtre@tre.vn', bookCount: 1 },
 ];
 
+// <Dữ liệu mẫu Sách hệ thống>
 const initialBooks: AdminBookData[] = [
     {
         id: 'B01',
@@ -52,6 +63,8 @@ const initialBooks: AdminBookData[] = [
         physicalPrice: 85000,
         eBookPrice: 45000,
         weeklyRentalPrice: 15000,
+        monthlyRentalPrice: 35000,
+        yearlyRentalPrice: 95000,
         stockCount: 3,
         status: 'selling',
         orderCount: 4,
@@ -65,8 +78,10 @@ const initialBooks: AdminBookData[] = [
         categoryIds: [1, 2],
         coverImg: 'https://salt.tikicdn.com/ts/product/19/22/e0/aa29986348ef0eeab07ff83f99e3cae6.jpg',
         physicalPrice: 145000,
-        eBookPrice: 75000,
+        eBookPrice: 0,
         weeklyRentalPrice: 0,
+        monthlyRentalPrice: 0,
+        yearlyRentalPrice: 0,
         stockCount: 15,
         status: 'selling',
         orderCount: 0,
@@ -82,6 +97,8 @@ const initialBooks: AdminBookData[] = [
         physicalPrice: 98000,
         eBookPrice: 68000,
         weeklyRentalPrice: 20000,
+        monthlyRentalPrice: 45000,
+        yearlyRentalPrice: 110000,
         stockCount: 5,
         status: 'upcoming',
         orderCount: 0,
@@ -106,30 +123,54 @@ export const AdminBookManagement: React.FC = () => {
     const [page, setPage] = useState(1);
     const [modalKind, setModalKind] = useState<ModalKind>(null);
     const [editingId, setEditingId] = useState<string | number | null>(null);
-    const [draft, setDraft] = useState<Record<string, string>>({});
+    const [draft, setDraft] = useState<DraftFormState>({});
     const [formWarn, setFormWarn] = useState('');
     const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
-    const [toast, setToast] = useState('');
+
+    const [toasts, setToasts] = useState<ToastMessage[]>([]);
+    const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+    const categoryDropdownRef = useRef<HTMLDivElement>(null);
+
+    // Lắng nghe click ngoài màn hình để tự đóng dropdown thể loại
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
+                setIsCategoryDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const addToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+        const newToast: ToastMessage = { id: Date.now().toString(), message, type };
+        setToasts((prev) => [...prev, newToast]);
+    };
+
+    const removeToast = (id: string) => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+    };
 
     const categoryNameMap = useMemo(
-        () => new Map(categories.map((category) => [category.id, category.name])),
+        () => new Map(categories.map((cat) => [cat.id, cat.name])),
         [categories]
     );
 
     const publisherNameMap = useMemo(
-        () => new Map(publishers.map((publisher) => [publisher.id, publisher.name])),
+        () => new Map(publishers.map((pub) => [pub.id, pub.name])),
         [publishers]
     );
 
     const stats = useMemo(() => {
         return {
             total: books.length,
-            selling: books.filter((book) => book.status === 'selling').length,
-            upcoming: books.filter((book) => book.status === 'upcoming').length,
-            stopped: books.filter((book) => book.status === 'stopped').length,
+            selling: books.filter((b) => b.status === 'selling').length,
+            upcoming: books.filter((b) => b.status === 'upcoming').length,
+            stopped: books.filter((b) => b.status === 'stopped').length,
         };
     }, [books]);
 
+    // Lọc dữ liệu theo từng Tab
     const filteredItems = useMemo(() => {
         const q = searchText.trim().toLowerCase();
 
@@ -144,25 +185,15 @@ export const AdminBookManagement: React.FC = () => {
         }
 
         if (activeTab === 'categories') {
-            return categories.filter((category) => {
-                const parentName = category.parentId ? categoryNameMap.get(category.parentId) || '' : '';
-                return !q || `${category.name} ${parentName} ${category.description || ''}`.toLowerCase().includes(q);
-            });
+            return categories.filter((cat) => !q || `${cat.name} ${cat.description || ''}`.toLowerCase().includes(q));
         }
 
-        return publishers.filter((publisher) => {
-            return !q || `${publisher.name} ${publisher.address || ''} ${publisher.phone || ''} ${publisher.email || ''}`.toLowerCase().includes(q);
-        });
+        return publishers.filter((pub) => !q || `${pub.name} ${pub.address || ''} ${pub.phone || ''} ${pub.email || ''}`.toLowerCase().includes(q));
     }, [activeTab, books, categories, categoryNameMap, publishers, publisherNameMap, searchText, statusFilter]);
 
     const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
     const currentPage = Math.min(page, totalPages);
     const pageItems = filteredItems.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-
-    const showToast = (message: string) => {
-        setToast(message);
-        window.setTimeout(() => setToast(''), 2600);
-    };
 
     const resetListState = (tab: AdminBookTab) => {
         setActiveTab(tab);
@@ -171,8 +202,31 @@ export const AdminBookManagement: React.FC = () => {
         setPage(1);
     };
 
-    const updateDraft = (key: string, value: string) => {
-        setDraft((prev) => ({ ...prev, [key]: value }));
+    const updateDraft = (key: string, value: DraftValue) => {
+        setDraft((prev) => {
+            const updated = { ...prev, [key]: value };
+
+            if (key === 'eBookPrice') {
+                const ebookVal = Number(value || 0);
+                if (ebookVal <= 0) {
+                    updated.weeklyRentalPrice = 0;
+                    updated.monthlyRentalPrice = 0;
+                    updated.yearlyRentalPrice = 0;
+                }
+            }
+
+            return updated;
+        });
+    };
+
+    // TÍNH NĂNG MỚI: Xử lý chọn/bỏ chọn Thể loại trong Dropdown Checkbox
+    const toggleCategorySelection = (categoryId: number) => {
+        const currentCategoryIds = (draft.categoryIds as number[]) || [];
+        const updatedCategoryIds = currentCategoryIds.includes(categoryId)
+            ? currentCategoryIds.filter((id) => id !== categoryId)
+            : [...currentCategoryIds, categoryId];
+
+        setDraft((prev) => ({ ...prev, categoryIds: updatedCategoryIds }));
     };
 
     const openCreateModal = () => {
@@ -185,22 +239,20 @@ export const AdminBookManagement: React.FC = () => {
                 title: '',
                 author: '',
                 isbn: '',
-                publisherId: String(publishers[0]?.id || ''),
-                categoryIds: String(categories[0]?.id || ''),
+                publisherId: publishers[0]?.id || 1,
+                categoryIds: [], // Để trống để người dùng chọn tùy ý, không khóa cứng ở Văn học
                 coverImg: '',
-                physicalPrice: '0',
-                eBookPrice: '0',
-                weeklyRentalPrice: '0',
-                stockCount: '0',
+                physicalPrice: 0,
+                eBookPrice: 0,
+                weeklyRentalPrice: 0,
+                monthlyRentalPrice: 0,
+                yearlyRentalPrice: 0,
+                stockCount: 0,
                 status: 'selling',
             });
-        }
-
-        if (activeTab === 'categories') {
+        } else if (activeTab === 'categories') {
             setDraft({ name: '', parentId: '', description: '' });
-        }
-
-        if (activeTab === 'publishers') {
+        } else if (activeTab === 'publishers') {
             setDraft({ name: '', address: '', phone: '', email: '', description: '' });
         }
 
@@ -220,37 +272,25 @@ export const AdminBookManagement: React.FC = () => {
                 title: book.title,
                 author: book.author,
                 isbn: book.isbn,
-                publisherId: String(book.publisherId),
-                categoryIds: book.categoryIds.join(','),
+                publisherId: book.publisherId,
+                categoryIds: [...book.categoryIds], // Nạp đầy đủ thể loại của sách
                 coverImg: book.coverImg,
-                physicalPrice: String(book.physicalPrice),
-                eBookPrice: String(book.eBookPrice),
-                weeklyRentalPrice: String(book.weeklyRentalPrice),
-                stockCount: String(book.stockCount),
+                physicalPrice: book.physicalPrice,
+                eBookPrice: book.eBookPrice,
+                weeklyRentalPrice: book.weeklyRentalPrice,
+                monthlyRentalPrice: book.monthlyRentalPrice || 0,
+                yearlyRentalPrice: book.yearlyRentalPrice || 0,
+                stockCount: book.stockCount,
                 status: book.status,
             });
-        }
-
-        if (kind === 'categories') {
-            const category = categories.find((item) => item.id === id);
-            if (!category) return;
-            setDraft({
-                name: category.name,
-                parentId: category.parentId ? String(category.parentId) : '',
-                description: category.description || '',
-            });
-        }
-
-        if (kind === 'publishers') {
-            const publisher = publishers.find((item) => item.id === id);
-            if (!publisher) return;
-            setDraft({
-                name: publisher.name,
-                address: publisher.address || '',
-                phone: publisher.phone || '',
-                email: publisher.email || '',
-                description: publisher.description || '',
-            });
+        } else if (kind === 'categories') {
+            const cat = categories.find((item) => item.id === id);
+            if (!cat) return;
+            setDraft({ name: cat.name, parentId: cat.parentId || '', description: cat.description || '' });
+        } else if (kind === 'publishers') {
+            const pub = publishers.find((item) => item.id === id);
+            if (!pub) return;
+            setDraft({ name: pub.name, address: pub.address || '', phone: pub.phone || '', email: pub.email || '', description: pub.description || '' });
         }
     };
 
@@ -258,6 +298,7 @@ export const AdminBookManagement: React.FC = () => {
         setModalKind(null);
         setEditingId(null);
         setFormWarn('');
+        setIsCategoryDropdownOpen(false);
     };
 
     const saveModal = () => {
@@ -267,133 +308,106 @@ export const AdminBookManagement: React.FC = () => {
     };
 
     const saveBook = () => {
-        if (!draft.title?.trim() || !draft.isbn?.trim() || !draft.publisherId || !draft.categoryIds) {
-            setFormWarn('Vui lòng nhập Tên sách, ISBN, NXB và ít nhất một Thể loại.');
+        const titleStr = typeof draft.title === 'string' ? draft.title.trim() : '';
+        const isbnStr = typeof draft.isbn === 'string' ? draft.isbn.trim() : '';
+        const categoryIds = (draft.categoryIds as number[]) || [];
+
+        if (!titleStr || !isbnStr || !draft.publisherId || categoryIds.length === 0) {
+            setFormWarn('Vui lòng nhập Tên sách, ISBN, chọn NXB và chọn ít nhất 1 Thể loại.');
             return;
         }
 
-        const duplicatedIsbn = books.some((book) => book.isbn === draft.isbn && book.id !== editingId);
+        const duplicatedIsbn = books.some((b) => b.isbn === isbnStr && b.id !== editingId);
         if (duplicatedIsbn) {
             setFormWarn('Mã ISBN đã tồn tại trong hệ thống.');
             return;
         }
 
+        const eBookPriceVal = Number(draft.eBookPrice || 0);
+
         const nextBook: AdminBookData = {
             id: String(draft.id || `B${Date.now()}`),
-            title: draft.title.trim(),
-            author: draft.author?.trim() || 'Chưa cập nhật',
-            isbn: draft.isbn.trim(),
+            title: titleStr,
+            author: (typeof draft.author === 'string' && draft.author.trim()) || 'Chưa cập nhật',
+            isbn: isbnStr,
             publisherId: Number(draft.publisherId),
-            categoryIds: draft.categoryIds.split(',').map((id) => Number(id)).filter(Boolean),
-            coverImg: draft.coverImg?.trim() || 'https://salt.tikicdn.com/ts/product/45/3e/2e/9f992ab2a5436d4f937d9fae16d47b53.jpg',
+            categoryIds,
+            coverImg: (typeof draft.coverImg === 'string' && draft.coverImg.trim()) || 'https://salt.tikicdn.com/ts/product/45/3e/2e/9f992ab2a5436d4f937d9fae16d47b53.jpg',
             physicalPrice: Number(draft.physicalPrice || 0),
-            eBookPrice: Number(draft.eBookPrice || 0),
-            weeklyRentalPrice: Number(draft.weeklyRentalPrice || 0),
-            stockCount: Number(draft.stockCount || 0),
+            eBookPrice: eBookPriceVal,
+            weeklyRentalPrice: eBookPriceVal > 0 ? Number(draft.weeklyRentalPrice || 0) : 0,
+            monthlyRentalPrice: eBookPriceVal > 0 ? Number(draft.monthlyRentalPrice || 0) : 0,
+            yearlyRentalPrice: eBookPriceVal > 0 ? Number(draft.yearlyRentalPrice || 0) : 0,
+            stockCount: editingId ? Number(draft.stockCount || 0) : 0,
             status: draft.status as AdminBookStatus,
-            orderCount: books.find((book) => book.id === editingId)?.orderCount || 0,
+            orderCount: books.find((b) => b.id === editingId)?.orderCount || 0,
         };
 
-        if (nextBook.physicalPrice < 0 || nextBook.eBookPrice < 0 || nextBook.stockCount < 0) {
-            setFormWarn('Giá bán và số lượng tồn không được nhập giá trị âm.');
-            return;
-        }
-
-        setBooks((prev) => editingId ? prev.map((book) => book.id === editingId ? nextBook : book) : [nextBook, ...prev]);
+        setBooks((prev) => (editingId ? prev.map((b) => (b.id === editingId ? nextBook : b)) : [nextBook, ...prev]));
         closeModal();
-        showToast(editingId ? 'Cập nhật thông tin Sách thành công.' : 'Thêm sách mới thành công.');
+        addToast(editingId ? 'Cập nhật thông tin Sách thành công.' : 'Thêm sách mới thành công.', 'success');
     };
 
     const saveCategory = () => {
-        const name = draft.name?.trim();
+        const name = typeof draft.name === 'string' ? draft.name.trim() : '';
         if (!name) {
             setFormWarn('Tên danh mục không được để trống.');
             return;
         }
 
-        const duplicatedName = categories.some((category) => category.name.toLowerCase() === name.toLowerCase() && category.id !== editingId);
-        if (duplicatedName) {
-            setFormWarn('Tên danh mục này đã tồn tại trong hệ thống.');
-            return;
-        }
-
         const nextCategory: CategoryData = {
-            id: typeof editingId === 'number' ? editingId : Math.max(0, ...categories.map((item) => item.id)) + 1,
+            id: typeof editingId === 'number' ? editingId : Math.max(0, ...categories.map((i) => i.id)) + 1,
             name,
             parentId: draft.parentId ? Number(draft.parentId) : null,
-            description: draft.description || null,
-            bookCount: categories.find((category) => category.id === editingId)?.bookCount || 0,
+            description: (draft.description as string) || null,
+            bookCount: categories.find((c) => c.id === editingId)?.bookCount || 0,
         };
 
-        setCategories((prev) => editingId ? prev.map((category) => category.id === editingId ? nextCategory : category) : [nextCategory, ...prev]);
+        setCategories((prev) => (editingId ? prev.map((c) => (c.id === editingId ? nextCategory : c)) : [nextCategory, ...prev]));
         closeModal();
-        showToast(editingId ? 'Cập nhật danh mục thành công.' : 'Thêm danh mục thể loại thành công.');
+        addToast(editingId ? 'Cập nhật danh mục thành công.' : 'Thêm danh mục thể loại thành công.', 'success');
     };
 
     const savePublisher = () => {
-        const name = draft.name?.trim();
+        const name = typeof draft.name === 'string' ? draft.name.trim() : '';
         if (!name) {
             setFormWarn('Tên NXB không được để trống.');
             return;
         }
 
-        const duplicatedName = publishers.some((publisher) => publisher.name.toLowerCase() === name.toLowerCase() && publisher.id !== editingId);
-        if (duplicatedName) {
-            setFormWarn('Tên Nhà xuất bản này đã tồn tại trong hệ thống.');
-            return;
-        }
-
         const nextPublisher: PublisherData = {
-            id: typeof editingId === 'number' ? editingId : Math.max(0, ...publishers.map((item) => item.id)) + 1,
+            id: typeof editingId === 'number' ? editingId : Math.max(0, ...publishers.map((i) => i.id)) + 1,
             name,
-            address: draft.address || null,
-            phone: draft.phone || null,
-            email: draft.email || null,
-            description: draft.description || null,
-            bookCount: publishers.find((publisher) => publisher.id === editingId)?.bookCount || 0,
+            address: (draft.address as string) || null,
+            phone: (draft.phone as string) || null,
+            email: (draft.email as string) || null,
+            description: (draft.description as string) || null,
+            bookCount: publishers.find((p) => p.id === editingId)?.bookCount || 0,
         };
 
-        setPublishers((prev) => editingId ? prev.map((publisher) => publisher.id === editingId ? nextPublisher : publisher) : [nextPublisher, ...prev]);
+        setPublishers((prev) => (editingId ? prev.map((p) => (p.id === editingId ? nextPublisher : p)) : [nextPublisher, ...prev]));
         closeModal();
-        showToast(editingId ? 'Cập nhật NXB thành công.' : 'Thêm nhà xuất bản thành công.');
-    };
-
-    const requestDelete = (kind: AdminBookTab, id: string | number, title: string) => {
-        setConfirmState({ kind, id, title });
+        addToast(editingId ? 'Cập nhật NXB thành công.' : 'Thêm nhà xuất bản thành công.', 'success');
     };
 
     const confirmDelete = () => {
         if (!confirmState) return;
 
         if (confirmState.kind === 'books') {
-            const book = books.find((item) => item.id === confirmState.id);
-            if (book?.orderCount) {
-                setBooks((prev) => prev.map((item) => item.id === confirmState.id ? { ...item, status: 'stopped' } : item));
-                showToast('Sách đã có dữ liệu đơn hàng nên hệ thống chuyển sang Ngừng bán.');
+            const book = books.find((b) => b.id === confirmState.id);
+            if (book?.orderCount && book.orderCount > 0) {
+                setBooks((prev) => prev.map((item) => (item.id === confirmState.id ? { ...item, status: 'stopped' } : item)));
+                addToast('Sách đã phát sinh đơn hàng nên hệ thống chuyển sang trạng thái Ngừng bán.', 'info');
             } else {
                 setBooks((prev) => prev.filter((item) => item.id !== confirmState.id));
-                showToast('Xóa Sách thành công.');
+                addToast('Xóa Sách thành công.', 'success');
             }
-        }
-
-        if (confirmState.kind === 'categories') {
-            const category = categories.find((item) => item.id === confirmState.id);
-            if (category?.bookCount) {
-                showToast(`Không thể xóa danh mục vì đang có ${category.bookCount} sản phẩm liên kết.`);
-            } else {
-                setCategories((prev) => prev.filter((item) => item.id !== confirmState.id));
-                showToast('Xóa danh mục thành công.');
-            }
-        }
-
-        if (confirmState.kind === 'publishers') {
-            const publisher = publishers.find((item) => item.id === confirmState.id);
-            if (publisher?.bookCount) {
-                showToast('Không thể xóa Nhà xuất bản này vì đang có sản phẩm sách liên kết.');
-            } else {
-                setPublishers((prev) => prev.filter((item) => item.id !== confirmState.id));
-                showToast('Xóa NXB thành công.');
-            }
+        } else if (confirmState.kind === 'categories') {
+            setCategories((prev) => prev.filter((item) => item.id !== confirmState.id));
+            addToast('Xóa thể loại danh mục thành công.', 'success');
+        } else if (confirmState.kind === 'publishers') {
+            setPublishers((prev) => prev.filter((item) => item.id !== confirmState.id));
+            addToast('Xóa nhà xuất bản thành công.', 'success');
         }
 
         setConfirmState(null);
@@ -404,253 +418,89 @@ export const AdminBookManagement: React.FC = () => {
         return <span className={`${styles.statusBadge} ${className}`}>{statusLabels[status]}</span>;
     };
 
-    const renderBooksTable = () => (
-        <table className={styles.dataTable}>
-            <thead>
-                <tr>
-                    <th>Đầu sách</th>
-                    <th>NXB</th>
-                    <th>Thể loại</th>
-                    <th>Giá bán / thuê</th>
-                    <th>SL tồn</th>
-                    <th>Trạng thái</th>
-                    <th>Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                {(pageItems as AdminBookData[]).map((book) => (
-                    <tr key={book.id}>
-                        <td>
-                            <div className={styles.bookCell}>
-                                <img src={book.coverImg} className={styles.bookCover} alt={book.title} />
-                                <div className={styles.cellTitle}>
-                                    <strong>{book.title}</strong>
-                                    <span>{book.author} • ISBN {book.isbn}</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td>{publisherNameMap.get(book.publisherId) || 'Chưa cập nhật'}</td>
-                        <td>
-                            <div className={styles.chipRow}>
-                                {book.categoryIds.map((id) => <span className={styles.chip} key={id}>{categoryNameMap.get(id)}</span>)}
-                            </div>
-                        </td>
-                        <td>
-                            <div className={styles.cellTitle}>
-                                <span>Sách giấy: {formatCurrency(book.physicalPrice)}</span>
-                                <span>E-book: {formatCurrency(book.eBookPrice)}</span>
-                                <span>Thuê tuần: {formatCurrency(book.weeklyRentalPrice)}</span>
-                            </div>
-                        </td>
-                        <td>{book.stockCount}</td>
-                        <td>{renderStatusBadge(book.status)}</td>
-                        <td>{renderActionButtons('books', book.id, book.title)}</td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
-    );
+    // Tự động hiển thị chuỗi danh sách các thể loại đã được chọn
+    const selectedCategoriesText = useMemo(() => {
+        const selectedIds = (draft.categoryIds as number[]) || [];
+        if (selectedIds.length === 0) return 'Chọn các thể loại...';
+        return selectedIds.map((id) => categoryNameMap.get(id)).filter(Boolean).join(', ');
+    }, [draft.categoryIds, categoryNameMap]);
 
-    const renderCategoriesTable = () => (
-        <table className={styles.dataTable}>
-            <thead>
-                <tr>
-                    <th>Id</th>
-                    <th>Name</th>
-                    <th>ParentId</th>
-                    <th>Description</th>
-                    <th>Số sách</th>
-                    <th>Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                {(pageItems as CategoryData[]).map((category) => (
-                    <tr key={category.id}>
-                        <td>{category.id}</td>
-                        <td>{category.name}</td>
-                        <td>{category.parentId ? `${category.parentId} - ${categoryNameMap.get(category.parentId)}` : 'NULL'}</td>
-                        <td>{category.description || 'NULL'}</td>
-                        <td>{category.bookCount || 0}</td>
-                        <td>{renderActionButtons('categories', category.id, category.name)}</td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
-    );
-
-    const renderPublishersTable = () => (
-        <table className={styles.dataTable}>
-            <thead>
-                <tr>
-                    <th>Id</th>
-                    <th>Name</th>
-                    <th>Address</th>
-                    <th>Phone</th>
-                    <th>Email</th>
-                    <th>Số sách</th>
-                    <th>Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                {(pageItems as PublisherData[]).map((publisher) => (
-                    <tr key={publisher.id}>
-                        <td>{publisher.id}</td>
-                        <td>{publisher.name}</td>
-                        <td>{publisher.address || 'NULL'}</td>
-                        <td>{publisher.phone || 'NULL'}</td>
-                        <td>{publisher.email || 'NULL'}</td>
-                        <td>{publisher.bookCount || 0}</td>
-                        <td>{renderActionButtons('publishers', publisher.id, publisher.name)}</td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
-    );
-
-    const renderActionButtons = (kind: AdminBookTab, id: string | number, title: string) => (
-        <div className={styles.actionBtns}>
-            <button type="button" className={styles.btnTable} onClick={() => openEditModal(kind, id)}>
-                <Pencil /> Sửa
-            </button>
-            <button type="button" className={`${styles.btnTable} ${styles.danger}`} onClick={() => requestDelete(kind, id, title)}>
-                <Trash2 /> Xóa
-            </button>
-        </div>
-    );
-
-    const renderTableContent = () => {
-        if (pageItems.length === 0) {
-            return <div className={styles.emptyState}>Không tìm thấy dữ liệu phù hợp với bộ lọc hiện tại.</div>;
-        }
-
-        if (activeTab === 'books') return renderBooksTable();
-        if (activeTab === 'categories') return renderCategoriesTable();
-        return renderPublishersTable();
-    };
-
-    const renderModalBody = () => {
-        if (modalKind === 'books') {
-            return (
-                <div className={styles.formGrid}>
-                    {renderInput('title', 'Tên sách *')}
-                    {renderInput('author', 'Tác giả')}
-                    {renderInput('isbn', 'Mã ISBN *')}
-                    <div className={styles.formGroup}>
-                        <label htmlFor="bookPublisher">Nhà xuất bản *</label>
-                        <select id="bookPublisher" className={styles.formControl} value={draft.publisherId || ''} onChange={(event) => updateDraft('publisherId', event.target.value)}>
-                            {publishers.map((publisher) => <option key={publisher.id} value={publisher.id}>{publisher.name}</option>)}
-                        </select>
-                    </div>
-                    <div className={styles.formGroup}>
-                        <label htmlFor="bookCategories">Thể loại *</label>
-                        <select id="bookCategories" className={styles.formControl} value={draft.categoryIds || ''} onChange={(event) => updateDraft('categoryIds', event.target.value)}>
-                            {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-                        </select>
-                    </div>
-                    <div className={styles.formGroup}>
-                        <label htmlFor="bookStatus">Trạng thái</label>
-                        <select id="bookStatus" className={styles.formControl} value={draft.status || 'selling'} onChange={(event) => updateDraft('status', event.target.value)}>
-                            <option value="selling">Đang bán</option>
-                            <option value="upcoming">Sắp phát hành</option>
-                            <option value="stopped">Ngừng bán</option>
-                        </select>
-                    </div>
-                    {renderInput('physicalPrice', 'Giá bán vật lý', 'number')}
-                    {renderInput('eBookPrice', 'Giá E-book', 'number')}
-                    {renderInput('weeklyRentalPrice', 'Giá thuê theo tuần', 'number')}
-                    {renderInput('stockCount', 'Số lượng tồn', 'number')}
-                    <div className={`${styles.formGroup} ${styles.full}`}>
-                        <label htmlFor="coverImg">Ảnh bìa chính</label>
-                        <input id="coverImg" className={styles.formControl} value={draft.coverImg || ''} onChange={(event) => updateDraft('coverImg', event.target.value)} />
-                    </div>
-                </div>
-            );
-        }
-
-        if (modalKind === 'categories') {
-            return (
-                <div className={styles.formGrid}>
-                    {renderInput('name', 'Tên danh mục *')}
-                    <div className={styles.formGroup}>
-                        <label htmlFor="categoryParent">Danh mục cha</label>
-                        <select id="categoryParent" className={styles.formControl} value={draft.parentId || ''} onChange={(event) => updateDraft('parentId', event.target.value)}>
-                            <option value="">NULL</option>
-                            {categories.filter((item) => item.id !== editingId).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-                        </select>
-                    </div>
-                    {renderTextarea('description', 'Mô tả')}
-                </div>
-            );
-        }
-
-        return (
-            <div className={styles.formGrid}>
-                {renderInput('name', 'Tên NXB *')}
-                {renderInput('phone', 'Số điện thoại')}
-                {renderInput('email', 'Email', 'email')}
-                {renderInput('address', 'Địa chỉ')}
-                {renderTextarea('description', 'Mô tả')}
-            </div>
-        );
-    };
-
-    const renderInput = (key: string, label: string, type = 'text') => (
-        <div className={styles.formGroup}>
-            <label htmlFor={key}>{label}</label>
-            <input id={key} type={type} className={styles.formControl} value={draft[key] || ''} onChange={(event) => updateDraft(key, event.target.value)} />
-        </div>
-    );
-
-    const renderTextarea = (key: string, label: string) => (
-        <div className={`${styles.formGroup} ${styles.full}`}>
-            <label htmlFor={key}>{label}</label>
-            <textarea id={key} className={styles.formControl} value={draft[key] || ''} onChange={(event) => updateDraft(key, event.target.value)} />
-        </div>
-    );
-
-    const tabActionLabel = activeTab === 'books' ? 'Thêm sách mới' : activeTab === 'categories' ? 'Thêm danh mục mới' : 'Thêm NXB mới';
+    const isEBookDisabled = Number(draft.eBookPrice || 0) <= 0;
 
     return (
         <>
+            <ToastNotification toasts={toasts} onClose={removeToast} />
+
+            {/* Thống kê KPI */}
             <section className={styles.statsGrid}>
-                <div className={styles.statBox}><span className={styles.statLabel}>Tổng số sách</span><span className={styles.statValue}>{stats.total}</span></div>
-                <div className={styles.statBox}><span className={styles.statLabel}>Đang kinh doanh</span><span className={styles.statValue}>{stats.selling}</span></div>
-                <div className={styles.statBox}><span className={styles.statLabel}>Sắp phát hành</span><span className={styles.statValue}>{stats.upcoming}</span></div>
-                <div className={styles.statBox}><span className={styles.statLabel}>Ngừng bán</span><span className={styles.statValue}>{stats.stopped}</span></div>
+                <div className={styles.statBox}>
+                    <span className={styles.statLabel}>TỔNG SỐ SÁCH</span>
+                    <span className={styles.statValue}>{stats.total}</span>
+                </div>
+                <div className={styles.statBox}>
+                    <span className={styles.statLabel}>ĐANG KINH DOANH</span>
+                    <span className={styles.statValue}>{stats.selling}</span>
+                </div>
+                <div className={styles.statBox}>
+                    <span className={styles.statLabel}>SẮP PHÁT HÀNH</span>
+                    <span className={styles.statValue}>{stats.upcoming}</span>
+                </div>
+                <div className={styles.statBox}>
+                    <span className={styles.statLabel}>NGỪNG BÁN</span>
+                    <span className={styles.statValue}>{stats.stopped}</span>
+                </div>
             </section>
 
             <section className={styles.tablePanel}>
                 <div className={styles.panelHeader}>
                     <div className={styles.tabRow}>
-                        <button type="button" className={`${styles.tabButton} ${activeTab === 'books' ? styles.active : ''}`} onClick={() => resetListState('books')}>
-                            <BookOpen /> Quản lý đầu sách
+                        <button
+                            type="button"
+                            className={`${styles.tabButton} ${activeTab === 'books' ? styles.active : ''}`}
+                            onClick={() => resetListState('books')}
+                        >
+                            <BookOpen size={16} /> Quản lý đầu sách
                         </button>
-                        <button type="button" className={`${styles.tabButton} ${activeTab === 'categories' ? styles.active : ''}`} onClick={() => resetListState('categories')}>
-                            <FolderTree /> Quản lý danh mục thể loại
+                        <button
+                            type="button"
+                            className={`${styles.tabButton} ${activeTab === 'categories' ? styles.active : ''}`}
+                            onClick={() => resetListState('categories')}
+                        >
+                            <FolderTree size={16} /> Quản lý danh mục thể loại
                         </button>
-                        <button type="button" className={`${styles.tabButton} ${activeTab === 'publishers' ? styles.active : ''}`} onClick={() => resetListState('publishers')}>
-                            <Building2 /> Quản lý NXB
+                        <button
+                            type="button"
+                            className={`${styles.tabButton} ${activeTab === 'publishers' ? styles.active : ''}`}
+                            onClick={() => resetListState('publishers')}
+                        >
+                            <Building2 size={16} /> Quản lý NXB
                         </button>
                     </div>
 
                     <div className={styles.toolbar}>
                         <div className={styles.searchWrap}>
-                            <Search />
+                            <Search size={16} />
                             <input
                                 type="text"
                                 className={styles.searchInput}
                                 value={searchText}
-                                onChange={(event) => {
-                                    setSearchText(event.target.value);
+                                onChange={(e) => {
+                                    setSearchText(e.target.value);
                                     setPage(1);
                                 }}
-                                placeholder={activeTab === 'books' ? 'Tìm theo tên sách, tác giả, ISBN...' : 'Tìm theo tên hoặc thông tin liên quan...'}
+                                placeholder={
+                                    activeTab === 'books'
+                                        ? 'Tìm theo tên sách, tác giả, ISBN...'
+                                        : activeTab === 'categories'
+                                            ? 'Tìm theo tên danh mục, mô tả...'
+                                            : 'Tìm theo tên NXB, địa chỉ, email...'
+                                }
                             />
                         </div>
 
                         <div className={styles.filterGroup}>
                             {activeTab === 'books' && (
-                                <select className={styles.filterSelect} value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                                <select className={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                                     <option value="">Tất cả trạng thái</option>
                                     <option value="selling">Đang bán</option>
                                     <option value="upcoming">Sắp phát hành</option>
@@ -658,60 +508,541 @@ export const AdminBookManagement: React.FC = () => {
                                 </select>
                             )}
                             <button type="button" className={styles.btnPrimary} onClick={openCreateModal}>
-                                <Plus /> {tabActionLabel}
+                                <Plus size={16} /> {activeTab === 'books' ? 'Thêm sách mới' : activeTab === 'categories' ? 'Thêm danh mục' : 'Thêm NXB'}
                             </button>
                         </div>
                     </div>
                 </div>
 
-                {renderTableContent()}
+                {/* 1. BẢNG DỮ LIỆU SÁCH */}
+                {activeTab === 'books' && (
+                    <table className={styles.dataTable}>
+                        <thead>
+                            <tr>
+                                <th>Đầu sách</th>
+                                <th>NXB</th>
+                                <th>Thể loại</th>
+                                <th>Giá Bán & Thuê</th>
+                                <th>SL Tồn</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {(pageItems as AdminBookData[]).map((book) => (
+                                <tr key={book.id}>
+                                    <td>
+                                        <div className={styles.bookCell}>
+                                            <img src={book.coverImg} className={styles.bookCover} alt={book.title} />
+                                            <div className={styles.cellTitle}>
+                                                <strong>{book.title}</strong>
+                                                <span>
+                                                    {book.author} • ISBN {book.isbn}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{publisherNameMap.get(book.publisherId) || 'Chưa cập nhật'}</td>
+                                    <td>
+                                        <div className={styles.chipRow}>
+                                            {book.categoryIds.map((id) => (
+                                                <span className={styles.chip} key={id}>
+                                                    {categoryNameMap.get(id)}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className={styles.cellTitle}>
+                                            <span>Sách giấy: {formatCurrency(book.physicalPrice)}</span>
+                                            <span>
+                                                E-book:{' '}
+                                                {book.eBookPrice > 0 ? (
+                                                    formatCurrency(book.eBookPrice)
+                                                ) : (
+                                                    <em style={{ color: '#94a3b8' }}>Không bán Online</em>
+                                                )}
+                                            </span>
+                                            <span>
+                                                Thuê (T/T/N):{' '}
+                                                {book.eBookPrice > 0 ? (
+                                                    `${formatCurrency(book.weeklyRentalPrice)} / ${formatCurrency(book.monthlyRentalPrice || 0)} / ${formatCurrency(book.yearlyRentalPrice || 0)}`
+                                                ) : (
+                                                    <em style={{ color: '#94a3b8' }}>Không cho thuê</em>
+                                                )}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <strong>{book.stockCount}</strong>
+                                    </td>
+                                    <td>{renderStatusBadge(book.status)}</td>
+                                    <td>
+                                        <div className={styles.actionBtns}>
+                                            <button type="button" className={styles.btnTable} onClick={() => openEditModal('books', book.id)}>
+                                                <Pencil size={14} /> Sửa
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={`${styles.btnTable} ${styles.danger}`}
+                                                onClick={() => setConfirmState({ kind: 'books', id: book.id, title: book.title })}
+                                            >
+                                                <Trash2 size={14} /> Xóa
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
 
+                {/* 2. BẢNG DỮ LIỆU DANH MỤC THỂ LOẠI */}
+                {activeTab === 'categories' && (
+                    <table className={styles.dataTable}>
+                        <thead>
+                            <tr>
+                                <th>Mã danh mục</th>
+                                <th>Tên thể loại</th>
+                                <th>Danh mục cha</th>
+                                <th>Mô tả</th>
+                                <th>Số lượng sách</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {(pageItems as CategoryData[]).map((cat) => (
+                                <tr key={cat.id}>
+                                    <td><strong>CAT-{cat.id}</strong></td>
+                                    <td><strong>{cat.name}</strong></td>
+                                    <td>{cat.parentId ? categoryNameMap.get(cat.parentId) || 'Gốc' : 'Danh mục gốc'}</td>
+                                    <td>{cat.description || 'Không có mô tả'}</td>
+                                    <td><span className={styles.badgeCount}>{cat.bookCount} đầu sách</span></td>
+                                    <td>
+                                        <div className={styles.actionBtns}>
+                                            <button type="button" className={styles.btnTable} onClick={() => openEditModal('categories', cat.id)}>
+                                                <Pencil size={14} /> Sửa
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={`${styles.btnTable} ${styles.danger}`}
+                                                onClick={() => setConfirmState({ kind: 'categories', id: cat.id, title: cat.name })}
+                                            >
+                                                <Trash2 size={14} /> Xóa
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+
+                {/* 3. BẢNG DỮ LIỆU NHÀ XUẤT BẢN */}
+                {activeTab === 'publishers' && (
+                    <table className={styles.dataTable}>
+                        <thead>
+                            <tr>
+                                <th>Mã NXB</th>
+                                <th>Tên Nhà Xuất Bản</th>
+                                <th>Địa chỉ</th>
+                                <th>Thông tin liên hệ</th>
+                                <th>Số lượng sách</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {(pageItems as PublisherData[]).map((pub) => (
+                                <tr key={pub.id}>
+                                    <td><strong>PUB-{pub.id}</strong></td>
+                                    <td><strong>{pub.name}</strong></td>
+                                    <td>{pub.address || 'Chưa cập nhật'}</td>
+                                    <td>
+                                        <div className={styles.cellTitle}>
+                                            <span>SĐT: {pub.phone || 'Chưa có'}</span>
+                                            <span>Email: {pub.email || 'Chưa có'}</span>
+                                        </div>
+                                    </td>
+                                    <td><span className={styles.badgeCount}>{pub.bookCount} đầu sách</span></td>
+                                    <td>
+                                        <div className={styles.actionBtns}>
+                                            <button type="button" className={styles.btnTable} onClick={() => openEditModal('publishers', pub.id)}>
+                                                <Pencil size={14} /> Sửa
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={`${styles.btnTable} ${styles.danger}`}
+                                                onClick={() => setConfirmState({ kind: 'publishers', id: pub.id, title: pub.name })}
+                                            >
+                                                <Trash2 size={14} /> Xóa
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+
+                {/* THANH PHÂN TRANG */}
                 <div className={styles.paginationBar}>
                     <span>
                         {filteredItems.length === 0
                             ? 'Không có dữ liệu'
-                            : `Hiển thị ${(currentPage - 1) * PAGE_SIZE + 1} - ${Math.min(currentPage * PAGE_SIZE, filteredItems.length)} trên tổng số ${filteredItems.length} bản ghi`}
+                            : `Hiển thị ${(currentPage - 1) * PAGE_SIZE + 1} - ${Math.min(
+                                currentPage * PAGE_SIZE,
+                                filteredItems.length
+                            )} trên tổng số ${filteredItems.length} bản ghi`}
                     </span>
+
                     <div className={styles.pageBtns}>
-                        <button type="button" className={styles.pageBtn} disabled={currentPage === 1} onClick={() => setPage((prev) => Math.max(1, prev - 1))}>
-                            <ChevronLeft />
+                        <button
+                            type="button"
+                            className={styles.pageBtn}
+                            disabled={currentPage === 1}
+                            onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        >
+                            <ChevronLeft size={16} />
                         </button>
-                        {Array.from({ length: totalPages }, (_, index) => index + 1).map((item) => (
-                            <button type="button" key={item} className={`${styles.pageBtn} ${item === currentPage ? styles.active : ''}`} onClick={() => setPage(item)}>
-                                {item}
+
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                            <button
+                                key={p}
+                                type="button"
+                                className={`${styles.pageBtn} ${p === currentPage ? styles.activePage : ''}`}
+                                onClick={() => setPage(p)}
+                            >
+                                {p}
                             </button>
                         ))}
-                        <button type="button" className={styles.pageBtn} disabled={currentPage === totalPages} onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}>
-                            <ChevronRight />
+
+                        <button
+                            type="button"
+                            className={styles.pageBtn}
+                            disabled={currentPage === totalPages}
+                            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        >
+                            <ChevronRight size={16} />
                         </button>
                     </div>
                 </div>
             </section>
 
+            {/* MODAL THÊM / SỬA SÁCH, THỂ LOẠI & NXB */}
             {modalKind && (
                 <div className={styles.overlay}>
                     <div className={styles.modal}>
                         <div className={styles.modalHeader}>
                             <div>
-                                <h3>{editingId ? 'Cập nhật thông tin' : tabActionLabel}</h3>
+                                <h3>
+                                    {editingId
+                                        ? `Cập nhật ${modalKind === 'books' ? 'sách' : modalKind === 'categories' ? 'danh mục' : 'NXB'}`
+                                        : `Thêm ${modalKind === 'books' ? 'sách mới' : modalKind === 'categories' ? 'danh mục mới' : 'NXB mới'}`}
+                                </h3>
                                 <p>Dữ liệu thay đổi sẽ được ghi nhận vào Audit Log khi kết nối backend.</p>
                             </div>
-                            <button type="button" className={styles.modalClose} onClick={closeModal} aria-label="Đóng">
-                                <X />
+                            <button type="button" className={styles.modalClose} onClick={closeModal}>
+                                <X size={18} />
                             </button>
                         </div>
+
                         <div className={styles.modalBody}>
-                            {renderModalBody()}
+                            {modalKind === 'books' && (
+                                <div className={styles.formGrid}>
+                                    <div className={styles.formGroup}>
+                                        <label htmlFor="title">Tên sách *</label>
+                                        <input
+                                            id="title"
+                                            type="text"
+                                            className={styles.formControl}
+                                            value={(draft.title as string) || ''}
+                                            onChange={(e) => updateDraft('title', e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label htmlFor="author">Tác giả *</label>
+                                        <input
+                                            id="author"
+                                            type="text"
+                                            className={styles.formControl}
+                                            value={(draft.author as string) || ''}
+                                            onChange={(e) => updateDraft('author', e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label htmlFor="isbn">Mã ISBN *</label>
+                                        <input
+                                            id="isbn"
+                                            type="text"
+                                            className={styles.formControl}
+                                            disabled={!!editingId}
+                                            value={(draft.isbn as string) || ''}
+                                            onChange={(e) => updateDraft('isbn', e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label htmlFor="publisherId">Nhà xuất bản *</label>
+                                        <select
+                                            id="publisherId"
+                                            className={styles.formControl}
+                                            value={(draft.publisherId as number) || ''}
+                                            onChange={(e) => updateDraft('publisherId', Number(e.target.value))}
+                                        >
+                                            {publishers.map((pub) => (
+                                                <option key={pub.id} value={pub.id}>
+                                                    {pub.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* ĐÃ SỬA: Multi-Select Checkbox Thể loại linh hoạt */}
+                                    <div className={styles.formGroup} ref={categoryDropdownRef} style={{ position: 'relative' }}>
+                                        <label>Thể loại (Chọn nhiều) *</label>
+                                        <div
+                                            className={styles.dropdownCheckboxTrigger}
+                                            onClick={() => setIsCategoryDropdownOpen((prev) => !prev)}
+                                        >
+                                            <span className={styles.dropdownCheckboxValue}>{selectedCategoriesText}</span>
+                                            <ChevronDown size={16} />
+                                        </div>
+
+                                        {isCategoryDropdownOpen && (
+                                            <div className={styles.dropdownCheckboxMenu}>
+                                                {categories.map((cat) => {
+                                                    const currentCategoryIds = (draft.categoryIds as number[]) || [];
+                                                    const isChecked = currentCategoryIds.includes(cat.id);
+                                                    return (
+                                                        <label
+                                                            key={cat.id}
+                                                            className={styles.checkboxOption}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={isChecked}
+                                                                onChange={() => toggleCategorySelection(cat.id)}
+                                                            />
+                                                            <span>{cat.name}</span>
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label htmlFor="status">Trạng thái kinh doanh</label>
+                                        <select
+                                            id="status"
+                                            className={styles.formControl}
+                                            value={(draft.status as AdminBookStatus) || 'selling'}
+                                            onChange={(e) => updateDraft('status', e.target.value as AdminBookStatus)}
+                                        >
+                                            <option value="selling">Đang bán</option>
+                                            <option value="upcoming">Sắp phát hành</option>
+                                            <option value="stopped">Ngừng bán</option>
+                                        </select>
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label htmlFor="physicalPrice">Giá bán sách giấy (VNĐ)</label>
+                                        <input
+                                            id="physicalPrice"
+                                            type="number"
+                                            className={styles.formControl}
+                                            value={(draft.physicalPrice as number) || 0}
+                                            onChange={(e) => updateDraft('physicalPrice', Number(e.target.value))}
+                                        />
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label htmlFor="eBookPrice">Giá bán E-book (VNĐ) - Đặt = 0 nếu không bán Online</label>
+                                        <input
+                                            id="eBookPrice"
+                                            type="number"
+                                            className={styles.formControl}
+                                            value={(draft.eBookPrice as number) || 0}
+                                            onChange={(e) => updateDraft('eBookPrice', Number(e.target.value))}
+                                        />
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label htmlFor="weeklyRentalPrice" className={isEBookDisabled ? styles.lockedLabel : ''}>
+                                            Giá thuê theo Tuần (VNĐ) {isEBookDisabled && <Ban size={12} color="#94a3b8" />}
+                                        </label>
+                                        <input
+                                            id="weeklyRentalPrice"
+                                            type="number"
+                                            disabled={isEBookDisabled}
+                                            className={`${styles.formControl} ${isEBookDisabled ? styles.disabledInput : ''}`}
+                                            value={isEBookDisabled ? 0 : (draft.weeklyRentalPrice as number) || 0}
+                                            onChange={(e) => updateDraft('weeklyRentalPrice', Number(e.target.value))}
+                                        />
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label htmlFor="monthlyRentalPrice" className={isEBookDisabled ? styles.lockedLabel : ''}>
+                                            Giá thuê theo Tháng (VNĐ) {isEBookDisabled && <Ban size={12} color="#94a3b8" />}
+                                        </label>
+                                        <input
+                                            id="monthlyRentalPrice"
+                                            type="number"
+                                            disabled={isEBookDisabled}
+                                            className={`${styles.formControl} ${isEBookDisabled ? styles.disabledInput : ''}`}
+                                            value={isEBookDisabled ? 0 : (draft.monthlyRentalPrice as number) || 0}
+                                            onChange={(e) => updateDraft('monthlyRentalPrice', Number(e.target.value))}
+                                        />
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label htmlFor="yearlyRentalPrice" className={isEBookDisabled ? styles.lockedLabel : ''}>
+                                            Giá thuê theo Năm (VNĐ) {isEBookDisabled && <Ban size={12} color="#94a3b8" />}
+                                        </label>
+                                        <input
+                                            id="yearlyRentalPrice"
+                                            type="number"
+                                            disabled={isEBookDisabled}
+                                            className={`${styles.formControl} ${isEBookDisabled ? styles.disabledInput : ''}`}
+                                            value={isEBookDisabled ? 0 : (draft.yearlyRentalPrice as number) || 0}
+                                            onChange={(e) => updateDraft('yearlyRentalPrice', Number(e.target.value))}
+                                        />
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label htmlFor="stockCount" className={styles.lockedLabel}>
+                                            Số lượng tồn kho <Lock size={12} />
+                                        </label>
+                                        <input
+                                            id="stockCount"
+                                            type="number"
+                                            className={`${styles.formControl} ${styles.disabledInput}`}
+                                            disabled
+                                            value={editingId ? (draft.stockCount as number) : 0}
+                                        />
+                                        <span className={styles.inputHelpText}>
+                                            SL tồn kho chỉ được điều chỉnh khi lập Phiếu Nhập Kho.
+                                        </span>
+                                    </div>
+
+                                    <div className={`${styles.formGroup} ${styles.full}`}>
+                                        <label htmlFor="coverImg">Đường dẫn ảnh bìa chính (URL)</label>
+                                        <input
+                                            id="coverImg"
+                                            type="text"
+                                            className={styles.formControl}
+                                            value={(draft.coverImg as string) || ''}
+                                            onChange={(e) => updateDraft('coverImg', e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {modalKind === 'categories' && (
+                                <div className={styles.formGrid}>
+                                    <div className={`${styles.formGroup} ${styles.full}`}>
+                                        <label htmlFor="catName">Tên thể loại *</label>
+                                        <input
+                                            id="catName"
+                                            type="text"
+                                            className={styles.formControl}
+                                            value={(draft.name as string) || ''}
+                                            onChange={(e) => updateDraft('name', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className={`${styles.formGroup} ${styles.full}`}>
+                                        <label htmlFor="parentId">Danh mục cha</label>
+                                        <select
+                                            id="parentId"
+                                            className={styles.formControl}
+                                            value={(draft.parentId as number) || ''}
+                                            onChange={(e) => updateDraft('parentId', e.target.value)}
+                                        >
+                                            <option value="">Danh mục gốc (Không có cha)</option>
+                                            {categories.map((c) => (
+                                                <option key={c.id} value={c.id}>
+                                                    {c.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className={`${styles.formGroup} ${styles.full}`}>
+                                        <label htmlFor="catDesc">Mô tả thể loại</label>
+                                        <textarea
+                                            id="catDesc"
+                                            rows={3}
+                                            className={styles.formControl}
+                                            value={(draft.description as string) || ''}
+                                            onChange={(e) => updateDraft('description', e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {modalKind === 'publishers' && (
+                                <div className={styles.formGrid}>
+                                    <div className={`${styles.formGroup} ${styles.full}`}>
+                                        <label htmlFor="pubName">Tên Nhà Xuất Bản *</label>
+                                        <input
+                                            id="pubName"
+                                            type="text"
+                                            className={styles.formControl}
+                                            value={(draft.name as string) || ''}
+                                            onChange={(e) => updateDraft('name', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                        <label htmlFor="pubPhone">Số điện thoại</label>
+                                        <input
+                                            id="pubPhone"
+                                            type="text"
+                                            className={styles.formControl}
+                                            value={(draft.phone as string) || ''}
+                                            onChange={(e) => updateDraft('phone', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                        <label htmlFor="pubEmail">Email liên hệ</label>
+                                        <input
+                                            id="pubEmail"
+                                            type="email"
+                                            className={styles.formControl}
+                                            value={(draft.email as string) || ''}
+                                            onChange={(e) => updateDraft('email', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className={`${styles.formGroup} ${styles.full}`}>
+                                        <label htmlFor="pubAddress">Địa chỉ trụ sở</label>
+                                        <input
+                                            id="pubAddress"
+                                            type="text"
+                                            className={styles.formControl}
+                                            value={(draft.address as string) || ''}
+                                            onChange={(e) => updateDraft('address', e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
                             {formWarn && <div className={styles.formWarn}>{formWarn}</div>}
                         </div>
+
                         <div className={styles.modalFooter}>
-                            <button type="button" className={styles.btnSecondary} onClick={closeModal}>Hủy</button>
-                            <button type="button" className={styles.btnPrimary} onClick={saveModal}>Lưu</button>
+                            <button type="button" className={styles.btnSecondary} onClick={closeModal}>
+                                Hủy
+                            </button>
+                            <button type="button" className={styles.btnPrimary} onClick={saveModal}>
+                                Lưu
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
 
+            {/* MODAL XÁC NHẬN XÓA */}
             {confirmState && (
                 <div className={styles.overlay}>
                     <div className={`${styles.modal} ${styles.modalSmall}`}>
@@ -720,22 +1051,24 @@ export const AdminBookManagement: React.FC = () => {
                                 <h3>Xác nhận xóa</h3>
                                 <p>{confirmState.title}</p>
                             </div>
-                            <button type="button" className={styles.modalClose} onClick={() => setConfirmState(null)} aria-label="Đóng">
-                                <X />
+                            <button type="button" className={styles.modalClose} onClick={() => setConfirmState(null)}>
+                                <X size={18} />
                             </button>
                         </div>
                         <div className={styles.modalBody}>
-                            Thao tác xóa sẽ kiểm tra ràng buộc dữ liệu liên kết trước khi thực hiện.
+                            Bạn có chắc chắn muốn xóa dữ liệu này không? Thao tác không thể hoàn tác.
                         </div>
                         <div className={styles.modalFooter}>
-                            <button type="button" className={styles.btnSecondary} onClick={() => setConfirmState(null)}>Hủy</button>
-                            <button type="button" className={styles.btnDanger} onClick={confirmDelete}>Xác nhận</button>
+                            <button type="button" className={styles.btnSecondary} onClick={() => setConfirmState(null)}>
+                                Hủy
+                            </button>
+                            <button type="button" className={styles.btnDanger} onClick={confirmDelete}>
+                                Xác nhận
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
-
-            {toast && <div className={styles.toast}>{toast}</div>}
         </>
     );
 };
