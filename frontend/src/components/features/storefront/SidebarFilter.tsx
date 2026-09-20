@@ -53,7 +53,7 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
                 <div className={styles.optimizedListBox}>
                     {categoriesList.map((cat, idx) => (
                         <label key={idx} className={styles.optimizedItem}>
-                            <input type="checkbox" onChange={(e) => onFilterChange({ categories: [cat] })} />
+                            <input type="checkbox" onChange={() => onFilterChange({ categories: [cat] })} />
                             {cat}
                         </label>
                     ))}
@@ -66,7 +66,7 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
                 <div className={styles.optimizedListBox}>
                     {publishersList.map((pub, idx) => (
                         <label key={idx} className={styles.optimizedItem}>
-                            <input type="checkbox" onChange={(e) => onFilterChange({ publishers: [pub] })} />
+                            <input type="checkbox" onChange={() => onFilterChange({ publishers: [pub] })} />
                             {pub}
                         </label>
                     ))}

@@ -8,6 +8,8 @@ import MyLibraryPage from './pages/MyLibraryPage';
 import { CartPage } from './pages/CartPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import RefundPage from './pages/RefundPage';
+import AdminBookManagementPage from './pages/AdminBookManagementPage';
+import AdminSettingsPage from './pages/AdminSettingsPage';
 
 export const App: React.FC = () => {
     return (
@@ -34,6 +36,12 @@ export const App: React.FC = () => {
                     
                     {/* Trang form hoàn tiền*/}
                     <Route path="/refund" element={<RefundPage />} />
+
+                    {/* Trang Admin quản lý sách */}
+                    <Route path="/admin/books" element={<AdminBookManagementPage />} />
+
+                    {/* Trang Admin quản lý cài đặt */}
+                    <Route path="/admin/settings" element={<AdminSettingsPage />} />
                 </Routes>
             </Router>
         </UserProvider>

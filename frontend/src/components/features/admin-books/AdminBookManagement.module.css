@@ -1,0 +1,483 @@
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.statBox {
+    background: var(--white);
+    padding: 18px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--hairline);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.statLabel {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+}
+
+.statValue {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--catalina);
+}
+
+.tablePanel {
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--hairline);
+    box-shadow: 0 4px 20px rgba(7, 18, 51, 0.04);
+    overflow: hidden;
+}
+
+.panelHeader {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--hairline);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.tabRow {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.tabButton {
+    border: 1.5px solid var(--hairline);
+    background: var(--white);
+    color: var(--catalina);
+    border-radius: 6px;
+    padding: 8px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.tabButton svg {
+    width: 16px;
+    height: 16px;
+}
+
+.tabButton.active {
+    background: var(--egyptian);
+    color: #fff;
+    border-color: var(--egyptian);
+}
+
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.searchWrap {
+    position: relative;
+    width: 320px;
+}
+
+.searchWrap svg {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    width: 17px;
+    height: 17px;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 9px 14px 9px 34px;
+    border: 1.5px solid var(--hairline);
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+    color: var(--ink);
+    font-family: inherit;
+}
+
+.searchInput:focus,
+.filterSelect:focus,
+.formControl:focus {
+    border-color: var(--egyptian);
+}
+
+.filterGroup {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filterSelect {
+    padding: 8px 12px;
+    border: 1.5px solid var(--hairline);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--ink);
+    outline: none;
+    background: var(--white);
+    font-family: inherit;
+}
+
+.btnPrimary,
+.btnSecondary,
+.btnDanger,
+.btnTable {
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btnPrimary {
+    background: var(--egyptian);
+    color: var(--white);
+    padding: 8px 16px;
+    border: none;
+}
+
+.btnPrimary:hover {
+    background: var(--catalina);
+}
+
+.btnSecondary {
+    padding: 9px 16px;
+    background: var(--white);
+    color: var(--ink);
+    border: 1.5px solid var(--hairline);
+}
+
+.btnDanger {
+    padding: 9px 16px;
+    background: var(--danger);
+    color: #fff;
+    border: none;
+}
+
+.btnTable {
+    padding: 5px 10px;
+    border: 1px solid var(--hairline);
+    background: var(--alice);
+    color: var(--egyptian);
+    font-size: 12px;
+}
+
+.btnTable.danger {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border-color: #fed7d7;
+}
+
+.dataTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+}
+
+.dataTable th {
+    background: #f8faff;
+    color: var(--catalina);
+    font-weight: 700;
+    text-align: left;
+    padding: 12px 20px;
+    border-bottom: 1.5px solid var(--hairline);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dataTable td {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--hairline);
+    vertical-align: middle;
+}
+
+.dataTable tr:hover td {
+    background: #fafcff;
+}
+
+.bookCell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 260px;
+}
+
+.bookCover {
+    width: 38px;
+    height: 50px;
+    object-fit: cover;
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    background: #fff;
+    flex-shrink: 0;
+}
+
+.cellTitle {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.cellTitle strong {
+    color: var(--ink);
+    font-size: 13.5px;
+}
+
+.cellTitle span {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.chipRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.chip {
+    background: #eef2ff;
+    color: #3730a3;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.statusSelling {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.statusUpcoming {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.statusStopped {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.actionBtns {
+    display: flex;
+    gap: 8px;
+}
+
+.paginationBar {
+    padding: 14px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: var(--muted);
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.pageBtns {
+    display: flex;
+    gap: 4px;
+}
+
+.pageBtn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--hairline);
+    background: var(--white);
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--ink);
+}
+
+.pageBtn.active {
+    background: var(--egyptian);
+    color: var(--white);
+    border-color: var(--egyptian);
+}
+
+.pageBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.emptyState {
+    padding: 48px 20px;
+    text-align: center;
+    color: var(--muted);
+}
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 18, 51, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+}
+
+.modal {
+    background: var(--white);
+    border-radius: 10px;
+    width: 720px;
+    max-width: 100%;
+    box-shadow: 0 30px 60px -20px rgba(7, 18, 51, 0.35);
+}
+
+.modalSmall {
+    width: 460px;
+}
+
+.modalHeader {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.modalHeader h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--catalina);
+}
+
+.modalHeader p {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 3px;
+}
+
+.modalClose {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    padding: 2px;
+    border-radius: 4px;
+    line-height: 0;
+}
+
+.modalBody {
+    padding: 20px 22px;
+}
+
+.modalFooter {
+    padding: 16px 22px;
+    border-top: 1px solid var(--hairline);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.formGroup.full {
+    grid-column: 1 / -1;
+}
+
+.formGroup label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.formControl {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1.5px solid var(--hairline);
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+    font-family: inherit;
+    color: var(--ink);
+    background: #fff;
+}
+
+textarea.formControl {
+    min-height: 84px;
+    resize: vertical;
+}
+
+.formWarn {
+    font-size: 12.5px;
+    color: var(--danger);
+    margin-top: 12px;
+    padding: 9px 12px;
+    background: var(--danger-bg);
+    border-radius: 6px;
+    line-height: 1.4;
+}
+
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 120;
+    background: var(--ink);
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 12px 24px -8px rgba(7, 18, 51, 0.4);
+}
+
+@media (max-width: 1024px) {
+    .statsGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .formGrid {
+        grid-template-columns: 1fr;
+    }
+}

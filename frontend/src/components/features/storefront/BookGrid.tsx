@@ -1,7 +1,7 @@
 import React from 'react';
 import styles from './BookGrid.module.css';
 import ProductCard from '../../common/ProductCard';
-import type { ProductData } from '../../common/ProductCard';
+import type { ProductData } from '../../../types/product';
 
 interface BookGridProps {
     books: ProductData[];
