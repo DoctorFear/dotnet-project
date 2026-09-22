@@ -1,10 +1,12 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using AncientBook.Application.Common;
 using AncientBook.Application.DTOs.Auth;
 using AncientBook.Application.Interfaces;
 using AncientBook.Domain.Entities;
 using AncientBook.Domain.Enums;
+using Google.Apis.Auth;
 
 namespace AncientBook.Application.Services
 {
@@ -21,24 +23,20 @@ namespace AncientBook.Application.Services
 
         public async Task<ApiResponse<RegisterResponseDto>> RegisterAsync(RegisterRequestDto request)
         {
-            // Kiểm tra BR01 & E2: Trùng Username
             var usernameExists = await _context.Users.AnyAsync(u => u.Username.ToLower() == request.Username.Trim().ToLower());
             if (usernameExists)
             {
                 return ApiResponse<RegisterResponseDto>.Fail("Tên đăng nhập đã tồn tại trên hệ thống.");
             }
 
-            // Kiểm tra BR01 & E2: Trùng Email
             var emailExists = await _context.Users.AnyAsync(u => u.Email.ToLower() == request.Email.Trim().ToLower());
             if (emailExists)
             {
                 return ApiResponse<RegisterResponseDto>.Fail("Địa chỉ email này đã được sử dụng.");
             }
 
-            // BR04: Hash mật khẩu bằng BCrypt
             var passwordHash = _passwordHasher.HashPassword(request.Password);
 
-            // BR03 & Bước 6: Mặc định vai trò Member, FPoints = 0, IsActive = true
             var user = new User
             {
                 Username = request.Username.Trim(),
@@ -66,6 +64,87 @@ namespace AncientBook.Application.Services
             };
 
             return ApiResponse<RegisterResponseDto>.Ok(responseData, "Đăng ký tài khoản thành công!");
+        }
+
+        public async Task<ApiResponse<RegisterResponseDto>> GoogleLoginAsync(GoogleLoginRequestDto request)
+        {
+            GoogleJsonWebSignature.Payload payload;
+            try
+            {
+                // Xác thực tính hợp lệ của IdToken từ Google
+                payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken);
+            }
+            catch (Exception)
+            {
+                return ApiResponse<RegisterResponseDto>.Fail("Mã xác thực Google không hợp lệ hoặc đã hết hạn.");
+            }
+
+            var email = payload.Email.ToLower();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email);
+
+            // A1: Nếu email đã tồn tại -> Thông báo và tự động đăng nhập (trả về thông tin user)
+            if (user != null)
+            {
+                if (!user.IsActive)
+                {
+                    return ApiResponse<RegisterResponseDto>.Fail("Tài khoản của bạn đã bị vô hiệu hóa.");
+                }
+
+                var existingUserResponse = new RegisterResponseDto
+                {
+                    UserId = user.Id,
+                    Username = user.Username,
+                    Email = user.Email,
+                    FullName = user.FullName,
+                    Role = user.Role.ToString(),
+                    FPoints = user.FPoints,
+                    CreatedAt = user.CreatedAt
+                };
+
+                return ApiResponse<RegisterResponseDto>.Ok(existingUserResponse, "Đăng nhập bằng tài khoản Google thành công!");
+            }
+
+            // A1: Nếu email chưa từng đăng ký -> Tự động tạo tài khoản mới với vai trò Member
+            var baseUsername = email.Split('@')[0];
+            var username = baseUsername;
+            int counter = 1;
+
+            // Đảm bảo username sinh tự động không bị trùng
+            while (await _context.Users.AnyAsync(u => u.Username.ToLower() == username.ToLower()))
+            {
+                username = $"{baseUsername}{counter++}";
+            }
+
+            // Tạo mật khẩu ngẫu nhiên để thỏa mãn ràng buộc PasswordHash (User đăng nhập qua Google không dùng pass này)
+            var dummyPassword = Guid.NewGuid().ToString("N") + "@Aa1";
+
+            user = new User
+            {
+                Username = username,
+                Email = email,
+                FullName = string.IsNullOrWhiteSpace(payload.Name) ? baseUsername : payload.Name,
+                PhoneNumber = null,
+                PasswordHash = _passwordHasher.HashPassword(dummyPassword),
+                Role = UserRole.Member,
+                FPoints = 0,
+                IsActive = true
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            var newUserResponse = new RegisterResponseDto
+            {
+                UserId = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                FullName = user.FullName,
+                Role = user.Role.ToString(),
+                FPoints = user.FPoints,
+                CreatedAt = user.CreatedAt
+            };
+
+            return ApiResponse<RegisterResponseDto>.Ok(newUserResponse, "Tạo tài khoản và đăng nhập bằng Google thành công!");
         }
     }
 }

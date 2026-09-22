@@ -41,5 +41,28 @@ namespace AncientBook.API.Controllers
 
             return Ok(result);
         }
+
+        /// <summary>
+        /// A1: Đăng ký / Đăng nhập nhanh bằng tài khoản Google
+        /// </summary>
+        [HttpPost("google-login")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequestDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var result = await _authService.GoogleLoginAsync(request);
+
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
     }
 }
