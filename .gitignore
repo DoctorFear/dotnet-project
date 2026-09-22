@@ -519,3 +519,5 @@ lerna-debug.log*
 # Vite / Rollup temporary files
 *.tsbuildinfo
 .eslintcache
+
+Migrations/

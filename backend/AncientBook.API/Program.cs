@@ -3,8 +3,11 @@ using AncientBook.Application.Interfaces;
 using AncientBook.Application.Services;
 using AncientBook.Infrastructure.Identity;
 using AncientBook.Infrastructure.Persistence;
+using DotNetEnv;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+
+Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +21,10 @@ builder.Services.AddScoped<IApplicationDbContext>(provider =>
 // DI Service & Hasher
 builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ICheckoutService, CheckoutService>();
+
+builder.Services.AddHttpClient<ICheckoutService, CheckoutService>();
+builder.Services.AddHttpClient();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
