@@ -1,8 +1,7 @@
-﻿using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using AncientBook.Application.Interfaces;
+﻿using AncientBook.Application.Interfaces;
 using AncientBook.Domain.Entities;
 using AncientBook.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace AncientBook.Infrastructure.Repositories
 {
@@ -17,22 +16,26 @@ namespace AncientBook.Infrastructure.Repositories
 
         public async Task<User?> GetByEmailAsync(string email)
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == email.Trim().ToLower());
         }
 
         public async Task<User?> GetByUsernameAsync(string username)
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Username.ToLower() == username.ToLower());
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.Username.ToLower() == username.Trim().ToLower());
         }
 
         public async Task<bool> ExistsByEmailAsync(string email)
         {
-            return await _context.Users.AnyAsync(u => u.Email.ToLower() == email.ToLower());
+            return await _context.Users
+                .AnyAsync(u => u.Email.ToLower() == email.Trim().ToLower());
         }
 
         public async Task<bool> ExistsByUsernameAsync(string username)
         {
-            return await _context.Users.AnyAsync(u => u.Username.ToLower() == username.ToLower());
+            return await _context.Users
+                .AnyAsync(u => u.Username.ToLower() == username.Trim().ToLower());
         }
 
         public async Task AddAsync(User user)

@@ -138,5 +138,43 @@ namespace AncientBook.Application.Services
 
             return ApiResponse<RegisterResponseDto>.Ok(newUserResponse, "Tạo tài khoản và đăng nhập bằng Google thành công!");
         }
+
+
+        public async Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto request)
+        {
+            // E1: Kiểm tra dữ liệu không được để trống
+            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
+            {
+                return ApiResponse<LoginResponseDto>.Fail("Tên đăng nhập và mật khẩu không được để trống.");
+            }
+
+            // Tìm kiếm user theo Username
+            var user = await _userRepository.GetByUsernameAsync(request.Username);
+
+            // E2 & BR01: Sai thông tin -> Báo lỗi chung chung chống rà quét tài khoản
+            if (user == null || !_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
+            {
+                return ApiResponse<LoginResponseDto>.Fail("Tên đăng nhập hoặc mật khẩu không chính xác.");
+            }
+
+            // E3 & BR03: Kiểm tra tài khoản bị khóa / vô hiệu hóa
+            if (!user.IsActive)
+            {
+                return ApiResponse<LoginResponseDto>.Fail("Tài khoản của bạn hiện đang bị khóa. Vui lòng liên hệ hotline để được hỗ trợ.");
+            }
+
+            // Đóng gói dữ liệu trả về phục vụ điều hướng theo Role (BR02)
+            var responseData = new LoginResponseDto
+            {
+                UserId = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                FullName = user.FullName,
+                Role = user.Role.ToString(),
+                FPoints = user.FPoints
+            };
+
+            return ApiResponse<LoginResponseDto>.Ok(responseData, "Đăng nhập thành công!");
+        }
     }
 }

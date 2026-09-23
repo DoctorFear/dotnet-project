@@ -8,6 +8,8 @@ namespace AncientBook.Application.Interfaces
     public interface IAuthService
     {
         Task<ApiResponse<RegisterResponseDto>> RegisterAsync(RegisterRequestDto request);
+        Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto request); 
         Task<ApiResponse<RegisterResponseDto>> GoogleLoginAsync(GoogleLoginRequestDto request);
+
     }
 }
