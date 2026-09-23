@@ -1,10 +1,9 @@
 ﻿using System;
-using AncientBook.Domain.Common;
 using AncientBook.Domain.Enums;
 
 namespace AncientBook.Domain.Entities
 {
-    public class User : IAuditableEntity
+    public class User 
     {
         public int Id { get; set; }
         public string Username { get; set; } = null!;
@@ -17,7 +16,7 @@ namespace AncientBook.Domain.Entities
         public UserRole Role { get; set; } = UserRole.Member; // BR03
 
         // Audit Trail
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = TimeZoneHelper.GetVietnamTime();
         public string? CreatedBy { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public string? UpdatedBy { get; set; }

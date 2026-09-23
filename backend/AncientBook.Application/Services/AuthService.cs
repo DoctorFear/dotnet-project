@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using AncientBook.Application.Common;
 using AncientBook.Application.DTOs.Auth;
 using AncientBook.Application.Interfaces;
@@ -12,25 +11,23 @@ namespace AncientBook.Application.Services
 {
     public class AuthService : IAuthService
     {
-        private readonly IApplicationDbContext _context;
+        private readonly IUserRepository _userRepository;
         private readonly IPasswordHasher _passwordHasher;
 
-        public AuthService(IApplicationDbContext context, IPasswordHasher passwordHasher)
+        public AuthService(IUserRepository userRepository, IPasswordHasher passwordHasher)
         {
-            _context = context;
+            _userRepository = userRepository;
             _passwordHasher = passwordHasher;
         }
 
         public async Task<ApiResponse<RegisterResponseDto>> RegisterAsync(RegisterRequestDto request)
         {
-            var usernameExists = await _context.Users.AnyAsync(u => u.Username.ToLower() == request.Username.Trim().ToLower());
-            if (usernameExists)
+            if (await _userRepository.ExistsByUsernameAsync(request.Username))
             {
                 return ApiResponse<RegisterResponseDto>.Fail("Tên đăng nhập đã tồn tại trên hệ thống.");
             }
 
-            var emailExists = await _context.Users.AnyAsync(u => u.Email.ToLower() == request.Email.Trim().ToLower());
-            if (emailExists)
+            if (await _userRepository.ExistsByEmailAsync(request.Email))
             {
                 return ApiResponse<RegisterResponseDto>.Fail("Địa chỉ email này đã được sử dụng.");
             }
@@ -49,8 +46,8 @@ namespace AncientBook.Application.Services
                 IsActive = true
             };
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            await _userRepository.AddAsync(user);
+            await _userRepository.SaveChangesAsync();
 
             var responseData = new RegisterResponseDto
             {
@@ -71,7 +68,6 @@ namespace AncientBook.Application.Services
             GoogleJsonWebSignature.Payload payload;
             try
             {
-                // Xác thực tính hợp lệ của IdToken từ Google
                 payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken);
             }
             catch (Exception)
@@ -80,9 +76,8 @@ namespace AncientBook.Application.Services
             }
 
             var email = payload.Email.ToLower();
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email);
+            var user = await _userRepository.GetByEmailAsync(email);
 
-            // A1: Nếu email đã tồn tại -> Thông báo và tự động đăng nhập (trả về thông tin user)
             if (user != null)
             {
                 if (!user.IsActive)
@@ -104,18 +99,15 @@ namespace AncientBook.Application.Services
                 return ApiResponse<RegisterResponseDto>.Ok(existingUserResponse, "Đăng nhập bằng tài khoản Google thành công!");
             }
 
-            // A1: Nếu email chưa từng đăng ký -> Tự động tạo tài khoản mới với vai trò Member
             var baseUsername = email.Split('@')[0];
             var username = baseUsername;
             int counter = 1;
 
-            // Đảm bảo username sinh tự động không bị trùng
-            while (await _context.Users.AnyAsync(u => u.Username.ToLower() == username.ToLower()))
+            while (await _userRepository.ExistsByUsernameAsync(username))
             {
                 username = $"{baseUsername}{counter++}";
             }
 
-            // Tạo mật khẩu ngẫu nhiên để thỏa mãn ràng buộc PasswordHash (User đăng nhập qua Google không dùng pass này)
             var dummyPassword = Guid.NewGuid().ToString("N") + "@Aa1";
 
             user = new User
@@ -130,8 +122,8 @@ namespace AncientBook.Application.Services
                 IsActive = true
             };
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            await _userRepository.AddAsync(user);
+            await _userRepository.SaveChangesAsync();
 
             var newUserResponse = new RegisterResponseDto
             {
