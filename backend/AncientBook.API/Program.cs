@@ -3,6 +3,7 @@ using AncientBook.Application.Services;
 using AncientBook.Infrastructure.Identity;
 using AncientBook.Infrastructure.Persistence;
 using AncientBook.Infrastructure.Repositories; // <-- Thêm using này nếu chưa có
+using AncientBook.Infrastructure.Services;
 using DotNetEnv;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,7 @@ builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddHttpClient<ICheckoutService, CheckoutService>();
+builder.Services.AddScoped<IEmailService, EmailService>();   
 
 builder.Services.AddScoped<IUserRepository, UserRepository>(); // <-- BỔ SUNG DÒNG NÀY
 

@@ -15,6 +15,10 @@ namespace AncientBook.Domain.Entities
         public int FPoints { get; set; } = 0;
         public UserRole Role { get; set; } = UserRole.Member; // BR03
 
+        // reset password token and expiration
+        public string? PasswordResetToken { get; set; }
+        public DateTime? ResetTokenExpires { get; set; }
+
         // Audit Trail
         public DateTime CreatedAt { get; set; } = TimeZoneHelper.GetVietnamTime();
         public string? CreatedBy { get; set; }
