@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
 using AncientBook.Application.Interfaces;
 using AncientBook.Domain.Entities;
 
@@ -16,16 +17,23 @@ namespace AncientBook.Infrastructure.Persistence
         public DbSet<Inventory> Inventories => Set<Inventory>();
         public DbSet<BookCategory> BookCategories => Set<BookCategory>();
 
+        // New DbSets for Inventory, Supplier & Stock Alert Modules
+        public DbSet<Supplier> Suppliers => Set<Supplier>();
+        public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
+        public DbSet<PurchaseOrderItem> PurchaseOrderItems => Set<PurchaseOrderItem>();
+        public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+        public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
+        public DbSet<StockAlert> StockAlerts => Set<StockAlert>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Users Entity Configuration
+            // 1. Users Entity Configuration
             modelBuilder.Entity<User>(entity =>
             {
                 entity.ToTable("Users");
                 entity.HasKey(u => u.Id);
-
                 entity.Property(u => u.Username).IsRequired().HasMaxLength(50);
                 entity.Property(u => u.Email).IsRequired().HasMaxLength(150);
                 entity.Property(u => u.FullName).IsRequired().HasMaxLength(100);
@@ -33,12 +41,11 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.Property(u => u.PasswordHash).IsRequired();
                 entity.Property(u => u.Role).HasConversion<string>().HasMaxLength(20);
 
-                // BR01: Đánh Unique Indexes chống trùng lặp dữ liệu định danh
                 entity.HasIndex(u => u.Username).IsUnique().HasDatabaseName("IX_Users_Username");
                 entity.HasIndex(u => u.Email).IsUnique().HasDatabaseName("IX_Users_Email");
             });
 
-            // AuditLogs Configuration
+            // 2. AuditLogs Configuration
             modelBuilder.Entity<AuditLog>(entity =>
             {
                 entity.ToTable("AuditLogs");
@@ -49,7 +56,7 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.HasIndex(a => a.Timestamp).HasDatabaseName("IX_AuditLogs_Timestamp");
             });
 
-            // Oder configuration
+            // 3. Order configuration
             modelBuilder.Entity<Order>(entity =>
             {
                 entity.ToTable("Orders");
@@ -67,7 +74,7 @@ namespace AncientBook.Infrastructure.Persistence
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // OrderItems Configuration
+            // 4. OrderItems Configuration
             modelBuilder.Entity<OrderItem>(entity =>
             {
                 entity.ToTable("OrderItems");
@@ -79,14 +86,14 @@ namespace AncientBook.Infrastructure.Persistence
                     .WithMany(o => o.OrderItems)
                     .HasForeignKey(oi => oi.OrderId)
                     .OnDelete(DeleteBehavior.Cascade);
-                
+
                 entity.HasOne<Book>()
                     .WithMany()
                     .HasForeignKey(oi => oi.BookId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // Books Configuration
+            // 5. Books Configuration
             modelBuilder.Entity<Book>(entity =>
             {
                 entity.ToTable("Books");
@@ -101,7 +108,7 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.Property(b => b.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             });
 
-            // Inventories Configuration
+            // 6. Inventories Configuration
             modelBuilder.Entity<Inventory>(entity =>
             {
                 entity.ToTable("Inventories");
@@ -113,12 +120,12 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.HasIndex(i => i.BookId).IsUnique(); // 1:1
 
                 entity.HasOne(i => i.Book)
-                    .WithOne(b => b.Inventory)
+                    .WithOne()
                     .HasForeignKey<Inventory>(i => i.BookId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // BookCategories Configuration
+            // 7. BookCategories Configuration
             modelBuilder.Entity<BookCategory>(entity =>
             {
                 entity.ToTable("BookCategories");
@@ -130,27 +137,118 @@ namespace AncientBook.Infrastructure.Persistence
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // Data để test checkout xóa nếu muốn
+            // 8. Suppliers Configuration (Phục vụ UC11)
+            modelBuilder.Entity<Supplier>(entity =>
+            {
+                entity.ToTable("Suppliers");
+                entity.HasKey(s => s.Id);
+                entity.Property(s => s.Name).IsRequired().HasMaxLength(255);
+                entity.Property(s => s.ContactPerson).HasMaxLength(100);
+                entity.Property(s => s.Phone).HasMaxLength(20);
+                entity.Property(s => s.Email).HasMaxLength(150);
+                entity.Property(s => s.Address).HasMaxLength(500);
+            });
+
+            // 9. PurchaseOrders Configuration (Phục vụ UC12, UC13)
+            modelBuilder.Entity<PurchaseOrder>(entity =>
+            {
+                entity.ToTable("PurchaseOrders");
+                entity.HasKey(po => po.Id);
+                entity.Property(po => po.Code).IsRequired().HasMaxLength(50);
+                entity.HasIndex(po => po.Code).IsUnique().HasDatabaseName("IX_PurchaseOrders_Code");
+                entity.Property(po => po.Status).IsRequired().HasMaxLength(30);
+                entity.Property(po => po.TotalAmount).HasColumnType("decimal(18,2)").IsRequired();
+                entity.Property(po => po.Notes).HasMaxLength(500);
+
+                entity.HasOne(po => po.Supplier)
+                    .WithMany(s => s.PurchaseOrders)
+                    .HasForeignKey(po => po.SupplierId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // 10. PurchaseOrderItems Configuration (Phục vụ UC12, UC13)
+            modelBuilder.Entity<PurchaseOrderItem>(entity =>
+            {
+                entity.ToTable("PurchaseOrderItems");
+                entity.HasKey(poi => poi.Id);
+                entity.Property(poi => poi.UnitPrice).HasColumnType("decimal(18,2)").IsRequired();
+                entity.Property(poi => poi.OrderedQuantity).IsRequired();
+                entity.Property(poi => poi.ReceivedQuantity).IsRequired();
+
+                entity.HasOne(poi => poi.PurchaseOrder)
+                    .WithMany(po => po.Items)
+                    .HasForeignKey(poi => poi.PurchaseOrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne<Book>()
+                    .WithMany()
+                    .HasForeignKey(poi => poi.BookId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // 11. StockMovements Configuration (Phục vụ UC13 - Biến động kho)
+            modelBuilder.Entity<StockMovement>(entity =>
+            {
+                entity.ToTable("StockMovements");
+                entity.HasKey(sm => sm.Id);
+                entity.Property(sm => sm.MovementType).IsRequired().HasMaxLength(50);
+                entity.Property(sm => sm.Reason).HasMaxLength(255);
+
+                entity.HasIndex(sm => sm.BookId).HasDatabaseName("IX_StockMovements_BookId");
+
+                entity.HasOne<Book>()
+                    .WithMany()
+                    .HasForeignKey(sm => sm.BookId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // 12. SystemSettings Configuration (Phục vụ Cảnh báo tồn kho)
+            modelBuilder.Entity<SystemSetting>(entity =>
+            {
+                entity.ToTable("SystemSettings");
+                entity.HasKey(ss => ss.Id);
+                entity.Property(ss => ss.SettingKey).IsRequired().HasMaxLength(100);
+                entity.HasIndex(ss => ss.SettingKey).IsUnique().HasDatabaseName("IX_SystemSettings_SettingKey");
+                entity.Property(ss => ss.SettingValue).IsRequired().HasMaxLength(500);
+                entity.Property(ss => ss.Description).HasMaxLength(255);
+            });
+
+            // 13. StockAlerts Configuration (Phục vụ Cảnh báo tồn kho)
+            modelBuilder.Entity<StockAlert>(entity =>
+            {
+                entity.ToTable("StockAlerts");
+                entity.HasKey(sa => sa.Id);
+                entity.Property(sa => sa.Status).IsRequired().HasMaxLength(30);
+
+                entity.HasIndex(sa => sa.IsResolved).HasDatabaseName("IX_StockAlerts_IsResolved");
+
+                entity.HasOne<Book>()
+                    .WithMany()
+                    .HasForeignKey(sa => sa.BookId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Data test mẫu
             modelBuilder.Entity<Book>().HasData(
-                new Book 
-                { 
-                    Id = 1, 
-                    Isbn = "978-604-0-00000-1", 
-                    Title = "Sách Cổ Mẫu", 
-                    Author = "Tác Giả Cổ", 
-                    Price = 100000, 
-                    CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) 
+                new Book
+                {
+                    Id = 1,
+                    Isbn = "978-604-0-00000-1",
+                    Title = "Sách Cổ Mẫu",
+                    Author = "Tác Giả Cổ",
+                    Price = 100000,
+                    CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 }
             );
-            
+
             modelBuilder.Entity<Inventory>().HasData(
-                new Inventory 
-                { 
-                    Id = 1, 
-                    BookId = 1, 
-                    QuantityOnHand = 50, 
-                    ReorderLevel = 5, 
-                    LastUpdated = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) 
+                new Inventory
+                {
+                    Id = 1,
+                    BookId = 1,
+                    QuantityOnHand = 50,
+                    ReorderLevel = 5,
+                    LastUpdated = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 }
             );
         }
