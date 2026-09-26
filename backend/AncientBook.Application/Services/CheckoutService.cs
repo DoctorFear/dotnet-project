@@ -68,7 +68,7 @@ namespace AncientBook.Application.Services
                         throw new InvalidOperationException($"Sách ID '{itemDto.BookId}' đã hết hàng hoặc không đủ số lượng.");
                     }
 
-                    decimal unitPrice = book.Price; 
+                    decimal unitPrice = book.PhysicalPrice;
                     decimal itemTotal = unitPrice * itemDto.Quantity;
                     subTotal += itemTotal;
 

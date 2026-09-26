@@ -11,6 +11,6 @@ namespace AncientBook.Domain.Entities
         public string EntityName { get; set; } = null!;
         public string? RecordId { get; set; }
         public string? Details { get; set; }
-        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+        public DateTime Timestamp { get; set; } = TimeZoneHelper.GetVietnamTime();
     }
 }

@@ -11,7 +11,5 @@ namespace AncientBook.Domain.Entities
         public int StockBefore { get; set; }
         public int StockAfter { get; set; }
         public string Reason { get; set; } = string.Empty; // Hư hỏng, thất thoát, nhầm lẫn...[cite: 3]
-        public DateTime CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
     }
 }

@@ -1,11 +1,12 @@
 ﻿using System;
+using AncientBook.Domain.Common;
 using AncientBook.Domain.Enums;
 
 namespace AncientBook.Domain.Entities
 {
-    public class User 
+    // Thực thể Tài khoản người dùng (Kế thừa BaseEntity)
+    public class User : BaseEntity
     {
-        public int Id { get; set; }
         public string Username { get; set; } = null!;
         public string Email { get; set; } = null!;
         public string PasswordHash { get; set; } = null!;
@@ -18,14 +19,6 @@ namespace AncientBook.Domain.Entities
         // reset password token and expiration
         public string? PasswordResetToken { get; set; }
         public DateTime? ResetTokenExpires { get; set; }
-
-        // Audit Trail
-        public DateTime CreatedAt { get; set; } = TimeZoneHelper.GetVietnamTime();
-        public string? CreatedBy { get; set; }
-        public DateTime? UpdatedAt { get; set; }
-        public string? UpdatedBy { get; set; }
-
-
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiryTime { get; set; }
     }

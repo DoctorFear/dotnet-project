@@ -1,13 +1,16 @@
+using System;
+using System.Collections.Generic;
+using AncientBook.Domain.Common;
 using AncientBook.Domain.Enums;
 
 namespace AncientBook.Domain.Entities
 {
-    public class Order
+    // Thực thể Đơn hàng (Kế thừa BaseEntity)
+    public class Order : BaseEntity
     {
-        public int Id { get; set; }
         public int UserId { get; set; }
         public int? PromotionId { get; set; }
-        public DateTime OrderDate { get; set; } = DateTime.UtcNow;
+        public DateTime OrderDate { get; set; } = TimeZoneHelper.GetVietnamTime();
         public decimal SubTotal { get; set; }
         public decimal DiscountAmount { get; set; } = 0;
         public decimal FinalAmount { get; set; }
@@ -18,11 +21,7 @@ namespace AncientBook.Domain.Entities
         public bool IsPaid { get; set; } = false;
 
         // Navigation properties
+        public User? User { get; set; }
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
-        
-        public DateTime CreatedAt { get; set; } = TimeZoneHelper.GetVietnamTime();
-        public string? CreatedBy { get; set; }
-        public DateTime? UpdatedAt { get; set; }
-        public string? UpdatedBy { get; set; }
     }
 }

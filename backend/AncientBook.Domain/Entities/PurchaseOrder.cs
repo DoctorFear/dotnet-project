@@ -14,8 +14,6 @@ namespace AncientBook.Domain.Entities
         public string Status { get; set; } = "Pending"; // Pending, Approved, Cancelled
         public decimal TotalAmount { get; set; }
         public string Notes { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
         // Navigation property
         public ICollection<PurchaseOrderItem> Items { get; set; } = new List<PurchaseOrderItem>();
     }
