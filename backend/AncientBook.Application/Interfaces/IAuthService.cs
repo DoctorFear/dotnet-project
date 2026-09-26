@@ -10,6 +10,8 @@ namespace AncientBook.Application.Interfaces
         Task<ApiResponse<RegisterResponseDto>> RegisterAsync(RegisterRequestDto request);
         Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto request); 
         Task<ApiResponse<RegisterResponseDto>> GoogleLoginAsync(GoogleLoginRequestDto request);
+        Task<ApiResponse<bool>> ForgotPasswordAsync(ForgotPasswordRequestDto request);
+        Task<ApiResponse<bool>> ResetPasswordAsync(ResetPasswordRequestDto request);
 
     }
 }
