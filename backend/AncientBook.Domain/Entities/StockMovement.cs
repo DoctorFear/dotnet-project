@@ -5,7 +5,7 @@ namespace AncientBook.Domain.Entities
 {
     public class StockMovement : BaseEntity, IAuditableEntity
     {
-        public Guid BookId { get; set; }
+        public int BookId { get; set; }
         public string MovementType { get; set; } = string.Empty; // Import (Nhập), Sale (Bán), Audit_Adjustment (Cân bằng kiểm kê)
         public int QuantityChange { get; set; } // (+ số lượng) hoặc (- số lượng)[cite: 3]
         public int StockBefore { get; set; }

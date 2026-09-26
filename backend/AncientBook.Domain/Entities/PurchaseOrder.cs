@@ -7,7 +7,7 @@ namespace AncientBook.Domain.Entities
     public class PurchaseOrder : BaseEntity, IAuditableEntity
     {
         public string Code { get; set; } = string.Empty; // Mã phiếu: PO-2026-001
-        public Guid SupplierId { get; set; }
+        public int SupplierId { get; set; }
         public Supplier Supplier { get; set; } = null!;
 
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
