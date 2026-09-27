@@ -1,3 +1,4 @@
+using System.Text;
 using AncientBook.Application.Common.Interfaces;
 using AncientBook.Application.Interfaces;
 using AncientBook.Application.Services;
@@ -7,8 +8,10 @@ using AncientBook.Infrastructure.Repositories;
 using AncientBook.Infrastructure.Services;
 using AncientBook.Infrastructure.Storage;
 using DotNetEnv;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using QuestPDF.Infrastructure;
 
@@ -52,27 +55,51 @@ builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
 builder.Services.AddHttpClient();
 builder.Services.AddControllers();
-builder.Services.AddAuthorization();
 
+// Cấu hình Authentication với JWT Bearer
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var secretKey = Encoding.UTF8.GetBytes(jwtSettings["Secret"] ?? throw new InvalidOperationException("JwtSettings:Secret chưa được cấu hình."));
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(secretKey),
+        ValidateIssuer = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidateAudience = true,
+        ValidAudience = jwtSettings["Audience"],
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 
-// Cấu hình Swagger hỗ trợ nhập Token JWT Bearer (đã gom gọn một chỗ)
+// Cấu hình Swagger hỗ trợ nhập Token JWT Bearer
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "AncientBook.API", Version = "v1" });
 
-    // 1. Định nghĩa Security Scheme
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Description = "Nhập token theo định dạng: Bearer {token}",
+        Description = "Nhập token JWT (không cần gõ tiền tố Bearer)",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
         Scheme = "bearer",
         BearerFormat = "JWT"
     });
 
-    // 2. Định nghĩa Security Requirement dạng delegate (chuẩn .NET 10 / Microsoft.OpenApi v2)
     c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
         {
@@ -92,7 +119,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 app.UseHttpsRedirection();
+
+// Thứ tự Middleware chuẩn: Authentication trước Authorization
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();

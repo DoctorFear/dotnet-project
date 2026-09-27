@@ -3,9 +3,12 @@ using AncientBook.Application.Common;
 using AncientBook.Application.DTOs;
 using AncientBook.Application.DTOs.Auth;
 using AncientBook.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Threading.Tasks;
+
 
 namespace AncientBook.API.Controllers
 {
@@ -117,6 +120,21 @@ namespace AncientBook.API.Controllers
             {
                 return BadRequest(result);
             }
+            return Ok(result);
+        }
+
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            // Lấy UserId từ Claims của Access Token đang gửi lên
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            {
+                return Unauthorized(ApiResponse<bool>.Fail("Không xác định được danh tính người dùng."));
+            }
+
+            var result = await _authService.LogoutAsync(userId);
             return Ok(result);
         }
     }

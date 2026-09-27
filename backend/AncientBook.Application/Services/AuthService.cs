@@ -279,5 +279,21 @@ namespace AncientBook.Application.Services
 
             return ApiResponse<bool>.Ok(true, "Đổi mật khẩu thành công! Vui lòng đăng nhập lại.");
         }
+
+        public async Task<ApiResponse<bool>> LogoutAsync(int userId)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+            {
+                return ApiResponse<bool>.Fail("Không tìm thấy người dùng.");
+            }
+
+            // Vô hiệu hóa Refresh Token của phiên hiện tại
+            user.RefreshToken = null;
+            user.RefreshTokenExpiryTime = null;
+            await _userRepository.SaveChangesAsync();
+
+            return ApiResponse<bool>.Ok(true, "Đăng xuất thành công.");
+        }
     }
 }

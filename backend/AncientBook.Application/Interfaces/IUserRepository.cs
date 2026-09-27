@@ -13,5 +13,6 @@ namespace AncientBook.Application.Interfaces
         Task SaveChangesAsync();
         Task<User?> GetByResetTokenAsync(string token);
         Task<User?> GetByRefreshTokenAsync(string refreshToken);
+        Task<User?> GetByIdAsync(int id);
     }
 }

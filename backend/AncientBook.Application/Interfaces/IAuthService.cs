@@ -13,6 +13,7 @@ namespace AncientBook.Application.Interfaces
         Task<ApiResponse<bool>> ForgotPasswordAsync(ForgotPasswordRequestDto request);
         Task<ApiResponse<bool>> ResetPasswordAsync(ResetPasswordRequestDto request);
         Task<ApiResponse<LoginResponseDto>> RefreshTokenAsync(string refreshToken);
+        Task<ApiResponse<bool>> LogoutAsync(int userId);
 
     }
 }

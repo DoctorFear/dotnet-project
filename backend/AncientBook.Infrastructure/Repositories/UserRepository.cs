@@ -58,5 +58,10 @@ namespace AncientBook.Infrastructure.Repositories
         {
             return await _context.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
         }
+
+        public async Task<User?> GetByIdAsync(int id)
+        {
+            return await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        }
     }
 }
