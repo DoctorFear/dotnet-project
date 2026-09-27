@@ -70,7 +70,7 @@ namespace AncientBook.Application.Services
 
                     processedInventories.Add((itemDto.BookId, itemDto.Quantity));
 
-                    decimal unitPrice = book.Price; 
+                    decimal unitPrice = book.PhysicalPrice;
                     decimal itemTotal = unitPrice * itemDto.Quantity;
                     subTotal += itemTotal;
 

@@ -8,5 +8,8 @@
         public string FullName { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty; // Member, Staff, Shipper, Admin
         public int FPoints { get; set; }
+
+        public string AccessToken { get; set; } = string.Empty;   // Thêm dòng này
+        public string RefreshToken { get; set; } = string.Empty;  // Thêm dòng này
     }
 }

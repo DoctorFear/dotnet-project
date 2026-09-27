@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RotateCcw, Save, AlertTriangle, CheckCircle2, AlertCircle, Award } from 'lucide-react';
+import { RotateCcw, Save, AlertTriangle, CheckCircle2, AlertCircle, Award, TrendingUp } from 'lucide-react';
 import styles from './AdminSettingsManagement.module.css';
 
 // Giá trị mặc định chuẩn hệ thống
@@ -10,6 +10,9 @@ const defaultSettings = {
     pointRateGold: 15,
     maxPointsPerOrder: 20000,
     maxReturnDays: 7,
+    memberUpgradeSpendingBronze: 0,
+    memberUpgradeSpendingSilver: 1000000,
+    memberUpgradeSpendingGold: 5000000,
 };
 
 // Khởi tạo tùy chọn phần trăm tích điểm 0% - 100%
@@ -23,6 +26,9 @@ export const AdminSettingsManagement: React.FC = () => {
     const [goldRate, setGoldRate] = useState(defaultSettings.pointRateGold);
     const [maxPoints, setMaxPoints] = useState(defaultSettings.maxPointsPerOrder);
     const [maxReturnDays, setMaxReturnDays] = useState(defaultSettings.maxReturnDays);
+    const [bronzeUpgradeSpending, setBronzeUpgradeSpending] = useState(defaultSettings.memberUpgradeSpendingBronze);
+    const [silverUpgradeSpending, setSilverUpgradeSpending] = useState(defaultSettings.memberUpgradeSpendingSilver);
+    const [goldUpgradeSpending, setGoldUpgradeSpending] = useState(defaultSettings.memberUpgradeSpendingGold);
 
     // Trạng thái thông báo Toast
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -41,6 +47,9 @@ export const AdminSettingsManagement: React.FC = () => {
         setGoldRate(defaultSettings.pointRateGold);
         setMaxPoints(defaultSettings.maxPointsPerOrder);
         setMaxReturnDays(defaultSettings.maxReturnDays);
+        setBronzeUpgradeSpending(defaultSettings.memberUpgradeSpendingBronze);
+        setSilverUpgradeSpending(defaultSettings.memberUpgradeSpendingSilver);
+        setGoldUpgradeSpending(defaultSettings.memberUpgradeSpendingGold);
         showToastNotification('Đã khôi phục cài đặt về giá trị mặc định.', 'success');
     };
 
@@ -53,7 +62,10 @@ export const AdminSettingsManagement: React.FC = () => {
             silverRate < 0 || silverRate > 100 ||
             goldRate < 0 || goldRate > 100 ||
             maxPoints < 0 ||
-            maxReturnDays < 1
+            maxReturnDays < 1 ||
+            bronzeUpgradeSpending < 0 ||
+            silverUpgradeSpending < bronzeUpgradeSpending ||
+            goldUpgradeSpending < silverUpgradeSpending
         ) {
             showToastNotification('Giá trị cài đặt không hợp lệ. Vui lòng kiểm tra lại!', 'error');
             return;
@@ -206,6 +218,74 @@ export const AdminSettingsManagement: React.FC = () => {
                                     onChange={(e) => setMaxPoints(Number(e.target.value))}
                                 />
                                 <span className={styles.unitText}>F-Point</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={styles.tierThresholdSection}>
+                        <div className={styles.tierThresholdTitle}>
+                            <TrendingUp size={16} />
+                            <span>Ngưỡng tổng chi tiêu thăng hạng thành viên</span>
+                        </div>
+                        <div className={styles.tierThresholdGrid}>
+                            <div className={styles.settingGroup}>
+                                <label className={styles.settingLabel} htmlFor="bronzeUpgradeSpending">
+                                    Thăng hạng Đồng
+                                </label>
+                                <span className={styles.settingDesc}>
+                                    Tổng chi tiêu tối thiểu để khách hàng đạt Hạng Đồng.
+                                </span>
+                                <div className={styles.inputWrapper}>
+                                    <input
+                                        id="bronzeUpgradeSpending"
+                                        type="number"
+                                        className={styles.inputControl}
+                                        value={bronzeUpgradeSpending}
+                                        min={0}
+                                        onChange={(e) => setBronzeUpgradeSpending(Number(e.target.value))}
+                                    />
+                                    <span className={styles.unitText}>VNĐ</span>
+                                </div>
+                            </div>
+
+                            <div className={styles.settingGroup}>
+                                <label className={styles.settingLabel} htmlFor="silverUpgradeSpending">
+                                    Thăng hạng Bạc
+                                </label>
+                                <span className={styles.settingDesc}>
+                                    Tổng chi tiêu tối thiểu để khách hàng đạt Hạng Bạc.
+                                </span>
+                                <div className={styles.inputWrapper}>
+                                    <input
+                                        id="silverUpgradeSpending"
+                                        type="number"
+                                        className={styles.inputControl}
+                                        value={silverUpgradeSpending}
+                                        min={0}
+                                        onChange={(e) => setSilverUpgradeSpending(Number(e.target.value))}
+                                    />
+                                    <span className={styles.unitText}>VNĐ</span>
+                                </div>
+                            </div>
+
+                            <div className={styles.settingGroup}>
+                                <label className={styles.settingLabel} htmlFor="goldUpgradeSpending">
+                                    Thăng hạng Vàng
+                                </label>
+                                <span className={styles.settingDesc}>
+                                    Tổng chi tiêu tối thiểu để khách hàng đạt Hạng Vàng.
+                                </span>
+                                <div className={styles.inputWrapper}>
+                                    <input
+                                        id="goldUpgradeSpending"
+                                        type="number"
+                                        className={styles.inputControl}
+                                        value={goldUpgradeSpending}
+                                        min={0}
+                                        onChange={(e) => setGoldUpgradeSpending(Number(e.target.value))}
+                                    />
+                                    <span className={styles.unitText}>VNĐ</span>
+                                </div>
                             </div>
                         </div>
                     </div>

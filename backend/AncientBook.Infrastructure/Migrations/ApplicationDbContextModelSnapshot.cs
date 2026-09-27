@@ -22,6 +22,39 @@ namespace AncientBook.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("AncientBook.Domain.Entities.Address", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Province")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StreetAddress")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Ward")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Addresses");
+                });
+
             modelBuilder.Entity("AncientBook.Domain.Entities.AuditLog", b =>
                 {
                     b.Property<int>("Id")
@@ -44,6 +77,19 @@ namespace AncientBook.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("IpAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Module")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NewValues")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OldValues")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("RecordId")
                         .HasColumnType("nvarchar(max)");
 
@@ -57,6 +103,8 @@ namespace AncientBook.Infrastructure.Migrations
 
                     b.HasIndex("Timestamp")
                         .HasDatabaseName("IX_AuditLogs_Timestamp");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("AuditLogs", (string)null);
                 });
@@ -74,45 +122,114 @@ namespace AncientBook.Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<string>("CoverUrl")
+                    b.Property<string>("CoverImg")
+                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EBookFilePath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("EBookPrice")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m);
+
+                    b.Property<bool>("IsEBookAvailable")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPhysicalAvailable")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsRentalAvailable")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Isbn")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<decimal>("MonthlyRentalPrice")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m);
+
                     b.Property<int?>("Pages")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<decimal>("PhysicalPrice")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m);
 
                     b.Property<int?>("PublicationYear")
                         .HasColumnType("int");
 
+                    b.Property<string>("Publisher")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("PublisherId")
                         .HasColumnType("int");
+
+                    b.Property<double>("Rating")
+                        .HasColumnType("float");
+
+                    b.Property<int>("ReviewsCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("StockCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StockStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("WeeklyRentalPrice")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m);
+
+                    b.Property<int?>("Weight")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("YearlyRentalPrice")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m);
+
                     b.HasKey("Id");
 
                     b.HasIndex("Isbn")
                         .IsUnique()
                         .HasDatabaseName("IX_Books_Isbn");
+
+                    b.HasIndex("PublisherId");
 
                     b.ToTable("Books", (string)null);
 
@@ -121,10 +238,23 @@ namespace AncientBook.Infrastructure.Migrations
                         {
                             Id = 1,
                             Author = "Tác Giả Cổ",
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CoverImg = "https://salt.tikicdn.com/ts/product/45/3e/2e/9f992ab2a5436d4f937d9fae16d47b53.jpg",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            EBookPrice = 50000m,
+                            IsEBookAvailable = true,
+                            IsPhysicalAvailable = true,
+                            IsRentalAvailable = true,
                             Isbn = "978-604-0-00000-1",
-                            Price = 100000m,
-                            Title = "Sách Cổ Mẫu"
+                            MonthlyRentalPrice = 0m,
+                            PhysicalPrice = 100000m,
+                            Rating = 0.0,
+                            ReviewsCount = 0,
+                            Status = "Selling",
+                            StockCount = 0,
+                            StockStatus = "InStock",
+                            Title = "Sách Cổ Mẫu",
+                            WeeklyRentalPrice = 10000m,
+                            YearlyRentalPrice = 0m
                         });
                 });
 
@@ -138,7 +268,89 @@ namespace AncientBook.Infrastructure.Migrations
 
                     b.HasKey("BookId", "CategoryId");
 
+                    b.HasIndex("CategoryId");
+
                     b.ToTable("BookCategories", (string)null);
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.BookImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookId");
+
+                    b.ToTable("BookImages", (string)null);
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<int?>("ParentId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Categories_Name");
+
+                    b.HasIndex("ParentId");
+
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.Inventory", b =>
@@ -151,6 +363,12 @@ namespace AncientBook.Infrastructure.Migrations
 
                     b.Property<int>("BookId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("LastUpdated")
                         .ValueGeneratedOnAdd()
@@ -167,6 +385,12 @@ namespace AncientBook.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(5);
 
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BookId")
@@ -179,7 +403,8 @@ namespace AncientBook.Infrastructure.Migrations
                         {
                             Id = 1,
                             BookId = 1,
-                            LastUpdated = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            LastUpdated = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             QuantityOnHand = 50,
                             ReorderLevel = 5
                         });
@@ -263,9 +488,6 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Property<int>("BookId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("BookId1")
-                        .HasColumnType("int");
-
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
 
@@ -279,11 +501,344 @@ namespace AncientBook.Infrastructure.Migrations
 
                     b.HasIndex("BookId");
 
-                    b.HasIndex("BookId1");
-
                     b.HasIndex("OrderId");
 
                     b.ToTable("OrderItems", (string)null);
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.Publisher", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Publishers_Name");
+
+                    b.ToTable("Publishers", (string)null);
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.PurchaseOrder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("OrderDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("SupplierId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("IX_PurchaseOrders_Code");
+
+                    b.HasIndex("SupplierId");
+
+                    b.ToTable("PurchaseOrders", (string)null);
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.PurchaseOrderItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("OrderedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PurchaseOrderId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ReceivedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookId");
+
+                    b.HasIndex("PurchaseOrderId");
+
+                    b.ToTable("PurchaseOrderItems", (string)null);
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.StockAlert", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("CurrentStock")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsResolved")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MinThreshold")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookId");
+
+                    b.ToTable("StockAlerts", (string)null);
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.StockMovement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MovementType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("QuantityChange")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("StockAfter")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StockBefore")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookId");
+
+                    b.ToTable("StockMovements", (string)null);
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.Supplier", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("ContactPerson")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Suppliers", (string)null);
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.SystemSetting", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DataType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SettingKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("SettingValue")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SettingKey")
+                        .IsUnique()
+                        .HasDatabaseName("IX_SystemSettings_Key");
+
+                    b.ToTable("SystemSettings", (string)null);
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.User", b =>
@@ -317,7 +872,6 @@ namespace AncientBook.Infrastructure.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("PasswordHash")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PasswordResetToken")
@@ -326,6 +880,12 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Property<string>("PhoneNumber")
                         .HasMaxLength(15)
                         .HasColumnType("nvarchar(15)");
+
+                    b.Property<string>("RefreshToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RefreshTokenExpiryTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("ResetTokenExpires")
                         .HasColumnType("datetime2");
@@ -359,6 +919,36 @@ namespace AncientBook.Infrastructure.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
+            modelBuilder.Entity("AncientBook.Domain.Entities.Address", b =>
+                {
+                    b.HasOne("AncientBook.Domain.Entities.User", "User")
+                        .WithMany("Addresses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.AuditLog", b =>
+                {
+                    b.HasOne("AncientBook.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.Book", b =>
+                {
+                    b.HasOne("AncientBook.Domain.Entities.Publisher", "PublisherEntity")
+                        .WithMany()
+                        .HasForeignKey("PublisherId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("PublisherEntity");
+                });
+
             modelBuilder.Entity("AncientBook.Domain.Entities.BookCategory", b =>
                 {
                     b.HasOne("AncientBook.Domain.Entities.Book", "Book")
@@ -367,7 +957,34 @@ namespace AncientBook.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("AncientBook.Domain.Entities.Category", "Category")
+                        .WithMany("BookCategories")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Book");
+
+                    b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.BookImage", b =>
+                {
+                    b.HasOne("AncientBook.Domain.Entities.Book", "Book")
+                        .WithMany("BookImages")
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Book");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.Category", b =>
+                {
+                    b.HasOne("AncientBook.Domain.Entities.Category", null)
+                        .WithMany()
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.Inventory", b =>
@@ -383,24 +1000,22 @@ namespace AncientBook.Infrastructure.Migrations
 
             modelBuilder.Entity("AncientBook.Domain.Entities.Order", b =>
                 {
-                    b.HasOne("AncientBook.Domain.Entities.User", null)
+                    b.HasOne("AncientBook.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.OrderItem", b =>
                 {
-                    b.HasOne("AncientBook.Domain.Entities.Book", null)
-                        .WithMany()
+                    b.HasOne("AncientBook.Domain.Entities.Book", "Book")
+                        .WithMany("OrderItems")
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("AncientBook.Domain.Entities.Book", null)
-                        .WithMany("OrderItems")
-                        .HasForeignKey("BookId1");
 
                     b.HasOne("AncientBook.Domain.Entities.Order", "Order")
                         .WithMany("OrderItems")
@@ -408,21 +1023,91 @@ namespace AncientBook.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Book");
+
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.PurchaseOrder", b =>
+                {
+                    b.HasOne("AncientBook.Domain.Entities.Supplier", "Supplier")
+                        .WithMany("PurchaseOrders")
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Supplier");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.PurchaseOrderItem", b =>
+                {
+                    b.HasOne("AncientBook.Domain.Entities.Book", null)
+                        .WithMany()
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AncientBook.Domain.Entities.PurchaseOrder", "PurchaseOrder")
+                        .WithMany("Items")
+                        .HasForeignKey("PurchaseOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PurchaseOrder");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.StockAlert", b =>
+                {
+                    b.HasOne("AncientBook.Domain.Entities.Book", null)
+                        .WithMany()
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.StockMovement", b =>
+                {
+                    b.HasOne("AncientBook.Domain.Entities.Book", null)
+                        .WithMany()
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.Book", b =>
                 {
                     b.Navigation("BookCategories");
 
+                    b.Navigation("BookImages");
+
                     b.Navigation("Inventory");
 
                     b.Navigation("OrderItems");
                 });
 
+            modelBuilder.Entity("AncientBook.Domain.Entities.Category", b =>
+                {
+                    b.Navigation("BookCategories");
+                });
+
             modelBuilder.Entity("AncientBook.Domain.Entities.Order", b =>
                 {
                     b.Navigation("OrderItems");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.PurchaseOrder", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.Supplier", b =>
+                {
+                    b.Navigation("PurchaseOrders");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.User", b =>
+                {
+                    b.Navigation("Addresses");
                 });
 #pragma warning restore 612, 618
         }

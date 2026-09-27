@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
 using AncientBook.Application.Interfaces;
+using AncientBook.Domain.Common;
 using AncientBook.Domain.Entities;
 
 namespace AncientBook.Infrastructure.Persistence
@@ -10,19 +11,24 @@ namespace AncientBook.Infrastructure.Persistence
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
         public DbSet<User> Users => Set<User>();
+
+        public DbSet<Address> Addresses => Set<Address>();
         public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
         public DbSet<Book> Books => Set<Book>();
         public DbSet<Inventory> Inventories => Set<Inventory>();
         public DbSet<BookCategory> BookCategories => Set<BookCategory>();
+        public DbSet<Category> Categories => Set<Category>();
+        public DbSet<Publisher> Publishers => Set<Publisher>();
+        public DbSet<BookImage> BookImages => Set<BookImage>();
+        public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
 
         // New DbSets for Inventory, Supplier & Stock Alert Modules
         public DbSet<Supplier> Suppliers => Set<Supplier>();
-        public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
+        public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>()  ;
         public DbSet<PurchaseOrderItem> PurchaseOrderItems => Set<PurchaseOrderItem>();
         public DbSet<StockMovement> StockMovements => Set<StockMovement>();
-        public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
         public DbSet<StockAlert> StockAlerts => Set<StockAlert>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -38,7 +44,7 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.Property(u => u.Email).IsRequired().HasMaxLength(150);
                 entity.Property(u => u.FullName).IsRequired().HasMaxLength(100);
                 entity.Property(u => u.PhoneNumber).HasMaxLength(15);
-                entity.Property(u => u.PasswordHash).IsRequired();
+                entity.Property(e => e.PasswordHash).IsRequired(false);
                 entity.Property(u => u.Role).HasConversion<string>().HasMaxLength(20);
 
                 entity.HasIndex(u => u.Username).IsUnique().HasDatabaseName("IX_Users_Username");
@@ -68,7 +74,7 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.Property(o => o.ShippingAddress).IsRequired().HasMaxLength(500);
                 entity.Property(o => o.Status).IsRequired().HasMaxLength(30);
 
-                entity.HasOne<User>()
+                entity.HasOne(o => o.User)
                     .WithMany()
                     .HasForeignKey(o => o.UserId)
                     .OnDelete(DeleteBehavior.Restrict);
@@ -87,28 +93,13 @@ namespace AncientBook.Infrastructure.Persistence
                     .HasForeignKey(oi => oi.OrderId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                entity.HasOne<Book>()
-                    .WithMany()
+                entity.HasOne(oi => oi.Book)
+                    .WithMany(b => b.OrderItems)
                     .HasForeignKey(oi => oi.BookId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // 5. Books Configuration
-            modelBuilder.Entity<Book>(entity =>
-            {
-                entity.ToTable("Books");
-                entity.HasKey(b => b.Id);
-                entity.Property(b => b.Isbn).IsRequired().HasMaxLength(20);
-                entity.HasIndex(b => b.Isbn).IsUnique().HasDatabaseName("IX_Books_Isbn");
-                entity.Property(b => b.Title).IsRequired().HasMaxLength(255);
-                entity.Property(b => b.Author).IsRequired().HasMaxLength(255);
-                entity.Property(b => b.Price).HasColumnType("decimal(18,2)").IsRequired();
-                entity.Property(b => b.CoverUrl).HasMaxLength(500);
-                entity.Property(b => b.Description).HasColumnType("text");
-                entity.Property(b => b.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-            });
-
-            // 6. Inventories Configuration
+            // 5. Inventories Configuration
             modelBuilder.Entity<Inventory>(entity =>
             {
                 entity.ToTable("Inventories");
@@ -117,27 +108,64 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.Property(i => i.ReorderLevel).IsRequired().HasDefaultValue(5);
                 entity.Property(i => i.LastUpdated).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                entity.HasIndex(i => i.BookId).IsUnique(); // 1:1
+                entity.HasIndex(i => i.BookId).IsUnique();
 
                 entity.HasOne(i => i.Book)
-                    .WithOne()
+                    .WithOne(b => b.Inventory)
                     .HasForeignKey<Inventory>(i => i.BookId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // 7. BookCategories Configuration
+            // 6. BookCategories Configuration
             modelBuilder.Entity<BookCategory>(entity =>
             {
                 entity.ToTable("BookCategories");
-                entity.HasKey(bc => new { bc.BookId, bc.CategoryId }); // N:N
+                entity.HasKey(bc => new { bc.BookId, bc.CategoryId });
 
                 entity.HasOne(bc => bc.Book)
                     .WithMany(b => b.BookCategories)
                     .HasForeignKey(bc => bc.BookId)
                     .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(bc => bc.Category)
+                    .WithMany(c => c.BookCategories)
+                    .HasForeignKey(bc => bc.CategoryId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // 8. Suppliers Configuration (Phục vụ UC11)
+            // 7. Categories Configuration 
+            modelBuilder.Entity<Category>(entity =>
+            {
+                entity.ToTable("Categories");
+                entity.HasKey(c => c.Id);
+                entity.Property(c => c.Name).IsRequired().HasMaxLength(150);
+                entity.HasIndex(c => c.Name).IsUnique().HasDatabaseName("IX_Categories_Name");
+
+                entity.HasOne<Category>()
+                    .WithMany()
+                    .HasForeignKey(c => c.ParentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // 8. Publishers Configuration 
+            modelBuilder.Entity<Publisher>(entity =>
+            {
+                entity.ToTable("Publishers");
+                entity.HasKey(p => p.Id);
+                entity.Property(p => p.Name).IsRequired().HasMaxLength(200);
+                entity.HasIndex(p => p.Name).IsUnique().HasDatabaseName("IX_Publishers_Name");
+            });
+
+            // 9. SystemSettings Configuration
+            modelBuilder.Entity<SystemSetting>(entity =>
+            {
+                entity.ToTable("SystemSettings");
+                entity.HasKey(s => s.Id);
+                entity.Property(s => s.SettingKey).IsRequired().HasMaxLength(100);
+                entity.HasIndex(s => s.SettingKey).IsUnique().HasDatabaseName("IX_SystemSettings_Key");
+            });
+
+            // 10. Supplier Configuration 
             modelBuilder.Entity<Supplier>(entity =>
             {
                 entity.ToTable("Suppliers");
@@ -149,7 +177,7 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.Property(s => s.Address).HasMaxLength(500);
             });
 
-            // 9. PurchaseOrders Configuration (Phục vụ UC12, UC13)
+            // 11. PurchaseOrder Configuration
             modelBuilder.Entity<PurchaseOrder>(entity =>
             {
                 entity.ToTable("PurchaseOrders");
@@ -157,7 +185,7 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.Property(po => po.Code).IsRequired().HasMaxLength(50);
                 entity.HasIndex(po => po.Code).IsUnique().HasDatabaseName("IX_PurchaseOrders_Code");
                 entity.Property(po => po.Status).IsRequired().HasMaxLength(30);
-                entity.Property(po => po.TotalAmount).HasColumnType("decimal(18,2)").IsRequired();
+                entity.Property(po => po.TotalAmount).HasPrecision(18, 2);
                 entity.Property(po => po.Notes).HasMaxLength(500);
 
                 entity.HasOne(po => po.Supplier)
@@ -166,14 +194,14 @@ namespace AncientBook.Infrastructure.Persistence
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // 10. PurchaseOrderItems Configuration (Phục vụ UC12, UC13)
+            // 12. PurchaseOrderItem Configuration
             modelBuilder.Entity<PurchaseOrderItem>(entity =>
             {
                 entity.ToTable("PurchaseOrderItems");
                 entity.HasKey(poi => poi.Id);
-                entity.Property(poi => poi.UnitPrice).HasColumnType("decimal(18,2)").IsRequired();
                 entity.Property(poi => poi.OrderedQuantity).IsRequired();
                 entity.Property(poi => poi.ReceivedQuantity).IsRequired();
+                entity.Property(poi => poi.UnitPrice).HasPrecision(18, 2);
 
                 entity.HasOne(poi => poi.PurchaseOrder)
                     .WithMany(po => po.Items)
@@ -186,15 +214,13 @@ namespace AncientBook.Infrastructure.Persistence
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // 11. StockMovements Configuration (Phục vụ UC13 - Biến động kho)
+            // 13. StockMovement Configuration
             modelBuilder.Entity<StockMovement>(entity =>
             {
                 entity.ToTable("StockMovements");
                 entity.HasKey(sm => sm.Id);
-                entity.Property(sm => sm.MovementType).IsRequired().HasMaxLength(50);
-                entity.Property(sm => sm.Reason).HasMaxLength(255);
-
-                entity.HasIndex(sm => sm.BookId).HasDatabaseName("IX_StockMovements_BookId");
+                entity.Property(sm => sm.MovementType).IsRequired().HasMaxLength(30);
+                entity.Property(sm => sm.Reason).HasMaxLength(500);
 
                 entity.HasOne<Book>()
                     .WithMany()
@@ -202,42 +228,76 @@ namespace AncientBook.Infrastructure.Persistence
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // 12. SystemSettings Configuration (Phục vụ Cảnh báo tồn kho)
-            modelBuilder.Entity<SystemSetting>(entity =>
-            {
-                entity.ToTable("SystemSettings");
-                entity.HasKey(ss => ss.Id);
-                entity.Property(ss => ss.SettingKey).IsRequired().HasMaxLength(100);
-                entity.HasIndex(ss => ss.SettingKey).IsUnique().HasDatabaseName("IX_SystemSettings_SettingKey");
-                entity.Property(ss => ss.SettingValue).IsRequired().HasMaxLength(500);
-                entity.Property(ss => ss.Description).HasMaxLength(255);
-            });
-
-            // 13. StockAlerts Configuration (Phục vụ Cảnh báo tồn kho)
+            // 14. StockAlert Configuration
             modelBuilder.Entity<StockAlert>(entity =>
             {
                 entity.ToTable("StockAlerts");
                 entity.HasKey(sa => sa.Id);
                 entity.Property(sa => sa.Status).IsRequired().HasMaxLength(30);
 
-                entity.HasIndex(sa => sa.IsResolved).HasDatabaseName("IX_StockAlerts_IsResolved");
-
                 entity.HasOne<Book>()
                     .WithMany()
                     .HasForeignKey(sa => sa.BookId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // 15. Books Configuration 
+            modelBuilder.Entity<Book>(entity =>
+            {
+                entity.ToTable("Books");
+                entity.HasKey(b => b.Id);
+                entity.Property(b => b.Isbn).IsRequired().HasMaxLength(20);
+                entity.HasIndex(b => b.Isbn).IsUnique().HasDatabaseName("IX_Books_Isbn");
+                entity.Property(b => b.Title).IsRequired().HasMaxLength(255);
+                entity.Property(b => b.Author).IsRequired().HasMaxLength(255);
+                entity.Property(b => b.CoverImg).HasMaxLength(500);
+
+                // Cấu hình các mức giá Decimal
+                entity.Property(b => b.PhysicalPrice).HasColumnType("decimal(18,2)").HasDefaultValue(0);
+                entity.Property(b => b.EBookPrice).HasColumnType("decimal(18,2)").HasDefaultValue(0);
+                entity.Property(b => b.WeeklyRentalPrice).HasColumnType("decimal(18,2)").HasDefaultValue(0);
+                entity.Property(b => b.MonthlyRentalPrice).HasColumnType("decimal(18,2)").HasDefaultValue(0);
+                entity.Property(b => b.YearlyRentalPrice).HasColumnType("decimal(18,2)").HasDefaultValue(0);
+
+                entity.Property(b => b.Status).HasConversion<string>().HasMaxLength(20);
+                entity.Property(b => b.StockStatus).HasConversion<string>().HasMaxLength(20);
+
+                // Quan hệ với Publisher
+                entity.HasOne(b => b.PublisherEntity)
+                    .WithMany()
+                    .HasForeignKey(b => b.PublisherId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // 16. BookImages Configuration (Gallery)
+            modelBuilder.Entity<BookImage>(entity =>
+            {
+                entity.ToTable("BookImages");
+                entity.HasKey(bi => bi.Id);
+                entity.Property(bi => bi.ImageUrl).IsRequired().HasMaxLength(500);
+
+                entity.HasOne(bi => bi.Book)
+                    .WithMany(b => b.BookImages)
+                    .HasForeignKey(bi => bi.BookId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // Data test mẫu
+            // Data để test checkout xóa nếu muốn
             modelBuilder.Entity<Book>().HasData(
-                new Book
-                {
-                    Id = 1,
-                    Isbn = "978-604-0-00000-1",
-                    Title = "Sách Cổ Mẫu",
-                    Author = "Tác Giả Cổ",
-                    Price = 100000,
-                    CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                new Book 
+                { 
+                    Id = 1, 
+                    Isbn = "978-604-0-00000-1", 
+                    Title = "Sách Cổ Mẫu", 
+                    Author = "Tác Giả Cổ", 
+                    PhysicalPrice = 100000,
+                    EBookPrice = 50000,
+                    WeeklyRentalPrice = 10000,
+                    IsPhysicalAvailable = true,
+                    IsEBookAvailable = true,
+                    IsRentalAvailable = true,
+                    CoverImg = "https://salt.tikicdn.com/ts/product/45/3e/2e/9f992ab2a5436d4f937d9fae16d47b53.jpg",
+                    CreatedAt = new DateTime(2026, 1, 1)
                 }
             );
 
@@ -248,9 +308,30 @@ namespace AncientBook.Infrastructure.Persistence
                     BookId = 1,
                     QuantityOnHand = 50,
                     ReorderLevel = 5,
-                    LastUpdated = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                    CreatedAt = new DateTime(2026, 1, 1),
+                    LastUpdated = new DateTime(2026, 1, 1)
                 }
             );
+        }
+
+        // Tự động ghi vết Audit Trail (CreatedAt, UpdatedAt) khi gọi SaveChangesAsync
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            foreach (var entry in ChangeTracker.Entries<BaseEntity>())
+            {
+                switch (entry.State)
+                {
+                    case EntityState.Added:
+                        entry.Entity.CreatedAt = TimeZoneHelper.GetVietnamTime();
+                        break;
+
+                    case EntityState.Modified:
+                        entry.Entity.UpdatedAt = TimeZoneHelper.GetVietnamTime();
+                        break;
+                }
+            }
+
+            return await base.SaveChangesAsync(cancellationToken);
         }
     }
 }

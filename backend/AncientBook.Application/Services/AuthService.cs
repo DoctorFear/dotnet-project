@@ -1,11 +1,13 @@
-﻿using System;
-using System.Threading.Tasks;
-using AncientBook.Application.Common;
+﻿using AncientBook.Application.Common;
+using AncientBook.Application.Common.Interfaces;
 using AncientBook.Application.DTOs.Auth;
 using AncientBook.Application.Interfaces;
 using AncientBook.Domain.Entities;
 using AncientBook.Domain.Enums;
 using Google.Apis.Auth;
+using System;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace AncientBook.Application.Services
 {
@@ -14,12 +16,16 @@ namespace AncientBook.Application.Services
         private readonly IUserRepository _userRepository;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IEmailService _emailService;
+        private readonly ITokenService _tokenService;
+        private readonly IAuditLogService _auditLogService;
 
-        public AuthService(IUserRepository userRepository, IPasswordHasher passwordHasher, IEmailService emailService)
+        public AuthService(IUserRepository userRepository, IPasswordHasher passwordHasher, IEmailService emailService, ITokenService tokenService, IAuditLogService auditLogService)
         {
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
-            _emailService = emailService;   
+            _emailService = emailService;
+            _tokenService = tokenService;
+            _auditLogService = auditLogService;
         }
 
         public async Task<ApiResponse<RegisterResponseDto>> RegisterAsync(RegisterRequestDto request)
@@ -65,7 +71,7 @@ namespace AncientBook.Application.Services
             return ApiResponse<RegisterResponseDto>.Ok(responseData, "Đăng ký tài khoản thành công!");
         }
 
-        public async Task<ApiResponse<RegisterResponseDto>> GoogleLoginAsync(GoogleLoginRequestDto request)
+        public async Task<ApiResponse<LoginResponseDto>> GoogleLoginAsync(GoogleLoginRequestDto request)
         {
             GoogleJsonWebSignature.Payload payload;
             try
@@ -74,98 +80,56 @@ namespace AncientBook.Application.Services
             }
             catch (Exception)
             {
-                return ApiResponse<RegisterResponseDto>.Fail("Mã xác thực Google không hợp lệ hoặc đã hết hạn.");
+                return ApiResponse<LoginResponseDto>.Fail("Mã xác thực Google không hợp lệ hoặc đã hết hạn.");
             }
 
             var email = payload.Email.ToLower();
             var user = await _userRepository.GetByEmailAsync(email);
 
+            // 1. Trường hợp tài khoản đã tồn tại
             if (user != null)
             {
                 if (!user.IsActive)
                 {
-                    return ApiResponse<RegisterResponseDto>.Fail("Tài khoản của bạn đã bị vô hiệu hóa.");
+                    return ApiResponse<LoginResponseDto>.Fail("Tài khoản của bạn đã bị vô hiệu hóa.");
+                }
+            }
+            else
+            {
+                // 2. Trường hợp tài khoản mới đăng ký lần đầu bằng Google
+                var baseUsername = email.Split('@')[0];
+                var username = baseUsername;
+                int counter = 1;
+
+                while (await _userRepository.ExistsByUsernameAsync(username))
+                {
+                    username = $"{baseUsername}{counter++}";
                 }
 
-                var existingUserResponse = new RegisterResponseDto
+                user = new User
                 {
-                    UserId = user.Id,
-                    Username = user.Username,
-                    Email = user.Email,
-                    FullName = user.FullName,
-                    Role = user.Role.ToString(),
-                    FPoints = user.FPoints,
-                    CreatedAt = user.CreatedAt
+                    Username = username,
+                    Email = email,
+                    FullName = string.IsNullOrWhiteSpace(payload.Name) ? baseUsername : payload.Name,
+                    PhoneNumber = null,
+                    PasswordHash = null, // BR05: Để NULL để hệ thống nhận diện là tài khoản chưa có password
+                    Role = UserRole.Member,
+                    FPoints = 0,
+                    IsActive = true
                 };
 
-                return ApiResponse<RegisterResponseDto>.Ok(existingUserResponse, "Đăng nhập bằng tài khoản Google thành công!");
+                await _userRepository.AddAsync(user);
+                await _userRepository.SaveChangesAsync();
             }
 
-            var baseUsername = email.Split('@')[0];
-            var username = baseUsername;
-            int counter = 1;
-
-            while (await _userRepository.ExistsByUsernameAsync(username))
-            {
-                username = $"{baseUsername}{counter++}";
-            }
-
-            var dummyPassword = Guid.NewGuid().ToString("N") + "@Aa1";
-
-            user = new User
-            {
-                Username = username,
-                Email = email,
-                FullName = string.IsNullOrWhiteSpace(payload.Name) ? baseUsername : payload.Name,
-                PhoneNumber = null,
-                PasswordHash = _passwordHasher.HashPassword(dummyPassword),
-                Role = UserRole.Member,
-                FPoints = 0,
-                IsActive = true
-            };
-
-            await _userRepository.AddAsync(user);
+            // 3. Cấp Refresh Token và Access Token cho người dùng
+            var refreshToken = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(3);
             await _userRepository.SaveChangesAsync();
 
-            var newUserResponse = new RegisterResponseDto
-            {
-                UserId = user.Id,
-                Username = user.Username,
-                Email = user.Email,
-                FullName = user.FullName,
-                Role = user.Role.ToString(),
-                FPoints = user.FPoints,
-                CreatedAt = user.CreatedAt
-            };
+            var accessToken = _tokenService.GenerateAccessToken(user);
 
-            return ApiResponse<RegisterResponseDto>.Ok(newUserResponse, "Tạo tài khoản và đăng nhập bằng Google thành công!");
-        }
-
-
-        public async Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto request)
-        {
-            // E1: Kiểm tra dữ liệu không được để trống
-            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
-            {
-                return ApiResponse<LoginResponseDto>.Fail("Tên đăng nhập và mật khẩu không được để trống.");
-            }
-
-            // Tìm kiếm user theo Username
-            var user = await _userRepository.GetByUsernameAsync(request.Username);
-
-            // E2 & BR01: Sai thông tin -> Báo lỗi chung chung chống rà quét tài khoản
-            if (user == null || !_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
-            {
-                return ApiResponse<LoginResponseDto>.Fail("Tên đăng nhập hoặc mật khẩu không chính xác.");
-            }
-
-            // E3 & BR03: Kiểm tra tài khoản bị khóa / vô hiệu hóa
-            if (!user.IsActive)
-            {
-                return ApiResponse<LoginResponseDto>.Fail("Tài khoản của bạn hiện đang bị khóa. Vui lòng liên hệ hotline để được hỗ trợ.");
-            }
-
-            // Đóng gói dữ liệu trả về phục vụ điều hướng theo Role (BR02)
             var responseData = new LoginResponseDto
             {
                 UserId = user.Id,
@@ -173,10 +137,72 @@ namespace AncientBook.Application.Services
                 Email = user.Email,
                 FullName = user.FullName,
                 Role = user.Role.ToString(),
-                FPoints = user.FPoints
+                FPoints = user.FPoints,
+                AccessToken = accessToken,
+                RefreshToken = refreshToken
+            };
+
+            return ApiResponse<LoginResponseDto>.Ok(responseData, "Đăng nhập bằng tài khoản Google thành công!");
+        }
+
+
+        public async Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto request)
+        {
+            var user = await _userRepository.GetByUsernameAsync(request.Username);
+            if (user == null || string.IsNullOrEmpty(user.PasswordHash) || !_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
+            {
+                return ApiResponse<LoginResponseDto>.Fail("Tên đăng nhập hoặc mật khẩu không chính xác.");
+            }
+
+            var refreshToken = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(3); // Hạn 3 ngày không hoạt động
+            await _userRepository.SaveChangesAsync();
+
+            var accessToken = _tokenService.GenerateAccessToken(user); // 3. Sinh Access Token (15p)
+
+            var responseData = new LoginResponseDto
+            {
+                UserId = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                FullName = user.FullName,
+                Role = user.Role.ToString(),
+                AccessToken = accessToken,
+                RefreshToken = refreshToken
             };
 
             return ApiResponse<LoginResponseDto>.Ok(responseData, "Đăng nhập thành công!");
+        }
+
+        public async Task<ApiResponse<LoginResponseDto>> RefreshTokenAsync(string incomingRefreshToken)
+        {
+            var user = await _userRepository.GetByRefreshTokenAsync(incomingRefreshToken);
+
+            if (user == null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            {
+                return ApiResponse<LoginResponseDto>.Fail("Phiên đăng nhập đã hết hạn (quá 3 ngày không hoạt động). Vui lòng đăng nhập lại.");
+            }
+
+            var newRefreshToken = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
+            user.RefreshToken = newRefreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(3); // Gia hạn tiếp 3 ngày
+            await _userRepository.SaveChangesAsync();
+
+            var newAccessToken = _tokenService.GenerateAccessToken(user);
+
+            var responseData = new LoginResponseDto
+            {
+                UserId = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                FullName = user.FullName,
+                Role = user.Role.ToString(),
+                AccessToken = newAccessToken,
+                RefreshToken = newRefreshToken
+            };
+
+            return ApiResponse<LoginResponseDto>.Ok(responseData, "Làm mới phiên thành công!");
         }
         public async Task<ApiResponse<bool>> ForgotPasswordAsync(ForgotPasswordRequestDto request)
         {
@@ -253,6 +279,35 @@ namespace AncientBook.Application.Services
             // _auditLogService.Log(user.Id, "Đổi mật khẩu thành công qua tính năng Quên mật khẩu");
 
             return ApiResponse<bool>.Ok(true, "Đổi mật khẩu thành công! Vui lòng đăng nhập lại.");
+        }
+
+        public async Task<ApiResponse<bool>> LogoutAsync(int userId, string? ipAddress = null)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+            {
+                return ApiResponse<bool>.Fail("Không tìm thấy người dùng.");
+            }
+
+            // 1. Vô hiệu hóa Refresh Token của phiên hiện tại
+            user.RefreshToken = null;
+            user.RefreshTokenExpiryTime = null;
+            await _userRepository.SaveChangesAsync();
+
+            // 2. Ghi vết vào Audit Log (UC07)
+            await _auditLogService.LogAsync(
+                action: "LOGOUT",
+                module: "AUTH",
+                entityName: "Users",
+                recordId: user.Id.ToString(),
+                oldValues: null,
+                newValues: null,
+                details: $"Người dùng @{user.Username} ({user.Role}) đã đăng xuất khỏi hệ thống",
+                userId: user.Id,
+                ipAddress: ipAddress
+            );
+
+            return ApiResponse<bool>.Ok(true, "Đăng xuất thành công.");
         }
     }
 }
