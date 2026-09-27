@@ -63,5 +63,12 @@ namespace AncientBook.Infrastructure.Repositories
         {
             return await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
         }
+
+        public async Task<User?> GetByIdWithAddressesAsync(int id)
+        {
+            return await _context.Users
+                .Include(u => u.Addresses)
+                .FirstOrDefaultAsync(u => u.Id == id);
+        }
     }
 }

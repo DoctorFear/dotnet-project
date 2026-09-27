@@ -35,6 +35,8 @@ builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
+
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddHttpClient<ICheckoutService, CheckoutService>();
 

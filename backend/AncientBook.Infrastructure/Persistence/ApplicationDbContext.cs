@@ -11,6 +11,8 @@ namespace AncientBook.Infrastructure.Persistence
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
         public DbSet<User> Users => Set<User>();
+
+        public DbSet<Address> Addresses => Set<Address>();
         public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
@@ -42,7 +44,7 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.Property(u => u.Email).IsRequired().HasMaxLength(150);
                 entity.Property(u => u.FullName).IsRequired().HasMaxLength(100);
                 entity.Property(u => u.PhoneNumber).HasMaxLength(15);
-                entity.Property(u => u.PasswordHash).IsRequired();
+                entity.Property(e => e.PasswordHash).IsRequired(false);
                 entity.Property(u => u.Role).HasConversion<string>().HasMaxLength(20);
 
                 entity.HasIndex(u => u.Username).IsUnique().HasDatabaseName("IX_Users_Username");
