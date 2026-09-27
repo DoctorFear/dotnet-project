@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Data;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Net.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using AncientBook.Application.DTOs;
 using AncientBook.Application.Interfaces;
 using AncientBook.Domain.Entities;
@@ -17,13 +17,21 @@ namespace AncientBook.Application.Services
 {
     public class CheckoutService : ICheckoutService
     {
-        private readonly IApplicationDbContext _context;
+        private readonly IBookRepository _bookRepository;
+        private readonly IInventoryRepository _inventoryRepository;
+        private readonly IOrderRepository _orderRepository;
+        private readonly IHmacSha256Hasher _hasher;
         private readonly HttpClient _httpClient;
+        private readonly ILogger<CheckoutService> _logger;
 
-        public CheckoutService(IApplicationDbContext context, HttpClient httpClient)
+        public CheckoutService(IBookRepository bookRepository, IInventoryRepository inventoryRepository, IOrderRepository orderRepository, IHmacSha256Hasher hasher, HttpClient httpClient, ILogger<CheckoutService> logger)
         {
-            _context = context;
+            _bookRepository = bookRepository;
+            _inventoryRepository = inventoryRepository;
+            _orderRepository = orderRepository;
             _httpClient = httpClient;
+            _hasher = hasher;
+            _logger = logger;
         }
 
         public async Task<CreateCheckoutResponse> ProcessCheckoutAsync(CreateCheckoutRequest request)
@@ -33,40 +41,34 @@ namespace AncientBook.Application.Services
                 throw new ArgumentException("Đơn hàng phải có ít nhất một sản phẩm sách.");
             }
 
-            // Using transaction to ensure atomicity across orders and stock updates
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
-            {
-                decimal subTotal = 0;
-                var orderItemsToCreate = new List<OrderItem>();
+            decimal subTotal = 0;
+            var orderItemsToCreate = new List<OrderItem>();
+            var processedInventories = new List<(int bookId, int quantity)>();
 
+            try {
                 foreach (var itemDto in request.Items)
                 {
-                    // Fetch Book to get current active pricing and check existence/stock if needed
-                    var book = await _context.Books.FindAsync(itemDto.BookId);
-                    var invetory = await _context.Inventories.FindAsync(itemDto.BookId);
-                    if (book == null || invetory == null)
+                    var book = await _bookRepository.GetByIdAsync(itemDto.BookId);
+                    var inventory = await _inventoryRepository.GetByBookIdAsync(itemDto.BookId);
+
+                    if (book == null || inventory == null)
                     {
                         throw new KeyNotFoundException($"Không tìm thấy sách với ID: {itemDto.BookId}");
                     }
 
-                    if (invetory.QuantityOnHand < itemDto.Quantity)
+                    if (inventory.QuantityOnHand < itemDto.Quantity)
                     {
-                        throw new InvalidOperationException($"Sách '{book.Title}' không đủ số lượng trong kho. Chỉ còn lại {invetory.QuantityOnHand} sản phẩm.");
+                        throw new InvalidOperationException($"Sách '{book.Title}' không đủ số lượng trong kho. Chỉ còn lại {inventory.QuantityOnHand} sản phẩm.");
                     }
                     
                     // Adjust inventory if quanity is available
-                    int rowsAffected = await _context.Inventories
-                    .Where(i => i.BookId == itemDto.BookId && i.QuantityOnHand >= itemDto.Quantity)
-                    .ExecuteUpdateAsync(s => s.SetProperty(
-                        i => i.QuantityOnHand, 
-                        i => i.QuantityOnHand - itemDto.Quantity
-                    ));
-
-                    if (rowsAffected == 0)
+                    bool success = await _inventoryRepository.DecreaseStockAsync(itemDto.BookId, itemDto.Quantity);
+                    if (!success)
                     {
                         throw new InvalidOperationException($"Sách ID '{itemDto.BookId}' đã hết hàng hoặc không đủ số lượng.");
                     }
+
+                    processedInventories.Add((itemDto.BookId, itemDto.Quantity));
 
                     decimal unitPrice = book.PhysicalPrice;
                     decimal itemTotal = unitPrice * itemDto.Quantity;
@@ -108,9 +110,7 @@ namespace AncientBook.Application.Services
                     OrderItems = orderItemsToCreate
                 };
 
-                _context.Orders.Add(order);
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
+                await _orderRepository.AddAsync(order);
 
                 return new CreateCheckoutResponse
                 {
@@ -123,16 +123,32 @@ namespace AncientBook.Application.Services
                     Message = "Đặt hàng thành công!"
                 };
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Lỗi xảy ra trong quá trình xử lý đơn hàng. Đang tiến hành hoàn lại kho...");
+                foreach (var (bookId, quantity) in processedInventories)
+                {
+                    try
+                    {
+                        await _inventoryRepository.IncreaseStockAsync(bookId, quantity);
+                    }
+                    catch (Exception compEx)
+                    {
+                        _logger.LogError(
+                            compEx, 
+                            "LỖI NGHIÊM TRỌNG: Không thể hoàn lại {Quantity} sản phẩm cho sách ID {BookId} trong quá trình rollback đơn hàng.", 
+                            quantity, 
+                            bookId
+                        );
+                    }
+                }
                 throw;
             }
         }
 
         public async Task<CreateMomoResponse> CreatePaymentUrlAsync(int orderId)
         {
-            var order = await _context.Orders.FindAsync(orderId);
+            var order = await _orderRepository.GetByIdAsync(orderId);
             if (order == null)
             {
                 throw new KeyNotFoundException($"Không tìm thấy đơn hàng {orderId}");
@@ -146,19 +162,17 @@ namespace AncientBook.Application.Services
             var ipnUrl = Environment.GetEnvironmentVariable("IPNURL");
 
             var requestId = Guid.NewGuid().ToString();
-            
             order.MoMoRequestId = requestId;
-            _context.Orders.Update(order);
-            await _context.SaveChangesAsync();
+            
+            await _orderRepository.UpdateAsync(order);
             
             var amount = ((long)order.FinalAmount).ToString();
             var orderInfo = $"Thanh toan don hang #{order.Id} tai AncientBook";
             var requestType = "captureWallet";
-            var extraData = ""; // Dữ liệu mã hóa base64 nếu cần truyền thêm
+            var extraData = "";
 
-            // HMAC SHA256 signature
             var rawHash = $"accessKey={accessKey}&amount={amount}&extraData={extraData}&ipnUrl={ipnUrl}&orderId={orderId}&orderInfo={orderInfo}&partnerCode={partnerCode}&redirectUrl={redirectUrl}&requestId={requestId}&requestType={requestType}";
-            var signature = ComputeHmacSha256(rawHash, secretKey);
+            var signature = _hasher.ComputeHmacSha256(rawHash, secretKey);
 
             var payload = new
             {
@@ -194,7 +208,7 @@ namespace AncientBook.Application.Services
                 var qrCodeUrl = root.TryGetProperty("qrCodeUrl", out var qrProp) ? qrProp.GetString() ?? "" : "";
 
                 order.PayUrl = payUrl;
-                await _context.SaveChangesAsync();
+                await _orderRepository.UpdateAsync(order);
 
                 return new CreateMomoResponse
                 {
@@ -212,10 +226,7 @@ namespace AncientBook.Application.Services
         
         public async Task<GetMomoResponse> QueryMoMoPaymentStatusAsync(int orderId)
         {
-            var order = await _context.Orders
-                .Include(o => o.OrderItems)
-                .FirstOrDefaultAsync(o => o.Id == orderId);
-
+            var order = await _orderRepository.GetByIdAsync(orderId);
             if (order == null)
             {
                 throw new KeyNotFoundException($"Không tìm thấy đơn hàng {orderId}");
@@ -229,7 +240,7 @@ namespace AncientBook.Application.Services
             var requestId = order.MoMoRequestId ?? Guid.NewGuid().ToString();
 
             var rawHash = $"accessKey={accessKey}&orderId={orderId}&partnerCode={partnerCode}&requestId={requestId}";
-            var signature = ComputeHmacSha256(rawHash, secretKey);
+            var signature = _hasher.ComputeHmacSha256(rawHash, secretKey);
 
             var payload = new
             {
@@ -263,7 +274,7 @@ namespace AncientBook.Application.Services
                 if (!order.IsPaid)
                 {
                     order.IsPaid = true;
-                    await _context.SaveChangesAsync();
+                    await _orderRepository.UpdateAsync(order);
                 }
             }
 
@@ -288,51 +299,25 @@ namespace AncientBook.Application.Services
 
             if (!int.TryParse(orderIdStr, out int orderId)) return;
 
-            var order = await _context.Orders
-                .Include(o => o.OrderItems)
-                .FirstOrDefaultAsync(o => o.Id == orderId);
+            var order = await _orderRepository.GetByIdAsync(orderId);
 
             if (order == null || order.MoMoRequestId != requestId) return;
 
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
+            if (resultCode != 0)
             {
-                if (resultCode != 0)
+                order.Status = OrderStatus.Failed;
+                
+                foreach (var item in order.OrderItems)
                 {
-                    // THANH TOÁN THẤT BẠI HOẶC BỊ HỦY -> HOÀN LẠI KHO SÁCH
-                    order.Status = OrderStatus.Failed;
-                    
-                    foreach (var item in order.OrderItems)
-                    {
-                        var inventory = await _context.Inventories.FindAsync(item.BookId);
-                        if (inventory != null)
-                        {
-                            inventory.QuantityOnHand += item.Quantity;
-                        }
-                    }
+                    var inventory = await _inventoryRepository.IncreaseStockAsync(item.BookId, item.Quantity);
                 }
-                else
-                {
-                    order.IsPaid = true;
-                }
-
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
             }
-            catch
+            else
             {
-                await transaction.RollbackAsync();
-                throw;
+                order.IsPaid = true;
             }
-        }
 
-        private string ComputeHmacSha256(string message, string secretKey)
-        {
-            var keyBytes = Encoding.UTF8.GetBytes(secretKey);
-            var messageBytes = Encoding.UTF8.GetBytes(message);
-            using var hmac = new HMACSHA256(keyBytes);
-            var hashBytes = hmac.ComputeHash(messageBytes);
-            return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+            await _orderRepository.UpdateAsync(order);
         }
     }
 }

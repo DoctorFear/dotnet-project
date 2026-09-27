@@ -16,7 +16,7 @@ namespace AncientBook.Infrastructure.Repositories
         {
             _context = context;
         }
-
+        
         public IQueryable<Book> GetBookListQuery()
         {
             return _context.Books

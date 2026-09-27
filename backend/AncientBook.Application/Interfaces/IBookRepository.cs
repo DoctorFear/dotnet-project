@@ -7,11 +7,11 @@ namespace AncientBook.Application.Interfaces
 {
     public interface IBookRepository
     {
+        Task<Book?> GetByIdAsync(int id);
         IQueryable<Book> GetBookListQuery();
         Task<Book?> GetDetailByIdAsync(int id);
         Task<Book?> GetForUpdateAsync(int id);
         Task<Book?> GetForDeleteAsync(int id);
-        Task<Book?> GetByIdAsync(int id);
         Task<bool> IsIsbnExistsAsync(string isbn);
         void Add(Book book);
         void Remove(Book book);
