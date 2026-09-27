@@ -20,11 +20,17 @@ builder.Services.AddScoped<IApplicationDbContext>(provider =>
 
 // DI Service & Repository & Hasher
 builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
+builder.Services.AddScoped<IHmacSha256Hasher, HmacSha256Hasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddHttpClient<ICheckoutService, CheckoutService>();
+builder.Services.AddHttpClient<IOrderService, OrderService>();
 builder.Services.AddScoped<IEmailService, EmailService>();   
 
+builder.Services.AddHttpClient<IBookRepository, BookRepository>();
+builder.Services.AddHttpClient<IOrderRepository, OrderRepository>();
+builder.Services.AddHttpClient<IInventoryRepository, InventoryRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>(); // <-- BỔ SUNG DÒNG NÀY
 
 
