@@ -1,5 +1,6 @@
 ﻿// AncientBook.API/Controllers/AuthController.cs
 using AncientBook.Application.Common;
+using AncientBook.Application.DTOs;
 using AncientBook.Application.DTOs.Auth;
 using AncientBook.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -64,8 +65,6 @@ namespace AncientBook.API.Controllers
         }
 
         [HttpPost("login")]
-        [ProducesResponseType(typeof(ApiResponse<LoginResponseDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
         {
             var result = await _authService.LoginAsync(request);
@@ -73,6 +72,24 @@ namespace AncientBook.API.Controllers
             {
                 return BadRequest(result);
             }
+
+            return Ok(result); // Trả về JSON chứa AccessToken & RefreshToken
+        }
+
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto request)
+        {
+            if (string.IsNullOrEmpty(request.RefreshToken))
+            {
+                return BadRequest(ApiResponse<string>.Fail("Thiếu Refresh Token trong request."));
+            }
+
+            var result = await _authService.RefreshTokenAsync(request.RefreshToken);
+            if (!result.Success)
+            {
+                return Unauthorized(result); // Quá 3 ngày hoặc token sai sẽ trả về 401 bắt đăng nhập lại
+            }
+
             return Ok(result);
         }
 

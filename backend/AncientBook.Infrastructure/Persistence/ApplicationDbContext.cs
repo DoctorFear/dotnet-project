@@ -24,7 +24,7 @@ namespace AncientBook.Infrastructure.Persistence
 
         // New DbSets for Inventory, Supplier & Stock Alert Modules
         public DbSet<Supplier> Suppliers => Set<Supplier>();
-        public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
+        public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>()  ;
         public DbSet<PurchaseOrderItem> PurchaseOrderItems => Set<PurchaseOrderItem>();
         public DbSet<StockMovement> StockMovements => Set<StockMovement>();
         public DbSet<StockAlert> StockAlerts => Set<StockAlert>();

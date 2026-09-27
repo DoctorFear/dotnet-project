@@ -1,11 +1,12 @@
-﻿using System;
-using System.Threading.Tasks;
-using AncientBook.Application.Common;
+﻿using AncientBook.Application.Common;
+using AncientBook.Application.Common.Interfaces;
 using AncientBook.Application.DTOs.Auth;
 using AncientBook.Application.Interfaces;
 using AncientBook.Domain.Entities;
 using AncientBook.Domain.Enums;
 using Google.Apis.Auth;
+using System;
+using System.Threading.Tasks;
 
 namespace AncientBook.Application.Services
 {
@@ -14,12 +15,14 @@ namespace AncientBook.Application.Services
         private readonly IUserRepository _userRepository;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IEmailService _emailService;
+        private readonly ITokenService _tokenService;
 
-        public AuthService(IUserRepository userRepository, IPasswordHasher passwordHasher, IEmailService emailService)
+        public AuthService(IUserRepository userRepository, IPasswordHasher passwordHasher, IEmailService emailService, ITokenService tokenService)
         {
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
-            _emailService = emailService;   
+            _emailService = emailService;
+            _tokenService = tokenService;
         }
 
         public async Task<ApiResponse<RegisterResponseDto>> RegisterAsync(RegisterRequestDto request)
@@ -144,28 +147,19 @@ namespace AncientBook.Application.Services
 
         public async Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto request)
         {
-            // E1: Kiểm tra dữ liệu không được để trống
-            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
-            {
-                return ApiResponse<LoginResponseDto>.Fail("Tên đăng nhập và mật khẩu không được để trống.");
-            }
-
-            // Tìm kiếm user theo Username
             var user = await _userRepository.GetByUsernameAsync(request.Username);
-
-            // E2 & BR01: Sai thông tin -> Báo lỗi chung chung chống rà quét tài khoản
             if (user == null || !_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
             {
                 return ApiResponse<LoginResponseDto>.Fail("Tên đăng nhập hoặc mật khẩu không chính xác.");
             }
 
-            // E3 & BR03: Kiểm tra tài khoản bị khóa / vô hiệu hóa
-            if (!user.IsActive)
-            {
-                return ApiResponse<LoginResponseDto>.Fail("Tài khoản của bạn hiện đang bị khóa. Vui lòng liên hệ hotline để được hỗ trợ.");
-            }
+            var refreshToken = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(3); // Hạn 3 ngày không hoạt động
+            await _userRepository.SaveChangesAsync();
 
-            // Đóng gói dữ liệu trả về phục vụ điều hướng theo Role (BR02)
+            var accessToken = _tokenService.GenerateAccessToken(user); // 3. Sinh Access Token (15p)
+
             var responseData = new LoginResponseDto
             {
                 UserId = user.Id,
@@ -173,10 +167,41 @@ namespace AncientBook.Application.Services
                 Email = user.Email,
                 FullName = user.FullName,
                 Role = user.Role.ToString(),
-                FPoints = user.FPoints
+                AccessToken = accessToken,
+                RefreshToken = refreshToken
             };
 
             return ApiResponse<LoginResponseDto>.Ok(responseData, "Đăng nhập thành công!");
+        }
+
+        public async Task<ApiResponse<LoginResponseDto>> RefreshTokenAsync(string incomingRefreshToken)
+        {
+            var user = await _userRepository.GetByRefreshTokenAsync(incomingRefreshToken);
+
+            if (user == null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            {
+                return ApiResponse<LoginResponseDto>.Fail("Phiên đăng nhập đã hết hạn (quá 3 ngày không hoạt động). Vui lòng đăng nhập lại.");
+            }
+
+            var newRefreshToken = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
+            user.RefreshToken = newRefreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(3); // Gia hạn tiếp 3 ngày
+            await _userRepository.SaveChangesAsync();
+
+            var newAccessToken = _tokenService.GenerateAccessToken(user);
+
+            var responseData = new LoginResponseDto
+            {
+                UserId = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                FullName = user.FullName,
+                Role = user.Role.ToString(),
+                AccessToken = newAccessToken,
+                RefreshToken = newRefreshToken
+            };
+
+            return ApiResponse<LoginResponseDto>.Ok(responseData, "Làm mới phiên thành công!");
         }
         public async Task<ApiResponse<bool>> ForgotPasswordAsync(ForgotPasswordRequestDto request)
         {
