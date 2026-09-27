@@ -1,5 +1,6 @@
-﻿    using System.Threading.Tasks;
+﻿using AncientBook.Application.DTOs.User;
 using AncientBook.Domain.Entities;
+    using System.Threading.Tasks;
 
 namespace AncientBook.Application.Interfaces
 {
@@ -15,5 +16,8 @@ namespace AncientBook.Application.Interfaces
         Task<User?> GetByRefreshTokenAsync(string refreshToken);
         Task<User?> GetByIdAsync(int id);
         Task<User?> GetByIdWithAddressesAsync(int id);
+        Task<(List<User> Items, int TotalCount)> GetPagedUsersAsync(UserFilterDto filter);
+        Task<int> CountActiveAdminsAsync();
+        Task<bool> ExistsByPhoneAsync(string phone);    
     }
 }

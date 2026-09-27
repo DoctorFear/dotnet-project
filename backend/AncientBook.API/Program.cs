@@ -27,7 +27,7 @@ builder.Logging.AddConsole();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<IApplicationDbContext>(provider =>
+builder.Services.AddScoped<AncientBook.Application.Interfaces.IApplicationDbContext>(provider =>
     provider.GetRequiredService<ApplicationDbContext>());
 
 // DI Service & Repository & Hasher
@@ -36,6 +36,9 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAdminUserService, AdminUserService>();
+builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddHttpClient<ICheckoutService, CheckoutService>();
@@ -86,6 +89,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddHttpContextAccessor();
 
 // Cấu hình Swagger hỗ trợ nhập Token JWT Bearer
 builder.Services.AddSwaggerGen(c =>

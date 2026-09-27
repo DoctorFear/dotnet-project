@@ -6,6 +6,7 @@ using AncientBook.Domain.Entities;
 using AncientBook.Domain.Enums;
 using Google.Apis.Auth;
 using System;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace AncientBook.Application.Services
@@ -16,13 +17,15 @@ namespace AncientBook.Application.Services
         private readonly IPasswordHasher _passwordHasher;
         private readonly IEmailService _emailService;
         private readonly ITokenService _tokenService;
+        private readonly IAuditLogService _auditLogService;
 
-        public AuthService(IUserRepository userRepository, IPasswordHasher passwordHasher, IEmailService emailService, ITokenService tokenService)
+        public AuthService(IUserRepository userRepository, IPasswordHasher passwordHasher, IEmailService emailService, ITokenService tokenService, IAuditLogService auditLogService)
         {
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
             _emailService = emailService;
             _tokenService = tokenService;
+            _auditLogService = auditLogService;
         }
 
         public async Task<ApiResponse<RegisterResponseDto>> RegisterAsync(RegisterRequestDto request)
@@ -146,7 +149,7 @@ namespace AncientBook.Application.Services
         public async Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto request)
         {
             var user = await _userRepository.GetByUsernameAsync(request.Username);
-            if (user == null || !_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
+            if (user == null || string.IsNullOrEmpty(user.PasswordHash) || !_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
             {
                 return ApiResponse<LoginResponseDto>.Fail("Tên đăng nhập hoặc mật khẩu không chính xác.");
             }
@@ -278,7 +281,7 @@ namespace AncientBook.Application.Services
             return ApiResponse<bool>.Ok(true, "Đổi mật khẩu thành công! Vui lòng đăng nhập lại.");
         }
 
-        public async Task<ApiResponse<bool>> LogoutAsync(int userId)
+        public async Task<ApiResponse<bool>> LogoutAsync(int userId, string? ipAddress = null)
         {
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null)
@@ -286,10 +289,23 @@ namespace AncientBook.Application.Services
                 return ApiResponse<bool>.Fail("Không tìm thấy người dùng.");
             }
 
-            // Vô hiệu hóa Refresh Token của phiên hiện tại
+            // 1. Vô hiệu hóa Refresh Token của phiên hiện tại
             user.RefreshToken = null;
             user.RefreshTokenExpiryTime = null;
             await _userRepository.SaveChangesAsync();
+
+            // 2. Ghi vết vào Audit Log (UC07)
+            await _auditLogService.LogAsync(
+                action: "LOGOUT",
+                module: "AUTH",
+                entityName: "Users",
+                recordId: user.Id.ToString(),
+                oldValues: null,
+                newValues: null,
+                details: $"Người dùng @{user.Username} ({user.Role}) đã đăng xuất khỏi hệ thống",
+                userId: user.Id,
+                ipAddress: ipAddress
+            );
 
             return ApiResponse<bool>.Ok(true, "Đăng xuất thành công.");
         }
