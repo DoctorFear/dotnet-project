@@ -16,11 +16,6 @@ namespace AncientBook.Infrastructure.Repositories
         {
             _context = context;
         }
-
-        public async Task<Book?> GetByIdAsync(int id)
-        {
-            return await _context.Books.FindAsync(id);
-        }
         
         public IQueryable<Book> GetBookListQuery()
         {

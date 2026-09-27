@@ -520,3 +520,4 @@ lerna-debug.log*
 *.tsbuildinfo
 .eslintcache
 
+Migrations/

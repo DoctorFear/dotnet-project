@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using AncientBook.Application.DTOs;
 using AncientBook.Application.Interfaces;
+using AncientBook.Application.Common;
 using AncientBook.Domain.Entities;
 using AncientBook.Domain.Enums;
 using Microsoft.Extensions.Logging;
@@ -195,12 +196,12 @@ namespace AncientBook.Application.Services
             var (items, totalCount) = await _orderRepository.GetPagedOrdersAsync(query);
 
             return new PagedResult<Order>
-            {
-                Items = items,
-                PageNumber = query.PageNumber,
-                PageSize = query.PageSize,
-                TotalItems = totalCount
-            };
+            (
+                items,
+                query.PageNumber,
+                query.PageSize,
+                totalCount
+            );
         }
 
         private async Task ProcessMoMoRefundAsync(Order order)

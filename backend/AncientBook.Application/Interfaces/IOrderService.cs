@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using AncientBook.Application.DTOs;
 using AncientBook.Domain.Entities;
 using AncientBook.Domain.Enums;
+using AncientBook.Application.Common;
 
 namespace AncientBook.Application.Interfaces
 {
