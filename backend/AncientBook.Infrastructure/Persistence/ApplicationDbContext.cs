@@ -18,6 +18,7 @@ namespace AncientBook.Infrastructure.Persistence
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
         public DbSet<Book> Books => Set<Book>();
         public DbSet<Inventory> Inventories => Set<Inventory>();
+        public DbSet<FPoints> FPoints => Set<FPoints>();
         public DbSet<BookCategory> BookCategories => Set<BookCategory>();
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<Publisher> Publishers => Set<Publisher>();
@@ -280,6 +281,23 @@ namespace AncientBook.Infrastructure.Persistence
                     .WithMany(b => b.BookImages)
                     .HasForeignKey(bi => bi.BookId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // 17. FPoints Configuration
+            modelBuilder.Entity<FPoints>(entity =>
+            {
+                entity.ToTable("FPoints");
+                entity.HasKey(pi => pi.Id);
+                
+                entity.Property(pi => pi.PointUsed).IsRequired();
+
+                entity.HasOne(pi => pi.user)
+                    .WithMany() 
+                    .HasForeignKey(pi => pi.UserId);
+
+                entity.HasOne(pi => pi.order)
+                    .WithMany() 
+                    .HasForeignKey(pi => pi.OrderId);
             });
 
             // Data để test checkout xóa nếu muốn

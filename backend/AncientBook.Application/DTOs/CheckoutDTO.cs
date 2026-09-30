@@ -12,7 +12,7 @@ namespace AncientBook.Application.DTOs
     public class CreateCheckoutRequest
     {
         public int UserId { get; set; }
-        public int? PromotionId { get; set; }
+        public int? PointsUsed { get; set; } = null;
         public string ShippingAddress { get; set; } = string.Empty;
         public List<CheckoutItemDto> Items { get; set; } = new();
     }

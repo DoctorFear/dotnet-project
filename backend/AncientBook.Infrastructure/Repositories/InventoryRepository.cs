@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using AncientBook.Application.Interfaces;
 using AncientBook.Domain.Entities;
+using AncientBook.Domain.Enums;
 using AncientBook.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,6 +30,12 @@ namespace AncientBook.Infrastructure.Repositories
                     i => i.QuantityOnHand, 
                     i => i.QuantityOnHand - quantity
                 ));
+            rowsAffected += await _context.Books
+                .Where(i => i.Id == bookId && i.StockStatus != StockStatus.OutOfStock && i.StockCount >= quantity )
+                .ExecuteUpdateAsync(s => s.SetProperty(
+                    i => i.StockCount,
+                    i => i.StockCount - quantity
+                ));
 
             return rowsAffected > 0;
         }
@@ -40,6 +47,12 @@ namespace AncientBook.Infrastructure.Repositories
                 .ExecuteUpdateAsync(s => s.SetProperty(
                     i => i.QuantityOnHand, 
                     i => i.QuantityOnHand + quantity
+                ));
+            rowsAffected += await _context.Books
+                .Where(i => i.Id == bookId && i.StockStatus != StockStatus.OutOfStock && i.StockCount >= quantity )
+                .ExecuteUpdateAsync(s => s.SetProperty(
+                    i => i.StockCount,
+                    i => i.StockCount + quantity
                 ));
 
             return rowsAffected > 0;

@@ -186,7 +186,7 @@ namespace AncientBook.Application.Services
 
             return true;
         }
-
+        
         public async Task<PagedResult<Order>> GetPagedOrdersAsync(GetOrdersQuery query)
         {
             if (query.PageNumber < 1) query.PageNumber = 1;

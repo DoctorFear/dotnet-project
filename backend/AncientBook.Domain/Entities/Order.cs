@@ -5,11 +5,10 @@ using AncientBook.Domain.Enums;
 
 namespace AncientBook.Domain.Entities
 {
-    // Thực thể Đơn hàng (Kế thừa BaseEntity)
     public class Order : BaseEntity
     {
         public int UserId { get; set; }
-        public int? PromotionId { get; set; }
+        public int? PointsId { get; set; }
         public DateTime OrderDate { get; set; } = TimeZoneHelper.GetVietnamTime();
         public decimal SubTotal { get; set; }
         public decimal DiscountAmount { get; set; } = 0;

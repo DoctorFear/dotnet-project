@@ -20,15 +20,17 @@ namespace AncientBook.Application.Services
         private readonly IBookRepository _bookRepository;
         private readonly IInventoryRepository _inventoryRepository;
         private readonly IOrderRepository _orderRepository;
+        private readonly IFPointRepository _fpointRepository;
         private readonly IHmacSha256Hasher _hasher;
         private readonly HttpClient _httpClient;
         private readonly ILogger<CheckoutService> _logger;
 
-        public CheckoutService(IBookRepository bookRepository, IInventoryRepository inventoryRepository, IOrderRepository orderRepository, IHmacSha256Hasher hasher, HttpClient httpClient, ILogger<CheckoutService> logger)
+        public CheckoutService(IBookRepository bookRepository, IInventoryRepository inventoryRepository, IOrderRepository orderRepository, IFPointRepository fpointRepository, IUserRepository userRepository, IHmacSha256Hasher hasher, HttpClient httpClient, ILogger<CheckoutService> logger)
         {
             _bookRepository = bookRepository;
             _inventoryRepository = inventoryRepository;
             _orderRepository = orderRepository;
+            _fpointRepository = fpointRepository;
             _httpClient = httpClient;
             _hasher = hasher;
             _logger = logger;
@@ -82,25 +84,20 @@ namespace AncientBook.Application.Services
                     });
                 }
 
-                // Calculate discount logic (Integrate with Promotions table if required)
                 decimal discountAmount = 0;
-                // if (request.PromotionId.HasValue)
-                // {
-                //     var promotion = await _context.Promotions.FindAsync(request.PromotionId.Value);
-                //     if (promotion != null)
-                //     {
-                //         // Example rule: Apply flat or percentage discount based on promotion properties
-                //         // discountAmount = ...;
-                //     }
-                // }
+                var userFpoints = await _fpointRepository.GetCurrentUserPointsAsync(request.UserId);
+
+                if (request.PointsUsed > 0 && request.PointsUsed <= userFpoints && request.PointsUsed < 1000)
+                {
+                    discountAmount = (decimal)request.PointsUsed * 10;
+                }
 
                 decimal finalAmount = subTotal - discountAmount;
-                // if (finalAmount < 0) finalAmount = 0;
+                if (finalAmount < 0) finalAmount = 0;
 
                 var order = new Order
                 {
                     UserId = request.UserId,
-                    PromotionId = request.PromotionId,
                     OrderDate = DateTime.UtcNow,
                     SubTotal = subTotal,
                     DiscountAmount = discountAmount,
@@ -109,6 +106,24 @@ namespace AncientBook.Application.Services
                     Status = OrderStatus.Pending,
                     OrderItems = orderItemsToCreate
                 };
+
+                await _orderRepository.AddAsync(order);
+
+                if (request.PointsUsed > 0 && discountAmount > 0)
+                {
+                    await _fpointRepository.DecreasePointsAsync(request.UserId, (int)request.PointsUsed, order.Id);
+                }
+                else
+                {
+                    await _fpointRepository.CalculateAndAwardPointsAsync(request.UserId, finalAmount, order.Id);
+                }
+                
+                var fPointRecord = _fpointRepository.GetAync(order.UserId, order.Id);
+                if (fPointRecord != null)
+                {
+                    order.PointsId = fPointRecord.Id;
+                    await _orderRepository.UpdateAsync(order);
+                }
 
                 await _orderRepository.AddAsync(order);
 
