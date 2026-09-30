@@ -25,6 +25,8 @@ namespace AncientBook.Domain.Entities
         public DateTime? ResetTokenExpires { get; set; }
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiryTime { get; set; }
+        public int TokenVersion { get; set; } = 1;
+        public bool IsSuperAdmin { get; set; } = false;
 
         // Quan hệ 1-N với Address phục vụ UC05
         public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();

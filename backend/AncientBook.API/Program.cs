@@ -1,4 +1,4 @@
-using System.Text;
+using AncientBook.API.Middlewares;
 using AncientBook.Application.Common.Interfaces;
 using AncientBook.Application.Interfaces;
 using AncientBook.Application.Services;
@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using QuestPDF.Infrastructure;
+using System.Text;
 
 Env.Load();
 QuestPDF.Settings.License = LicenseType.Community;
@@ -120,7 +121,25 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+// ==================== SEED DATABASE KHI RUN ====================
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        var passwordHasher = services.GetRequiredService<IPasswordHasher>();
 
+        // Thực thi seed
+        await DatabaseSeeder.SeedAsync(context, passwordHasher);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Đã xảy ra lỗi trong quá trình khởi tạo dữ liệu mẫu (Seeding).");
+    }
+}
+// ==============================================================
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -131,7 +150,13 @@ app.UseStaticFiles();
 app.UseHttpsRedirection();
 
 // Thứ tự Middleware chuẩn: Authentication trước Authorization
+// 1. Xác thực danh tính từ Bearer Token
 app.UseAuthentication();
+
+// 2. Chèn Middleware kiểm tra TokenVersion tức thì (BR04) tại đây
+app.UseMiddleware<TokenValidationMiddleware>();
+
+// 3. Kiểm tra phân quyền (Admin, Staff,...)
 app.UseAuthorization();
 
 app.MapControllers();

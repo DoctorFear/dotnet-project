@@ -1,4 +1,5 @@
-﻿using System;
+﻿// AncientBook.Infrastructure/Services/TokenService.cs
+using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -26,7 +27,9 @@ namespace AncientBook.Infrastructure.Services
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Username),
                 new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
-                new Claim(ClaimTypes.Role, user.Role.ToString())
+                new Claim(ClaimTypes.Role, user.Role.ToString()),
+                // Thêm claim token_version phục vụ kiểm tra tức thì
+                new Claim("token_version", user.TokenVersion.ToString())
             };
 
             var jwtKey = _configuration["JwtSettings:Secret"] ?? "SuperSecretKeyWithAtLeast32BytesLengthHere!";
@@ -36,7 +39,7 @@ namespace AncientBook.Infrastructure.Services
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddMinutes(15), // Access Token sống 15 phút
+                Expires = DateTime.UtcNow.AddMinutes(15),
                 SigningCredentials = creds,
                 Issuer = _configuration["JwtSettings:Issuer"],
                 Audience = _configuration["JwtSettings:Audience"]

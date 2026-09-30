@@ -46,6 +46,7 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.Property(u => u.PhoneNumber).HasMaxLength(15);
                 entity.Property(e => e.PasswordHash).IsRequired(false);
                 entity.Property(u => u.Role).HasConversion<string>().HasMaxLength(20);
+                entity.Property(u => u.IsSuperAdmin).HasDefaultValue(false);
 
                 entity.HasIndex(u => u.Username).IsUnique().HasDatabaseName("IX_Users_Username");
                 entity.HasIndex(u => u.Email).IsUnique().HasDatabaseName("IX_Users_Email");

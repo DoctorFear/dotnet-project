@@ -13,12 +13,11 @@ public class AdminUserService : IAdminUserService
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IAuditLogService _auditLogService;
-    private const string SUPER_ADMIN_EMAIL = "admin@ancientbook.com"; // Email Super Admin bất khả xâm phạm
 
     public AdminUserService(
             IUserRepository userRepository,
             IPasswordHasher passwordHasher,
-            IAuditLogService auditLogService) // <-- Inject IAuditLogService
+            IAuditLogService auditLogService)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
@@ -39,7 +38,8 @@ public class AdminUserService : IAdminUserService
             Role = u.Role.ToString(),
             IsActive = u.IsActive,
             CreatedAt = u.CreatedAt,
-            IsSuperAdmin = u.Email.Equals(SUPER_ADMIN_EMAIL, StringComparison.OrdinalIgnoreCase)
+            // Đọc trực tiếp từ cột IsSuperAdmin trong database
+            IsSuperAdmin = u.IsSuperAdmin
         }).ToList();
 
         var pagedResult = new PagedResult<UserManagementItemDto>(
@@ -81,6 +81,8 @@ public class AdminUserService : IAdminUserService
             PasswordHash = _passwordHasher.HashPassword(defaultPassword),
             Role = request.Role,
             IsActive = true,
+            IsSuperAdmin = false, // Nhân sự mới tạo không bao giờ là Super Admin
+            TokenVersion = 1,
             FPoints = 0,
             CreatedAt = DateTime.UtcNow
         };
@@ -132,8 +134,8 @@ public class AdminUserService : IAdminUserService
             return ApiResponse<bool>.Fail("Không thể chuyển vai trò nhân sự về Khách hàng.");
         }
 
-        // E3: Chặn xâm phạm Super Admin
-        if (targetUser.Email.Equals(SUPER_ADMIN_EMAIL, StringComparison.OrdinalIgnoreCase))
+        // E3: Chặn xâm phạm Super Admin dựa trên cột IsSuperAdmin trong DB
+        if (targetUser.IsSuperAdmin)
         {
             return ApiResponse<bool>.Fail("Tài khoản Super Admin là bất khả xâm phạm.");
         }
@@ -151,7 +153,8 @@ public class AdminUserService : IAdminUserService
         var oldRole = targetUser.Role;
         targetUser.Role = request.NewRole;
 
-        // BR04: Thu hồi phiên làm việc tức thì (buộc đăng nhập lại để nhận quyền mới)
+        // BR04: Thu hồi phiên làm việc tức thì bằng cách tăng TokenVersion và hủy RefreshToken
+        targetUser.TokenVersion++;
         targetUser.RefreshToken = null;
         targetUser.RefreshTokenExpiryTime = null;
 
@@ -176,8 +179,8 @@ public class AdminUserService : IAdminUserService
         if (targetUser == null)
             return ApiResponse<bool>.Fail("Người dùng không tồn tại.");
 
-        // E3: Bất khả xâm phạm Super Admin
-        if (targetUser.Email.Equals(SUPER_ADMIN_EMAIL, StringComparison.OrdinalIgnoreCase))
+        // E3: Chặn khóa Super Admin dựa trên cột IsSuperAdmin trong DB
+        if (targetUser.IsSuperAdmin)
         {
             return ApiResponse<bool>.Fail("Không thể khóa tài khoản Super Admin.");
         }
@@ -197,6 +200,7 @@ public class AdminUserService : IAdminUserService
         // BR04: Nếu thao tác là KHÓA, lập tức hủy phiên làm việc
         if (!request.IsActive)
         {
+            targetUser.TokenVersion++;
             targetUser.RefreshToken = null;
             targetUser.RefreshTokenExpiryTime = null;
         }
