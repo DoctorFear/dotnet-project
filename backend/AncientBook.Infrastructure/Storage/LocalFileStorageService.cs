@@ -7,14 +7,14 @@ using Microsoft.AspNetCore.Http;
 namespace AncientBook.Infrastructure.Storage
 {
     // Interface định nghĩa lưu trữ tệp tin
-    public interface IFileStorageService
+    public interface IFileStorageServices
     {
         Task<string> SaveFileAsync(IFormFile file, string folderName);
         void DeleteFile(string relativePath);
     }
 
     // Service triển khai lưu tệp trực tiếp vào thư mục Server (wwwroot/uploads)
-    public class LocalFileStorageService : IFileStorageService
+    public class LocalFileStorageService : IFileStorageServices
     {
         private readonly IWebHostEnvironment _environment;
 

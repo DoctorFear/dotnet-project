@@ -1,9 +1,11 @@
+using AncientBook.API.Hubs;
 using AncientBook.API.Middlewares;
 using AncientBook.Application.Common.Interfaces;
 using AncientBook.Application.Interfaces;
 using AncientBook.Application.Services;
 using AncientBook.Infrastructure.Identity;
 using AncientBook.Infrastructure.Persistence;
+using AncientBook.Infrastructure.Persistence.Repositories;
 using AncientBook.Infrastructure.Repositories;
 using AncientBook.Infrastructure.Services;
 using AncientBook.Infrastructure.Storage;
@@ -41,6 +43,10 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAdminUserService, AdminUserService>();
 builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddScoped<IChatRepository, ChatRepository>();
+builder.Services.AddScoped<IChatService, ChatService>();
+
+
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddHttpClient<ICheckoutService, CheckoutService>();
@@ -61,10 +67,14 @@ builder.Services.AddScoped<IPublisherService, PublisherService>();
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<ISystemSettingService, SystemSettingService>();
 builder.Services.AddScoped<IReportService, ReportService>();
-builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+builder.Services.AddScoped<IFileStorageService, DropboxStorageService>();
+builder.Services.AddScoped<IFileStorageServices, LocalFileStorageService>();
 
 builder.Services.AddHttpClient();
 builder.Services.AddControllers();
+
+// Đăng ký SignalR
+builder.Services.AddSignalR();
 
 // Cấu hình Authentication với JWT Bearer
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -158,6 +168,8 @@ app.UseMiddleware<TokenValidationMiddleware>();
 
 // 3. Kiểm tra phân quyền (Admin, Staff,...)
 app.UseAuthorization();
+// Map SignalR Hub & Controller sau app.UseAuthentication() và app.UseAuthorization()
+app.MapHub<LiveChatHub>("/hubs/chat");
 
 app.MapControllers();
 
