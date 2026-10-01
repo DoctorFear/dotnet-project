@@ -14,6 +14,10 @@ namespace AncientBook.Infrastructure.Persistence
 
         public DbSet<Address> Addresses => Set<Address>();
         public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+        public DbSet<ChatSession> ChatSessions => Set<ChatSession>();
+        public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+        public DbSet<ChatSessionEvent> ChatSessionEvents => Set<ChatSessionEvent>();
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
         public DbSet<Book> Books => Set<Book>();
@@ -283,6 +287,86 @@ namespace AncientBook.Infrastructure.Persistence
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
+            // 17. Cấu hình ChatSession
+            modelBuilder.Entity<ChatSession>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                // Optimistic concurrency token chống nhận trùng phiên (E1 UC24)
+                entity.Property(e => e.RowVersion)
+                      .IsRowVersion();
+
+                entity.Property(e => e.InternalNote)
+                      .HasMaxLength(1000);
+
+                entity.HasOne(e => e.Customer)
+                      .WithMany()
+                      .HasForeignKey(e => e.CustomerId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Staff)
+                      .WithMany()
+                      .HasForeignKey(e => e.StaffId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // Index phục vụ lọc hàng đợi theo 3 tab (Pending, Active, Closed)
+                entity.HasIndex(e => new { e.Status, e.StaffId });
+            });
+
+            // 18. Cấu hình ChatMessage
+            modelBuilder.Entity<ChatMessage>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.AttachmentUrl)
+                      .HasMaxLength(500);
+
+                entity.HasOne(e => e.ChatSession)
+                      .WithMany(s => s.Messages)
+                      .HasForeignKey(e => e.ChatSessionId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Sender)
+                      .WithMany()
+                      .HasForeignKey(e => e.SenderId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // Index tối ưu truy vấn lịch sử tin nhắn theo thứ tự thời gian
+                entity.HasIndex(e => new { e.ChatSessionId, e.CreatedAt });
+            });
+
+            // 19. Cấu hình ChatSessionEvent
+            modelBuilder.Entity<ChatSessionEvent>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Note)
+                      .HasMaxLength(500);
+
+                entity.HasOne(e => e.ChatSession)
+                      .WithMany(s => s.Events)
+                      .HasForeignKey(e => e.ChatSessionId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Actor)
+                      .WithMany()
+                      .HasForeignKey(e => e.ActorId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.PreviousStaff)
+                      .WithMany()
+                      .HasForeignKey(e => e.PreviousStaffId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.NextStaff)
+                      .WithMany()
+                      .HasForeignKey(e => e.NextStaffId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // Index tối ưu truy vấn sự kiện của phiên theo thứ tự thời gian
+                entity.HasIndex(e => new { e.ChatSessionId, e.CreatedAt });
+            });
+
             // Data để test checkout xóa nếu muốn
             modelBuilder.Entity<Book>().HasData(
                 new Book 
@@ -313,6 +397,9 @@ namespace AncientBook.Infrastructure.Persistence
                     LastUpdated = new DateTime(2026, 1, 1)
                 }
             );
+
+
+
         }
 
         // Tự động ghi vết Audit Trail (CreatedAt, UpdatedAt) khi gọi SaveChangesAsync
