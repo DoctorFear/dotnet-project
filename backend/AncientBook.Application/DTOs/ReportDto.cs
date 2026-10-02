@@ -9,6 +9,7 @@ namespace AncientBook.Application.DTOs
         public int TotalBooks { get; set; }
         public int TotalSellingBooks { get; set; }
         public int TotalLowStockBooks { get; set; }
+        public int LowStockThreshold { get; set; }
         public decimal TotalRevenue { get; set; }
         public List<TopSellingBookDto> TopBooks { get; set; } = new List<TopSellingBookDto>();
     }

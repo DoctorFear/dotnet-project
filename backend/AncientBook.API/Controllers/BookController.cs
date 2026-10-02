@@ -43,7 +43,7 @@ namespace AncientBook.API.Controllers
         // Upload Ảnh bìa, Gallery hoặc Tệp E-Book PDF/EPUB lên Server (UC06)
         [HttpPost("upload-file")]
         [Authorize(Roles = "Admin,Staff")]
-        public async Task<IActionResult> UploadFile(IFormFile file, [FromQuery] string folder = "covers")
+        public async Task<IActionResult> UploadFile(IFormFile file, [FromQuery] string folder = "books")
         {
             try
             {

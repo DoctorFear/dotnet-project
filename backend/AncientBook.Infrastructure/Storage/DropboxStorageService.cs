@@ -53,6 +53,13 @@ public class DropboxStorageService : IFileStorageService
     /// </summary>
     private async Task<string> GetAccessTokenAsync()
     {
+        if (string.IsNullOrWhiteSpace(_appKey) ||
+            string.IsNullOrWhiteSpace(_appSecret) ||
+            string.IsNullOrWhiteSpace(_refreshToken))
+        {
+            throw new InvalidOperationException("Chưa cấu hình Dropbox. Hãy thiết lập Dropbox:AppKey, Dropbox:AppSecret và Dropbox:RefreshToken trong appsettings.Development.json hoặc User Secrets.");
+        }
+
         var request = new HttpRequestMessage(HttpMethod.Post, "https://api.dropboxapi.com/oauth2/token");
 
         // Basic Authentication với AppKey và AppSecret
