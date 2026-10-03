@@ -37,6 +37,10 @@ namespace AncientBook.Application.Services
         // Lấy danh sách thể loại có phân trang và tìm kiếm 
         public async Task<PagedResult<CategoryDto>> GetPagedCategoriesAsync(string? searchTerm, int pageNumber, int pageSize)
         {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+            if (pageSize > 100) pageSize = 100;
+
             var query = _categoryRepository.GetQuery();
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
@@ -128,6 +132,9 @@ namespace AncientBook.Application.Services
 
             if (category.BookCategories.Any())
                 throw new Exception($"Không thể xóa danh mục này vì đang có {category.BookCategories.Count} sách thuộc danh mục!");
+
+            if (await _categoryRepository.HasChildrenAsync(id))
+                throw new Exception("Không thể xóa danh mục này vì đang có danh mục con!");
 
             _categoryRepository.Remove(category);
             await _categoryRepository.SaveChangesAsync();

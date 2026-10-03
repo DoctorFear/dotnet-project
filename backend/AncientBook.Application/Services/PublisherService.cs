@@ -38,6 +38,10 @@ namespace AncientBook.Application.Services
         // Lấy danh sách NXB phân trang 
         public async Task<PagedResult<PublisherDto>> GetPagedPublishersAsync(string? searchTerm, int pageNumber, int pageSize)
         {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+            if (pageSize > 100) pageSize = 100;
+
             var query = _publisherRepository.GetQuery();
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
