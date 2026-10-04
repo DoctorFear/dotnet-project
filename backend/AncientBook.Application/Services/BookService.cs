@@ -141,7 +141,6 @@ namespace AncientBook.Application.Services
                 Weight = b.Weight,
                 PublicationYear = b.PublicationYear,
                 Description = b.Description,
-                EBookFilePath = b.EBookFilePath,
                 GalleryImages = b.BookImages.Select(bi => bi.ImageUrl).ToList()
             };
         }
@@ -177,7 +176,6 @@ namespace AncientBook.Application.Services
                 Weight = dto.Weight,
                 PublicationYear = dto.PublicationYear,
                 Description = dto.Description,
-                EBookFilePath = dto.EBookFilePath,
                 CreatedBy = currentUserId.ToString()
             };
 
@@ -232,7 +230,6 @@ namespace AncientBook.Application.Services
             book.Weight = dto.Weight;
             book.PublicationYear = dto.PublicationYear;
             book.Description = dto.Description;
-            book.EBookFilePath = dto.EBookFilePath;
             book.UpdatedAt = TimeZoneHelper.GetVietnamTime();
             book.UpdatedBy = currentUserId.ToString();
 
