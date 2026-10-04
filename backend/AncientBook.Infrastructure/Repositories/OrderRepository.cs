@@ -1,12 +1,12 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using AncientBook.Application.Interfaces;
 using AncientBook.Domain.Entities;
-using AncientBook.Domain.Enums;
-using AncientBook.Application.DTOs;
-using AncientBook.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 
-namespace AncientBook.Infrastructure.Repositories
+namespace AncientBook.Infrastructure.Persistence.Repositories
 {
     public class OrderRepository : IOrderRepository
     {
@@ -20,14 +20,30 @@ namespace AncientBook.Infrastructure.Repositories
         public async Task<Order?> GetByIdAsync(int id)
         {
             return await _context.Orders
+                .Include(o => o.Shipper)
                 .Include(o => o.OrderItems)
                 .FirstOrDefaultAsync(o => o.Id == id);
         }
 
+        public async Task<List<Order>> GetAllAsync()
+        {
+            return await _context.Orders
+                .Include(o => o.Shipper)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<List<Order>> GetByShipperIdAsync(int shipperId)
+        {
+            return await _context.Orders
+                .Where(o => o.ShipperId == shipperId)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
         public async Task AddAsync(Order order)
         {
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
+            await _context.Orders.AddAsync(order);
         }
 
         public async Task UpdateAsync(Order order)
@@ -36,40 +52,30 @@ namespace AncientBook.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<bool> UpdateStatusAsync(int orderId, OrderStatus newStatus)
+        public void Update(Order order)
         {
-            int rowsAffected = await _context.Orders
-                .Where(o => o.Id == orderId)
-                .ExecuteUpdateAsync(s => s
-                    .SetProperty(o => o.Status, newStatus)
-                    .SetProperty(o => o.UpdatedAt, TimeZoneHelper.GetVietnamTime())
-                );
-
-            return rowsAffected > 0;
+            _context.Orders.Update(order);
         }
 
-        public async Task<(List<Order> Items, int TotalCount)> GetPagedOrdersAsync(GetOrdersQuery query)
+        public async Task SaveChangesAsync()
         {
-            var dbQuery = _context.Orders
-                .Include(o => o.OrderItems)
-                .AsQueryable();
+            await _context.SaveChangesAsync();
+        }
 
-            if (query.UserId.HasValue)
+        public async Task<(List<Order> items, int totalCount)> GetPagedOrdersAsync(int pageIndex, int pageSize, string? status)
+        {
+            var query = _context.Orders.Include(o => o.OrderItems).AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(status))
             {
-                dbQuery = dbQuery.Where(o => o.UserId == query.UserId.Value);
+                query = query.Where(o => o.Status.ToString() == status);
             }
 
-            if (query.Status.HasValue)
-            {
-                dbQuery = dbQuery.Where(o => o.Status == query.Status.Value);
-            }
-
-            int totalCount = await dbQuery.CountAsync();
-
-            var items = await dbQuery
+            int totalCount = await query.CountAsync();
+            var items = await query
                 .OrderByDescending(o => o.OrderDate)
-                .Skip((query.PageNumber - 1) * query.PageSize)
-                .Take(query.PageSize)
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
             return (items, totalCount);

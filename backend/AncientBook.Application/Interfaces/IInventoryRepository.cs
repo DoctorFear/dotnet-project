@@ -8,5 +8,7 @@ namespace AncientBook.Application.Interfaces
         Task<Inventory?> GetByBookIdAsync(int bookId);
         Task<bool> DecreaseStockAsync(int bookId, int quantity);
         Task<bool> IncreaseStockAsync(int bookId, int quantity);
+        Task<List<Inventory>> GetAllAsync(); 
+        Task UpdateAsync(Inventory inventory);
     }
 }

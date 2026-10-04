@@ -9,8 +9,10 @@ namespace AncientBook.Domain.Entities
         public PurchaseOrder PurchaseOrder { get; set; } = null!;
 
         public int BookId { get; set; }
-        public int OrderedQuantity { get; set; }
-        public int ReceivedQuantity { get; set; } // Số lượng thực nhận khi kiểm kho
+        public Book Book { get; set; } = null!;
+
+        public int OrderedQuantity { get; set; }  // Đổi từ QuantityOrdered sang OrderedQuantity
+        public int ReceivedQuantity { get; set; } // Đổi từ QuantityReceived sang ReceivedQuantity
         public decimal UnitPrice { get; set; }
     }
 }

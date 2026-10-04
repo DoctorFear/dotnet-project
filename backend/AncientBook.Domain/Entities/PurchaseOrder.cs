@@ -6,15 +6,17 @@ namespace AncientBook.Domain.Entities
 {
     public class PurchaseOrder : BaseEntity, IAuditableEntity
     {
-        public string Code { get; set; } = string.Empty; // Mã phiếu: PO-2026-001
+        public string Code { get; set; } = string.Empty;
         public int SupplierId { get; set; }
         public Supplier Supplier { get; set; } = null!;
 
-        public DateTime OrderDate { get; set; } = DateTime.UtcNow;
-        public string Status { get; set; } = "Pending"; // Pending, Approved, Cancelled
+        public string Status { get; set; } = "Pending";
         public decimal TotalAmount { get; set; }
-        public string Notes { get; set; } = string.Empty;
-        // Navigation property
+        public string Notes { get; set; } = string.Empty; // Bổ sung thuộc tính Notes
+        public string? CancelReason { get; set; }
+        public string? ApprovedBy { get; set; }
+        public DateTime? ApprovedAt { get; set; }
+
         public ICollection<PurchaseOrderItem> Items { get; set; } = new List<PurchaseOrderItem>();
     }
 }

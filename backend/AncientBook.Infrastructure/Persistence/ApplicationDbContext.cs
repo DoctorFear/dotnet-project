@@ -34,6 +34,7 @@ namespace AncientBook.Infrastructure.Persistence
         public DbSet<PurchaseOrderItem> PurchaseOrderItems => Set<PurchaseOrderItem>();
         public DbSet<StockMovement> StockMovements => Set<StockMovement>();
         public DbSet<StockAlert> StockAlerts => Set<StockAlert>();
+        public DbSet<Shipper> Shippers => Set<Shipper>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -84,7 +85,24 @@ namespace AncientBook.Infrastructure.Persistence
                     .HasForeignKey(o => o.UserId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+            modelBuilder.Entity<Shipper>(entity =>
+            {
+                entity.ToTable("Shippers");
+                entity.HasKey(s => s.Id);
+                entity.Property(s => s.Name).IsRequired().HasMaxLength(100);
+                entity.Property(s => s.Phone).IsRequired().HasMaxLength(20);
+                entity.Property(s => s.Area).HasMaxLength(200);
+                entity.Property(s => s.Status).HasMaxLength(30);
+            });
 
+            // Cấu hình Khóa ngoại ShipperId trong Order
+            modelBuilder.Entity<Order>(entity =>
+            {
+                entity.HasOne(o => o.Shipper)
+                      .WithMany(s => s.Orders)
+                      .HasForeignKey(o => o.ShipperId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
             // 4. OrderItems Configuration
             modelBuilder.Entity<OrderItem>(entity =>
             {
@@ -213,7 +231,7 @@ namespace AncientBook.Infrastructure.Persistence
                     .HasForeignKey(poi => poi.PurchaseOrderId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                entity.HasOne<Book>()
+                entity.HasOne(poi => poi.Book)
                     .WithMany()
                     .HasForeignKey(poi => poi.BookId)
                     .OnDelete(DeleteBehavior.Restrict);

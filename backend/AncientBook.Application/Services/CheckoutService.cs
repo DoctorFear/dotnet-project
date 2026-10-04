@@ -293,7 +293,7 @@ namespace AncientBook.Application.Services
 
         public async Task HandleMoMoIpnAsync(JsonElement ipnData)
         {
-            var orderIdStr = ipnData.GetProperty("orderId").GetString();
+            var orderIdStr = ipnData.GetProperty("orderId").ToString();
             var resultCode = ipnData.GetProperty("resultCode").GetInt32();
             var requestId = ipnData.GetProperty("requestId").GetString();
 

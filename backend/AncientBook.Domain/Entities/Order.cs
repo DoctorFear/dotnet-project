@@ -19,7 +19,8 @@ namespace AncientBook.Domain.Entities
         public string? MoMoRequestId { get; set; }
         public string? PayUrl { get; set; }
         public bool IsPaid { get; set; } = false;
-
+        public int? ShipperId { get; set; } 
+        public Shipper? Shipper { get; set; } 
         // Navigation properties
         public User? User { get; set; }
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();

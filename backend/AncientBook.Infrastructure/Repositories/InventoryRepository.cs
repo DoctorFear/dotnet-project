@@ -17,10 +17,19 @@ namespace AncientBook.Infrastructure.Repositories
 
         public async Task<Inventory?> GetByBookIdAsync(int bookId)
         {
-            // Assuming Inventory primary key or unique index matches BookId
-            return await _context.Inventories.FindAsync(bookId);
+            return await _context.Inventories.FirstOrDefaultAsync(i => i.BookId == bookId);
         }
 
+        public async Task<List<Inventory>> GetAllAsync()
+        {
+            return await _context.Inventories.AsNoTracking().ToListAsync();
+        }
+
+        public async Task UpdateAsync(Inventory inventory)
+        {
+            _context.Inventories.Update(inventory);
+            await _context.SaveChangesAsync();
+        }
         public async Task<bool> DecreaseStockAsync(int bookId, int quantity)
         {
             int rowsAffected = await _context.Inventories
