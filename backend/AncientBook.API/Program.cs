@@ -1,6 +1,7 @@
 using AncientBook.API.Hubs;
 using AncientBook.API.Middlewares;
 using AncientBook.Application.Common.Interfaces;
+using AncientBook.Application.Common.Interfaces.Repositories;
 using AncientBook.Application.Interfaces;
 using AncientBook.Application.Services;
 using AncientBook.Infrastructure.Identity;
@@ -45,6 +46,8 @@ builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IChatRepository, ChatRepository>();
 builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<IEbookEditionRepository, EbookEditionRepository>();
+builder.Services.AddScoped<IBookEmbeddingRepository, BookEmbeddingRepository>();
 
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IPhysicalOrderService, PhysicalOrderService>();

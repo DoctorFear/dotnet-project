@@ -519,3 +519,7 @@ lerna-debug.log*
 # Vite / Rollup temporary files
 *.tsbuildinfo
 .eslintcache
+
+# App settings with secrets
+**/appsettings.json
+**/appsettings.Development.json

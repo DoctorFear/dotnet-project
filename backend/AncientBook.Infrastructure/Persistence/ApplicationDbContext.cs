@@ -18,6 +18,11 @@ namespace AncientBook.Infrastructure.Persistence
         public DbSet<ChatSession> ChatSessions => Set<ChatSession>();
         public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
         public DbSet<ChatSessionEvent> ChatSessionEvents => Set<ChatSessionEvent>();
+
+        public DbSet<EbookEdition> EbookEditions => Set<EbookEdition>();
+        public DbSet<EbookPreset> EbookPresets => Set<EbookPreset>();
+        public DbSet<BookEmbedding> BookEmbeddings => Set<BookEmbedding>();
+
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
         public DbSet<Book> Books => Set<Book>();
