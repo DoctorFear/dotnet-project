@@ -141,10 +141,28 @@ namespace AncientBook.API.Controllers
 
         [HttpGet]
         [Authorize]
-        public async Task<IActionResult> GetPagedOrders([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] int? userId = null, [FromQuery] OrderStatus? status = null)
+        public async Task<IActionResult> GetPagedOrders([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] int? userId = null, [FromQuery] OrderStatus? status = null, [FromQuery] string? searchKeyword = null)
+        
         {
             try
             {
+                var currentUserIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? 
+                                   User.FindFirst("sub")?.Value;
+                var userRoleClaim = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+
+                if (string.IsNullOrEmpty(currentUserIdClaim) || !int.TryParse(currentUserIdClaim, out int currentUserId))
+                {
+                    return Unauthorized(new { message = "Không thể xác thực thông tin người dùng." });
+                }
+
+                bool isAdmin = userRoleClaim == "Admin";
+
+                if (!isAdmin)
+                {
+                    userId = currentUserId;
+                    searchKeyword = null;
+                }
+                
                 var query = new GetOrdersQuery
                 {
                     PageNumber = pageNumber,

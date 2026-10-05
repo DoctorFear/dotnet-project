@@ -102,8 +102,11 @@ namespace AncientBook.Application.Services
                     {
                         try
                         {
-                            await _inventoryRepository.IncreaseStockAsync(item.BookId, item.Quantity);
-                            _logger.LogInformation("Đã hoàn lại {Quantity} sản phẩm cho sách ID {BookId} do hủy đơn hàng #{OrderId}", item.Quantity, item.BookId, order.Id);
+                            if (item.PurchaseType == PurchaseType.Physical)
+                            {
+                                await _inventoryRepository.IncreaseStockAsync(item.BookId, item.Quantity);
+                                _logger.LogInformation("Đã hoàn lại {Quantity} sản phẩm cho sách ID {BookId} do hủy đơn hàng #{OrderId}", item.Quantity, item.BookId, order.Id);
+                            }
                         }
                         catch (Exception ex)
                         {

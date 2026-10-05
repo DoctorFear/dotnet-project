@@ -16,6 +16,8 @@ namespace AncientBook.Infrastructure.Persistence
         public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+        public DbSet<Cart> Carts => Set<Cart>();
+        public DbSet<CartItem> CartItems => Set<CartItem>();
         public DbSet<Book> Books => Set<Book>();
         public DbSet<Inventory> Inventories => Set<Inventory>();
         public DbSet<FPoints> FPoints => Set<FPoints>();

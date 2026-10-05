@@ -24,10 +24,12 @@ namespace AncientBook.Application.Interfaces
         DbSet<AuditLog> AuditLogs { get; }
         DbSet<Order> Orders { get; }
         DbSet<OrderItem> OrderItems { get; }
-        public DbSet<Book> Books { get; }
-        public DbSet<Inventory> Inventories { get; }
-        public DbSet<BookCategory> BookCategories { get; }
-        public DbSet<FPoints> FPoints { get; }
+        DbSet<Book> Books { get; }
+        DbSet<Inventory> Inventories { get; }
+        DbSet<BookCategory> BookCategories { get; }
+        DbSet<FPoints> FPoints { get; }
+        DbSet<Cart> Carts { get; }
+        DbSet<CartItem> CartItems { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }

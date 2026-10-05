@@ -52,6 +52,7 @@ namespace AncientBook.Infrastructure.Repositories
         {
             var dbQuery = _context.Orders
                 .Include(o => o.OrderItems)
+                .Include(o => o.User)
                 .AsQueryable();
 
             if (query.UserId.HasValue)
@@ -62,6 +63,17 @@ namespace AncientBook.Infrastructure.Repositories
             if (query.Status.HasValue)
             {
                 dbQuery = dbQuery.Where(o => o.Status == query.Status.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.SearchKeyword))
+            {
+                var keyword = query.SearchKeyword.Trim().ToLower();
+                dbQuery = dbQuery.Where(o => 
+                    (o.User != null && (o.User.Username.ToLower().Contains(keyword) || 
+                                        o.User.Email.ToLower().Contains(keyword) || 
+                                        o.User.FullName.ToLower().Contains(keyword))) ||
+                    o.Id.ToString() == keyword
+                );
             }
 
             int totalCount = await dbQuery.CountAsync();

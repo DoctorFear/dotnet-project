@@ -13,5 +13,6 @@ namespace AncientBook.Application.DTOs
         public int PageSize { get; set; } = 10;
         public int? UserId { get; set; }
         public OrderStatus? Status { get; set; }
+        public string? SearchKeyword { get; set; }
     }
 }
