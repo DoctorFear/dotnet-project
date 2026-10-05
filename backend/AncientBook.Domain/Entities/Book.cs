@@ -36,7 +36,6 @@ namespace AncientBook.Domain.Entities
         public int? Weight { get; set; }
         public int? PublicationYear { get; set; }
         public string? Description { get; set; }
-        public string? EBookFilePath { get; set; }
 
         // --- Navigation properties (Quan hệ bảng) ---
 
@@ -46,5 +45,8 @@ namespace AncientBook.Domain.Entities
         public ICollection<BookImage> BookImages { get; set; } = new List<BookImage>();
         public ICollection<BookCategory> BookCategories { get; set; } = new List<BookCategory>();
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+
+        // [MỚI CẬP NHẬT]: Quan hệ 1-N với các ấn bản E-Book số hóa
+        public ICollection<EbookEdition> EbookEditions { get; set; } = new List<EbookEdition>();
     }
 }

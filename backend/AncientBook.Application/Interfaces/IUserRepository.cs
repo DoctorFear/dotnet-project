@@ -18,6 +18,7 @@ namespace AncientBook.Application.Interfaces
         Task<User?> GetByIdWithAddressesAsync(int id);
         Task<(List<User> Items, int TotalCount)> GetPagedUsersAsync(UserFilterDto filter);
         Task<int> CountActiveAdminsAsync();
-        Task<bool> ExistsByPhoneAsync(string phone);    
+        Task<bool> ExistsByPhoneAsync(string phone);
+        Task<List<User>> GetAllAsync();
     }
 }

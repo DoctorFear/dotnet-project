@@ -24,7 +24,7 @@ namespace AncientBook.Infrastructure.Repositories
                         column.Item().Text($"Ngày xuất: {DateTime.Now:dd/MM/yyyy HH:mm}");
                         column.Item().Text($"Tổng đầu sách: {report.TotalBooks}");
                         column.Item().Text($"Sách đang kinh doanh: {report.TotalSellingBooks}");
-                        column.Item().Text($"Sách sắp hết: {report.TotalLowStockBooks}");
+                        column.Item().Text($"Sách sắp hết (ngưỡng {report.LowStockThreshold}): {report.TotalLowStockBooks}");
                         column.Item().Text($"Tổng doanh thu: {report.TotalRevenue:N0} VNĐ").Bold();
                         column.Item().Text("Top sách bán chạy").FontSize(14).Bold();
                         column.Item().Table(table =>

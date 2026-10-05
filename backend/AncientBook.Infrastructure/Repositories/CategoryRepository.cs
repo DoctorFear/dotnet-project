@@ -33,6 +33,11 @@ namespace AncientBook.Infrastructure.Repositories
                 .FirstOrDefaultAsync(category => category.Id == id);
         }
 
+        public Task<bool> HasChildrenAsync(int parentId)
+        {
+            return _context.Categories.AnyAsync(category => category.ParentId == parentId);
+        }
+
         public Task<bool> IsNameExistsAsync(string name, int? excludedId = null)
         {
             return _context.Categories.AnyAsync(category =>

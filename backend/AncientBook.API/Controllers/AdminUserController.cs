@@ -1,71 +1,66 @@
-﻿using AncientBook.Application.DTOs.User;
+﻿// AncientBook.API/Controllers/AdminUsersController.cs
+using AncientBook.Application.DTOs.User;
 using AncientBook.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
-namespace AncientBook.API.Controllers;
-
-[ApiController]
-[Route("api/admin/users")]
-[Authorize(Roles = "Admin")] // BR01: Chỉ Quản trị viên mới có quyền truy cập
-public class AdminUserController : ControllerBase
+namespace AncientBook.API.Controllers
 {
-    private readonly IAdminUserService _adminUserService;
-
-    public AdminUserController(IAdminUserService adminUserService)
+    [ApiController]
+    [Route("api/admin/users")]
+    [Authorize(Roles = "Admin")] // BR01: Chỉ Admin mới có quyền truy cập
+    public class AdminUsersController : ControllerBase
     {
-        _adminUserService = adminUserService;
-    }
+        private readonly IAdminUserService _adminUserService;
 
-    private int GetCurrentUserId()
-    {
-        var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        return int.TryParse(claim, out int id) ? id : 0;
-    }
+        public AdminUsersController(IAdminUserService adminUserService)
+        {
+            _adminUserService = adminUserService;
+        }
 
-    /// <summary>
-    /// A1: Tìm kiếm, lọc và phân trang danh sách tài khoản
-    /// </summary>
-    [HttpGet]
-    public async Task<IActionResult> GetUsers([FromQuery] UserFilterDto filter)
-    {
-        var result = await _adminUserService.GetUsersAsync(filter);
-        return Ok(result);
-    }
+        private int CurrentAdminId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-    /// <summary>
-    /// A2: Tạo tài khoản nhân sự mới (Admin, Staff, Shipper)
-    /// </summary>
-    [HttpPost]
-    public async Task<IActionResult> CreateInternalUser([FromBody] CreateInternalUserRequestDto request)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
+        // 1. Lấy danh sách tài khoản kèm tìm kiếm, lọc & phân trang (Main Flow, A1)
+        [HttpGet]
+        public async Task<IActionResult> GetUsers([FromQuery] UserFilterDto filter)
+        {
+            var result = await _adminUserService.GetUsersAsync(filter);
+            return Ok(result);
+        }
 
-        var adminId = GetCurrentUserId();
-        var result = await _adminUserService.CreateInternalUserAsync(adminId, request);
-        return result.Success ? Ok(result) : BadRequest(result);
-    }
+        // 2. Tạo tài khoản nhân sự mới
+        [HttpPost]
+        public async Task<IActionResult> CreateInternalUser([FromBody] CreateInternalUserRequestDto request)
+        {
+            var result = await _adminUserService.CreateInternalUserAsync(CurrentAdminId, request);
+            if (!result.Success) // <-- Đổi IsSuccess thành Success
+                return BadRequest(result);
 
-    /// <summary>
-    /// Main Flow: Phân quyền / luân chuyển vai trò nhân sự
-    /// </summary>
-    [HttpPut("{id}/role")]
-    public async Task<IActionResult> UpdateRole(int id, [FromBody] ChangeUserRoleRequestDto request)
-    {
-        var adminId = GetCurrentUserId();
-        var result = await _adminUserService.UpdateRoleAsync(adminId, id, request);
-        return result.Success ? Ok(result) : BadRequest(result);
-    }
+            return Ok(result);
+        }
 
-    /// <summary>
-    /// A3: Khóa hoặc Mở khóa tài khoản người dùng
-    /// </summary>
-    [HttpPatch("{id}/status")]
-    public async Task<IActionResult> ToggleStatus(int id, [FromBody] ToggleUserStatusRequestDto request)
-    {
-        var adminId = GetCurrentUserId();
-        var result = await _adminUserService.ToggleStatusAsync(adminId, id, request);
-        return result.Success ? Ok(result) : BadRequest(result);
+        // 3. Phân vai trò nội bộ
+        [HttpPatch("{id}/role")]
+        public async Task<IActionResult> UpdateRole(int id, [FromBody] ChangeUserRoleRequestDto request)
+        {
+            var result = await _adminUserService.UpdateRoleAsync(CurrentAdminId, id, request);
+            if (!result.Success) // <-- Đổi IsSuccess thành Success
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        // 4. Khóa hoặc Mở khóa tài khoản
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> ToggleStatus(int id, [FromBody] ToggleUserStatusRequestDto request)
+        {
+            var result = await _adminUserService.ToggleStatusAsync(CurrentAdminId, id, request);
+            if (!result.Success) // <-- Đổi IsSuccess thành Success
+                return BadRequest(result);
+
+            return Ok(result);
+        }
     }
 }

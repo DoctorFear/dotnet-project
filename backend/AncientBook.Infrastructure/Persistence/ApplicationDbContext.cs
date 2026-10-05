@@ -14,6 +14,16 @@ namespace AncientBook.Infrastructure.Persistence
 
         public DbSet<Address> Addresses => Set<Address>();
         public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+        public DbSet<ChatSession> ChatSessions => Set<ChatSession>();
+        public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+        public DbSet<ChatSessionEvent> ChatSessionEvents => Set<ChatSessionEvent>();
+
+        public DbSet<EbookEdition> EbookEditions => Set<EbookEdition>();
+        public DbSet<BookEmbedding> BookEmbeddings => Set<BookEmbedding>();
+
+        public DbSet<CopilotChatHistory> CopilotChatHistories => Set<CopilotChatHistory>();
+
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
         public DbSet<Cart> Carts => Set<Cart>();
@@ -33,6 +43,7 @@ namespace AncientBook.Infrastructure.Persistence
         public DbSet<PurchaseOrderItem> PurchaseOrderItems => Set<PurchaseOrderItem>();
         public DbSet<StockMovement> StockMovements => Set<StockMovement>();
         public DbSet<StockAlert> StockAlerts => Set<StockAlert>();
+        public DbSet<Shipper> Shippers => Set<Shipper>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -49,6 +60,7 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.Property(u => u.PhoneNumber).HasMaxLength(15);
                 entity.Property(e => e.PasswordHash).IsRequired(false);
                 entity.Property(u => u.Role).HasConversion<string>().HasMaxLength(20);
+                entity.Property(u => u.IsSuperAdmin).HasDefaultValue(false);
 
                 entity.HasIndex(u => u.Username).IsUnique().HasDatabaseName("IX_Users_Username");
                 entity.HasIndex(u => u.Email).IsUnique().HasDatabaseName("IX_Users_Email");
@@ -82,7 +94,24 @@ namespace AncientBook.Infrastructure.Persistence
                     .HasForeignKey(o => o.UserId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+            modelBuilder.Entity<Shipper>(entity =>
+            {
+                entity.ToTable("Shippers");
+                entity.HasKey(s => s.Id);
+                entity.Property(s => s.Name).IsRequired().HasMaxLength(100);
+                entity.Property(s => s.Phone).IsRequired().HasMaxLength(20);
+                entity.Property(s => s.Area).HasMaxLength(200);
+                entity.Property(s => s.Status).HasMaxLength(30);
+            });
 
+            // Cấu hình Khóa ngoại ShipperId trong Order
+            modelBuilder.Entity<Order>(entity =>
+            {
+                entity.HasOne(o => o.Shipper)
+                      .WithMany(s => s.Orders)
+                      .HasForeignKey(o => o.ShipperId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
             // 4. OrderItems Configuration
             modelBuilder.Entity<OrderItem>(entity =>
             {
@@ -211,7 +240,7 @@ namespace AncientBook.Infrastructure.Persistence
                     .HasForeignKey(poi => poi.PurchaseOrderId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                entity.HasOne<Book>()
+                entity.HasOne(poi => poi.Book)
                     .WithMany()
                     .HasForeignKey(poi => poi.BookId)
                     .OnDelete(DeleteBehavior.Restrict);
@@ -301,6 +330,40 @@ namespace AncientBook.Infrastructure.Persistence
                     .WithMany() 
                     .HasForeignKey(pi => pi.OrderId);
             });
+            
+            modelBuilder.Entity<Cart>(entity =>
+            {
+                entity.ToTable("Carts");
+                entity.HasKey(c => c.Id);
+
+                entity.HasOne(c => c.User)
+                    .WithMany()
+                    .HasForeignKey(c => c.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(c => c.UserId).IsUnique().HasDatabaseName("IX_Carts_UserId");
+            });
+
+            modelBuilder.Entity<CartItem>(entity =>
+            {
+                entity.ToTable("CartItems");
+                entity.HasKey(ci => ci.Id);
+                entity.Property(ci => ci.Quantity).IsRequired();
+                entity.Property(ci => ci.PurchaseType).HasConversion<string>().HasMaxLength(20);
+                entity.Property(ci => ci.RentalDuration).HasConversion<string>().HasMaxLength(20);
+
+                entity.HasIndex(ci => new { ci.CartId, ci.BookId, ci.PurchaseType }).IsUnique().HasDatabaseName("IX_CartItems_CartId_BookId_PurchaseType");
+
+                entity.HasOne(ci => ci.Cart)
+                    .WithMany(c => c.CartItems)
+                    .HasForeignKey(ci => ci.CartId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(ci => ci.Book)
+                    .WithMany()
+                    .HasForeignKey(ci => ci.BookId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
 
             // Data để test checkout xóa nếu muốn
             modelBuilder.Entity<Book>().HasData(
@@ -320,18 +383,85 @@ namespace AncientBook.Infrastructure.Persistence
                     CreatedAt = new DateTime(2026, 1, 1)
                 }
             );
+            // 17. Cấu hình ChatSession
+            modelBuilder.Entity<ChatSession>(entity =>
+            {
+                entity.HasKey(e => e.Id);
 
-            modelBuilder.Entity<Inventory>().HasData(
-                new Inventory
-                {
-                    Id = 1,
-                    BookId = 1,
-                    QuantityOnHand = 50,
-                    ReorderLevel = 5,
-                    CreatedAt = new DateTime(2026, 1, 1),
-                    LastUpdated = new DateTime(2026, 1, 1)
-                }
-            );
+                // Optimistic concurrency token chống nhận trùng phiên (E1 UC24)
+                entity.Property(e => e.RowVersion)
+                      .IsRowVersion();
+
+                entity.Property(e => e.InternalNote)
+                      .HasMaxLength(1000);
+
+                entity.HasOne(e => e.Customer)
+                      .WithMany()
+                      .HasForeignKey(e => e.CustomerId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Staff)
+                      .WithMany()
+                      .HasForeignKey(e => e.StaffId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // Index phục vụ lọc hàng đợi theo 3 tab (Pending, Active, Closed)
+                entity.HasIndex(e => new { e.Status, e.StaffId });
+            });
+
+            // 18. Cấu hình ChatMessage
+            modelBuilder.Entity<ChatMessage>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.AttachmentUrl)
+                      .HasMaxLength(500);
+
+                entity.HasOne(e => e.ChatSession)
+                      .WithMany(s => s.Messages)
+                      .HasForeignKey(e => e.ChatSessionId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Sender)
+                      .WithMany()
+                      .HasForeignKey(e => e.SenderId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // Index tối ưu truy vấn lịch sử tin nhắn theo thứ tự thời gian
+                entity.HasIndex(e => new { e.ChatSessionId, e.CreatedAt });
+            });
+
+            // 19. Cấu hình ChatSessionEvent
+            modelBuilder.Entity<ChatSessionEvent>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Note)
+                      .HasMaxLength(500);
+
+                entity.HasOne(e => e.ChatSession)
+                      .WithMany(s => s.Events)
+                      .HasForeignKey(e => e.ChatSessionId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Actor)
+                      .WithMany()
+                      .HasForeignKey(e => e.ActorId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.PreviousStaff)
+                      .WithMany()
+                      .HasForeignKey(e => e.PreviousStaffId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.NextStaff)
+                      .WithMany()
+                      .HasForeignKey(e => e.NextStaffId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // Index tối ưu truy vấn sự kiện của phiên theo thứ tự thời gian
+                entity.HasIndex(e => new { e.ChatSessionId, e.CreatedAt });
+            });
         }
 
         // Tự động ghi vết Audit Trail (CreatedAt, UpdatedAt) khi gọi SaveChangesAsync

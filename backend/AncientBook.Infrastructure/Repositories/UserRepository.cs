@@ -116,5 +116,10 @@ namespace AncientBook.Infrastructure.Repositories
         {
             return await _context.Users.AnyAsync(u => u.PhoneNumber == phone);
         }
+
+        public async Task<List<User>> GetAllAsync()
+        {
+            return await _context.Users.AsNoTracking().ToListAsync();
+        }
     }
 }

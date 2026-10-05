@@ -23,6 +23,10 @@ namespace AncientBook.Application.Services
         // Tra cứu, lọc nâng cao và phân trang danh sách sách
         public async Task<PagedResult<BookListDto>> GetFilteredBooksAsync(BookFilterRequestDto filter)
         {
+            if (filter.PageNumber < 1) filter.PageNumber = 1;
+            if (filter.PageSize < 1) filter.PageSize = 12;
+            if (filter.PageSize > 100) filter.PageSize = 100;
+
             var query = _bookRepository.GetBookListQuery();
 
             // Lọc theo từ khóa (Tên sách, Tác giả, ISBN)
@@ -49,6 +53,8 @@ namespace AncientBook.Application.Services
             // Lọc theo khoảng giá vật lý
             if (filter.MinPrice.HasValue) query = query.Where(b => b.PhysicalPrice >= filter.MinPrice.Value);
             if (filter.MaxPrice.HasValue) query = query.Where(b => b.PhysicalPrice <= filter.MaxPrice.Value);
+            if (filter.PublicationYear.HasValue) query = query.Where(b => b.PublicationYear == filter.PublicationYear.Value);
+            if (filter.MinRating.HasValue) query = query.Where(b => b.Rating >= filter.MinRating.Value);
 
             // Lọc theo trạng thái kinh doanh
             if (!string.IsNullOrWhiteSpace(filter.Status))
@@ -135,7 +141,6 @@ namespace AncientBook.Application.Services
                 Weight = b.Weight,
                 PublicationYear = b.PublicationYear,
                 Description = b.Description,
-                EBookFilePath = b.EBookFilePath,
                 GalleryImages = b.BookImages.Select(bi => bi.ImageUrl).ToList()
             };
         }
@@ -146,7 +151,8 @@ namespace AncientBook.Application.Services
             if (await _bookRepository.IsIsbnExistsAsync(dto.Isbn.Trim()))
                 throw new Exception("Mã ISBN này đã tồn tại trên hệ thống!");
 
-            Enum.TryParse<BookStatus>(dto.Status, true, out var statusEnum);
+            if (!Enum.TryParse<BookStatus>(dto.Status, true, out var statusEnum))
+                throw new Exception("Trạng thái kinh doanh không hợp lệ!");
 
             var book = new Book
             {
@@ -170,7 +176,6 @@ namespace AncientBook.Application.Services
                 Weight = dto.Weight,
                 PublicationYear = dto.PublicationYear,
                 Description = dto.Description,
-                EBookFilePath = dto.EBookFilePath,
                 CreatedBy = currentUserId.ToString()
             };
 
@@ -205,7 +210,8 @@ namespace AncientBook.Application.Services
 
             if (book == null) return null;
 
-            Enum.TryParse<BookStatus>(dto.Status, true, out var statusEnum);
+            if (!Enum.TryParse<BookStatus>(dto.Status, true, out var statusEnum))
+                throw new Exception("Trạng thái kinh doanh không hợp lệ!");
 
             book.Title = dto.Title.Trim();
             book.Author = dto.Author.Trim();
@@ -224,7 +230,6 @@ namespace AncientBook.Application.Services
             book.Weight = dto.Weight;
             book.PublicationYear = dto.PublicationYear;
             book.Description = dto.Description;
-            book.EBookFilePath = dto.EBookFilePath;
             book.UpdatedAt = TimeZoneHelper.GetVietnamTime();
             book.UpdatedBy = currentUserId.ToString();
 

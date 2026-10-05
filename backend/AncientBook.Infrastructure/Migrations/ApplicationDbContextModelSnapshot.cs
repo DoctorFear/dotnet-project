@@ -136,9 +136,6 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("EBookFilePath")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<decimal>("EBookPrice")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("decimal(18,2)")
@@ -232,30 +229,6 @@ namespace AncientBook.Infrastructure.Migrations
                     b.HasIndex("PublisherId");
 
                     b.ToTable("Books", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Author = "Tác Giả Cổ",
-                            CoverImg = "https://salt.tikicdn.com/ts/product/45/3e/2e/9f992ab2a5436d4f937d9fae16d47b53.jpg",
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            EBookPrice = 50000m,
-                            IsEBookAvailable = true,
-                            IsPhysicalAvailable = true,
-                            IsRentalAvailable = true,
-                            Isbn = "978-604-0-00000-1",
-                            MonthlyRentalPrice = 0m,
-                            PhysicalPrice = 100000m,
-                            Rating = 0.0,
-                            ReviewsCount = 0,
-                            Status = "Selling",
-                            StockCount = 0,
-                            StockStatus = "InStock",
-                            Title = "Sách Cổ Mẫu",
-                            WeeklyRentalPrice = 10000m,
-                            YearlyRentalPrice = 0m
-                        });
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.BookCategory", b =>
@@ -271,6 +244,50 @@ namespace AncientBook.Infrastructure.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("BookCategories", (string)null);
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.BookEmbedding", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ChunkContent")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ChunkIndex")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("EditionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EmbeddingJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("PageNumber")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EditionId");
+
+                    b.ToTable("BookEmbeddings");
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.BookImage", b =>
@@ -353,6 +370,259 @@ namespace AncientBook.Infrastructure.Migrations
                     b.ToTable("Categories", (string)null);
                 });
 
+            modelBuilder.Entity("AncientBook.Domain.Entities.ChatMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AttachmentUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("ChatSessionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Content")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsReadByCustomer")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsReadByStaff")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("SenderId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SenderRole")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SenderId");
+
+                    b.HasIndex("ChatSessionId", "CreatedAt");
+
+                    b.ToTable("ChatMessages");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.ChatSession", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("InternalNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int?>("StaffId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("StaffId");
+
+                    b.HasIndex("Status", "StaffId");
+
+                    b.ToTable("ChatSessions");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.ChatSessionEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ActorId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ChatSessionId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("EventType")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("NextStaffId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("PreviousStaffId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("NextStaffId");
+
+                    b.HasIndex("PreviousStaffId");
+
+                    b.HasIndex("ChatSessionId", "CreatedAt");
+
+                    b.ToTable("ChatSessionEvents");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.CopilotChatHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Answer")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CurrentPage")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EditionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Question")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SelectedText")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EditionId");
+
+                    b.ToTable("CopilotChatHistories");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.EbookEdition", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DropboxPath")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("FileSizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("FileTitle")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Format")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PresetType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalPages")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookId");
+
+                    b.ToTable("EbookEditions");
+                });
+
             modelBuilder.Entity("AncientBook.Domain.Entities.Inventory", b =>
                 {
                     b.Property<int>("Id")
@@ -397,17 +667,6 @@ namespace AncientBook.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Inventories", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            BookId = 1,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            LastUpdated = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            QuantityOnHand = 50,
-                            ReorderLevel = 5
-                        });
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.Order", b =>
@@ -449,6 +708,9 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Property<int?>("PromotionId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("ShipperId")
+                        .HasColumnType("int");
+
                     b.Property<string>("ShippingAddress")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -471,6 +733,8 @@ namespace AncientBook.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ShipperId");
 
                     b.HasIndex("UserId");
 
@@ -560,6 +824,15 @@ namespace AncientBook.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CancelReason")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -575,9 +848,6 @@ namespace AncientBook.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("OrderDate")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -651,6 +921,54 @@ namespace AncientBook.Infrastructure.Migrations
                     b.HasIndex("PurchaseOrderId");
 
                     b.ToTable("PurchaseOrderItems", (string)null);
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.Shipper", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Area")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("MaxConcurrentOrders")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Shippers", (string)null);
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.StockAlert", b =>
@@ -785,6 +1103,14 @@ namespace AncientBook.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TaxCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -871,6 +1197,11 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsSuperAdmin")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
 
@@ -894,6 +1225,9 @@ namespace AncientBook.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("TokenVersion")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -968,6 +1302,17 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("AncientBook.Domain.Entities.BookEmbedding", b =>
+                {
+                    b.HasOne("AncientBook.Domain.Entities.EbookEdition", "Edition")
+                        .WithMany("Embeddings")
+                        .HasForeignKey("EditionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Edition");
+                });
+
             modelBuilder.Entity("AncientBook.Domain.Entities.BookImage", b =>
                 {
                     b.HasOne("AncientBook.Domain.Entities.Book", "Book")
@@ -987,6 +1332,98 @@ namespace AncientBook.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
+            modelBuilder.Entity("AncientBook.Domain.Entities.ChatMessage", b =>
+                {
+                    b.HasOne("AncientBook.Domain.Entities.ChatSession", "ChatSession")
+                        .WithMany("Messages")
+                        .HasForeignKey("ChatSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AncientBook.Domain.Entities.User", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ChatSession");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.ChatSession", b =>
+                {
+                    b.HasOne("AncientBook.Domain.Entities.User", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AncientBook.Domain.Entities.User", "Staff")
+                        .WithMany()
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Staff");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.ChatSessionEvent", b =>
+                {
+                    b.HasOne("AncientBook.Domain.Entities.User", "Actor")
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AncientBook.Domain.Entities.ChatSession", "ChatSession")
+                        .WithMany("Events")
+                        .HasForeignKey("ChatSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AncientBook.Domain.Entities.User", "NextStaff")
+                        .WithMany()
+                        .HasForeignKey("NextStaffId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("AncientBook.Domain.Entities.User", "PreviousStaff")
+                        .WithMany()
+                        .HasForeignKey("PreviousStaffId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Actor");
+
+                    b.Navigation("ChatSession");
+
+                    b.Navigation("NextStaff");
+
+                    b.Navigation("PreviousStaff");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.CopilotChatHistory", b =>
+                {
+                    b.HasOne("AncientBook.Domain.Entities.EbookEdition", "Edition")
+                        .WithMany()
+                        .HasForeignKey("EditionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Edition");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.EbookEdition", b =>
+                {
+                    b.HasOne("AncientBook.Domain.Entities.Book", "Book")
+                        .WithMany("EbookEditions")
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Book");
+                });
+
             modelBuilder.Entity("AncientBook.Domain.Entities.Inventory", b =>
                 {
                     b.HasOne("AncientBook.Domain.Entities.Book", "Book")
@@ -1000,11 +1437,18 @@ namespace AncientBook.Infrastructure.Migrations
 
             modelBuilder.Entity("AncientBook.Domain.Entities.Order", b =>
                 {
+                    b.HasOne("AncientBook.Domain.Entities.Shipper", "Shipper")
+                        .WithMany("Orders")
+                        .HasForeignKey("ShipperId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("AncientBook.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Shipper");
 
                     b.Navigation("User");
                 });
@@ -1041,7 +1485,7 @@ namespace AncientBook.Infrastructure.Migrations
 
             modelBuilder.Entity("AncientBook.Domain.Entities.PurchaseOrderItem", b =>
                 {
-                    b.HasOne("AncientBook.Domain.Entities.Book", null)
+                    b.HasOne("AncientBook.Domain.Entities.Book", "Book")
                         .WithMany()
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1052,6 +1496,8 @@ namespace AncientBook.Infrastructure.Migrations
                         .HasForeignKey("PurchaseOrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Book");
 
                     b.Navigation("PurchaseOrder");
                 });
@@ -1080,6 +1526,8 @@ namespace AncientBook.Infrastructure.Migrations
 
                     b.Navigation("BookImages");
 
+                    b.Navigation("EbookEditions");
+
                     b.Navigation("Inventory");
 
                     b.Navigation("OrderItems");
@@ -1090,6 +1538,18 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Navigation("BookCategories");
                 });
 
+            modelBuilder.Entity("AncientBook.Domain.Entities.ChatSession", b =>
+                {
+                    b.Navigation("Events");
+
+                    b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.EbookEdition", b =>
+                {
+                    b.Navigation("Embeddings");
+                });
+
             modelBuilder.Entity("AncientBook.Domain.Entities.Order", b =>
                 {
                     b.Navigation("OrderItems");
@@ -1098,6 +1558,11 @@ namespace AncientBook.Infrastructure.Migrations
             modelBuilder.Entity("AncientBook.Domain.Entities.PurchaseOrder", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.Shipper", b =>
+                {
+                    b.Navigation("Orders");
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.Supplier", b =>

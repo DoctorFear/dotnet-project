@@ -520,4 +520,6 @@ lerna-debug.log*
 *.tsbuildinfo
 .eslintcache
 
-Migrations/
+# App settings with secrets
+**/appsettings.json
+**/appsettings.Development.json

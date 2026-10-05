@@ -8,6 +8,7 @@ namespace AncientBook.Application.Interfaces
     public interface IBookRepository
     {
         Task<Book?> GetByIdAsync(int id);
+        Task<List<Book>> GetAllAsync();
         IQueryable<Book> GetBookListQuery();
         Task<Book?> GetDetailByIdAsync(int id);
         Task<Book?> GetForUpdateAsync(int id);

@@ -82,7 +82,10 @@ namespace AncientBook.Infrastructure.Repositories
         {
             _context.BookImages.RemoveRange(bookImages);
         }
-
+        public async Task<List<Book>> GetAllAsync()
+        {
+            return await _context.Books.AsNoTracking().ToListAsync();
+        }
         public Task SaveChangesAsync()
         {
             return _context.SaveChangesAsync();

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AncientBook.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260927063748_InitialCleanSchema")]
-    partial class InitialCleanSchema
+    [Migration("20260930082553_AddTokenVersionToUsers")]
+    partial class AddTokenVersionToUsers
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -80,6 +80,19 @@ namespace AncientBook.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("IpAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Module")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NewValues")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OldValues")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("RecordId")
                         .HasColumnType("nvarchar(max)");
 
@@ -93,6 +106,8 @@ namespace AncientBook.Infrastructure.Migrations
 
                     b.HasIndex("Timestamp")
                         .HasDatabaseName("IX_AuditLogs_Timestamp");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("AuditLogs", (string)null);
                 });
@@ -860,7 +875,6 @@ namespace AncientBook.Infrastructure.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("PasswordHash")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PasswordResetToken")
@@ -883,6 +897,9 @@ namespace AncientBook.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("TokenVersion")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -915,6 +932,15 @@ namespace AncientBook.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.AuditLog", b =>
+                {
+                    b.HasOne("AncientBook.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });
