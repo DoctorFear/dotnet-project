@@ -2,17 +2,7 @@
 
 namespace AncientBook.Application.Common.Models.Responses
 {
-    public class UploadEditionResponse
-    {
-        public int EditionId { get; set; }
-        public int BookId { get; set; }
-        public string FileTitle { get; set; } = string.Empty;
-        public string Format { get; set; } = string.Empty;
-        public int TotalPages { get; set; }
-        public long FileSizeBytes { get; set; }
-        public string Status { get; set; } = string.Empty;
-        public int SuggestedPresetId { get; set; }
-    }
+
 
     public class PublishEditionRequest
     {

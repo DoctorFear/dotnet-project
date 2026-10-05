@@ -4,6 +4,7 @@ using AncientBook.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AncientBook.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261005023711_UpdateEbookEditionToPresetEnum")]
+    partial class UpdateEbookEditionToPresetEnum
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -229,6 +232,30 @@ namespace AncientBook.Infrastructure.Migrations
                     b.HasIndex("PublisherId");
 
                     b.ToTable("Books", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Author = "Tác Giả Cổ",
+                            CoverImg = "https://salt.tikicdn.com/ts/product/45/3e/2e/9f992ab2a5436d4f937d9fae16d47b53.jpg",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            EBookPrice = 50000m,
+                            IsEBookAvailable = true,
+                            IsPhysicalAvailable = true,
+                            IsRentalAvailable = true,
+                            Isbn = "978-604-0-00000-1",
+                            MonthlyRentalPrice = 0m,
+                            PhysicalPrice = 100000m,
+                            Rating = 0.0,
+                            ReviewsCount = 0,
+                            Status = "Selling",
+                            StockCount = 0,
+                            StockStatus = "InStock",
+                            Title = "Sách Cổ Mẫu",
+                            WeeklyRentalPrice = 10000m,
+                            YearlyRentalPrice = 0m
+                        });
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.BookCategory", b =>
@@ -629,6 +656,17 @@ namespace AncientBook.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Inventories", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            BookId = 1,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            LastUpdated = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            QuantityOnHand = 50,
+                            ReorderLevel = 5
+                        });
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.Order", b =>

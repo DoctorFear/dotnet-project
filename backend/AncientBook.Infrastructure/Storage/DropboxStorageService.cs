@@ -197,24 +197,88 @@ namespace AncientBook.Infrastructure.Storage
                 throw new ArgumentException("Đường dẫn tệp Dropbox không được để trống.", nameof(dropboxPath));
             }
 
+            // 1. Chuẩn hóa đường dẫn: đổi '\' thành '/' và đảm bảo có '/' ở đầu
+            string normalizedPath = dropboxPath.Replace("\\", "/").Trim();
+            if (!normalizedPath.StartsWith("/"))
+            {
+                normalizedPath = "/" + normalizedPath;
+            }
+
+            // 2. Nếu path lưu trong DB là đường dẫn tương đối (chưa có _baseFolder), tự bù vào
+            string cleanBase = string.IsNullOrWhiteSpace(_baseFolder) ? "" : "/" + _baseFolder.Trim('/');
+            if (!string.IsNullOrEmpty(cleanBase) && !normalizedPath.StartsWith(cleanBase + "/"))
+            {
+                normalizedPath = $"{cleanBase}{normalizedPath}".Replace("//", "/");
+            }
+
             string accessToken = await GetAccessTokenAsync();
             using var client = new DropboxClient(accessToken);
 
-            var response = await client.Files.DownloadAsync(dropboxPath);
-            var memoryStream = new MemoryStream();
-
-            using (var responseStream = await response.GetContentAsStreamAsync())
+            try
             {
-                await responseStream.CopyToAsync(memoryStream, ct);
-            }
+                var response = await client.Files.DownloadAsync(normalizedPath);
+                var memoryStream = new MemoryStream();
 
-            memoryStream.Position = 0;
-            return memoryStream;
+                using (var responseStream = await response.GetContentAsStreamAsync())
+                {
+                    await responseStream.CopyToAsync(memoryStream, ct);
+                }
+
+                memoryStream.Position = 0;
+                return memoryStream;
+            }
+            catch (Dropbox.Api.ApiException<Dropbox.Api.Files.DownloadError> ex)
+            {
+                throw new InvalidOperationException(
+                    $"Không tìm thấy tệp trên Dropbox tại đường dẫn: '{normalizedPath}'. " +
+                    $"Đường dẫn gốc truyền vào: '{dropboxPath}'. Chi tiết lỗi: {ex.Message}", ex);
+            }
         }
 
-        public async Task DeleteFileAsync(string fileUrl)
+        public async Task DeleteFileAsync(string fileUrlOrPath)
         {
-            await Task.CompletedTask;
+            if (string.IsNullOrWhiteSpace(fileUrlOrPath)) return;
+
+            try
+            {
+                // 1. Chuẩn hóa đường dẫn: đổi '\' thành '/'
+                string normalizedPath = fileUrlOrPath.Replace("\\", "/").Trim();
+
+                // 2. Nếu là URL direct link (chia sẻ), bóc tách lấy đường dẫn tương đối
+                if (normalizedPath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                    normalizedPath.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                {
+                    var uri = new Uri(normalizedPath);
+                    normalizedPath = Uri.UnescapeDataString(uri.AbsolutePath);
+                }
+
+                if (!normalizedPath.StartsWith("/"))
+                {
+                    normalizedPath = "/" + normalizedPath;
+                }
+
+                // Đảm bảo có tiền tố _baseFolder (nếu có)
+                string cleanBase = string.IsNullOrWhiteSpace(_baseFolder) ? "" : "/" + _baseFolder.Trim('/');
+                if (!string.IsNullOrEmpty(cleanBase) && !normalizedPath.StartsWith(cleanBase + "/"))
+                {
+                    normalizedPath = $"{cleanBase}{normalizedPath}".Replace("//", "/");
+                }
+
+                string accessToken = await GetAccessTokenAsync();
+                using var client = new DropboxClient(accessToken);
+
+                // Gọi Dropbox API xóa vĩnh viễn tệp
+                await client.Files.DeleteV2Async(normalizedPath);
+            }
+            catch (Dropbox.Api.ApiException<Dropbox.Api.Files.DeleteError> ex)
+            {
+                // Nếu file không còn trên Dropbox (đã bị xóa từ trước), bỏ qua không làm crash ứng dụng
+                Console.WriteLine($"[Dropbox Cleanup Warning]: Không tìm thấy file cần xóa tại {fileUrlOrPath}: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Dropbox Cleanup Error]: {ex.Message}");
+            }
         }
 
         private static async Task<string> GetDirectSharedLinkAsync(DropboxClient client, string path)

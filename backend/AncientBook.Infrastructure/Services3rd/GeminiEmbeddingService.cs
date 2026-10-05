@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Net.Http;
-using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,32 +14,54 @@ namespace AncientBook.Infrastructure.Services
         private readonly HttpClient _httpClient;
         private readonly string _apiKey;
 
-        public GeminiEmbeddingService(HttpClient httpClient, IConfiguration config)
+        public GeminiEmbeddingService(HttpClient httpClient, IConfiguration configuration)
         {
             _httpClient = httpClient;
-            _apiKey = config["Gemini:ApiKey"]
-                ?? throw new ArgumentNullException("Thiếu cấu hình Gemini:ApiKey trong appsettings.json");
+            _apiKey = configuration["Gemini:ApiKey"] ?? string.Empty;
         }
 
         public async Task<float[]> GetEmbeddingAsync(string text, CancellationToken ct = default)
         {
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key={_apiKey}";
+            // Sử dụng model chính thức: gemini-embedding-001
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key={_apiKey}";
 
-            var payload = new
+            var requestBody = new
             {
-                model = "models/text-embedding-004",
-                content = new { parts = new[] { new { text } } }
+                content = new
+                {
+                    parts = new[]
+                    {
+                        new { text = text }
+                    }
+                },
+                // Chỉ định chiều vector trả về 768 (hoặc 1536 / 3072 tùy thiết kế của bạn)
+                outputDimensionality = 768
             };
 
-            var response = await _httpClient.PostAsJsonAsync(url, payload, ct);
-            response.EnsureSuccessStatusCode();
+            var jsonContent = new StringContent(
+                JsonSerializer.Serialize(requestBody),
+                Encoding.UTF8,
+                "application/json"
+            );
 
-            using var doc = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(ct), cancellationToken: ct);
-            var values = doc.RootElement
+            var response = await _httpClient.PostAsync(url, jsonContent, ct);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorDetail = await response.Content.ReadAsStringAsync(ct);
+                throw new HttpRequestException($"Google API error ({response.StatusCode}): {errorDetail}");
+            }
+
+            var responseString = await response.Content.ReadAsStringAsync(ct);
+            using var doc = JsonDocument.Parse(responseString);
+
+            // Trích xuất mảng vector float từ response: { "embedding": { "values": [...] } }
+            var valuesElement = doc.RootElement
                 .GetProperty("embedding")
                 .GetProperty("values");
 
-            return JsonSerializer.Deserialize<float[]>(values.GetRawText()) ?? Array.Empty<float>();
+            var vector = JsonSerializer.Deserialize<float[]>(valuesElement.GetRawText());
+            return vector ?? Array.Empty<float>();
         }
     }
 }

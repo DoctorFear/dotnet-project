@@ -27,7 +27,7 @@ namespace AncientBook.Domain.Entities
         public int TotalPages { get; set; }
 
         // ID nhóm cấu hình trải nghiệm đọc (Preset 1, 2 hoặc 3)
-        public int PresetId { get; set; }
+        public EbookPresetType PresetType { get; set; }
 
         // Trạng thái xuất bản (Draft = 0, Processing = 1, Published = 2, Failed = 3)
         public EditionPublishStatus Status { get; set; } = EditionPublishStatus.Draft;
@@ -40,8 +40,6 @@ namespace AncientBook.Domain.Entities
         // Đầu sách sở hữu ấn bản này
         public Book? Book { get; set; }
 
-        // Cấu hình Preset đang được áp dụng
-        public EbookPreset? Preset { get; set; }
 
         // Tập hợp các khối văn bản đã được vector hóa phục vụ RAG (dành cho Preset 1 & 2)
         public ICollection<BookEmbedding> Embeddings { get; set; } = new List<BookEmbedding>();

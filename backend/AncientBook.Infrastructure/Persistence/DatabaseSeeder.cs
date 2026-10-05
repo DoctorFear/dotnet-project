@@ -6,20 +6,156 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-
 namespace AncientBook.Infrastructure.Persistence
 {
     public static class DatabaseSeeder
     {
         public static async Task SeedAsync(ApplicationDbContext context, IPasswordHasher passwordHasher)
         {
-            // Kiểm tra nếu đã có dữ liệu trong bảng Users thì không chạy seed nữa
+            // ==================== 1. SEED 10 CUỐN SÁCH MẪU ====================
+            if (!await context.Books.AnyAsync())
+            {
+                var sampleBooks = new List<Book>
+                {
+                    new Book
+                    {
+                        Isbn = "978-604-0-00001-0",
+                        Title = "Đại Việt Sử Ký Toàn Thư",
+                        Author = "Ngô Sĩ Liên",
+                        PhysicalPrice = 120000,
+                        EBookPrice = 60000,
+                        IsPhysicalAvailable = true,
+                        IsEBookAvailable = false,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new Book
+                    {
+                        Isbn = "978-604-0-00002-7",
+                        Title = "Lĩnh Nam Chích Quái",
+                        Author = "Trần Thế Pháp",
+                        PhysicalPrice = 85000,
+                        EBookPrice = 45000,
+                        IsPhysicalAvailable = true,
+                        IsEBookAvailable = false,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new Book
+                    {
+                        Isbn = "978-604-0-00003-4",
+                        Title = "Truyền Kỳ Mạn Lục",
+                        Author = "Nguyễn Dữ",
+                        PhysicalPrice = 95000,
+                        EBookPrice = 50000,
+                        IsPhysicalAvailable = true,
+                        IsEBookAvailable = false,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new Book
+                    {
+                        Isbn = "978-604-0-00004-1",
+                        Title = "Việt Nam Sử Lược",
+                        Author = "Trần Trọng Kim",
+                        PhysicalPrice = 150000,
+                        EBookPrice = 70000,
+                        IsPhysicalAvailable = true,
+                        IsEBookAvailable = false,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new Book
+                    {
+                        Isbn = "978-604-0-00005-8",
+                        Title = "Nam Triều Công Nghiệp Diễn Chí",
+                        Author = "Nguyễn Khoa Chiêm",
+                        PhysicalPrice = 110000,
+                        EBookPrice = 55000,
+                        IsPhysicalAvailable = true,
+                        IsEBookAvailable = false,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new Book
+                    {
+                        Isbn = "978-604-0-00006-5",
+                        Title = "Hoàng Lê Nhất Thống Chí",
+                        Author = "Ngô Gia Văn Phái",
+                        PhysicalPrice = 135000,
+                        EBookPrice = 65000,
+                        IsPhysicalAvailable = true,
+                        IsEBookAvailable = false,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new Book
+                    {
+                        Isbn = "978-604-0-00007-2",
+                        Title = "Khâm Định Việt Sử Thông Giám Cương Mục",
+                        Author = "Quốc Sử Quán Triều Nguyễn",
+                        PhysicalPrice = 250000,
+                        EBookPrice = 120000,
+                        IsPhysicalAvailable = true,
+                        IsEBookAvailable = false,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new Book
+                    {
+                        Isbn = "978-604-0-00008-9",
+                        Title = "Gia Định Thành Thông Chí",
+                        Author = "Trịnh Hoài Đức",
+                        PhysicalPrice = 140000,
+                        EBookPrice = 70000,
+                        IsPhysicalAvailable = true,
+                        IsEBookAvailable = false,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new Book
+                    {
+                        Isbn = "978-604-0-00009-6",
+                        Title = "Bình Ngô Đại Cáo & Thơ Văn Nguyễn Trãi",
+                        Author = "Nguyễn Trãi",
+                        PhysicalPrice = 100000,
+                        EBookPrice = 50000,
+                        IsPhysicalAvailable = true,
+                        IsEBookAvailable = false,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new Book
+                    {
+                        Isbn = "978-604-0-00010-2",
+                        Title = "Hải Thượng Y Tông Tâm Lĩnh",
+                        Author = "Lê Hữu Trác",
+                        PhysicalPrice = 300000,
+                        EBookPrice = 150000,
+                        IsPhysicalAvailable = true,
+                        IsEBookAvailable = false,
+                        CreatedAt = DateTime.UtcNow
+                    }
+                };
+
+                await context.Books.AddRangeAsync(sampleBooks);
+                await context.SaveChangesAsync();
+
+                // Sau khi lưu, sampleBooks đã có Id thật do DB sinh (1 -> 10)
+                var inventories = new List<Inventory>();
+                foreach (var book in sampleBooks)
+                {
+                    inventories.Add(new Inventory
+                    {
+                        BookId = book.Id,
+                        QuantityOnHand = 50,
+                        ReorderLevel = 5,
+                        CreatedAt = DateTime.UtcNow,
+                        LastUpdated = DateTime.UtcNow
+                    });
+                }
+
+                await context.Inventories.AddRangeAsync(inventories);
+                await context.SaveChangesAsync();
+            }
+
+            // ==================== 2. SEED TÀI KHOẢN USERS ====================
             if (await context.Users.AnyAsync())
             {
                 return;
             }
 
-            // Mật khẩu mặc định cho toàn bộ tài khoản seed là: Password@123
             string defaultHash = passwordHasher.HashPassword("Password@123");
 
             var users = new List<User>
@@ -33,7 +169,7 @@ namespace AncientBook.Infrastructure.Persistence
                     PhoneNumber = "0901000001",
                     PasswordHash = defaultHash,
                     Role = UserRole.Admin,
-                    IsSuperAdmin = true, // Tài khoản nắm cờ Super Admin
+                    IsSuperAdmin = true,
                     IsActive = true,
                     TokenVersion = 1,
                     FPoints = 0
@@ -86,7 +222,7 @@ namespace AncientBook.Infrastructure.Persistence
                     PasswordHash = defaultHash,
                     Role = UserRole.Admin,
                     IsSuperAdmin = false,
-                    IsActive = false, // 1 Admin ở trạng thái khóa để test toggle status
+                    IsActive = false,
                     TokenVersion = 1,
                     FPoints = 0
                 },

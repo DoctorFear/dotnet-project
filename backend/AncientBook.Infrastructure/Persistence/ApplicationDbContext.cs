@@ -20,7 +20,6 @@ namespace AncientBook.Infrastructure.Persistence
         public DbSet<ChatSessionEvent> ChatSessionEvents => Set<ChatSessionEvent>();
 
         public DbSet<EbookEdition> EbookEditions => Set<EbookEdition>();
-        public DbSet<EbookPreset> EbookPresets => Set<EbookPreset>();
         public DbSet<BookEmbedding> BookEmbeddings => Set<BookEmbedding>();
 
         public DbSet<Order> Orders => Set<Order>();
@@ -389,40 +388,6 @@ namespace AncientBook.Infrastructure.Persistence
                 // Index tối ưu truy vấn sự kiện của phiên theo thứ tự thời gian
                 entity.HasIndex(e => new { e.ChatSessionId, e.CreatedAt });
             });
-
-            // Data để test checkout xóa nếu muốn
-            modelBuilder.Entity<Book>().HasData(
-                new Book 
-                { 
-                    Id = 1, 
-                    Isbn = "978-604-0-00000-1", 
-                    Title = "Sách Cổ Mẫu", 
-                    Author = "Tác Giả Cổ", 
-                    PhysicalPrice = 100000,
-                    EBookPrice = 50000,
-                    WeeklyRentalPrice = 10000,
-                    IsPhysicalAvailable = true,
-                    IsEBookAvailable = true,
-                    IsRentalAvailable = true,
-                    CoverImg = "https://salt.tikicdn.com/ts/product/45/3e/2e/9f992ab2a5436d4f937d9fae16d47b53.jpg",
-                    CreatedAt = new DateTime(2026, 1, 1)
-                }
-            );
-
-            modelBuilder.Entity<Inventory>().HasData(
-                new Inventory
-                {
-                    Id = 1,
-                    BookId = 1,
-                    QuantityOnHand = 50,
-                    ReorderLevel = 5,
-                    CreatedAt = new DateTime(2026, 1, 1),
-                    LastUpdated = new DateTime(2026, 1, 1)
-                }
-            );
-
-
-
         }
 
         // Tự động ghi vết Audit Trail (CreatedAt, UpdatedAt) khi gọi SaveChangesAsync

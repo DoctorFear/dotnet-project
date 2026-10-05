@@ -9,6 +9,7 @@ using AncientBook.Infrastructure.Persistence;
 using AncientBook.Infrastructure.Persistence.Repositories;
 using AncientBook.Infrastructure.Repositories;
 using AncientBook.Infrastructure.Services;
+
 using AncientBook.Infrastructure.Storage;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -48,6 +49,20 @@ builder.Services.AddScoped<IChatRepository, ChatRepository>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IEbookEditionRepository, EbookEditionRepository>();
 builder.Services.AddScoped<IBookEmbeddingRepository, BookEmbeddingRepository>();
+// 1. Repositories
+builder.Services.AddScoped<IEbookEditionRepository, EbookEditionRepository>();
+builder.Services.AddScoped<IBookEmbeddingRepository, BookEmbeddingRepository>();
+
+// 2. Document & Storage
+builder.Services.AddScoped<IDocumentExtractor, DocumentExtractorService>(); 
+builder.Services.AddScoped<IFileStorageService, DropboxStorageService>();
+
+// 3. Publishing & RAG Pipeline
+builder.Services.AddScoped<ITextChunker, TextChunker>();
+builder.Services.AddScoped<IGeminiEmbeddingService, GeminiEmbeddingService>();
+builder.Services.AddScoped<IEbookPublishService, EbookPublishService>();
+builder.Services.AddScoped<IRagSearchService, RagSearchService>();
+
 
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IPhysicalOrderService, PhysicalOrderService>();
