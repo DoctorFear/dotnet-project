@@ -19,14 +19,17 @@ namespace AncientBook.Application.Interfaces
 {
     public interface IApplicationDbContext
     {
+        DatabaseFacade Database { get; }
         DbSet<User> Users { get; }
         DbSet<AuditLog> AuditLogs { get; }
         DbSet<Order> Orders { get; }
         DbSet<OrderItem> OrderItems { get; }
-        DatabaseFacade Database { get; }
-        public DbSet<Book> Books { get; }
-        public DbSet<Inventory> Inventories { get; }
-        public DbSet<BookCategory> BookCategories { get; }
+        DbSet<Book> Books { get; }
+        DbSet<Inventory> Inventories { get; }
+        DbSet<BookCategory> BookCategories { get; }
+        DbSet<FPoints> FPoints { get; }
+        DbSet<Cart> Carts { get; }
+        DbSet<CartItem> CartItems { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }

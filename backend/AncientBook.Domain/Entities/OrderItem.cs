@@ -1,3 +1,5 @@
+using AncientBook.Domain.Enums;
+
 namespace AncientBook.Domain.Entities
 {
     public class OrderItem
@@ -8,6 +10,10 @@ namespace AncientBook.Domain.Entities
         public Book? Book { get; set; }
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
+        public PurchaseType PurchaseType { get; set; } = PurchaseType.Physical;
+        public RentalDurationType? RentalDuration { get; set; } // Weekly, Monthly, Yearly
+        public DateTime? RentalStartDate { get; set; }
+        public DateTime? RentalEndDate { get; set; }
 
         // Navigation properties
         public Order? Order { get; set; }

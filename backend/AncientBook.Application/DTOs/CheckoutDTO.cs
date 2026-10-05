@@ -7,12 +7,14 @@ namespace AncientBook.Application.DTOs
     {
         public int BookId { get; set; }
         public int Quantity { get; set; }
+        public PurchaseType PurchaseType { get; set; }
+        public RentalDurationType? RentalDuration { get; set; }
     }
 
     public class CreateCheckoutRequest
     {
         public int UserId { get; set; }
-        public int? PromotionId { get; set; }
+        public int? PointsUsed { get; set; } = null;
         public string ShippingAddress { get; set; } = string.Empty;
         public List<CheckoutItemDto> Items { get; set; } = new();
     }

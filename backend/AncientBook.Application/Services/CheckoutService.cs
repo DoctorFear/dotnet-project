@@ -20,15 +20,17 @@ namespace AncientBook.Application.Services
         private readonly IBookRepository _bookRepository;
         private readonly IInventoryRepository _inventoryRepository;
         private readonly IOrderRepository _orderRepository;
+        private readonly IFPointRepository _fpointRepository;
         private readonly IHmacSha256Hasher _hasher;
         private readonly HttpClient _httpClient;
         private readonly ILogger<CheckoutService> _logger;
 
-        public CheckoutService(IBookRepository bookRepository, IInventoryRepository inventoryRepository, IOrderRepository orderRepository, IHmacSha256Hasher hasher, HttpClient httpClient, ILogger<CheckoutService> logger)
+        public CheckoutService(IBookRepository bookRepository, IInventoryRepository inventoryRepository, IOrderRepository orderRepository, IFPointRepository fpointRepository, IUserRepository userRepository, IHmacSha256Hasher hasher, HttpClient httpClient, ILogger<CheckoutService> logger)
         {
             _bookRepository = bookRepository;
             _inventoryRepository = inventoryRepository;
             _orderRepository = orderRepository;
+            _fpointRepository = fpointRepository;
             _httpClient = httpClient;
             _hasher = hasher;
             _logger = logger;
@@ -43,64 +45,87 @@ namespace AncientBook.Application.Services
 
             decimal subTotal = 0;
             var orderItemsToCreate = new List<OrderItem>();
-            var processedInventories = new List<(int bookId, int quantity)>();
+            var processedPhysicalInventories = new List<(int bookId, int quantity)>();
 
             try {
                 foreach (var itemDto in request.Items)
                 {
                     var book = await _bookRepository.GetByIdAsync(itemDto.BookId);
-                    var inventory = await _inventoryRepository.GetByBookIdAsync(itemDto.BookId);
 
-                    if (book == null || inventory == null)
+                    if (book == null)
                     {
                         throw new KeyNotFoundException($"Không tìm thấy sách với ID: {itemDto.BookId}");
                     }
-
-                    if (inventory.QuantityOnHand < itemDto.Quantity)
-                    {
-                        throw new InvalidOperationException($"Sách '{book.Title}' không đủ số lượng trong kho. Chỉ còn lại {inventory.QuantityOnHand} sản phẩm.");
-                    }
                     
-                    // Adjust inventory if quanity is available
-                    bool success = await _inventoryRepository.DecreaseStockAsync(itemDto.BookId, itemDto.Quantity);
-                    if (!success)
+                    decimal unitPrice = 0;
+                    DateTime? rentalStart = null;
+                    DateTime? rentalEnd = null;
+
+                    if (itemDto.PurchaseType == PurchaseType.Physical)
                     {
-                        throw new InvalidOperationException($"Sách ID '{itemDto.BookId}' đã hết hàng hoặc không đủ số lượng.");
+                        if (!book.IsPhysicalAvailable)
+                        {
+                            throw new InvalidOperationException($"Sách '{book.Title}' hiện không hỗ trợ bán bản vật lý.");
+                        }
+
+                        var inventory = await _inventoryRepository.GetByBookIdAsync(itemDto.BookId);
+                        if (inventory == null || inventory.QuantityOnHand < itemDto.Quantity)
+                        {
+                            throw new InvalidOperationException($"Sách '{book.Title}' không đủ số lượng trong kho.");
+                        }
+
+                        bool success = await _inventoryRepository.DecreaseStockAsync(itemDto.BookId, itemDto.Quantity);
+                        if (!success)
+                        {
+                            throw new InvalidOperationException($"Sách ID '{itemDto.BookId}' đã hết hàng.");
+                        }
+
+                        processedPhysicalInventories.Add((itemDto.BookId, itemDto.Quantity));
+                        unitPrice = book.PhysicalPrice;
                     }
-
-                    processedInventories.Add((itemDto.BookId, itemDto.Quantity));
-
-                    decimal unitPrice = book.PhysicalPrice;
-                    decimal itemTotal = unitPrice * itemDto.Quantity;
-                    subTotal += itemTotal;
-
-                    orderItemsToCreate.Add(new OrderItem
+                    else if (itemDto.PurchaseType == PurchaseType.Rental)
                     {
-                        BookId = itemDto.BookId,
-                        Quantity = itemDto.Quantity,
-                        UnitPrice = unitPrice
-                    });
+                        if (!book.IsRentalAvailable)
+                        {
+                            throw new InvalidOperationException($"Sách '{book.Title}' không hỗ trợ cho thuê online.");
+                        }
+
+                        rentalStart = TimeZoneHelper.GetVietnamTime();
+
+                        switch (itemDto.RentalDuration)
+                        {
+                            case RentalDurationType.Weekly:
+                                unitPrice = book.WeeklyRentalPrice;
+                                rentalEnd = rentalStart.Value.AddDays(7);
+                                break;
+                            case RentalDurationType.Monthly:
+                                unitPrice = book.MonthlyRentalPrice;
+                                rentalEnd = rentalStart.Value.AddMonths(1);
+                                break;
+                            case RentalDurationType.Yearly:
+                                unitPrice = book.YearlyRentalPrice;
+                                rentalEnd = rentalStart.Value.AddYears(1);
+                                break;
+                            default:
+                                throw new ArgumentException("Gói thời gian thuê không hợp lệ.");
+                        }
+                    }
                 }
 
-                // Calculate discount logic (Integrate with Promotions table if required)
                 decimal discountAmount = 0;
-                // if (request.PromotionId.HasValue)
-                // {
-                //     var promotion = await _context.Promotions.FindAsync(request.PromotionId.Value);
-                //     if (promotion != null)
-                //     {
-                //         // Example rule: Apply flat or percentage discount based on promotion properties
-                //         // discountAmount = ...;
-                //     }
-                // }
+                var userFpoints = await _fpointRepository.GetCurrentUserPointsAsync(request.UserId);
+
+                if (request.PointsUsed > 0 && request.PointsUsed <= userFpoints && request.PointsUsed < 1000)
+                {
+                    discountAmount = (decimal)request.PointsUsed * 10;
+                }
 
                 decimal finalAmount = subTotal - discountAmount;
-                // if (finalAmount < 0) finalAmount = 0;
+                if (finalAmount < 0) finalAmount = 0;
 
                 var order = new Order
                 {
                     UserId = request.UserId,
-                    PromotionId = request.PromotionId,
                     OrderDate = DateTime.UtcNow,
                     SubTotal = subTotal,
                     DiscountAmount = discountAmount,
@@ -109,6 +134,24 @@ namespace AncientBook.Application.Services
                     Status = OrderStatus.Pending,
                     OrderItems = orderItemsToCreate
                 };
+
+                await _orderRepository.AddAsync(order);
+
+                if (request.PointsUsed > 0 && discountAmount > 0)
+                {
+                    await _fpointRepository.DecreasePointsAsync(request.UserId, (int)request.PointsUsed, order.Id);
+                }
+                else
+                {
+                    await _fpointRepository.CalculateAndAwardPointsAsync(request.UserId, finalAmount, order.Id);
+                }
+                
+                var fPointRecord = _fpointRepository.GetAsync(order.UserId, order.Id);
+                if (fPointRecord != null)
+                {
+                    order.PointsId = fPointRecord.Id;
+                    await _orderRepository.UpdateAsync(order);
+                }
 
                 await _orderRepository.AddAsync(order);
 
@@ -126,7 +169,7 @@ namespace AncientBook.Application.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Lỗi xảy ra trong quá trình xử lý đơn hàng. Đang tiến hành hoàn lại kho...");
-                foreach (var (bookId, quantity) in processedInventories)
+                foreach (var (bookId, quantity) in processedPhysicalInventories)
                 {
                     try
                     {

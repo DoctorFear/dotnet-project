@@ -51,6 +51,18 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
             _context.Orders.Update(order);
             await _context.SaveChangesAsync();
         }
+        
+        public async Task<bool> UpdateStatusAsync(int orderId, OrderStatus newStatus)
+        {
+            int rowsAffected = await _context.Orders
+                .Where(o => o.Id == orderId)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(o => o.Status, newStatus)
+                    .SetProperty(o => o.UpdatedAt, TimeZoneHelper.GetVietnamTime())
+                );
+
+            return rowsAffected > 0;
+        }
 
         public void Update(Order order)
         {
@@ -76,6 +88,45 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
                 .OrderByDescending(o => o.OrderDate)
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
+        
+        public async Task<(List<Order> Items, int TotalCount)> GetPagedOrdersAsync(GetOrdersQuery query)
+        {
+            var dbQuery = _context.Orders
+                .Include(o => o.OrderItems)
+                .Include(o => o.User)
+                .AsQueryable();
+
+            if (query.UserId.HasValue)
+            {
+                dbQuery = dbQuery.Where(o => o.UserId == query.UserId.Value);
+            }
+
+            if (query.Status.HasValue)
+            {
+                dbQuery = dbQuery.Where(o => o.Status == query.Status.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.SearchKeyword))
+            {
+                var keyword = query.SearchKeyword.Trim().ToLower();
+                dbQuery = dbQuery.Where(o => 
+                    (o.User != null && (o.User.Username.ToLower().Contains(keyword) || 
+                                        o.User.Email.ToLower().Contains(keyword) || 
+                                        o.User.FullName.ToLower().Contains(keyword))) ||
+                    o.Id.ToString() == keyword
+                );
+            }
+
+            int totalCount = await dbQuery.CountAsync();
+
+            var items = await dbQuery
+                .OrderByDescending(o => o.OrderDate)
+                .Skip((query.PageNumber - 1) * query.PageSize)
+                .Take(query.PageSize)
                 .ToListAsync();
 
             return (items, totalCount);

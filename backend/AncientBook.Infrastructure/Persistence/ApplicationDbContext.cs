@@ -26,8 +26,11 @@ namespace AncientBook.Infrastructure.Persistence
 
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+        public DbSet<Cart> Carts => Set<Cart>();
+        public DbSet<CartItem> CartItems => Set<CartItem>();
         public DbSet<Book> Books => Set<Book>();
         public DbSet<Inventory> Inventories => Set<Inventory>();
+        public DbSet<FPoints> FPoints => Set<FPoints>();
         public DbSet<BookCategory> BookCategories => Set<BookCategory>();
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<Publisher> Publishers => Set<Publisher>();
@@ -311,6 +314,75 @@ namespace AncientBook.Infrastructure.Persistence
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
+            // 17. FPoints Configuration
+            modelBuilder.Entity<FPoints>(entity =>
+            {
+                entity.ToTable("FPoints");
+                entity.HasKey(pi => pi.Id);
+                
+                entity.Property(pi => pi.PointUsed).IsRequired();
+
+                entity.HasOne(pi => pi.user)
+                    .WithMany() 
+                    .HasForeignKey(pi => pi.UserId);
+
+                entity.HasOne(pi => pi.order)
+                    .WithMany() 
+                    .HasForeignKey(pi => pi.OrderId);
+            });
+            
+            modelBuilder.Entity<Cart>(entity =>
+            {
+                entity.ToTable("Carts");
+                entity.HasKey(c => c.Id);
+
+                entity.HasOne(c => c.User)
+                    .WithMany()
+                    .HasForeignKey(c => c.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(c => c.UserId).IsUnique().HasDatabaseName("IX_Carts_UserId");
+            });
+
+            modelBuilder.Entity<CartItem>(entity =>
+            {
+                entity.ToTable("CartItems");
+                entity.HasKey(ci => ci.Id);
+                entity.Property(ci => ci.Quantity).IsRequired();
+                entity.Property(ci => ci.PurchaseType).HasConversion<string>().HasMaxLength(20);
+                entity.Property(ci => ci.RentalDuration).HasConversion<string>().HasMaxLength(20);
+
+                entity.HasIndex(ci => new { ci.CartId, ci.BookId, ci.PurchaseType }).IsUnique().HasDatabaseName("IX_CartItems_CartId_BookId_PurchaseType");
+
+                entity.HasOne(ci => ci.Cart)
+                    .WithMany(c => c.CartItems)
+                    .HasForeignKey(ci => ci.CartId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(ci => ci.Book)
+                    .WithMany()
+                    .HasForeignKey(ci => ci.BookId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Data để test checkout xóa nếu muốn
+            modelBuilder.Entity<Book>().HasData(
+                new Book 
+                { 
+                    Id = 1, 
+                    Isbn = "978-604-0-00000-1", 
+                    Title = "Sách Cổ Mẫu", 
+                    Author = "Tác Giả Cổ", 
+                    PhysicalPrice = 100000,
+                    EBookPrice = 50000,
+                    WeeklyRentalPrice = 10000,
+                    IsPhysicalAvailable = true,
+                    IsEBookAvailable = true,
+                    IsRentalAvailable = true,
+                    CoverImg = "https://salt.tikicdn.com/ts/product/45/3e/2e/9f992ab2a5436d4f937d9fae16d47b53.jpg",
+                    CreatedAt = new DateTime(2026, 1, 1)
+                }
+            );
             // 17. Cấu hình ChatSession
             modelBuilder.Entity<ChatSession>(entity =>
             {
