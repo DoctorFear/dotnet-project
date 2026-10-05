@@ -1,69 +1,24 @@
 ﻿using AncientBook.Application.Common.Interfaces;
 using AncientBook.Application.Common.Interfaces.Repositories;
-using AncientBook.Application.Common.Models.Responses;
+using AncientBook.Application.Common.Models;
 using AncientBook.Domain.Entities;
 using AncientBook.Domain.Enums;
 using AncientBook.Infrastructure.Persistence;
 using AncientBook.Infrastructure.Storage;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
+using System.Linq;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-public class UploadEditionRequest
-{
-    [Required(ErrorMessage = "Mã sách không được để trống.")]
-    public int BookId { get; set; }
 
-    [Required(ErrorMessage = "Vui lòng chọn tệp sách.")]
-    public IFormFile File { get; set; } = null!;
-}
-
-public class UploadEditionResponse
-{
-    public int EditionId { get; set; }
-    public int BookId { get; set; }
-    public string FileTitle { get; set; } = string.Empty;
-    public string Format { get; set; } = string.Empty;
-    public int TotalPages { get; set; }
-    public long FileSizeBytes { get; set; }
-    public string Status { get; set; } = string.Empty;
-    public string SuggestedPresetType { get; set; } = string.Empty;
-}
 namespace AncientBook.API.Controllers
 {
-    // ==================== DTOs REQUEST ====================
-    public class UploadEditionRequest
-    {
-        [Required(ErrorMessage = "Mã sách không được để trống.")]
-        public int BookId { get; set; }
-
-        [Required(ErrorMessage = "Vui lòng chọn tệp sách.")]
-        public IFormFile File { get; set; } = null!;
-    }
-
-    public class SaveDraftRequest
-    {
-        [Required(ErrorMessage = "Vui lòng chọn loại cấu hình preset.")]
-        public EbookPresetType PresetType { get; set; }
-    }
-
-    public class PublishEditionRequest
-    {
-        [Required(ErrorMessage = "Vui lòng chọn loại cấu hình preset.")]
-        public EbookPresetType PresetType { get; set; }
-    }
-
-    public class CopilotQueryRequest
-    {
-        [Required(ErrorMessage = "Câu hỏi không được để trống.")]
-        public string Question { get; set; } = string.Empty;
-    }
-
-    // ==================== CONTROLLER ====================
     [ApiController]
     [Route("api/[controller]")]
     public class EbookEditionsController : ControllerBase
@@ -73,19 +28,25 @@ namespace AncientBook.API.Controllers
         private readonly IDocumentExtractor _documentExtractor;
         private readonly IEbookPublishService _publishService;
         private readonly IRagSearchService _ragSearchService;
+        private readonly IGeminiEmbeddingService _geminiService;
+        private readonly ApplicationDbContext _context;
 
         public EbookEditionsController(
             IEbookEditionRepository editionRepository,
             IFileStorageService fileStorageService,
             IDocumentExtractor documentExtractor,
             IEbookPublishService publishService,
-            IRagSearchService ragSearchService)
+            IRagSearchService ragSearchService,
+            IGeminiEmbeddingService geminiService,
+            ApplicationDbContext context)
         {
             _editionRepository = editionRepository;
             _fileStorageService = fileStorageService;
             _documentExtractor = documentExtractor;
             _publishService = publishService;
             _ragSearchService = ragSearchService;
+            _geminiService = geminiService;
+            _context = context;
         }
 
         /// <summary>
@@ -105,7 +66,6 @@ namespace AncientBook.API.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest(new { message = "Vui lòng chọn tệp sách hợp lệ." });
 
-            // Kiểm tra xem BookId có thực sự tồn tại trong DB chưa
             var bookExists = await dbContext.Books.AnyAsync(b => b.Id == bookId, ct);
             if (!bookExists)
             {
@@ -235,10 +195,10 @@ namespace AncientBook.API.Controllers
         }
 
         /// <summary>
-        /// Tìm kiếm ngữ nghĩa qua RAG dành cho AI Copilot giải nghĩa ngữ cảnh sách
+        /// Hỏi đáp AI Copilot dựa trên RAG + Bôi đen (SelectedText) + Trang hiện tại (CurrentPage)
         /// </summary>
         [HttpPost("{editionId}/ask-copilot")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(CopilotQueryResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> AskCopilot(
             [FromRoute] int editionId,
@@ -246,16 +206,134 @@ namespace AncientBook.API.Controllers
             CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(request.Question))
-                return BadRequest(new { message = "Câu hỏi không được để trống." });
-
-            var relevantChunks = await _ragSearchService.SearchRelevantChunksAsync(editionId, request.Question, ct);
-
-            return Ok(new
             {
-                Query = request.Question,
+                return BadRequest(new { message = "Câu hỏi không được để trống." });
+            }
+
+            // 1. Tầng RETRIEVAL: Tìm kiếm các chunk liên quan nhất
+            string searchQuery = string.IsNullOrWhiteSpace(request.SelectedText)
+                ? request.Question
+                : $"{request.Question} {request.SelectedText}";
+
+            var relevantChunks = await _ragSearchService.SearchRelevantChunksAsync(editionId, searchQuery, ct);
+
+            var citationTexts = relevantChunks
+                .Select(c => $"[Trang {c.PageNumber}]: {c.ChunkContent}")
+                .ToList();
+
+            // 2. Tầng GENERATION: Gọi Gemini tổng hợp câu trả lời
+            string aiAnswer = await _geminiService.GenerateCopilotAnswerAsync(
+                request.Question,
+                request.SelectedText,
+                request.CurrentPage,
+                citationTexts,
+                ct);
+
+            // 3. Tầng PERSISTENCE: Lưu vào lịch sử CopilotChatHistory
+            int? currentUserId = null;
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(userIdClaim, out var parsedId))
+            {
+                currentUserId = parsedId;
+            }
+
+            var historyRecord = new CopilotChatHistory
+            {
+                EditionId = editionId,
+                UserId = currentUserId,
+                CurrentPage = request.CurrentPage,
+                SelectedText = request.SelectedText,
+                Question = request.Question,
+                Answer = aiAnswer,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.CopilotChatHistories.Add(historyRecord);
+            await _context.SaveChangesAsync(ct);
+
+            // 4. Trả kết quả về cho Frontend
+            var response = new CopilotQueryResponse
+            {
+                Question = request.Question,
+                Answer = aiAnswer,
                 TotalMatches = relevantChunks.Count,
-                Citations = relevantChunks
-            });
+                Citations = relevantChunks.Select(c => new BookEmbeddingCitationDto
+                {
+                    PageNumber = c.PageNumber,
+                    ChunkIndex = c.ChunkIndex,
+                    ChunkContent = c.ChunkContent
+                }).ToList()
+            };
+
+            return Ok(response);
         }
+
+        /// <summary>
+        /// Lấy lịch sử trò chuyện với AI Copilot cho ấn bản sách này
+        /// </summary>
+        [HttpGet("{editionId}/copilot-history")]
+        [ProducesResponseType(typeof(List<CopilotHistoryItemDto>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetCopilotHistory(
+            [FromRoute] int editionId,
+            CancellationToken ct)
+        {
+            int? currentUserId = null;
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(userIdClaim, out var parsedId))
+            {
+                currentUserId = parsedId;
+            }
+
+            var query = _context.CopilotChatHistories
+                .Where(h => h.EditionId == editionId);
+
+            if (currentUserId.HasValue)
+            {
+                query = query.Where(h => h.UserId == currentUserId.Value);
+            }
+
+            var histories = await query
+                .OrderBy(h => h.CreatedAt)
+                .Select(h => new CopilotHistoryItemDto
+                {
+                    Id = h.Id,
+                    CurrentPage = h.CurrentPage,
+                    SelectedText = h.SelectedText,
+                    Question = h.Question,
+                    Answer = h.Answer,
+                    CreatedAt = h.CreatedAt
+                })
+                .ToListAsync(ct);
+
+            return Ok(histories);
+        }
+    }
+
+    // =========================================================================
+    // DTOs CHO TÍNH NĂNG AI COPILOT
+    // =========================================================================
+    public class CopilotQueryResponse
+    {
+        public string Question { get; set; } = string.Empty;
+        public string Answer { get; set; } = string.Empty;
+        public int TotalMatches { get; set; }
+        public List<BookEmbeddingCitationDto> Citations { get; set; } = new();
+    }
+
+    public class BookEmbeddingCitationDto
+    {
+        public int? PageNumber { get; set; }
+        public int ChunkIndex { get; set; }
+        public string ChunkContent { get; set; } = string.Empty;
+    }
+
+    public class CopilotHistoryItemDto
+    {
+        public int Id { get; set; }
+        public int? CurrentPage { get; set; }
+        public string? SelectedText { get; set; }
+        public string Question { get; set; } = string.Empty;
+        public string Answer { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
     }
 }

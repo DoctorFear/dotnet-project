@@ -22,6 +22,8 @@ namespace AncientBook.Infrastructure.Persistence
         public DbSet<EbookEdition> EbookEditions => Set<EbookEdition>();
         public DbSet<BookEmbedding> BookEmbeddings => Set<BookEmbedding>();
 
+        public DbSet<CopilotChatHistory> CopilotChatHistories => Set<CopilotChatHistory>();
+
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
         public DbSet<Book> Books => Set<Book>();
