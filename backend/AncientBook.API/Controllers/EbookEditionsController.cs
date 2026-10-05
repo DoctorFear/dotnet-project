@@ -1,8 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using AncientBook.Application.Common.Interfaces;
+﻿using AncientBook.Application.Common.Interfaces;
 using AncientBook.Application.Common.Interfaces.Repositories;
 using AncientBook.Application.Common.Models.Responses;
 using AncientBook.Domain.Entities;
@@ -10,7 +6,19 @@ using AncientBook.Domain.Enums;
 using AncientBook.Infrastructure.Storage;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.ComponentModel.DataAnnotations;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+public class UploadEditionRequest
+{
+    [Required(ErrorMessage = "Mã sách không được để trống.")]
+    public int BookId { get; set; }
 
+    [Required(ErrorMessage = "Vui lòng chọn tệp sách.")]
+    public IFormFile File { get; set; } = null!;
+}
 namespace AncientBook.API.Controllers
 {
     [ApiController]
@@ -41,14 +49,17 @@ namespace AncientBook.API.Controllers
         /// Bước 1: Nhân viên tải tệp PDF/EPUB lên server để trích xuất metadata kỹ thuật và lưu nháp
         /// </summary>
         [HttpPost("upload")]
-        [RequestSizeLimit(104_857_600)] // Hạn mức tối đa 100MB (theo chuẩn E2)
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(104_857_600)] // Hạn mức tối đa 100MB
         [ProducesResponseType(typeof(UploadEditionResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> UploadEditionFile(
-            [FromForm] int bookId,
-            [FromForm] IFormFile file,
+            [FromForm] UploadEditionRequest request,
             CancellationToken ct)
         {
+            var file = request.File;
+            int bookId = request.BookId;
+
             if (file == null || file.Length == 0)
                 return BadRequest(new { message = "Vui lòng chọn tệp sách hợp lệ." });
 
@@ -60,7 +71,6 @@ namespace AncientBook.API.Controllers
 
             var format = extension == ".epub" ? EbookFormat.Epub : EbookFormat.Pdf;
 
-            // 1. Đọc số trang và dung lượng thực tế trước khi tải lên kho lưu trữ
             int totalPages;
             long fileSize;
             using (var stream = file.OpenReadStream())
@@ -68,13 +78,10 @@ namespace AncientBook.API.Controllers
                 (totalPages, fileSize) = await _documentExtractor.InspectMetadataAsync(stream, format);
             }
 
-            // 2. Lưu trữ tệp lên thư mục /AncientBook/ebooks của Dropbox
             string dropboxPath = await _fileStorageService.SaveEbookAsync(file, "ebooks");
 
-            // 3. Gợi ý cấu hình Preset dựa theo định dạng tệp: EPUB -> Preset 1 (Văn học), PDF -> Preset 2 (Học thuật)
             int suggestedPresetId = format == EbookFormat.Epub ? 1 : 2;
 
-            // 4. Khởi tạo bản ghi ở trạng thái Bản nháp (Draft)
             var edition = new EbookEdition
             {
                 BookId = bookId,
