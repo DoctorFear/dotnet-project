@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using AncientBook.Application.Interfaces;
 using AncientBook.Domain.Entities;
+using AncientBook.Domain.Enums; // Hoặc namespace chứa enum OrderStatus
+using AncientBook.Application.DTOs; // Hoặc AncientBook.Application.Features.Orders.Queries (nơi chứa GetOrdersQuery)
 
 namespace AncientBook.Infrastructure.Persistence.Repositories
 {

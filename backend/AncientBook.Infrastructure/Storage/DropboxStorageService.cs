@@ -17,38 +17,7 @@ using System.Threading.Tasks;
 namespace AncientBook.Infrastructure.Storage
 {
 
-    public interface IFileStorageService
-    {
-        /// <summary>
-        /// Lưu tệp tin hình ảnh vào thư mục chỉ định trên Dropbox.
-        /// </summary>
-        /// <param name="file">Tệp tin tải lên (IFormFile).</param>
-        /// <param name="folder">Tên thư mục con bên trong /AncientBook (vd: "chat_customer", "books", "avatars").</param>
-        /// <returns>Đường dẫn Direct Link (raw=1) hiển thị trực tiếp ảnh.</returns>
-        Task<string> SaveFileAsync(IFormFile file, string folder);
 
-        /// <summary>
-        /// Lưu tệp sách số hóa (PDF, EPUB) lên Dropbox phục vụ E-Reader.
-        /// </summary>
-        /// <param name="file">Tệp sách tải lên (IFormFile).</param>
-        /// <param name="folder">Tên thư mục con (vd: "ebooks").</param>
-        /// <returns>Đường dẫn nội bộ trên Dropbox (vd: "/AncientBook/ebooks/filename.pdf").</returns>
-        Task<string> SaveEbookAsync(IFormFile file, string folder = "ebooks");
-
-        /// <summary>
-        /// Tải nội dung tệp từ Dropbox về dưới dạng Stream để bóc tách text hoặc phục vụ AI.
-        /// </summary>
-        /// <param name="dropboxPath">Đường dẫn tệp nội bộ trên Dropbox.</param>
-        /// <param name="ct">CancellationToken hủy tác vụ nếu cần.</param>
-        /// <returns>Luồng dữ liệu Stream của tệp.</returns>
-        Task<Stream> GetFileStreamAsync(string dropboxPath, CancellationToken ct = default);
-
-        /// <summary>
-        /// Xóa tệp tin trên Dropbox (nếu cần dọn dẹp bộ nhớ).
-        /// </summary>
-        /// <param name="fileUrl">Đường dẫn URL của file.</param>
-        Task DeleteFileAsync(string fileUrl);
-    }
     public class DropboxStorageService : IFileStorageService
     {
         private readonly IConfiguration _configuration;
@@ -309,6 +278,31 @@ namespace AncientBook.Infrastructure.Storage
             if (dropboxUrl.Contains("?dl=1")) return dropboxUrl.Replace("?dl=1", "?raw=1");
 
             return $"{dropboxUrl}?raw=1";
+        }
+
+        public async Task<string> SaveBytesFileAsync(byte[] bytes, string fileName, string folder)
+        {
+            if (bytes == null || bytes.Length == 0)
+            {
+                throw new ArgumentException("Dữ liệu tệp nhị phân không hợp lệ hoặc rỗng.");
+            }
+
+            string subFolder = string.IsNullOrWhiteSpace(folder) ? "tts-audio" : folder.Trim('/');
+            string targetPath = $"/{_baseFolder.Trim('/')}/{subFolder}/{fileName}".Replace("//", "/");
+
+            string accessToken = await GetAccessTokenAsync();
+            using var client = new DropboxClient(accessToken);
+
+            using var memoryStream = new MemoryStream(bytes);
+            memoryStream.Position = 0;
+
+            await client.Files.UploadAsync(
+                targetPath,
+                WriteMode.Overwrite.Instance,
+                body: memoryStream);
+
+            // Trả về Direct Link có đuôi ?raw=1 để trình duyệt stream trực tiếp
+            return await GetDirectSharedLinkAsync(client, targetPath);
         }
     }
 }

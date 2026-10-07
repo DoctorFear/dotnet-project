@@ -4,6 +4,7 @@ using AncientBook.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AncientBook.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261005105025_AddBookTtsSegmentsTable")]
+    partial class AddBookTtsSegmentsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -229,30 +232,6 @@ namespace AncientBook.Infrastructure.Migrations
                     b.HasIndex("PublisherId");
 
                     b.ToTable("Books", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Author = "Tác Giả Cổ",
-                            CoverImg = "https://salt.tikicdn.com/ts/product/45/3e/2e/9f992ab2a5436d4f937d9fae16d47b53.jpg",
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            EBookPrice = 50000m,
-                            IsEBookAvailable = true,
-                            IsPhysicalAvailable = true,
-                            IsRentalAvailable = true,
-                            Isbn = "978-604-0-00000-1",
-                            MonthlyRentalPrice = 0m,
-                            PhysicalPrice = 100000m,
-                            Rating = 0.0,
-                            ReviewsCount = 0,
-                            Status = "Selling",
-                            StockCount = 0,
-                            StockStatus = "InStock",
-                            Title = "Sách Cổ Mẫu",
-                            WeeklyRentalPrice = 10000m,
-                            YearlyRentalPrice = 0m
-                        });
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.BookCategory", b =>
@@ -391,87 +370,6 @@ namespace AncientBook.Infrastructure.Migrations
                     b.HasIndex("EditionId", "PageNumber", "SegmentIndex");
 
                     b.ToTable("BookTtsSegments");
-                });
-
-            modelBuilder.Entity("AncientBook.Domain.Entities.Cart", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Carts_UserId");
-
-                    b.ToTable("Carts", (string)null);
-                });
-
-            modelBuilder.Entity("AncientBook.Domain.Entities.CartItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("BookId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CartId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PurchaseType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<string>("RentalDuration")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BookId");
-
-                    b.HasIndex("CartId", "BookId", "PurchaseType")
-                        .IsUnique()
-                        .HasDatabaseName("IX_CartItems_CartId_BookId_PurchaseType");
-
-                    b.ToTable("CartItems", (string)null);
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.Category", b =>
@@ -772,44 +670,6 @@ namespace AncientBook.Infrastructure.Migrations
                     b.ToTable("EbookEditions");
                 });
 
-            modelBuilder.Entity("AncientBook.Domain.Entities.FPoints", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PointUsed")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrderId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("FPoints", (string)null);
-                });
-
             modelBuilder.Entity("AncientBook.Domain.Entities.Inventory", b =>
                 {
                     b.Property<int>("Id")
@@ -892,7 +752,7 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Property<string>("PayUrl")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("PointsId")
+                    b.Property<int?>("PromotionId")
                         .HasColumnType("int");
 
                     b.Property<int?>("ShipperId")
@@ -942,20 +802,8 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
 
-                    b.Property<int>("PurchaseType")
-                        .HasColumnType("int");
-
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
-
-                    b.Property<int?>("RentalDuration")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("RentalEndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("RentalStartDate")
-                        .HasColumnType("datetime2");
 
                     b.Property<decimal>("UnitPrice")
                         .HasColumnType("decimal(18,2)");
@@ -1534,36 +1382,6 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Navigation("Edition");
                 });
 
-            modelBuilder.Entity("AncientBook.Domain.Entities.Cart", b =>
-                {
-                    b.HasOne("AncientBook.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("AncientBook.Domain.Entities.CartItem", b =>
-                {
-                    b.HasOne("AncientBook.Domain.Entities.Book", "Book")
-                        .WithMany()
-                        .HasForeignKey("BookId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("AncientBook.Domain.Entities.Cart", "Cart")
-                        .WithMany("CartItems")
-                        .HasForeignKey("CartId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Book");
-
-                    b.Navigation("Cart");
-                });
-
             modelBuilder.Entity("AncientBook.Domain.Entities.Category", b =>
                 {
                     b.HasOne("AncientBook.Domain.Entities.Category", null)
@@ -1662,25 +1480,6 @@ namespace AncientBook.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Book");
-                });
-
-            modelBuilder.Entity("AncientBook.Domain.Entities.FPoints", b =>
-                {
-                    b.HasOne("AncientBook.Domain.Entities.Order", "order")
-                        .WithMany()
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("AncientBook.Domain.Entities.User", "user")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("order");
-
-                    b.Navigation("user");
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.Inventory", b =>
@@ -1790,11 +1589,6 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Navigation("Inventory");
 
                     b.Navigation("OrderItems");
-                });
-
-            modelBuilder.Entity("AncientBook.Domain.Entities.Cart", b =>
-                {
-                    b.Navigation("CartItems");
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.Category", b =>

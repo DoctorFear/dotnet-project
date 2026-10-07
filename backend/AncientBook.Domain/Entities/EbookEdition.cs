@@ -43,5 +43,8 @@ namespace AncientBook.Domain.Entities
 
         // Tập hợp các khối văn bản đã được vector hóa phục vụ RAG (dành cho Preset 1 & 2)
         public ICollection<BookEmbedding> Embeddings { get; set; } = new List<BookEmbedding>();
+
+
+        public bool IsTtsEnabled { get; set; } = false;
     }
 }

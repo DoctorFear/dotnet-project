@@ -24,6 +24,8 @@ namespace AncientBook.Infrastructure.Persistence
 
         public DbSet<CopilotChatHistory> CopilotChatHistories => Set<CopilotChatHistory>();
 
+        public DbSet<BookTtsSegment> BookTtsSegments { get; set; }
+
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
         public DbSet<Cart> Carts => Set<Cart>();
@@ -461,6 +463,20 @@ namespace AncientBook.Infrastructure.Persistence
 
                 // Index tối ưu truy vấn sự kiện của phiên theo thứ tự thời gian
                 entity.HasIndex(e => new { e.ChatSessionId, e.CreatedAt });
+            });
+
+            modelBuilder.Entity<BookTtsSegment>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => new { e.EditionId, e.PageNumber, e.SegmentIndex });
+                entity.Property(e => e.TextContent).IsRequired();
+                entity.Property(e => e.AudioUrlFemale).HasMaxLength(1000);
+                entity.Property(e => e.AudioUrlMale).HasMaxLength(1000);
+
+                entity.HasOne(e => e.Edition)
+                      .WithMany()
+                      .HasForeignKey(e => e.EditionId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
         }
 

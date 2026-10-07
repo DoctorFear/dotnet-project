@@ -71,3 +71,26 @@ public class CopilotHistoryItemDto
     public string Answer { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
 }
+
+public class TtsSegmentDto
+{
+    public int PageNumber { get; set; }
+    public int SegmentIndex { get; set; }
+    public string TextContent { get; set; } = string.Empty;
+}
+
+public class PageTtsResponseDto
+{
+    public int SegmentIndex { get; set; }
+    public int PageNumber { get; set; }
+    public string TextContent { get; set; } = string.Empty;
+    public string AudioUrlFemale { get; set; } = string.Empty;
+    public string AudioUrlMale { get; set; } = string.Empty;
+}
+
+public class TtsGenerateResultDto
+{
+    public bool Success { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public int TotalSegmentsGenerated { get; set; }
+}   

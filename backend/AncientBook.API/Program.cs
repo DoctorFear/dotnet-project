@@ -4,6 +4,7 @@ using AncientBook.Application.Common.Interfaces;
 using AncientBook.Application.Common.Interfaces.Repositories;
 using AncientBook.Application.Interfaces;
 using AncientBook.Application.Services;
+using AncientBook.Domain.Interfaces;
 using AncientBook.Infrastructure.Identity;
 using AncientBook.Infrastructure.Persistence;
 using AncientBook.Infrastructure.Persistence.Repositories;
@@ -64,6 +65,11 @@ builder.Services.AddScoped<IGeminiEmbeddingService, GeminiEmbeddingService>();
 builder.Services.AddScoped<IEbookPublishService, EbookPublishService>();
 builder.Services.AddScoped<IRagSearchService, RagSearchService>();
 
+builder.Services.AddScoped<ITtsDocumentExtractorService, TtsDocumentExtractorService>();
+builder.Services.AddScoped<ITtsAudioService, TtsAudioService>();
+builder.Services.AddScoped<IEbookTtsService, EbookTtsService>();
+builder.Services.AddScoped<IBookTtsSegmentRepository, BookTtsSegmentRepository>();
+builder.Services.AddScoped<IEbookTtsService, EbookTtsService>();
 
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IPhysicalOrderService, PhysicalOrderService>();
