@@ -58,6 +58,12 @@
 .toastText {
     flex: 1;
     line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+    .toastStack { left: 12px; right: 12px; }
+    .toastItem { min-width: 0; max-width: 100%; }
 }
 
 .btnClose {

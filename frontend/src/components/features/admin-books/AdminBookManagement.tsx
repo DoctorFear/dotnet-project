@@ -2,8 +2,6 @@ import React, { useMemo, useState, useRef, useEffect } from 'react';
 import {
     BookOpen,
     Building2,
-    ChevronLeft,
-    ChevronRight,
     ChevronDown,
     FolderTree,
     Pencil,
@@ -14,9 +12,11 @@ import {
     Lock,
     Ban,
 } from 'lucide-react';
-import type { AdminBookData, AdminBookStatus } from '../../../types/adminBook';
+import type { AdminBookData, AdminBookStatus } from '../../../types/book';
 import type { CategoryData } from '../../../types/category';
 import type { PublisherData } from '../../../types/publisher';
+import { useAdminBookData } from '../../../hooks/useAdminBookData';
+import BookPagination from '../../common/BookPagination';
 import ToastNotification from '../../common/ToastNotification';
 import type { ToastMessage } from '../../common/ToastNotification';
 import styles from './AdminBookManagement.module.css';
@@ -29,81 +29,10 @@ type DraftFormState = Record<string, DraftValue>;
 
 interface ConfirmState {
     kind: AdminBookTab;
-    id: string | number;
+    id: number;
     title: string;
 }
 
-const PAGE_SIZE = 5;
-
-// <Dữ liệu mẫu Thể loại>
-const initialCategories: CategoryData[] = [
-    { id: 1, name: 'Văn học', parentId: null, description: 'Nhóm danh mục văn học tổng hợp', bookCount: 5 },
-    { id: 2, name: 'Tiểu thuyết', parentId: 1, description: 'Tiểu thuyết trong và ngoài nước', bookCount: 3 },
-    { id: 3, name: 'Trinh thám', parentId: 1, description: 'Tác phẩm phá án, bí ẩn', bookCount: 1 },
-    { id: 4, name: 'Kinh tế', parentId: null, description: 'Sách kinh tế và quản trị', bookCount: 0 },
-];
-
-// <Dữ liệu mẫu Nhà xuất bản>
-const initialPublishers: PublisherData[] = [
-    { id: 1, name: 'NXB Văn Học', address: '18 Nguyễn Trường Tộ, Hà Nội', phone: '02438221435', email: 'contact@vanhoc.vn', bookCount: 1 },
-    { id: 2, name: 'NXB Tri Thức', address: '53 Nguyễn Du, Hà Nội', phone: '02439421219', email: 'info@trithuc.vn', bookCount: 1 },
-    { id: 3, name: 'NXB Trẻ', address: '161B Lý Chính Thắng, TP.HCM', phone: '02839316289', email: 'nxbtre@tre.vn', bookCount: 1 },
-];
-
-// <Dữ liệu mẫu Sách hệ thống>
-const initialBooks: AdminBookData[] = [
-    {
-        id: 'B01',
-        isbn: '978-604-976-123-4',
-        title: 'Số Đỏ (Tái bản khổ lớn nghệ thuật)',
-        author: 'Vũ Trọng Phụng',
-        publisherId: 1,
-        categoryIds: [1, 2],
-        coverImg: 'https://salt.tikicdn.com/ts/product/45/3e/2e/9f992ab2a5436d4f937d9fae16d47b53.jpg',
-        physicalPrice: 85000,
-        eBookPrice: 45000,
-        weeklyRentalPrice: 15000,
-        monthlyRentalPrice: 35000,
-        yearlyRentalPrice: 95000,
-        stockCount: 3,
-        status: 'selling',
-        orderCount: 4,
-    },
-    {
-        id: 'B02',
-        isbn: '978-604-887-221-7',
-        title: 'Tội Lỗi Và Hình Phạt (Tập 1)',
-        author: 'Fyodor Dostoevsky',
-        publisherId: 2,
-        categoryIds: [1, 2],
-        coverImg: 'https://salt.tikicdn.com/ts/product/19/22/e0/aa29986348ef0eeab07ff83f99e3cae6.jpg',
-        physicalPrice: 145000,
-        eBookPrice: 0,
-        weeklyRentalPrice: 0,
-        monthlyRentalPrice: 0,
-        yearlyRentalPrice: 0,
-        stockCount: 15,
-        status: 'selling',
-        orderCount: 0,
-    },
-    {
-        id: 'B03',
-        isbn: '978-604-998-777-9',
-        title: 'Vụ Án Mạng Trên Chuyến Tàu Tốc Hành Phương Đông',
-        author: 'Agatha Christie',
-        publisherId: 3,
-        categoryIds: [1, 3],
-        coverImg: 'https://nhasachphuongnam.com/images/detailed/181/81yvSg0d7AL._AC_SL1500_.jpg',
-        physicalPrice: 98000,
-        eBookPrice: 68000,
-        weeklyRentalPrice: 20000,
-        monthlyRentalPrice: 45000,
-        yearlyRentalPrice: 110000,
-        stockCount: 5,
-        status: 'upcoming',
-        orderCount: 0,
-    },
-];
 
 const statusLabels: Record<AdminBookStatus, string> = {
     selling: 'Đang bán',
@@ -114,15 +43,27 @@ const statusLabels: Record<AdminBookStatus, string> = {
 const formatCurrency = (value: number) => `${value.toLocaleString('vi-VN')} đ`;
 
 export const AdminBookManagement: React.FC = () => {
+    const {
+        books,
+        categories,
+        publishers,
+        isLoading,
+        error,
+        saveBook: saveBookToServer,
+        removeBook,
+        saveCategory: saveCategoryToServer,
+        removeCategory,
+        savePublisher: savePublisherToServer,
+        removePublisher,
+        loadData,
+    } = useAdminBookData();
     const [activeTab, setActiveTab] = useState<AdminBookTab>('books');
-    const [books, setBooks] = useState<AdminBookData[]>(initialBooks);
-    const [categories, setCategories] = useState<CategoryData[]>(initialCategories);
-    const [publishers, setPublishers] = useState<PublisherData[]>(initialPublishers);
     const [searchText, setSearchText] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(5);
     const [modalKind, setModalKind] = useState<ModalKind>(null);
-    const [editingId, setEditingId] = useState<string | number | null>(null);
+    const [editingId, setEditingId] = useState<number | null>(null);
     const [draft, setDraft] = useState<DraftFormState>({});
     const [formWarn, setFormWarn] = useState('');
     const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
@@ -176,7 +117,7 @@ export const AdminBookManagement: React.FC = () => {
 
         if (activeTab === 'books') {
             return books.filter((book) => {
-                const publisherName = publisherNameMap.get(book.publisherId) || '';
+                const publisherName = (book.publisherId === null ? book.publisher : publisherNameMap.get(book.publisherId)) || '';
                 const categoryNames = book.categoryIds.map((id) => categoryNameMap.get(id) || '').join(' ');
                 const matchesText = !q || `${book.title} ${book.author} ${book.isbn} ${publisherName} ${categoryNames}`.toLowerCase().includes(q);
                 const matchesStatus = !statusFilter || book.status === statusFilter;
@@ -191,9 +132,9 @@ export const AdminBookManagement: React.FC = () => {
         return publishers.filter((pub) => !q || `${pub.name} ${pub.address || ''} ${pub.phone || ''} ${pub.email || ''}`.toLowerCase().includes(q));
     }, [activeTab, books, categories, categoryNameMap, publishers, publisherNameMap, searchText, statusFilter]);
 
-    const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
     const currentPage = Math.min(page, totalPages);
-    const pageItems = filteredItems.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+    const pageItems = filteredItems.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
     const resetListState = (tab: AdminBookTab) => {
         setActiveTab(tab);
@@ -259,7 +200,7 @@ export const AdminBookManagement: React.FC = () => {
         setModalKind(activeTab);
     };
 
-    const openEditModal = (kind: AdminBookTab, id: string | number) => {
+    const openEditModal = (kind: AdminBookTab, id: number) => {
         setEditingId(id);
         setFormWarn('');
         setModalKind(kind);
@@ -301,13 +242,13 @@ export const AdminBookManagement: React.FC = () => {
         setIsCategoryDropdownOpen(false);
     };
 
-    const saveModal = () => {
-        if (modalKind === 'books') saveBook();
-        if (modalKind === 'categories') saveCategory();
-        if (modalKind === 'publishers') savePublisher();
+    const saveModal = async () => {
+        if (modalKind === 'books') await saveBook();
+        if (modalKind === 'categories') await saveCategory();
+        if (modalKind === 'publishers') await savePublisher();
     };
 
-    const saveBook = () => {
+    const saveBook = async () => {
         const titleStr = typeof draft.title === 'string' ? draft.title.trim() : '';
         const isbnStr = typeof draft.isbn === 'string' ? draft.isbn.trim() : '';
         const categoryIds = (draft.categoryIds as number[]) || [];
@@ -325,92 +266,95 @@ export const AdminBookManagement: React.FC = () => {
 
         const eBookPriceVal = Number(draft.eBookPrice || 0);
 
-        const nextBook: AdminBookData = {
-            id: String(draft.id || `B${Date.now()}`),
+        const request = {
             title: titleStr,
             author: (typeof draft.author === 'string' && draft.author.trim()) || 'Chưa cập nhật',
             isbn: isbnStr,
             publisherId: Number(draft.publisherId),
             categoryIds,
             coverImg: (typeof draft.coverImg === 'string' && draft.coverImg.trim()) || 'https://salt.tikicdn.com/ts/product/45/3e/2e/9f992ab2a5436d4f937d9fae16d47b53.jpg',
+            isPhysicalAvailable: Number(draft.physicalPrice || 0) > 0,
             physicalPrice: Number(draft.physicalPrice || 0),
+            isEBookAvailable: eBookPriceVal > 0,
             eBookPrice: eBookPriceVal,
+            isRentalAvailable: eBookPriceVal > 0 && (Number(draft.weeklyRentalPrice || 0) > 0 || Number(draft.monthlyRentalPrice || 0) > 0 || Number(draft.yearlyRentalPrice || 0) > 0),
             weeklyRentalPrice: eBookPriceVal > 0 ? Number(draft.weeklyRentalPrice || 0) : 0,
             monthlyRentalPrice: eBookPriceVal > 0 ? Number(draft.monthlyRentalPrice || 0) : 0,
             yearlyRentalPrice: eBookPriceVal > 0 ? Number(draft.yearlyRentalPrice || 0) : 0,
-            stockCount: editingId ? Number(draft.stockCount || 0) : 0,
             status: draft.status as AdminBookStatus,
-            orderCount: books.find((b) => b.id === editingId)?.orderCount || 0,
+            pages: null,
+            weight: null,
+            publicationYear: null,
+            description: null,
+            eBookFilePath: null,
+            galleryImages: [],
         };
 
-        setBooks((prev) => (editingId ? prev.map((b) => (b.id === editingId ? nextBook : b)) : [nextBook, ...prev]));
-        closeModal();
-        addToast(editingId ? 'Cập nhật thông tin Sách thành công.' : 'Thêm sách mới thành công.', 'success');
+        try {
+            await saveBookToServer(editingId, request);
+            closeModal();
+            addToast(editingId ? 'Cập nhật thông tin Sách thành công.' : 'Thêm sách mới thành công.', 'success');
+        } catch (requestError) {
+            setFormWarn(requestError instanceof Error ? requestError.message : 'Không thể lưu thông tin sách.');
+        }
     };
 
-    const saveCategory = () => {
+    const saveCategory = async () => {
         const name = typeof draft.name === 'string' ? draft.name.trim() : '';
         if (!name) {
             setFormWarn('Tên danh mục không được để trống.');
             return;
         }
 
-        const nextCategory: CategoryData = {
-            id: typeof editingId === 'number' ? editingId : Math.max(0, ...categories.map((i) => i.id)) + 1,
-            name,
-            parentId: draft.parentId ? Number(draft.parentId) : null,
-            description: (draft.description as string) || null,
-            bookCount: categories.find((c) => c.id === editingId)?.bookCount || 0,
-        };
-
-        setCategories((prev) => (editingId ? prev.map((c) => (c.id === editingId ? nextCategory : c)) : [nextCategory, ...prev]));
-        closeModal();
-        addToast(editingId ? 'Cập nhật danh mục thành công.' : 'Thêm danh mục thể loại thành công.', 'success');
+        try {
+            await saveCategoryToServer(typeof editingId === 'number' ? editingId : null, {
+                name,
+                parentId: draft.parentId ? Number(draft.parentId) : null,
+                description: (draft.description as string) || null,
+            });
+            closeModal();
+            addToast(editingId ? 'Cập nhật danh mục thành công.' : 'Thêm danh mục thể loại thành công.', 'success');
+        } catch (requestError) {
+            setFormWarn(requestError instanceof Error ? requestError.message : 'Không thể lưu danh mục.');
+        }
     };
 
-    const savePublisher = () => {
+    const savePublisher = async () => {
         const name = typeof draft.name === 'string' ? draft.name.trim() : '';
         if (!name) {
             setFormWarn('Tên NXB không được để trống.');
             return;
         }
 
-        const nextPublisher: PublisherData = {
-            id: typeof editingId === 'number' ? editingId : Math.max(0, ...publishers.map((i) => i.id)) + 1,
-            name,
-            address: (draft.address as string) || null,
-            phone: (draft.phone as string) || null,
-            email: (draft.email as string) || null,
-            description: (draft.description as string) || null,
-            bookCount: publishers.find((p) => p.id === editingId)?.bookCount || 0,
-        };
-
-        setPublishers((prev) => (editingId ? prev.map((p) => (p.id === editingId ? nextPublisher : p)) : [nextPublisher, ...prev]));
-        closeModal();
-        addToast(editingId ? 'Cập nhật NXB thành công.' : 'Thêm nhà xuất bản thành công.', 'success');
+        try {
+            await savePublisherToServer(typeof editingId === 'number' ? editingId : null, {
+                name,
+                address: (draft.address as string) || null,
+                phone: (draft.phone as string) || null,
+                email: (draft.email as string) || null,
+                description: (draft.description as string) || null,
+            });
+            closeModal();
+            addToast(editingId ? 'Cập nhật NXB thành công.' : 'Thêm nhà xuất bản thành công.', 'success');
+        } catch (requestError) {
+            setFormWarn(requestError instanceof Error ? requestError.message : 'Không thể lưu nhà xuất bản.');
+        }
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (!confirmState) return;
 
-        if (confirmState.kind === 'books') {
-            const book = books.find((b) => b.id === confirmState.id);
-            if (book?.orderCount && book.orderCount > 0) {
-                setBooks((prev) => prev.map((item) => (item.id === confirmState.id ? { ...item, status: 'stopped' } : item)));
-                addToast('Sách đã phát sinh đơn hàng nên hệ thống chuyển sang trạng thái Ngừng bán.', 'info');
-            } else {
-                setBooks((prev) => prev.filter((item) => item.id !== confirmState.id));
-                addToast('Xóa Sách thành công.', 'success');
-            }
-        } else if (confirmState.kind === 'categories') {
-            setCategories((prev) => prev.filter((item) => item.id !== confirmState.id));
-            addToast('Xóa thể loại danh mục thành công.', 'success');
-        } else if (confirmState.kind === 'publishers') {
-            setPublishers((prev) => prev.filter((item) => item.id !== confirmState.id));
-            addToast('Xóa nhà xuất bản thành công.', 'success');
+        try {
+            if (confirmState.kind === 'books') await removeBook(confirmState.id);
+            if (confirmState.kind === 'categories') await removeCategory(Number(confirmState.id));
+            if (confirmState.kind === 'publishers') await removePublisher(Number(confirmState.id));
+            setConfirmState(null);
+            addToast(confirmState.kind === 'books' ? 'Xóa Sách thành công.' : confirmState.kind === 'categories' ? 'Xóa thể loại danh mục thành công.' : 'Xóa nhà xuất bản thành công.', 'success');
+        } catch (requestError) {
+            await loadData();
+            setConfirmState(null);
+            addToast(requestError instanceof Error ? requestError.message : 'Không thể xóa dữ liệu.', 'error');
         }
-
-        setConfirmState(null);
     };
 
     const renderStatusBadge = (status: AdminBookStatus) => {
@@ -430,6 +374,9 @@ export const AdminBookManagement: React.FC = () => {
     return (
         <>
             <ToastNotification toasts={toasts} onClose={removeToast} />
+
+            {isLoading && <section className={styles.tablePanel}>Đang tải dữ liệu quản lý sách...</section>}
+            {error && <section className={styles.tablePanel}>{error}</section>}
 
             {/* Thống kê KPI */}
             <section className={styles.statsGrid}>
@@ -542,7 +489,7 @@ export const AdminBookManagement: React.FC = () => {
                                             </div>
                                         </div>
                                     </td>
-                                    <td>{publisherNameMap.get(book.publisherId) || 'Chưa cập nhật'}</td>
+                                    <td>{(book.publisherId === null ? book.publisher : publisherNameMap.get(book.publisherId)) || 'Chưa cập nhật'}</td>
                                     <td>
                                         <div className={styles.chipRow}>
                                             {book.categoryIds.map((id) => (
@@ -685,47 +632,16 @@ export const AdminBookManagement: React.FC = () => {
                 )}
 
                 {/* THANH PHÂN TRANG */}
-                <div className={styles.paginationBar}>
-                    <span>
-                        {filteredItems.length === 0
-                            ? 'Không có dữ liệu'
-                            : `Hiển thị ${(currentPage - 1) * PAGE_SIZE + 1} - ${Math.min(
-                                currentPage * PAGE_SIZE,
-                                filteredItems.length
-                            )} trên tổng số ${filteredItems.length} bản ghi`}
-                    </span>
-
-                    <div className={styles.pageBtns}>
-                        <button
-                            type="button"
-                            className={styles.pageBtn}
-                            disabled={currentPage === 1}
-                            onClick={() => setPage((p) => Math.max(1, p - 1))}
-                        >
-                            <ChevronLeft size={16} />
-                        </button>
-
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                            <button
-                                key={p}
-                                type="button"
-                                className={`${styles.pageBtn} ${p === currentPage ? styles.activePage : ''}`}
-                                onClick={() => setPage(p)}
-                            >
-                                {p}
-                            </button>
-                        ))}
-
-                        <button
-                            type="button"
-                            className={styles.pageBtn}
-                            disabled={currentPage === totalPages}
-                            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                        >
-                            <ChevronRight size={16} />
-                        </button>
-                    </div>
-                </div>
+                <BookPagination
+                    variant="admin"
+                    page={currentPage}
+                    pageSize={pageSize}
+                    totalCount={filteredItems.length}
+                    pageSizes={[5, 10, 20, 50, 100]}
+                    itemLabel={activeTab === 'books' ? 'sách' : 'dòng'}
+                    onPageChange={setPage}
+                    onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+                />
             </section>
 
             {/* MODAL THÊM / SỬA SÁCH, THỂ LOẠI & NXB */}

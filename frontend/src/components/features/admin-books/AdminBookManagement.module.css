@@ -32,7 +32,7 @@
     border-radius: 8px;
     border: 1px solid var(--hairline);
     box-shadow: 0 4px 20px rgba(7, 18, 51, 0.04);
-    overflow: hidden;
+    overflow: visible;
 }
 
 .panelHeader {

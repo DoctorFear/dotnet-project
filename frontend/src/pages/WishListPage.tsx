@@ -6,7 +6,8 @@ import Breadcrumb from '../components/common/Breadcrumb';
 import ProductCard from '../components/common/ProductCard';
 import { useWishlist } from '../hooks/useWishList'; 
 import { useUser } from '../context/UserContext';
-import type { ProductData } from '../types/product';
+import type { ProductData } from '../types/book';
+import ToastNotification from '../components/common/ToastNotification';
 
 interface WishListPageProps {
     onLoginClick?: () => void;
@@ -14,7 +15,15 @@ interface WishListPageProps {
 
 const INITIAL_WISHLIST: ProductData[] = [
     {
-        id: 'B01',
+        id: 1,
+        isbn: '978-604-976-123-4',
+        publisherId: null,
+        categoryIds: [],
+        isRentalAvailable: false,
+        weeklyRentalPrice: 0,
+        monthlyRentalPrice: 0,
+        yearlyRentalPrice: 0,
+        status: 'selling',
         title: 'Số Đỏ (Tái bản khổ lớn nghệ thuật)',
         author: 'Vũ Trọng Phụng',
         publisher: 'NXB Văn Học',
@@ -31,7 +40,15 @@ const INITIAL_WISHLIST: ProductData[] = [
         isWishlisted: true,
     },
     {
-        id: 'B02',
+        id: 2,
+        isbn: '978-604-887-221-7',
+        publisherId: null,
+        categoryIds: [],
+        isRentalAvailable: false,
+        weeklyRentalPrice: 0,
+        monthlyRentalPrice: 0,
+        yearlyRentalPrice: 0,
+        status: 'selling',
         title: 'Tội Lỗi Và Hình Phạt (Tập 1)',
         author: 'Fyodor Dostoevsky',
         publisher: 'NXB Tri Thức',
@@ -51,7 +68,7 @@ const INITIAL_WISHLIST: ProductData[] = [
 
 export const WishListPage: React.FC<WishListPageProps> = ({ onLoginClick }) => {
     const { isLoggedIn } = useUser();
-    const { wishlistItems, wishlistCount, removeWishlistItem } = useWishlist(INITIAL_WISHLIST);
+    const { wishlistItems, wishlistCount, removeWishlistItem, toasts, dismissToast } = useWishlist(INITIAL_WISHLIST);
 
     if (!isLoggedIn) {
         return (
@@ -98,6 +115,7 @@ export const WishListPage: React.FC<WishListPageProps> = ({ onLoginClick }) => {
 
     return (
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#F2F7FF' }}>
+            <ToastNotification toasts={toasts} onClose={dismissToast} />
             <TopBar />
             <Header wishlistCount={wishlistCount} />
             <Navbar />

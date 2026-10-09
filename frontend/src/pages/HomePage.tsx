@@ -1,76 +1,51 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import TopBar from '../components/layout/TopBar';
 import Header from '../components/layout/Header';
 import Navbar from '../components/layout/Navbar';
 import SidebarFilter from '../components/features/storefront/SidebarFilter';
 import type { FilterParams } from '../components/features/storefront/SidebarFilter';
 import BookGrid from '../components/features/storefront/BookGrid';
-import type { ProductData } from '../types/product';
+import { useBookCatalog } from '../hooks/useBookCatalog';
+import BookPagination from '../components/common/BookPagination';
+import ToastNotification from '../components/common/ToastNotification';
+import BookPurchaseDialog from '../components/features/storefront/BookPurchaseDialog';
+import { useToastNotifications } from '../hooks/useToastNotifications';
+import { useBookCartAction } from '../hooks/useBookCartAction';
+import type { ProductData } from '../types/book';
 
 export const HomePage: React.FC = () => {
-    const [wishlistIds, setWishlistIds] = useState<string[]>(['B01', 'B03']);
+    const [wishlistIds, setWishlistIds] = useState<number[]>([]);
     const [sortBy, setSortBy] = useState<string>('newest');
+    const [filters, setFilters] = useState<Partial<FilterParams>>({});
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(6);
+    const [purchaseBook, setPurchaseBook] = useState<ProductData | null>(null);
+    const { toasts, notify, dismissToast } = useToastNotifications();
+    const { isSubmitting, submitPurchase } = useBookCartAction(notify);
+    const requestFilters = useMemo(() => ({
+        ...filters,
+        sortBy,
+        pageNumber: page,
+        pageSize,
+        publicationYear: filters.publishYear ? Number(filters.publishYear) : undefined,
+    }), [filters, sortBy, page, pageSize]);
+    const { books, categories, publishers, totalCount, isLoading, error } = useBookCatalog(requestFilters);
 
-    const initialBooks: ProductData[] = [
-        {
-            id: 'B01',
-            title: 'Số Đỏ (Tái bản khổ lớn nghệ thuật)',
-            author: 'Vũ Trọng Phụng',
-            coverImg: 'https://salt.tikicdn.com/ts/product/45/3e/2e/9f992ab2a5436d4f937d9fae16d47b53.jpg',
-            isPhysicalAvailable: true,
-            physicalPrice: 85000,
-            isEBookAvailable: true,
-            eBookPrice: 45000,
-            isRentalAvailable: true,
-            weeklyRentalPrice: 15000,
-            monthlyRentalPrice: 35000,
-            yearlyRentalPrice: 95000,
-            rating: 4.8,
-            reviewsCount: 124,
-            stockStatus: 'low_stock',
-            stockCount: 3,
-        },
-        {
-            id: 'B02',
-            title: 'Tội Lỗi Và Hình Phạt (Tập 1)',
-            author: 'Fyodor Dostoevsky',
-            coverImg: 'https://salt.tikicdn.com/ts/product/19/22/e0/aa29986348ef0eeab07ff83f99e3cae6.jpg',
-            isPhysicalAvailable: true,
-            physicalPrice: 145000,
-            isEBookAvailable: true,
-            eBookPrice: 75000,
-            isRentalAvailable: false,
-            rating: 4.9,
-            reviewsCount: 89,
-            stockStatus: 'in_stock',
-        },
-        {
-            id: 'B03',
-            title: 'Vụ Án Mạng Trên Chuyến Tàu Tốc Hành Phương Đông',
-            author: 'Agatha Christie',
-            coverImg: 'https://nhasachphuongnam.com/images/detailed/181/81yvSg0d7AL._AC_SL1500_.jpg',
-            isPhysicalAvailable: true,
-            physicalPrice: 98000,
-            isEBookAvailable: false,
-            isRentalAvailable: true,
-            weeklyRentalPrice: 20000,
-            monthlyRentalPrice: 45000,
-            yearlyRentalPrice: 110000,
-            rating: 4.7,
-            reviewsCount: 210,
-            stockStatus: 'low_stock',
-            stockCount: 5,
-        },
-    ];
-
-    const handleToggleWishlist = (id: string) => {
+    const handleToggleWishlist = (id: number) => {
+        const book = books.find((item) => item.id === id);
+        const isRemoving = wishlistIds.includes(id);
         setWishlistIds((prev) =>
             prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
         );
+        notify(isRemoving
+            ? `Đã xóa ${book?.title || 'sách'} khỏi danh sách yêu thích.`
+            : `Đã thêm ${book?.title || 'sách'} vào danh sách yêu thích.`, 'success');
     };
 
     return (
         <>
+            {!purchaseBook && <ToastNotification toasts={toasts} onClose={dismissToast} />}
+            {purchaseBook && <BookPurchaseDialog key={purchaseBook.id} book={purchaseBook} isSubmitting={isSubmitting} onClose={() => setPurchaseBook(null)} onConfirm={submitPurchase}><ToastNotification toasts={toasts} onClose={dismissToast} /></BookPurchaseDialog>}
             <style>{`
         .ab-home-page-layout {
           min-height: 100vh;
@@ -101,22 +76,45 @@ export const HomePage: React.FC = () => {
             <div className="ab-home-page-layout">
                 <TopBar />
                 <Header wishlistCount={wishlistIds.length} cartCount={2} />
-                <Navbar />
+                <Navbar
+                    categories={categories.map((category) => ({ id: String(category.id), name: category.name }))}
+                    publishers={publishers.map((publisher) => ({ id: String(publisher.id), name: publisher.name }))}
+                    onSelectCategory={(name) => {
+                        const category = categories.find((item) => item.name === name);
+                        if (category) { setPage(1); setFilters((current) => ({ ...current, categoryIds: [category.id] })); }
+                    }}
+                    onSelectPublisher={(name) => {
+                        const publisher = publishers.find((item) => item.name === name);
+                        if (publisher) { setPage(1); setFilters((current) => ({ ...current, publisherIds: [publisher.id] })); }
+                    }}
+                />
 
                 <main className="ab-storefront-container">
                     <SidebarFilter
-                        onFilterChange={(filters: Partial<FilterParams>) => console.log('Filters:', filters)}
-                        onResetFilters={() => console.log('Reset Filters')}
+                        categoriesList={categories.map(({ id, name }) => ({ id, name }))}
+                        publishersList={publishers.map(({ id, name }) => ({ id, name }))}
+                        onFilterChange={(nextFilters) => { setPage(1); setFilters((current) => ({ ...current, ...nextFilters })); }}
+                        onResetFilters={() => { setPage(1); setFilters({}); }}
                     />
-                    <BookGrid
-                        books={initialBooks}
-                        wishlistIds={wishlistIds}
-                        sortBy={sortBy}
-                        onSortChange={(val) => setSortBy(val)}
-                        onToggleWishlist={handleToggleWishlist}
-                        onSelectBook={(id) => (window.location.href = `/books/${id}`)}
-                        onAddToCart={(id) => alert(`Đã thêm sách vật lý ${id} vào giỏ hàng!`)}
-                    />
+                    {isLoading ? (
+                        <BookGrid books={[]} emptyMessage="Đang tải danh sách sách..." />
+                    ) : error ? (
+                        <BookGrid books={[]} emptyMessage={error} />
+                    ) : (
+                        <div>
+                        <BookGrid
+                            books={books}
+                            totalCount={totalCount}
+                            wishlistIds={wishlistIds}
+                            sortBy={sortBy}
+                            onSortChange={(value) => { setPage(1); setSortBy(value); }}
+                            onToggleWishlist={handleToggleWishlist}
+                            onSelectBook={(id) => (window.location.href = `/books/${id}`)}
+                            onAddToCart={(id) => setPurchaseBook(books.find((book) => book.id === id) ?? null)}
+                        />
+                        <BookPagination page={page} pageSize={pageSize} totalCount={totalCount} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} />
+                        </div>
+                    )}
                 </main>
             </div>
         </>

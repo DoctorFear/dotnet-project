@@ -55,6 +55,7 @@ namespace AncientBook.Application.Services
             if (filter.MaxPrice.HasValue) query = query.Where(b => b.PhysicalPrice <= filter.MaxPrice.Value);
             if (filter.PublicationYear.HasValue) query = query.Where(b => b.PublicationYear == filter.PublicationYear.Value);
             if (filter.MinRating.HasValue) query = query.Where(b => b.Rating >= filter.MinRating.Value);
+            if (filter.MaxRatingExclusive.HasValue) query = query.Where(b => b.Rating < filter.MaxRatingExclusive.Value);
 
             // Lọc theo trạng thái kinh doanh
             if (!string.IsNullOrWhiteSpace(filter.Status))
@@ -97,7 +98,7 @@ namespace AncientBook.Application.Services
                     YearlyRentalPrice = b.YearlyRentalPrice,
                     Rating = b.Rating,
                     ReviewsCount = b.ReviewsCount,
-                    StockStatus = b.StockStatus.ToString().ToLower(),
+                    StockStatus = GetStockStatusValue(b.StockStatus),
                     StockCount = b.StockCount,
                     Status = b.Status.ToString().ToLower()
                 })
@@ -134,7 +135,7 @@ namespace AncientBook.Application.Services
                 YearlyRentalPrice = b.YearlyRentalPrice,
                 Rating = b.Rating,
                 ReviewsCount = b.ReviewsCount,
-                StockStatus = b.StockStatus.ToString().ToLower(),
+                StockStatus = GetStockStatusValue(b.StockStatus),
                 StockCount = b.StockCount,
                 Status = b.Status.ToString().ToLower(),
                 Pages = b.Pages,
@@ -293,5 +294,13 @@ namespace AncientBook.Application.Services
             await _bookRepository.SaveChangesAsync();
             return true;
         }
+
+        private static string GetStockStatusValue(StockStatus stockStatus) => stockStatus switch
+        {
+            StockStatus.InStock => "in_stock",
+            StockStatus.LowStock => "low_stock",
+            StockStatus.OutOfStock => "out_of_stock",
+            _ => "out_of_stock"
+        };
     }
 }

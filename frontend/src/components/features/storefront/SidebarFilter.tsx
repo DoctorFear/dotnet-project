@@ -1,40 +1,43 @@
 import React, { useState } from 'react';
+import { Funnel } from 'lucide-react';
 import styles from './SidebarFilter.module.css';
 import PriceRangeSlider from './PriceRangeSlider';
 
 export interface FilterParams {
-    categories: string[];
-    publishers: string[];
+    categoryIds: number[];
+    publisherIds: number[];
     minPrice: number;
     maxPrice: number;
     publishYear: string;
     minRating: number;
+    maxRatingExclusive?: number;
     hasPhysical: boolean;
     hasEBook: boolean;
     hasRental: boolean;
 }
 
 interface SidebarFilterProps {
-    categoriesList?: string[];
-    publishersList?: string[];
+    categoriesList?: { id: number; name: string }[];
+    publishersList?: { id: number; name: string }[];
     onFilterChange: (filters: Partial<FilterParams>) => void;
     onResetFilters: () => void;
     className?: string;
 }
 
 export const SidebarFilter: React.FC<SidebarFilterProps> = ({
-    categoriesList = ['Văn học Việt Nam', 'Văn học Cổ điển', 'Tiểu thuyết Trinh thám', 'Tiểu thuyết Thiếu niên', 'Khoa học Viễn tưởng', 'Triết học Phương Đông', 'Lịch sử khảo cổ', 'Bí ẩn', 'Truyện tâm linh', 'Sách Kỹ năng sống'],
-    publishersList = ['NXB Giáo dục', 'NXB Trẻ', 'NXB Kim Đồng', 'NXB Hội Nhà Văn', 'NXB Phụ Nữ', 'NXB Văn Học', 'NXB Tổng Hợp', 'NXB Chính trị Quốc Gia'],
+    categoriesList = [],
+    publishersList = [],
     onFilterChange,
     onResetFilters,
     className = '',
 }) => {
     const [minPrice, setMinPrice] = useState<number>(0);
     const [maxPrice, setMaxPrice] = useState<number>(1000000);
+    const [ratingGroup, setRatingGroup] = useState('all');
 
     // State lưu danh sách các thể loại và NXB được tích chọn (hỗ trợ nhiều item khi lấy từ DB)
-    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-    const [selectedPublishers, setSelectedPublishers] = useState<string[]>([]);
+    const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+    const [selectedPublishers, setSelectedPublishers] = useState<number[]>([]);
 
     const handlePriceChange = (min: number, max: number) => {
         setMinPrice(min);
@@ -43,23 +46,23 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
     };
 
     // Logic xử lý tích/bỏ tích chọn nhiều Thể loại
-    const handleCategoryToggle = (category: string) => {
-        const nextCategories = selectedCategories.includes(category)
-            ? selectedCategories.filter((c) => c !== category)
-            : [...selectedCategories, category];
+    const handleCategoryToggle = (categoryId: number) => {
+        const nextCategories = selectedCategories.includes(categoryId)
+            ? selectedCategories.filter((id) => id !== categoryId)
+            : [...selectedCategories, categoryId];
 
         setSelectedCategories(nextCategories);
-        onFilterChange({ categories: nextCategories });
+        onFilterChange({ categoryIds: nextCategories });
     };
 
     // Logic xử lý tích/bỏ tích chọn nhiều Nhà xuất bản
-    const handlePublisherToggle = (publisher: string) => {
-        const nextPublishers = selectedPublishers.includes(publisher)
-            ? selectedPublishers.filter((p) => p !== publisher)
-            : [...selectedPublishers, publisher];
+    const handlePublisherToggle = (publisherId: number) => {
+        const nextPublishers = selectedPublishers.includes(publisherId)
+            ? selectedPublishers.filter((id) => id !== publisherId)
+            : [...selectedPublishers, publisherId];
 
         setSelectedPublishers(nextPublishers);
-        onFilterChange({ publishers: nextPublishers });
+        onFilterChange({ publisherIds: nextPublishers });
     };
 
     // Xóa sạch trạng thái chọn khi Reset bộ lọc
@@ -68,15 +71,14 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
         setSelectedPublishers([]);
         setMinPrice(0);
         setMaxPrice(1000000);
+        setRatingGroup('all');
         onResetFilters();
     };
 
     return (
         <aside className={`${styles.searchSidebar} ${className}`}>
             <h3 className={styles.sidebarSectionTitle}>
-                <svg className={styles.icon} viewBox="0 0 24 24">
-                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-                </svg>
+                <Funnel className={styles.icon} />
                 Bộ lọc tìm kiếm
             </h3>
 
@@ -84,14 +86,14 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
             <div className={styles.filterGroup}>
                 <label className={styles.filterLabel}>Thể loại sách</label>
                 <div className={styles.optimizedListBox}>
-                    {categoriesList.map((cat, idx) => (
-                        <label key={idx} className={styles.optimizedItem}>
+                    {categoriesList.map((cat) => (
+                        <label key={cat.id} className={styles.optimizedItem}>
                             <input
                                 type="checkbox"
-                                checked={selectedCategories.includes(cat)}
-                                onChange={() => handleCategoryToggle(cat)}
+                                checked={selectedCategories.includes(cat.id)}
+                                onChange={() => handleCategoryToggle(cat.id)}
                             />
-                            {cat}
+                            {cat.name}
                         </label>
                     ))}
                 </div>
@@ -101,14 +103,14 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
             <div className={styles.filterGroup}>
                 <label className={styles.filterLabel}>Nhà xuất bản</label>
                 <div className={styles.optimizedListBox}>
-                    {publishersList.map((pub, idx) => (
-                        <label key={idx} className={styles.optimizedItem}>
+                    {publishersList.map((pub) => (
+                        <label key={pub.id} className={styles.optimizedItem}>
                             <input
                                 type="checkbox"
-                                checked={selectedPublishers.includes(pub)}
-                                onChange={() => handlePublisherToggle(pub)}
+                                checked={selectedPublishers.includes(pub.id)}
+                                onChange={() => handlePublisherToggle(pub.id)}
                             />
-                            {pub}
+                            {pub.name}
                         </label>
                     ))}
                 </div>
@@ -138,13 +140,20 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
             <div className={styles.filterGroup}>
                 <label className={styles.filterLabel}>Đánh giá sao</label>
                 <label className={styles.starFilterOption}>
-                    <input type="radio" name="starFilter" defaultChecked onChange={() => onFilterChange({ minRating: 0 })} />
+                    <input type="radio" name="starFilter" checked={ratingGroup === 'all'} onChange={() => { setRatingGroup('all'); onFilterChange({ minRating: 0, maxRatingExclusive: undefined }); }} />
                     <span>Tất cả đánh giá</span>
                 </label>
-                <label className={styles.starFilterOption}>
-                    <input type="radio" name="starFilter" onChange={() => onFilterChange({ minRating: 4 })} />
-                    <span className={styles.starsGold}>★★★★☆</span> từ 4 sao trở lên
-                </label>
+                {[
+                    { value: '5', label: '5 sao', stars: '★★★★★', min: 5, max: undefined },
+                    { value: '4', label: '4 sao', stars: '★★★★☆', min: 4, max: 5 },
+                    { value: '3', label: '3 sao', stars: '★★★☆☆', min: 3, max: 4 },
+                    { value: 'below3', label: 'Dưới 3 sao', stars: '★★☆☆☆', min: 0, max: 3 },
+                ].map((option) => (
+                    <label key={option.value} className={styles.starFilterOption}>
+                        <input type="radio" name="starFilter" checked={ratingGroup === option.value} onChange={() => { setRatingGroup(option.value); onFilterChange({ minRating: option.min, maxRatingExclusive: option.max }); }} />
+                        <span className={styles.starsGold}>{option.stars}</span> {option.label}
+                    </label>
+                ))}
             </div>
 
             <button type="button" className={styles.btnResetFilters} onClick={handleResetAll}>

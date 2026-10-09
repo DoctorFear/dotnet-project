@@ -12,6 +12,7 @@ namespace AncientBook.Application.DTOs
         public decimal? MaxPrice { get; set; }
         public int? PublicationYear { get; set; }
         public double? MinRating { get; set; }
+        public double? MaxRatingExclusive { get; set; }
         public string? Status { get; set; }
         public string? SortBy { get; set; } = "newest";
         public int PageNumber { get; set; } = 1;

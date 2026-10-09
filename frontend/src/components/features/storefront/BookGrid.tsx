@@ -1,21 +1,25 @@
 import React from 'react';
 import styles from './BookGrid.module.css';
 import ProductCard from '../../common/ProductCard';
-import type { ProductData } from '../../../types/product';
+import type { ProductData } from '../../../types/book';
 
 interface BookGridProps {
     books: ProductData[];
-    wishlistIds?: string[];
+    totalCount?: number;
+    emptyMessage?: string;
+    wishlistIds?: number[];
     sortBy?: string;
     onSortChange?: (sortValue: string) => void;
-    onToggleWishlist?: (id: string) => void;
-    onSelectBook?: (id: string) => void;
-    onAddToCart?: (id: string) => void;
+    onToggleWishlist?: (id: number) => void;
+    onSelectBook?: (id: number) => void;
+    onAddToCart?: (id: number) => void;
     className?: string;
 }
 
 export const BookGrid: React.FC<BookGridProps> = ({
     books,
+    totalCount,
+    emptyMessage = 'Rất tiếc, không tìm thấy sản phẩm phù hợp với bộ lọc của bạn.',
     wishlistIds = [],
     sortBy = 'newest',
     onSortChange,
@@ -29,7 +33,7 @@ export const BookGrid: React.FC<BookGridProps> = ({
             {/* Thanh hiển thị số lượng & Dropdown Sắp xếp */}
             <div className={styles.resultsSortingBar}>
                 <div>
-                    Hiển thị <strong>{books.length}</strong> sản phẩm phù hợp
+                    Hiển thị <strong>{totalCount ?? books.length}</strong> sản phẩm phù hợp
                 </div>
                 <div>
                     <select
@@ -60,7 +64,7 @@ export const BookGrid: React.FC<BookGridProps> = ({
                     ))
                 ) : (
                     <div className={styles.emptyState}>
-                        Rất tiếc, không tìm thấy sản phẩm phù hợp với bộ lọc của bạn.
+                        {emptyMessage}
                     </div>
                 )}
             </div>

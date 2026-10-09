@@ -3,16 +3,16 @@ import WishListButton from './WishListButton';
 import StarRating from './StarRating';
 import Badge from './Badge';
 import styles from './ProductCard.module.css';
-import type { ProductData } from '../../types/product';
+import type { ProductData } from '../../types/book';
 
 export interface ProductCardProps {
     product: ProductData;
     isWishlisted?: boolean;
-    onToggleWishlist?: (id: string) => void;
-    onSelectBook?: (id: string) => void;
-    onAddToCart?: (id: string) => void;
+    onToggleWishlist?: (id: number) => void;
+    onSelectBook?: (id: number) => void;
+    onAddToCart?: (id: number) => void;
     showRemoveWishlistBtn?: boolean;
-    onRemoveWishlist?: (id: string) => void;
+    onRemoveWishlist?: (id: number) => void;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({

@@ -34,7 +34,7 @@ const ToastItem: React.FC<{ toast: ToastMessage; onClose: (id: string) => void }
     const type = toast.type || 'success';
 
     return (
-        <div className={`${styles.toastItem} ${styles[type]}`}>
+        <div className={`${styles.toastItem} ${styles[type]}`} role={type === 'error' ? 'alert' : 'status'}>
             {type === 'success' && <CheckCircle2 className={styles.iconSuccess} size={18} />}
             {type === 'error' && <AlertCircle className={styles.iconError} size={18} />}
             {type === 'info' && <Info className={styles.iconInfo} size={18} />}
