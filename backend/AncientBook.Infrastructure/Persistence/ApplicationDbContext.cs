@@ -47,6 +47,18 @@ namespace AncientBook.Infrastructure.Persistence
         public DbSet<StockAlert> StockAlerts => Set<StockAlert>();
         public DbSet<Shipper> Shippers => Set<Shipper>();
 
+        // ===== UC21 - Book Reviews =====
+        public DbSet<BookReview> BookReviews => Set<BookReview>();
+
+        // ===== UC19 - Delivery =====
+        public DbSet<FailureReason> FailureReasons => Set<FailureReason>();
+        public DbSet<OrderFailureReason> OrderFailureReasons => Set<OrderFailureReason>();
+        public DbSet<OrderStatusHistory> OrderStatusHistories => Set<OrderStatusHistory>();
+
+        // ===== UC22 - Membership =====
+        public DbSet<MembershipTier> MembershipTiers => Set<MembershipTier>();
+        public DbSet<TierHistory> TierHistories => Set<TierHistory>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -63,9 +75,16 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.Property(e => e.PasswordHash).IsRequired(false);
                 entity.Property(u => u.Role).HasConversion<string>().HasMaxLength(20);
                 entity.Property(u => u.IsSuperAdmin).HasDefaultValue(false);
+                entity.Property(u => u.TotalSpent).HasPrecision(18, 2).HasDefaultValue(0);
 
                 entity.HasIndex(u => u.Username).IsUnique().HasDatabaseName("IX_Users_Username");
                 entity.HasIndex(u => u.Email).IsUnique().HasDatabaseName("IX_Users_Email");
+
+                // UC22: Quan hệ 1-N với MembershipTier
+                entity.HasOne(u => u.MembershipTier)
+                    .WithMany(mt => mt.Users)
+                    .HasForeignKey(u => u.MembershipTierId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             // 2. AuditLogs Configuration
@@ -91,11 +110,15 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.Property(o => o.ShippingAddress).IsRequired().HasMaxLength(500);
                 entity.Property(o => o.Status).IsRequired().HasMaxLength(30);
 
+                entity.HasIndex(o => new { o.ShipperId, o.Status, o.CreatedAt })
+                .HasDatabaseName("IX_Orders_ShipperId_Status_CreatedAt");
+
                 entity.HasOne(o => o.User)
                     .WithMany()
                     .HasForeignKey(o => o.UserId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+
             modelBuilder.Entity<Shipper>(entity =>
             {
                 entity.ToTable("Shippers");
@@ -114,6 +137,7 @@ namespace AncientBook.Infrastructure.Persistence
                       .HasForeignKey(o => o.ShipperId)
                       .OnDelete(DeleteBehavior.SetNull);
             });
+
             // 4. OrderItems Configuration
             modelBuilder.Entity<OrderItem>(entity =>
             {
@@ -286,7 +310,6 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.Property(b => b.Author).IsRequired().HasMaxLength(255);
                 entity.Property(b => b.CoverImg).HasMaxLength(500);
 
-                // Cấu hình các mức giá Decimal
                 entity.Property(b => b.PhysicalPrice).HasColumnType("decimal(18,2)").HasDefaultValue(0);
                 entity.Property(b => b.EBookPrice).HasColumnType("decimal(18,2)").HasDefaultValue(0);
                 entity.Property(b => b.WeeklyRentalPrice).HasColumnType("decimal(18,2)").HasDefaultValue(0);
@@ -296,7 +319,6 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.Property(b => b.Status).HasConversion<string>().HasMaxLength(20);
                 entity.Property(b => b.StockStatus).HasConversion<string>().HasMaxLength(20);
 
-                // Quan hệ với Publisher
                 entity.HasOne(b => b.PublisherEntity)
                     .WithMany()
                     .HasForeignKey(b => b.PublisherId)
@@ -330,7 +352,8 @@ namespace AncientBook.Infrastructure.Persistence
 
                 entity.HasOne(pi => pi.order)
                     .WithMany() 
-                    .HasForeignKey(pi => pi.OrderId);
+                    .HasForeignKey(pi => pi.OrderId)
+                    .OnDelete(DeleteBehavior.SetNull);  // ← SỬA: SetNull vì OrderId nullable
             });
             
             modelBuilder.Entity<Cart>(entity =>
@@ -367,30 +390,11 @@ namespace AncientBook.Infrastructure.Persistence
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // Data để test checkout xóa nếu muốn
-            modelBuilder.Entity<Book>().HasData(
-                new Book 
-                { 
-                    Id = 1, 
-                    Isbn = "978-604-0-00000-1", 
-                    Title = "Sách Cổ Mẫu", 
-                    Author = "Tác Giả Cổ", 
-                    PhysicalPrice = 100000,
-                    EBookPrice = 50000,
-                    WeeklyRentalPrice = 10000,
-                    IsPhysicalAvailable = true,
-                    IsEBookAvailable = true,
-                    IsRentalAvailable = true,
-                    CoverImg = "https://salt.tikicdn.com/ts/product/45/3e/2e/9f992ab2a5436d4f937d9fae16d47b53.jpg",
-                    CreatedAt = new DateTime(2026, 1, 1)
-                }
-            );
-            // 17. Cấu hình ChatSession
+            // 18. Cấu hình ChatSession
             modelBuilder.Entity<ChatSession>(entity =>
             {
                 entity.HasKey(e => e.Id);
 
-                // Optimistic concurrency token chống nhận trùng phiên (E1 UC24)
                 entity.Property(e => e.RowVersion)
                       .IsRowVersion();
 
@@ -407,11 +411,10 @@ namespace AncientBook.Infrastructure.Persistence
                       .HasForeignKey(e => e.StaffId)
                       .OnDelete(DeleteBehavior.Restrict);
 
-                // Index phục vụ lọc hàng đợi theo 3 tab (Pending, Active, Closed)
                 entity.HasIndex(e => new { e.Status, e.StaffId });
             });
 
-            // 18. Cấu hình ChatMessage
+            // 19. Cấu hình ChatMessage
             modelBuilder.Entity<ChatMessage>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -429,11 +432,10 @@ namespace AncientBook.Infrastructure.Persistence
                       .HasForeignKey(e => e.SenderId)
                       .OnDelete(DeleteBehavior.Restrict);
 
-                // Index tối ưu truy vấn lịch sử tin nhắn theo thứ tự thời gian
                 entity.HasIndex(e => new { e.ChatSessionId, e.CreatedAt });
             });
 
-            // 19. Cấu hình ChatSessionEvent
+            // 20. Cấu hình ChatSessionEvent
             modelBuilder.Entity<ChatSessionEvent>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -461,10 +463,10 @@ namespace AncientBook.Infrastructure.Persistence
                       .HasForeignKey(e => e.NextStaffId)
                       .OnDelete(DeleteBehavior.Restrict);
 
-                // Index tối ưu truy vấn sự kiện của phiên theo thứ tự thời gian
                 entity.HasIndex(e => new { e.ChatSessionId, e.CreatedAt });
             });
 
+            // 21. Cấu hình BookTtsSegment (TỪ NHÓM)
             modelBuilder.Entity<BookTtsSegment>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -477,6 +479,143 @@ namespace AncientBook.Infrastructure.Persistence
                       .WithMany()
                       .HasForeignKey(e => e.EditionId)
                       .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ============================================================
+            // ============ CẤU HÌNH UC21 - BOOK REVIEW ===================
+            // ============================================================
+
+            // 22. BookReview Configuration (TỪ BẠN)
+            modelBuilder.Entity<BookReview>(entity =>
+            {
+                entity.ToTable("BookReviews", t =>
+                {
+                    t.HasCheckConstraint("CK_BookReview_Rating", "[Rating] BETWEEN 1 AND 5");
+                });
+
+                entity.HasKey(r => r.Id);
+
+                entity.Property(r => r.Title).HasMaxLength(200);
+                entity.Property(r => r.Content).HasMaxLength(4000);
+                entity.Property(r => r.ImageUrls).HasMaxLength(2000);
+                entity.Property(r => r.Status).HasConversion<int>();
+
+                entity.HasIndex(r => new { r.BookId, r.Status }).HasDatabaseName("IX_BookReviews_Book_Status");
+                entity.HasIndex(r => new { r.BookId, r.Rating }).HasDatabaseName("IX_BookReviews_Book_Rating");
+                entity.HasIndex(r => new { r.UserId, r.BookId, r.OrderId }).IsUnique().HasDatabaseName("IX_BookReviews_User_Book_Order");
+                entity.HasIndex(r => r.CreatedAt).HasDatabaseName("IX_BookReviews_CreatedAt");
+
+                entity.HasOne(r => r.Book)
+                    .WithMany()
+                    .HasForeignKey(r => r.BookId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(r => r.User)
+                    .WithMany()
+                    .HasForeignKey(r => r.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(r => r.Order)
+                    .WithMany()
+                    .HasForeignKey(r => r.OrderId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // ============================================================
+            // ============ CẤU HÌNH UC19 - DELIVERY =====================
+            // ============================================================
+
+            // 23. FailureReason Configuration
+            modelBuilder.Entity<FailureReason>(entity =>
+            {
+                entity.ToTable("FailureReasons");
+                entity.HasKey(f => f.Id);
+                entity.Property(f => f.ReasonText).IsRequired().HasMaxLength(200);
+                entity.Property(f => f.Description).HasMaxLength(500);
+                entity.HasIndex(f => f.ReasonText).IsUnique().HasDatabaseName("IX_FailureReasons_ReasonText");
+            });
+
+            // 24. OrderFailureReason Configuration
+            modelBuilder.Entity<OrderFailureReason>(entity =>
+            {
+                entity.ToTable("OrderFailureReasons");
+                entity.HasKey(ofr => ofr.Id);
+                entity.Property(ofr => ofr.FailureNote).HasMaxLength(500);
+                entity.Property(ofr => ofr.RecordedBy).HasMaxLength(100);
+
+                entity.HasIndex(ofr => ofr.OrderId).HasDatabaseName("IX_OrderFailureReasons_OrderId");
+                entity.HasIndex(ofr => ofr.FailureReasonId).HasDatabaseName("IX_OrderFailureReasons_FailureReasonId");
+
+                entity.HasOne(ofr => ofr.Order)
+                    .WithMany()
+                    .HasForeignKey(ofr => ofr.OrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(ofr => ofr.FailureReason)
+                    .WithMany(fr => fr.OrderFailureReasons)
+                    .HasForeignKey(ofr => ofr.FailureReasonId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // 25. OrderStatusHistory Configuration
+            modelBuilder.Entity<OrderStatusHistory>(entity =>
+            {
+                entity.ToTable("OrderStatusHistories");
+                entity.HasKey(osh => osh.Id);
+                entity.Property(osh => osh.Note).HasMaxLength(500);
+                entity.Property(osh => osh.ChangedBy).HasMaxLength(100);
+                entity.Property(osh => osh.IpAddress).HasMaxLength(50);
+                entity.Property(osh => osh.FromStatus).HasConversion<int>();
+                entity.Property(osh => osh.ToStatus).HasConversion<int>();
+
+                entity.HasIndex(osh => new { osh.OrderId, osh.ChangedAt }).HasDatabaseName("IX_OrderStatusHistories_OrderId_ChangedAt");
+
+                entity.HasOne(osh => osh.Order)
+                    .WithMany()
+                    .HasForeignKey(osh => osh.OrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ============================================================
+            // ============ CẤU HÌNH UC22 - MEMBERSHIP ====================
+            // ============================================================
+
+            // 26. MembershipTier Configuration
+            modelBuilder.Entity<MembershipTier>(entity =>
+            {
+                entity.ToTable("MembershipTiers");
+                entity.HasKey(mt => mt.Id);
+                entity.Property(mt => mt.TierName).IsRequired().HasMaxLength(50);
+                entity.Property(mt => mt.MinSpending).HasPrecision(18, 2);
+                entity.Property(mt => mt.Benefits).HasMaxLength(1000);
+
+                entity.HasIndex(mt => mt.TierName).IsUnique().HasDatabaseName("IX_MembershipTiers_TierName");
+                entity.HasIndex(mt => mt.DisplayOrder).HasDatabaseName("IX_MembershipTiers_DisplayOrder");
+            });
+
+            // 27. TierHistory Configuration
+            modelBuilder.Entity<TierHistory>(entity =>
+            {
+                entity.ToTable("TierHistories");
+                entity.HasKey(th => th.Id);
+                entity.Property(th => th.FromTier).IsRequired().HasMaxLength(50);
+                entity.Property(th => th.ToTier).IsRequired().HasMaxLength(50);
+                entity.Property(th => th.TotalSpendingAtChange).HasPrecision(18, 2);
+                entity.Property(th => th.ChangedBy).HasMaxLength(100);
+                entity.Property(th => th.Note).HasMaxLength(500);
+
+                entity.HasIndex(th => new { th.UserId, th.ChangedAt }).HasDatabaseName("IX_TierHistories_UserId_ChangedAt");
+                entity.HasIndex(th => th.TriggerOrderId).HasDatabaseName("IX_TierHistories_TriggerOrderId");
+
+                entity.HasOne(th => th.User)
+                    .WithMany()
+                    .HasForeignKey(th => th.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(th => th.TriggerOrder)
+                    .WithMany()
+                    .HasForeignKey(th => th.TriggerOrderId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
         }
 

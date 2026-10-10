@@ -20,6 +20,13 @@ namespace AncientBook.Domain.Entities
         public int FPoints { get; set; } = 0;
         public UserRole Role { get; set; } = UserRole.Member; // BR03
 
+
+        // ===== UC22 - Membership =====
+    public int? MembershipTierId { get; set; }     // ← THÊM MỚI
+    public decimal TotalSpent { get; set; } = 0;    // ← THÊM MỚI
+    public MembershipTier? MembershipTier { get; set; }  // ← THÊM MỚI (navigation)
+
+
         // Reset password token and expiration
         public string? PasswordResetToken { get; set; }
         public DateTime? ResetTokenExpires { get; set; }

@@ -10,7 +10,7 @@ namespace AncientBook.Infrastructure.Repositories
     public class FPointsRepository : IFPointRepository
     {
         private readonly ApplicationDbContext _context;
-        private readonly int conversionFactor = 1000;
+        private readonly int conversionFactor = 100;  // ← SỬA: 100 VNĐ = 1 F-Point (UC22 BR03)
 
         public FPointsRepository(ApplicationDbContext context)
         {
@@ -23,7 +23,7 @@ namespace AncientBook.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<FPoints?> GetAsync(int userId, int orderId)
+        public async Task<FPoints?> GetAsync(int userId, int? orderId)
         {
             var record = await _context.FPoints.FirstOrDefaultAsync(p => p.UserId == userId && p.OrderId == orderId);
             return record;
@@ -90,14 +90,25 @@ namespace AncientBook.Infrastructure.Repositories
 
         public async Task<int> CalculateAndAwardPointsAsync(int userId, decimal totalAmount, int? orderId = null)
         {
+            // UC22 BR03: 1 F-Point = 100 VNĐ
             int earnedPoints = (int)(totalAmount / conversionFactor);
+
+            // UC22 BR03: Tối đa = min(số dư, 50% tiền sách, 1000 F-Point)
+            // 50% tiền sách quy đổi ra điểm
+            int maxPointsByAmount = (int)((totalAmount * 0.5m) / conversionFactor);
+            
+            if (earnedPoints > maxPointsByAmount)
+            {
+                earnedPoints = maxPointsByAmount;
+            }
+            
+            if (earnedPoints > 1000)
+            {
+                earnedPoints = 1000;
+            }
 
             if (earnedPoints > 0)
             {
-                if (earnedPoints > 1000)
-                {
-                    earnedPoints = 1000;       
-                }
                 await IncreasePointsAsync(userId, earnedPoints, orderId);
             }
 

@@ -4,6 +4,7 @@ using AncientBook.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AncientBook.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261009103549_AddBookReviewsOnly")]
+    partial class AddBookReviewsOnly
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -845,7 +848,7 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("OrderId")
+                    b.Property<int>("OrderId")
                         .HasColumnType("int");
 
                     b.Property<int>("PointUsed")
@@ -867,50 +870,6 @@ namespace AncientBook.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("FPoints", (string)null);
-                });
-
-            modelBuilder.Entity("AncientBook.Domain.Entities.FailureReason", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("ReasonText")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ReasonText")
-                        .IsUnique()
-                        .HasDatabaseName("IX_FailureReasons_ReasonText");
-
-                    b.ToTable("FailureReasons", (string)null);
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.Inventory", b =>
@@ -957,60 +916,6 @@ namespace AncientBook.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Inventories", (string)null);
-                });
-
-            modelBuilder.Entity("AncientBook.Domain.Entities.MembershipTier", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Benefits")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<decimal>("MinSpending")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("PointRate")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TierName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DisplayOrder")
-                        .HasDatabaseName("IX_MembershipTiers_DisplayOrder");
-
-                    b.HasIndex("TierName")
-                        .IsUnique()
-                        .HasDatabaseName("IX_MembershipTiers_TierName");
-
-                    b.ToTable("MembershipTiers", (string)null);
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.Order", b =>
@@ -1078,63 +983,11 @@ namespace AncientBook.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ShipperId");
+
                     b.HasIndex("UserId");
 
-                    b.HasIndex("ShipperId", "Status", "CreatedAt")
-                        .HasDatabaseName("IX_Orders_ShipperId_Status_CreatedAt");
-
                     b.ToTable("Orders", (string)null);
-                });
-
-            modelBuilder.Entity("AncientBook.Domain.Entities.OrderFailureReason", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AttemptNumber")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FailureNote")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("FailureReasonId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("RecordedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("RecordedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FailureReasonId")
-                        .HasDatabaseName("IX_OrderFailureReasons_FailureReasonId");
-
-                    b.HasIndex("OrderId")
-                        .HasDatabaseName("IX_OrderFailureReasons_OrderId");
-
-                    b.ToTable("OrderFailureReasons", (string)null);
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.OrderItem", b =>
@@ -1176,58 +1029,6 @@ namespace AncientBook.Infrastructure.Migrations
                     b.HasIndex("OrderId");
 
                     b.ToTable("OrderItems", (string)null);
-                });
-
-            modelBuilder.Entity("AncientBook.Domain.Entities.OrderStatusHistory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("ChangedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ChangedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("FromStatus")
-                        .HasColumnType("int");
-
-                    b.Property<string>("IpAddress")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Note")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ToStatus")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrderId", "ChangedAt")
-                        .HasDatabaseName("IX_OrderStatusHistories_OrderId_ChangedAt");
-
-                    b.ToTable("OrderStatusHistories", (string)null);
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.Publisher", b =>
@@ -1627,68 +1428,6 @@ namespace AncientBook.Infrastructure.Migrations
                     b.ToTable("SystemSettings", (string)null);
                 });
 
-            modelBuilder.Entity("AncientBook.Domain.Entities.TierHistory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("ChangedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ChangedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FromTier")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Note")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("ToTier")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<decimal>("TotalSpendingAtChange")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int?>("TriggerOrderId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TriggerOrderId")
-                        .HasDatabaseName("IX_TierHistories_TriggerOrderId");
-
-                    b.HasIndex("UserId", "ChangedAt")
-                        .HasDatabaseName("IX_TierHistories_UserId_ChangedAt");
-
-                    b.ToTable("TierHistories", (string)null);
-                });
-
             modelBuilder.Entity("AncientBook.Domain.Entities.User", b =>
                 {
                     b.Property<int>("Id")
@@ -1724,9 +1463,6 @@ namespace AncientBook.Infrastructure.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
 
-                    b.Property<int?>("MembershipTierId")
-                        .HasColumnType("int");
-
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
 
@@ -1754,12 +1490,6 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Property<int>("TokenVersion")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("TotalSpent")
-                        .ValueGeneratedOnAdd()
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)")
-                        .HasDefaultValue(0m);
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -1776,8 +1506,6 @@ namespace AncientBook.Infrastructure.Migrations
                     b.HasIndex("Email")
                         .IsUnique()
                         .HasDatabaseName("IX_Users_Email");
-
-                    b.HasIndex("MembershipTierId");
 
                     b.HasIndex("Username")
                         .IsUnique()
@@ -2029,7 +1757,8 @@ namespace AncientBook.Infrastructure.Migrations
                     b.HasOne("AncientBook.Domain.Entities.Order", "order")
                         .WithMany()
                         .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("AncientBook.Domain.Entities.User", "user")
                         .WithMany()
@@ -2071,25 +1800,6 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("AncientBook.Domain.Entities.OrderFailureReason", b =>
-                {
-                    b.HasOne("AncientBook.Domain.Entities.FailureReason", "FailureReason")
-                        .WithMany("OrderFailureReasons")
-                        .HasForeignKey("FailureReasonId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("AncientBook.Domain.Entities.Order", "Order")
-                        .WithMany()
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("FailureReason");
-
-                    b.Navigation("Order");
-                });
-
             modelBuilder.Entity("AncientBook.Domain.Entities.OrderItem", b =>
                 {
                     b.HasOne("AncientBook.Domain.Entities.Book", "Book")
@@ -2105,17 +1815,6 @@ namespace AncientBook.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Book");
-
-                    b.Navigation("Order");
-                });
-
-            modelBuilder.Entity("AncientBook.Domain.Entities.OrderStatusHistory", b =>
-                {
-                    b.HasOne("AncientBook.Domain.Entities.Order", "Order")
-                        .WithMany()
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("Order");
                 });
@@ -2168,34 +1867,6 @@ namespace AncientBook.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("AncientBook.Domain.Entities.TierHistory", b =>
-                {
-                    b.HasOne("AncientBook.Domain.Entities.Order", "TriggerOrder")
-                        .WithMany()
-                        .HasForeignKey("TriggerOrderId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("AncientBook.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("TriggerOrder");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("AncientBook.Domain.Entities.User", b =>
-                {
-                    b.HasOne("AncientBook.Domain.Entities.MembershipTier", "MembershipTier")
-                        .WithMany("Users")
-                        .HasForeignKey("MembershipTierId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("MembershipTier");
-                });
-
             modelBuilder.Entity("AncientBook.Domain.Entities.Book", b =>
                 {
                     b.Navigation("BookCategories");
@@ -2229,16 +1900,6 @@ namespace AncientBook.Infrastructure.Migrations
             modelBuilder.Entity("AncientBook.Domain.Entities.EbookEdition", b =>
                 {
                     b.Navigation("Embeddings");
-                });
-
-            modelBuilder.Entity("AncientBook.Domain.Entities.FailureReason", b =>
-                {
-                    b.Navigation("OrderFailureReasons");
-                });
-
-            modelBuilder.Entity("AncientBook.Domain.Entities.MembershipTier", b =>
-                {
-                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.Order", b =>

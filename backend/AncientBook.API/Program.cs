@@ -51,6 +51,7 @@ builder.Services.AddScoped<IChatRepository, ChatRepository>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IEbookEditionRepository, EbookEditionRepository>();
 builder.Services.AddScoped<IBookEmbeddingRepository, BookEmbeddingRepository>();
+
 // 1. Repositories
 builder.Services.AddScoped<IEbookEditionRepository, EbookEditionRepository>();
 builder.Services.AddScoped<IBookEmbeddingRepository, BookEmbeddingRepository>();
@@ -89,6 +90,20 @@ builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IBookRepository, BookRepository>();
+
+// UC18 - Fulfillment Service (HUY)
+builder.Services.AddScoped<IFulfillmentService, FulfillmentService>();
+
+// UC21 - Book Review (HUY)
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+
+// UC19 - Delivery (HUY) ← THÊM MỚI
+builder.Services.AddScoped<IDeliveryService, DeliveryService>();
+
+// UC22 - FPoint (HUY) ← THÊM MỚI
+builder.Services.AddScoped<IFPointService, FPointService>();
+
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IPublisherRepository, PublisherRepository>();
 builder.Services.AddScoped<ISystemSettingRepository, SystemSettingRepository>();

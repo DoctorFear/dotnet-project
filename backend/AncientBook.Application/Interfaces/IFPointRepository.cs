@@ -10,6 +10,6 @@ namespace AncientBook.Application.Interfaces
         Task DecreasePointsAsync(int userId, int points, int? orderId = null);
         Task<int> CalculateAndAwardPointsAsync(int userId, decimal totalAmount, int? orderId = null);
         Task AddAsync(FPoints record);
-        Task<FPoints?> GetAsync(int userId, int orderId);
+        Task<FPoints?> GetAsync(int userId, int? orderId);  // ← SỬA: int? orderId
     }
 }
