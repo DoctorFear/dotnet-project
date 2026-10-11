@@ -30,11 +30,13 @@ namespace AncientBook.Application.Services
 
         public async Task<ApiResponse<RegisterResponseDto>> RegisterAsync(RegisterRequestDto request)
         {
+            // 1. Kiểm tra Username
             if (await _userRepository.ExistsByUsernameAsync(request.Username))
             {
                 return ApiResponse<RegisterResponseDto>.Fail("Tên đăng nhập đã tồn tại trên hệ thống.");
             }
 
+            // 2. Kiểm tra Email (đảm bảo mỗi email chỉ liên kết 1 tài khoản để phục vụ Quên mật khẩu)
             if (await _userRepository.ExistsByEmailAsync(request.Email))
             {
                 return ApiResponse<RegisterResponseDto>.Fail("Địa chỉ email này đã được sử dụng.");
@@ -71,95 +73,27 @@ namespace AncientBook.Application.Services
             return ApiResponse<RegisterResponseDto>.Ok(responseData, "Đăng ký tài khoản thành công!");
         }
 
-        public async Task<ApiResponse<LoginResponseDto>> GoogleLoginAsync(GoogleLoginRequestDto request)
+        public async Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto request)
         {
-            GoogleJsonWebSignature.Payload payload;
-            try
+            // Chỉ tìm người dùng qua Username (Không tìm qua Email)
+            var user = await _userRepository.GetByUsernameAsync(request.Username);
+
+            if (user == null || string.IsNullOrEmpty(user.PasswordHash) || !_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
             {
-                payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken);
-            }
-            catch (Exception)
-            {
-                return ApiResponse<LoginResponseDto>.Fail("Mã xác thực Google không hợp lệ hoặc đã hết hạn.");
+                return ApiResponse<LoginResponseDto>.Fail("Tên đăng nhập hoặc mật khẩu không chính xác.");
             }
 
-            var email = payload.Email.ToLower();
-            var user = await _userRepository.GetByEmailAsync(email);
-
-            // 1. Trường hợp tài khoản đã tồn tại
-            if (user != null)
+            if (!user.IsActive)
             {
-                if (!user.IsActive)
-                {
-                    return ApiResponse<LoginResponseDto>.Fail("Tài khoản của bạn đã bị vô hiệu hóa.");
-                }
-            }
-            else
-            {
-                // 2. Trường hợp tài khoản mới đăng ký lần đầu bằng Google
-                var baseUsername = email.Split('@')[0];
-                var username = baseUsername;
-                int counter = 1;
-
-                while (await _userRepository.ExistsByUsernameAsync(username))
-                {
-                    username = $"{baseUsername}{counter++}";
-                }
-
-                user = new User
-                {
-                    Username = username,
-                    Email = email,
-                    FullName = string.IsNullOrWhiteSpace(payload.Name) ? baseUsername : payload.Name,
-                    PhoneNumber = null,
-                    PasswordHash = null, // BR05: Để NULL để hệ thống nhận diện là tài khoản chưa có password
-                    Role = UserRole.Member,
-                    FPoints = 0,
-                    IsActive = true
-                };
-
-                await _userRepository.AddAsync(user);
-                await _userRepository.SaveChangesAsync();
+                return ApiResponse<LoginResponseDto>.Fail("Tài khoản đã bị khóa hoặc vô hiệu hóa.");
             }
 
-            // 3. Cấp Refresh Token và Access Token cho người dùng
             var refreshToken = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
             user.RefreshToken = refreshToken;
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(3);
             await _userRepository.SaveChangesAsync();
 
             var accessToken = _tokenService.GenerateAccessToken(user);
-
-            var responseData = new LoginResponseDto
-            {
-                UserId = user.Id,
-                Username = user.Username,
-                Email = user.Email,
-                FullName = user.FullName,
-                Role = user.Role.ToString(),
-                FPoints = user.FPoints,
-                AccessToken = accessToken,
-                RefreshToken = refreshToken
-            };
-
-            return ApiResponse<LoginResponseDto>.Ok(responseData, "Đăng nhập bằng tài khoản Google thành công!");
-        }
-
-
-        public async Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto request)
-        {
-            var user = await _userRepository.GetByUsernameAsync(request.Username);
-            if (user == null || string.IsNullOrEmpty(user.PasswordHash) || !_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
-            {
-                return ApiResponse<LoginResponseDto>.Fail("Tên đăng nhập hoặc mật khẩu không chính xác.");
-            }
-
-            var refreshToken = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
-            user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(3); // Hạn 3 ngày không hoạt động
-            await _userRepository.SaveChangesAsync();
-
-            var accessToken = _tokenService.GenerateAccessToken(user); // 3. Sinh Access Token (15p)
 
             var responseData = new LoginResponseDto
             {

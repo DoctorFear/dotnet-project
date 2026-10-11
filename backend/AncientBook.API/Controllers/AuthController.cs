@@ -1,5 +1,4 @@
-﻿// AncientBook.API/Controllers/AuthController.cs
-using AncientBook.Application.Common;
+﻿using AncientBook.Application.Common;
 using AncientBook.Application.DTOs;
 using AncientBook.Application.DTOs.Auth;
 using AncientBook.Application.Interfaces;
@@ -8,7 +7,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
-
 
 namespace AncientBook.API.Controllers
 {
@@ -24,102 +22,66 @@ namespace AncientBook.API.Controllers
         }
 
         /// <summary>
-        /// UC01: Đăng ký tài khoản mới cho Khách vãng lai
+        /// Đăng ký tài khoản bằng Username + Password (kèm Email để phục vụ quên mật khẩu)
         /// </summary>
         [HttpPost("register")]
-
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
         {
-            // Kiểm tra Validation Attributes (E1)
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
 
             var result = await _authService.RegisterAsync(request);
-
             if (!result.Success)
-            {
                 return BadRequest(result);
-            }
 
             return Ok(result);
         }
 
         /// <summary>
-        /// A1: Đăng ký / Đăng nhập nhanh bằng tài khoản Google
+        /// Đăng nhập hệ thống (Chỉ chấp nhận Username + Password)
         /// </summary>
-        [HttpPost("google-login")]
-        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequestDto request)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var result = await _authService.GoogleLoginAsync(request);
-
-            if (!result.Success)
-            {
-                return BadRequest(result);
-            }
-
-            return Ok(result);
-        }
-
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
         {
             var result = await _authService.LoginAsync(request);
             if (!result.Success)
-            {
                 return BadRequest(result);
-            }
 
-            return Ok(result); // Trả về JSON chứa AccessToken & RefreshToken
+            return Ok(result);
         }
 
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto request)
         {
             if (string.IsNullOrEmpty(request.RefreshToken))
-            {
                 return BadRequest(ApiResponse<string>.Fail("Thiếu Refresh Token trong request."));
-            }
 
             var result = await _authService.RefreshTokenAsync(request.RefreshToken);
             if (!result.Success)
-            {
-                return Unauthorized(result); // Quá 3 ngày hoặc token sai sẽ trả về 401 bắt đăng nhập lại
-            }
+                return Unauthorized(result);
 
             return Ok(result);
         }
 
-
         [HttpPost("forgot-password")]
         [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDto request)
         {
             var result = await _authService.ForgotPasswordAsync(request);
             if (!result.Success)
-            {
                 return BadRequest(result);
-            }
+
             return Ok(result);
         }
 
         [HttpPost("reset-password")]
         [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto request)
         {
             var result = await _authService.ResetPasswordAsync(request);
             if (!result.Success)
-            {
                 return BadRequest(result);
-            }
+
             return Ok(result);
         }
 
@@ -127,7 +89,6 @@ namespace AncientBook.API.Controllers
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
-            // Lấy UserId từ Claims của Access Token đang gửi lên
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
             {
