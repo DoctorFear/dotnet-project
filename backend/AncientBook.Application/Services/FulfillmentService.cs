@@ -1,121 +1,113 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+using System.Data;
 using AncientBook.Application.Common;
 using AncientBook.Application.DTOs;
 using AncientBook.Application.Interfaces;
-using AncientBook.Domain.Common;
 using AncientBook.Domain.Entities;
 using AncientBook.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 
-namespace AncientBook.Application.Services
+namespace AncientBook.Application.Services;
+
+public class FulfillmentService : IFulfillmentService
 {
-    public class FulfillmentService : IFulfillmentService
+    private readonly IWorkflowDbContext _db;
+    public FulfillmentService(IWorkflowDbContext db) => _db = db;
+
+    public async Task<PagedResult<FulfillmentPendingItem>> GetPendingOrdersAsync(FulfillmentPendingQuery query)
     {
-        private readonly IOrderRepository _orderRepository;
-        private readonly ILogger<FulfillmentService> _logger;
-
-        public FulfillmentService(
-            IOrderRepository orderRepository,
-            ILogger<FulfillmentService> logger)
+        query.PageNumber = Math.Max(1, query.PageNumber);
+        query.PageSize = Math.Clamp(query.PageSize, 1, 100);
+        var orders = _db.Set<Order>().AsNoTracking().Where(o => o.Status == OrderStatus.Confirmed
+            && o.OrderItems.Any(i => i.PurchaseType == PurchaseType.Physical));
+        if (query.FromDate > query.ToDate) throw new InvalidOperationException("Khoảng ngày không hợp lệ.");
+        if (query.FromDate.HasValue) orders = orders.Where(o => o.OrderDate >= query.FromDate.Value);
+        if (query.ToDate.HasValue) orders = orders.Where(o => o.OrderDate <= query.ToDate.Value);
+        if (!string.IsNullOrWhiteSpace(query.Keyword))
         {
-            _orderRepository = orderRepository;
-            _logger = logger;
+            var keyword = query.Keyword.Trim();
+            orders = orders.Where(o => o.Id.ToString().Contains(keyword) || o.User != null && o.User.FullName.Contains(keyword));
         }
+        var count = await orders.CountAsync();
+        var items = await orders.OrderByDescending(o => o.CreatedAt).ThenByDescending(o => o.Id)
+            .Skip((query.PageNumber - 1) * query.PageSize).Take(query.PageSize)
+            .Select(o => new FulfillmentPendingItem
+            {
+                OrderId = o.Id, CustomerName = o.User != null ? o.User.FullName : "N/A",
+                OrderDate = o.OrderDate, FinalAmount = o.FinalAmount, Status = o.Status,
+                TotalItems = o.OrderItems.Where(i => i.PurchaseType == PurchaseType.Physical).Sum(i => i.Quantity),
+                PackingIssue = o.PackingIssue
+            }).ToListAsync();
+        return new(items, count, query.PageNumber, query.PageSize);
+    }
 
-        // ============================================================
-        // UC18: Lấy danh sách đơn "Đã xác nhận" cần đóng gói
-        // ============================================================
-        public async Task<PagedResult<FulfillmentPendingItem>> GetPendingOrdersAsync(FulfillmentPendingQuery query)
+    public async Task<FulfillmentDetailResponse> GetOrderDetailAsync(int orderId)
+    {
+        var order = await _db.Set<Order>().AsNoTracking().Include(o => o.User)
+            .Include(o => o.OrderItems).ThenInclude(i => i.Book).FirstOrDefaultAsync(o => o.Id == orderId)
+            ?? throw new KeyNotFoundException("Không tìm thấy đơn hàng.");
+        ValidatePacking(order);
+        return new FulfillmentDetailResponse
         {
-            if (query.PageNumber < 1) query.PageNumber = 1;
-            if (query.PageSize < 1) query.PageSize = 10;
-            if (query.PageSize > 100) query.PageSize = 100;
-
-            // Dùng overload 3-param (signature MỚI của nhóm)
-            var (items, totalCount) = await _orderRepository.GetPagedOrdersAsync(
-                query.PageNumber,
-                query.PageSize,
-                OrderStatus.Confirmed.ToString());
-
-            var result = items.Select(o => new FulfillmentPendingItem
+            OrderId = order.Id, CustomerName = order.User?.FullName ?? "N/A",
+            ReceiverPhone = order.User?.PhoneNumber, ShippingAddress = order.ShippingAddress,
+            PackingIssue = order.PackingIssue,
+            Items = order.OrderItems.Where(i => i.PurchaseType == PurchaseType.Physical).Select(i => new FulfillmentItemDetail
             {
-                OrderId = o.Id,
-                CustomerName = o.User?.FullName ?? "N/A",
-                OrderDate = o.OrderDate,
-                TotalItems = o.OrderItems?.Sum(oi => oi.Quantity) ?? 0,
-                FinalAmount = o.FinalAmount,
-                Status = o.Status
-            }).ToList();
+                BookId = i.BookId, BookTitle = i.Book?.Title ?? "N/A", BookCover = i.Book?.CoverImg,
+                Quantity = i.Quantity, UnitPrice = i.UnitPrice
+            }).ToList()
+        };
+    }
 
-            return new PagedResult<FulfillmentPendingItem>(result, totalCount, query.PageNumber, query.PageSize);
-        }
+    public async Task<bool> ConfirmPackingAsync(int orderId, string staffUsername)
+    {
+        await using var tx = await _db.BeginWorkflowTransactionAsync();
+        await WorkflowSupport.LockOrderAsync(_db, orderId);
+        var order = await _db.Set<Order>().Include(o => o.OrderItems).FirstOrDefaultAsync(o => o.Id == orderId)
+            ?? throw new KeyNotFoundException("Không tìm thấy đơn hàng.");
+        ValidatePacking(order);
+        var previous = order.Status;
+        order.Status = OrderStatus.Prepared;
+        order.PackingIssue = null;
+        order.UpdatedBy = staffUsername;
+        WorkflowSupport.StatusHistory(_db, order, previous, staffUsername);
+        WorkflowSupport.Audit(_db, "PackingCompleted", "Order", orderId, new { Status = previous },
+            new { order.Status }, await ActorIdAsync(staffUsername));
+        WorkflowSupport.Notify(_db, $"Đơn #{orderId} đã đóng gói xong, chờ phân công Shipper.", orderId);
+        await _db.SaveChangesAsync();
+        await tx.CommitAsync();
+        return true;
+    }
 
-        // ============================================================
-        // UC18: Lấy chi tiết đơn để đóng gói
-        // ============================================================
-        public async Task<FulfillmentDetailResponse> GetOrderDetailAsync(int orderId)
-        {
-            var order = await _orderRepository.GetByIdAsync(orderId);
-            if (order == null)
-            {
-                throw new KeyNotFoundException($"Không tìm thấy đơn hàng với ID: {orderId}");
-            }
+    public async Task<bool> ReportPackingIssueAsync(int orderId, string staffUsername, string reason)
+    {
+        if (string.IsNullOrWhiteSpace(reason) || reason.Length > 1000)
+            throw new InvalidOperationException("Vui lòng nhập lý do sự cố kho (tối đa 1.000 ký tự).");
+        await using var tx = await _db.BeginWorkflowTransactionAsync();
+        await WorkflowSupport.LockOrderAsync(_db, orderId);
+        var order = await _db.Set<Order>().Include(o => o.OrderItems).FirstOrDefaultAsync(o => o.Id == orderId)
+            ?? throw new KeyNotFoundException("Không tìm thấy đơn hàng.");
+        ValidatePacking(order);
+        var old = order.PackingIssue;
+        order.PackingIssue = reason.Trim();
+        order.UpdatedBy = staffUsername;
+        WorkflowSupport.Audit(_db, "PackingIssue", "Order", orderId, new { PackingIssue = old },
+            new { order.PackingIssue }, await ActorIdAsync(staffUsername));
+        var message = $"Sự cố kho đơn #{orderId}: {order.PackingIssue}";
+        WorkflowSupport.Notify(_db, message[..Math.Min(1000, message.Length)], orderId);
+        await _db.SaveChangesAsync();
+        await tx.CommitAsync();
+        return true;
+    }
 
-            if (order.Status != OrderStatus.Confirmed)
-            {
-                throw new InvalidOperationException($"Đơn hàng không ở trạng thái 'Đã xác nhận' (hiện tại: {order.Status}).");
-            }
+    private Task<int?> ActorIdAsync(string username) => _db.Set<User>()
+        .Where(u => u.Username == username).Select(u => (int?)u.Id).FirstOrDefaultAsync();
 
-            var response = new FulfillmentDetailResponse
-            {
-                OrderId = order.Id,
-                CustomerName = order.User?.FullName ?? "N/A",
-                ShippingAddress = order.ShippingAddress,
-                ReceiverPhone = order.User?.PhoneNumber,
-                Items = order.OrderItems?.Select(oi => new FulfillmentItemDetail
-                {
-                    BookId = oi.BookId,
-                    BookTitle = oi.Book?.Title ?? "N/A",
-                    BookCover = oi.Book?.CoverImg,
-                    Quantity = oi.Quantity,
-                    UnitPrice = oi.UnitPrice
-                }).ToList() ?? new List<FulfillmentItemDetail>()
-            };
-
-            return response;
-        }
-
-        // ============================================================
-        // UC18: Xác nhận đóng gói xong → Chuyển Confirmed → Prepared
-        // ============================================================
-        public async Task<bool> ConfirmPackingAsync(int orderId, string staffUsername)
-        {
-            var order = await _orderRepository.GetByIdAsync(orderId);
-            if (order == null)
-            {
-                throw new KeyNotFoundException($"Không tìm thấy đơn hàng với ID: {orderId}");
-            }
-
-            if (order.Status != OrderStatus.Confirmed)
-            {
-                throw new InvalidOperationException($"Đơn hàng không ở trạng thái 'Đã xác nhận'. Trạng thái hiện tại: {order.Status}.");
-            }
-
-            var previousStatus = order.Status;
-            order.Status = OrderStatus.Prepared;
-            order.UpdatedAt = TimeZoneHelper.GetVietnamTime();
-            order.UpdatedBy = staffUsername;
-
-            await _orderRepository.UpdateAsync(order);
-
-            _logger.LogInformation(
-                "Staff {Staff} đã đóng gói xong đơn hàng #{OrderId}. Trạng thái: {OldStatus} → {NewStatus}",
-                staffUsername, orderId, previousStatus, order.Status);
-
-            return true;
-        }
+    private static void ValidatePacking(Order order)
+    {
+        if (order.Status != OrderStatus.Confirmed)
+            throw new InvalidOperationException("Đơn đã bị hủy hoặc được nhân viên khác xử lý. Vui lòng làm mới danh sách.");
+        if (!order.OrderItems.Any(i => i.PurchaseType == PurchaseType.Physical))
+            throw new InvalidOperationException("Chỉ đóng gói đơn có sách vật lý.");
     }
 }

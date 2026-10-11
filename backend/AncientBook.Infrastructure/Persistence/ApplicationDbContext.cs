@@ -6,9 +6,18 @@ using AncientBook.Domain.Entities;
 
 namespace AncientBook.Infrastructure.Persistence
 {
-    public class ApplicationDbContext : DbContext, IApplicationDbContext
+    public class ApplicationDbContext : DbContext, IApplicationDbContext, IWorkflowDbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
+
+        public Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> BeginWorkflowTransactionAsync() =>
+            Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+        public Task LockOrderAsync(int id) => Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT [Id] FROM [Orders] WITH (UPDLOCK, HOLDLOCK) WHERE [Id] = {id}");
+        public Task LockUserAsync(int id) => Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT [Id] FROM [Users] WITH (UPDLOCK, HOLDLOCK) WHERE [Id] = {id}");
+        public Task LockBookAsync(int id) => Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT [Id] FROM [Books] WITH (UPDLOCK, HOLDLOCK) WHERE [Id] = {id}");
 
         public DbSet<User> Users => Set<User>();
 
@@ -62,6 +71,27 @@ namespace AncientBook.Infrastructure.Persistence
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Shipper>().HasOne(s => s.User).WithMany()
+                .HasForeignKey(s => s.UserId).OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Shipper>().HasIndex(s => s.UserId).IsUnique()
+                .HasFilter("[UserId] IS NOT NULL");
+            modelBuilder.Entity<Order>().Property(o => o.PackingIssue).HasMaxLength(1000);
+            modelBuilder.Entity<FPoints>().Property(p => p.SourceKey).HasMaxLength(200);
+            modelBuilder.Entity<FPoints>().Property(p => p.Description).HasMaxLength(1000);
+            modelBuilder.Entity<FPoints>().HasIndex(p => p.SourceKey).IsUnique()
+                .HasFilter("[SourceKey] IS NOT NULL");
+            modelBuilder.Entity<FPoints>().HasIndex(p => new { p.UserId, p.CreatedAt });
+            modelBuilder.Entity<FulfillmentNotification>(entity =>
+            {
+                entity.Property(n => n.Audience).HasMaxLength(20);
+                entity.Property(n => n.Message).HasMaxLength(1000);
+                entity.HasIndex(n => new { n.Audience, n.UserId, n.CreatedAt });
+                entity.HasOne<User>().WithMany().HasForeignKey(n => n.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne<Order>().WithMany().HasForeignKey(n => n.OrderId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
 
             // 1. Users Entity Configuration
             modelBuilder.Entity<User>(entity =>
@@ -353,7 +383,7 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.HasOne(pi => pi.order)
                     .WithMany() 
                     .HasForeignKey(pi => pi.OrderId)
-                    .OnDelete(DeleteBehavior.SetNull);  // ← SỬA: SetNull vì OrderId nullable
+                    .OnDelete(DeleteBehavior.SetNull);
             });
             
             modelBuilder.Entity<Cart>(entity =>
@@ -481,11 +511,7 @@ namespace AncientBook.Infrastructure.Persistence
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // ============================================================
-            // ============ CẤU HÌNH UC21 - BOOK REVIEW ===================
-            // ============================================================
-
-            // 22. BookReview Configuration (TỪ BẠN)
+            // 22. BookReview Configuration (UC21)
             modelBuilder.Entity<BookReview>(entity =>
             {
                 entity.ToTable("BookReviews", t =>
@@ -520,10 +546,6 @@ namespace AncientBook.Infrastructure.Persistence
                     .HasForeignKey(r => r.OrderId)
                     .OnDelete(DeleteBehavior.SetNull);
             });
-
-            // ============================================================
-            // ============ CẤU HÌNH UC19 - DELIVERY =====================
-            // ============================================================
 
             // 23. FailureReason Configuration
             modelBuilder.Entity<FailureReason>(entity =>
@@ -575,10 +597,6 @@ namespace AncientBook.Infrastructure.Persistence
                     .HasForeignKey(osh => osh.OrderId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
-
-            // ============================================================
-            // ============ CẤU HÌNH UC22 - MEMBERSHIP ====================
-            // ============================================================
 
             // 26. MembershipTier Configuration
             modelBuilder.Entity<MembershipTier>(entity =>

@@ -4,14 +4,16 @@ using AncientBook.Domain.Enums;
 
 namespace AncientBook.Application.DTOs
 {
-    // Request đóng gói đơn hàng (UC18)
+    public class PackingIssueRequest
+    {
+        public string Reason { get; set; } = string.Empty;
+    }
     public class PackOrderRequest
     {
         public int OrderId { get; set; }
         public string? Note { get; set; }
     }
 
-    // Query lấy danh sách đơn chờ đóng gói (UC18)
     public class FulfillmentPendingQuery
     {
         public int PageNumber { get; set; } = 1;
@@ -21,9 +23,9 @@ namespace AncientBook.Application.DTOs
         public DateTime? ToDate { get; set; }
     }
 
-    // Response cho danh sách đơn chờ đóng gói
     public class FulfillmentPendingItem
     {
+        public string? PackingIssue { get; set; }
         public int OrderId { get; set; }
         public string CustomerName { get; set; } = string.Empty;
         public DateTime OrderDate { get; set; }
@@ -32,9 +34,9 @@ namespace AncientBook.Application.DTOs
         public OrderStatus Status { get; set; }
     }
 
-    // Response cho chi tiết đơn đóng gói
     public class FulfillmentDetailResponse
     {
+        public string? PackingIssue { get; set; }
         public int OrderId { get; set; }
         public string CustomerName { get; set; } = string.Empty;
         public string ShippingAddress { get; set; } = string.Empty;

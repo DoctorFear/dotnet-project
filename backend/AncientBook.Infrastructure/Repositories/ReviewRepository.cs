@@ -60,6 +60,7 @@ namespace AncientBook.Infrastructure.Repositories
             int bookId, int pageNumber, int pageSize, int? ratingFilter, bool? verifiedOnly)
         {
             var query = _context.BookReviews
+                .AsNoTracking()
                 .Include(r => r.User)
                 .Where(r => r.BookId == bookId && r.Status == ReviewStatus.Approved);
 
@@ -89,7 +90,9 @@ namespace AncientBook.Infrastructure.Repositories
             int userId, int pageNumber, int pageSize)
         {
             var query = _context.BookReviews
+                .AsNoTracking()
                 .Include(r => r.Book)
+                .Where(r => r.Status != ReviewStatus.Hidden)
                 .Where(r => r.UserId == userId);
 
             var totalCount = await query.CountAsync();
@@ -105,16 +108,9 @@ namespace AncientBook.Infrastructure.Repositories
 
         public async Task<(double AverageRating, int TotalCount)> CalculateBookRatingAsync(int bookId)
         {
-            var reviews = await _context.BookReviews
-                .Where(r => r.BookId == bookId && r.Status == ReviewStatus.Approved)
-                .ToListAsync();
-
-            if (!reviews.Any())
-            {
-                return (0, 0);
-            }
-
-            return (reviews.Average(r => r.Rating), reviews.Count);
+            var reviews = _context.BookReviews.AsNoTracking()
+                .Where(r => r.BookId == bookId && r.Status == ReviewStatus.Approved);
+            return (await reviews.AverageAsync(r => (double?)r.Rating) ?? 0, await reviews.CountAsync());
         }
 
         public async Task<Dictionary<int, int>> GetRatingBreakdownAsync(int bookId)

@@ -63,7 +63,7 @@ namespace AncientBook.API.Controllers
             }
         }
 
-        // UC22: Áp dụng điểm khi checkout
+        // UC22: Xem trước mức giảm giá khi dùng điểm, chưa trừ điểm.
         [HttpPost("apply")]
         public async Task<IActionResult> ApplyPoints([FromBody] UseFPointRequest request)
         {
@@ -72,6 +72,10 @@ namespace AncientBook.API.Controllers
                 var userId = GetCurrentUserId();
                 var result = await _fpointService.ValidateAndCalculatePointsAsync(userId, request);
                 return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -88,6 +92,29 @@ namespace AncientBook.API.Controllers
             {
                 var result = await _fpointService.GetMembershipTiersAsync();
                 return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống.", details = ex.Message });
+            }
+        }
+
+        // UC22: Cập nhật hạng thành viên (Admin only)
+        [HttpPut("tiers/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateTier(int id, [FromBody] MembershipTierDto dto)
+        {
+            try
+            {
+                var result = await _fpointService.UpdateMembershipTierAsync(id, dto, GetCurrentUserId());
+                if (!result)
+                    return NotFound(new { message = $"Không tìm thấy hạng thành viên với ID: {id}" });
+
+                return Ok(new { message = "Cập nhật hạng thành viên thành công." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {

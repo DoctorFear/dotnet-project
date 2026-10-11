@@ -19,10 +19,14 @@ namespace AncientBook.API.Controllers
         }
 
         [HttpPost]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Member")]
         public async Task<IActionResult> Checkout([FromBody] CreateCheckoutRequest request)
         {
             try
             {
+                var id = User.FindFirst("UserId")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(id, out var currentUserId)) return Unauthorized();
+                request.UserId = currentUserId;
                 var response = await _checkoutService.ProcessCheckoutAsync(request);
                 return Ok(response);
             }
@@ -31,6 +35,10 @@ namespace AncientBook.API.Controllers
                 return NotFound(new { message = ex.Message });
             }
             catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
             {
                 return BadRequest(new { message = ex.Message });
             }

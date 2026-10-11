@@ -4,6 +4,8 @@ using AncientBook.Application.Common.Interfaces;
 using AncientBook.Application.Common.Interfaces.Repositories;
 using AncientBook.Application.Interfaces;
 using AncientBook.Application.Services;
+using AncientBook.Domain.Entities;
+using AncientBook.Domain.Enums;
 using AncientBook.Domain.Interfaces;
 using AncientBook.Infrastructure.Identity;
 using AncientBook.Infrastructure.Persistence;
@@ -35,6 +37,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<AncientBook.Application.Interfaces.IApplicationDbContext>(provider =>
     provider.GetRequiredService<ApplicationDbContext>());
+builder.Services.AddScoped<IWorkflowDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
 // DI Service & Repository & Hasher
 builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
@@ -91,18 +94,29 @@ builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IBookRepository, BookRepository>();
 
-// UC18 - Fulfillment Service (HUY)
+// UC18 - Đóng gói đơn hàng
 builder.Services.AddScoped<IFulfillmentService, FulfillmentService>();
 
-// UC21 - Book Review (HUY)
+// UC21 - Đánh giá sách
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 
-// UC19 - Delivery (HUY) ← THÊM MỚI
+// UC19 - Giao hàng
 builder.Services.AddScoped<IDeliveryService, DeliveryService>();
+builder.Services.AddScoped<IWorkflowReadService, WorkflowReadService>();
 
-// UC22 - FPoint (HUY) ← THÊM MỚI
+// UC22 - Điểm thưởng
 builder.Services.AddScoped<IFPointService, FPointService>();
+
+// UC22 - Hạng thành viên
+builder.Services.AddScoped<IMembershipTierRepository, MembershipTierRepository>();
+builder.Services.AddScoped<ITierHistoryRepository, TierHistoryRepository>();
+
+// Cache cấu hình hạng thành viên
+builder.Services.AddMemoryCache();
+
+// Đối soát điểm và hạng thành viên định kỳ
+builder.Services.AddHostedService<TierUpgradeBackgroundService>();
 
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IPublisherRepository, PublisherRepository>();
@@ -207,16 +221,11 @@ if (app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseHttpsRedirection();
 
-// Thứ tự Middleware chuẩn: Authentication trước Authorization
-// 1. Xác thực danh tính từ Bearer Token
 app.UseAuthentication();
 
-// 2. Chèn Middleware kiểm tra TokenVersion tức thì (BR04) tại đây
 app.UseMiddleware<TokenValidationMiddleware>();
 
-// 3. Kiểm tra phân quyền (Admin, Staff,...)
 app.UseAuthorization();
-// Map SignalR Hub & Controller sau app.UseAuthentication() và app.UseAuthorization()
 app.MapHub<LiveChatHub>("/hubs/chat");
 
 app.MapControllers();

@@ -7,6 +7,8 @@ namespace AncientBook.Domain.Entities
         public int UserId { get; set; }
         public int? OrderId { get; set; }
         public int PointUsed { get; set; }
+        public string? SourceKey { get; set; }
+        public string? Description { get; set; }
 
         public User? user { get; set; }
         public Order? order { get; set; }

@@ -6,6 +6,8 @@ namespace AncientBook.Domain.Entities
 {
     public class Shipper : BaseEntity, IAuditableEntity
     {
+        public int? UserId { get; set; }
+        public User? User { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Phone { get; set; } = string.Empty;
         public string Area { get; set; } = string.Empty;                  // Khu vực phụ trách giao hàng

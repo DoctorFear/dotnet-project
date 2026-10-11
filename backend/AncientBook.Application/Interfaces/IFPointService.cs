@@ -7,19 +7,20 @@ namespace AncientBook.Application.Interfaces
 {
     public interface IFPointService
     {
-        // UC22: Xem số dư điểm
         Task<FPointBalanceDto> GetBalanceAsync(int userId);
 
-        // UC22: Xem lịch sử biến động điểm
         Task<PagedResult<FPointTransactionDto>> GetHistoryAsync(int userId, int pageNumber, int pageSize);
 
-        // UC22: Sử dụng điểm khi checkout
+        // Chỉ xem trước mức giảm giá; Checkout kiểm tra lại và trừ điểm trong transaction.
         Task<UseFPointResponse> ValidateAndCalculatePointsAsync(int userId, UseFPointRequest request);
 
-        // UC22: Lấy danh sách hạng thành viên
         Task<List<MembershipTierDto>> GetMembershipTiersAsync();
 
-        // UC22: Tự động nâng hạng (gọi khi đơn Hoàn thành)
+        // Xét nâng hạng theo tổng chi tiêu của các đơn hoàn thành, đã thanh toán.
         Task<bool> AutoUpgradeTierAsync(int userId, int orderId, decimal totalSpent);
+
+        Task<bool> UpdateMembershipTierAsync(int id, MembershipTierDto dto, int? actorUserId = null);
+        Task<int> AwardCompletedOrderAsync(int orderId);
+        Task ProcessPaidDigitalOrderAsync(int orderId);
     }
 }

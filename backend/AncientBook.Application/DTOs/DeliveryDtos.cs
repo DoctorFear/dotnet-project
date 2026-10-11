@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace AncientBook.Application.DTOs
 {
-    // ===== UC19: Shipper xem danh sách đơn được phân công =====
     public class DeliveryOrderSummaryDto
     {
         public int OrderId { get; set; }
@@ -18,7 +17,6 @@ namespace AncientBook.Application.DTOs
         public DateTime OrderDate { get; set; }
     }
 
-    // ===== UC19: Chi tiết đơn hàng cho shipper =====
     public class DeliveryOrderDetailDto
     {
         public int OrderId { get; set; }
@@ -32,6 +30,10 @@ namespace AncientBook.Application.DTOs
         public decimal FinalAmount { get; set; }
         public decimal? CodAmount { get; set; }
         public string? Note { get; set; }
+        public bool IsReadOnly { get; set; }
+        public DateTime? CompletedAt { get; set; }
+        public string? FailureReason { get; set; }
+        public string? FailureNote { get; set; }
         public List<DeliveryItemDto> Items { get; set; } = new();
     }
 
@@ -43,7 +45,6 @@ namespace AncientBook.Application.DTOs
         public decimal UnitPrice { get; set; }
     }
 
-    // ===== UC19: Cập nhật trạng thái giao hàng =====
     public class UpdateDeliveryStatusRequest
     {
         public string NewStatus { get; set; } = string.Empty;   // "Shipping", "Completed", "Failed"
@@ -51,7 +52,6 @@ namespace AncientBook.Application.DTOs
         public string? FailureNote { get; set; }
     }
 
-    // ===== UC19: Lý do giao thất bại =====
     public class FailureReasonDto
     {
         public int Id { get; set; }
@@ -60,7 +60,6 @@ namespace AncientBook.Application.DTOs
         public int DisplayOrder { get; set; }
     }
 
-    // ===== UC19: Query lọc đơn hàng =====
     public class DeliveryOrderQuery
     {
         public int PageNumber { get; set; } = 1;

@@ -4,7 +4,6 @@ using AncientBook.Domain.Enums;
 
 namespace AncientBook.Application.DTOs
 {
-    // Request tạo đánh giá (UC21)
     public class CreateReviewRequest
     {
         public int BookId { get; set; }
@@ -25,7 +24,6 @@ namespace AncientBook.Application.DTOs
         public string? ImageUrls { get; set; }
     }
 
-    // Query danh sách đánh giá của sách
     public class BookReviewQuery
     {
         public int PageNumber { get; set; } = 1;
@@ -34,7 +32,6 @@ namespace AncientBook.Application.DTOs
         public bool? VerifiedOnly { get; set; }
     }
 
-    // Response đánh giá
     public class ReviewResponse
     {
         public int Id { get; set; }
@@ -47,12 +44,13 @@ namespace AncientBook.Application.DTOs
         public string? Content { get; set; }
         public string? ImageUrls { get; set; }
         public bool IsVerifiedPurchase { get; set; }
+        public PurchaseType? PurchaseType { get; set; }
+        public string? VerificationLabel { get; set; }
         public ReviewStatus Status { get; set; }
         public int HelpfulCount { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 
-    // Response tổng hợp đánh giá của sách
     public class BookReviewSummaryResponse
     {
         public int BookId { get; set; }

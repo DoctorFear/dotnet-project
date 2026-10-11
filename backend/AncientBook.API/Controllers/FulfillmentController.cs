@@ -15,6 +15,19 @@ namespace AncientBook.API.Controllers
     {
         private readonly IFulfillmentService _fulfillmentService;
 
+        [HttpPost("orders/{orderId}/packing-issue")]
+        [Authorize(Roles = "Staff,Admin")]
+        public async Task<IActionResult> ReportPackingIssue(int orderId, [FromBody] PackingIssueRequest request)
+        {
+            try
+            {
+                await _fulfillmentService.ReportPackingIssueAsync(orderId, User.Identity?.Name ?? "SystemStaff", request.Reason);
+                return Ok(new { message = "Đã báo sự cố kho. Trạng thái đơn được giữ nguyên." });
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+        }
+
         public FulfillmentController(IFulfillmentService fulfillmentService)
         {
             _fulfillmentService = fulfillmentService;
@@ -29,6 +42,10 @@ namespace AncientBook.API.Controllers
             {
                 var result = await _fulfillmentService.GetPendingOrdersAsync(query);
                 return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {

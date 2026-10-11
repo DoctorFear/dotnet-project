@@ -18,5 +18,6 @@ namespace AncientBook.Application.Interfaces
 
         // UC19: Lấy danh sách lý do giao thất bại
         Task<List<FailureReasonDto>> GetFailureReasonsAsync();
+        Task LinkShipperAccountAsync(int shipperId, int userId, int actorId);
     }
 }

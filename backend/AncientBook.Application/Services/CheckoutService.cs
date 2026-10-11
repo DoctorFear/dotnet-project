@@ -24,8 +24,10 @@ namespace AncientBook.Application.Services
         private readonly IHmacSha256Hasher _hasher;
         private readonly HttpClient _httpClient;
         private readonly ILogger<CheckoutService> _logger;
+        private readonly IWorkflowDbContext _workflow;
+        private readonly IFPointService _loyalty;
 
-        public CheckoutService(IBookRepository bookRepository, IInventoryRepository inventoryRepository, IOrderRepository orderRepository, IFPointRepository fpointRepository, IUserRepository userRepository, IHmacSha256Hasher hasher, HttpClient httpClient, ILogger<CheckoutService> logger)
+        public CheckoutService(IBookRepository bookRepository, IInventoryRepository inventoryRepository, IOrderRepository orderRepository, IFPointRepository fpointRepository, IUserRepository userRepository, IHmacSha256Hasher hasher, HttpClient httpClient, ILogger<CheckoutService> logger, IWorkflowDbContext workflow, IFPointService loyalty)
         {
             _bookRepository = bookRepository;
             _inventoryRepository = inventoryRepository;
@@ -34,6 +36,8 @@ namespace AncientBook.Application.Services
             _httpClient = httpClient;
             _hasher = hasher;
             _logger = logger;
+            _workflow = workflow;
+            _loyalty = loyalty;
         }
 
         public async Task<CreateCheckoutResponse> ProcessCheckoutAsync(CreateCheckoutRequest request)
@@ -42,6 +46,10 @@ namespace AncientBook.Application.Services
             {
                 throw new ArgumentException("Đơn hàng phải có ít nhất một sản phẩm sách.");
             }
+            if (request.PointsUsed < 0 || request.Items.Any(i => i.Quantity <= 0 || !Enum.IsDefined(i.PurchaseType)))
+                throw new ArgumentException("Số lượng sách và số điểm sử dụng không hợp lệ.");
+
+            await using var transaction = await _workflow.BeginWorkflowTransactionAsync();
 
             decimal subTotal = 0;
             var orderItemsToCreate = new List<OrderItem>();
@@ -50,6 +58,7 @@ namespace AncientBook.Application.Services
             try {
                 foreach (var itemDto in request.Items)
                 {
+                    await WorkflowSupport.LockBookAsync(_workflow, itemDto.BookId);
                     var book = await _bookRepository.GetByIdAsync(itemDto.BookId);
 
                     if (book == null)
@@ -110,14 +119,24 @@ namespace AncientBook.Application.Services
                                 throw new ArgumentException("Gói thời gian thuê không hợp lệ.");
                         }
                     }
+                    subTotal += unitPrice * itemDto.Quantity;
+                    orderItemsToCreate.Add(new OrderItem
+                    {
+                        BookId = itemDto.BookId, Quantity = itemDto.Quantity, UnitPrice = unitPrice,
+                        PurchaseType = itemDto.PurchaseType, RentalDuration = itemDto.RentalDuration,
+                        RentalStartDate = rentalStart, RentalEndDate = rentalEnd
+                    });
                 }
 
                 decimal discountAmount = 0;
                 var userFpoints = await _fpointRepository.GetCurrentUserPointsAsync(request.UserId);
 
-                if (request.PointsUsed > 0 && request.PointsUsed <= userFpoints && request.PointsUsed < 1000)
+                if (request.PointsUsed > 0)
                 {
-                    discountAmount = (decimal)request.PointsUsed * 10;
+                    var limit = Math.Min(1000, await WorkflowSupport.IntSettingAsync(_workflow, "MAX_POINTS_PER_ORDER", 1000));
+                    if (request.PointsUsed > userFpoints || request.PointsUsed > limit || request.PointsUsed * 100m > subTotal * 0.5m)
+                        throw new InvalidOperationException("Số điểm vượt số dư hoặc hạn mức cho đơn hàng.");
+                    discountAmount = (decimal)request.PointsUsed * 100;
                 }
 
                 decimal finalAmount = subTotal - discountAmount;
@@ -136,24 +155,26 @@ namespace AncientBook.Application.Services
                 };
 
                 await _orderRepository.AddAsync(order);
+                await _orderRepository.SaveChangesAsync();
+                WorkflowSupport.Audit(_workflow, "OrderCreated", "Order", order.Id, null,
+                    new { order.Status, order.SubTotal, order.DiscountAmount, order.FinalAmount }, request.UserId);
+                foreach (var entry in processedPhysicalInventories)
+                    WorkflowSupport.Audit(_workflow, "CheckoutStockReserved", "Book", entry.bookId, null,
+                        new { ReservedQuantity = entry.quantity }, request.UserId, $"Đơn #{order.Id}");
 
                 if (request.PointsUsed > 0 && discountAmount > 0)
                 {
                     await _fpointRepository.DecreasePointsAsync(request.UserId, (int)request.PointsUsed, order.Id);
                 }
-                else
-                {
-                    await _fpointRepository.CalculateAndAwardPointsAsync(request.UserId, finalAmount, order.Id);
-                }
-                
-                var fPointRecord = _fpointRepository.GetAsync(order.UserId, order.Id);
+                var fPointRecord = await _fpointRepository.GetAsync(order.UserId, order.Id);
                 if (fPointRecord != null)
                 {
                     order.PointsId = fPointRecord.Id;
                     await _orderRepository.UpdateAsync(order);
                 }
 
-                await _orderRepository.AddAsync(order);
+                await _workflow.SaveChangesAsync();
+                await transaction.CommitAsync();
 
                 return new CreateCheckoutResponse
                 {
@@ -168,23 +189,8 @@ namespace AncientBook.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi xảy ra trong quá trình xử lý đơn hàng. Đang tiến hành hoàn lại kho...");
-                foreach (var (bookId, quantity) in processedPhysicalInventories)
-                {
-                    try
-                    {
-                        await _inventoryRepository.IncreaseStockAsync(bookId, quantity);
-                    }
-                    catch (Exception compEx)
-                    {
-                        _logger.LogError(
-                            compEx, 
-                            "LỖI NGHIÊM TRỌNG: Không thể hoàn lại {Quantity} sản phẩm cho sách ID {BookId} trong quá trình rollback đơn hàng.", 
-                            quantity, 
-                            bookId
-                        );
-                    }
-                }
+                // The transaction rolls back stock, the order and points together.
+                _logger.LogError(ex, "Không thể tạo đơn hàng. Giao dịch đã bị hủy.");
                 throw;
             }
         }
@@ -319,6 +325,7 @@ namespace AncientBook.Application.Services
                     order.IsPaid = true;
                     await _orderRepository.UpdateAsync(order);
                 }
+                await _loyalty.ProcessPaidDigitalOrderAsync(order.Id);
             }
 
             return new GetMomoResponse
@@ -361,6 +368,7 @@ namespace AncientBook.Application.Services
             }
 
             await _orderRepository.UpdateAsync(order);
+            if (resultCode == 0) await _loyalty.ProcessPaidDigitalOrderAsync(order.Id);
         }
     }
 }

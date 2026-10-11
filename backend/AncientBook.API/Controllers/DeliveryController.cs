@@ -42,6 +42,10 @@ namespace AncientBook.API.Controllers
                 var result = await _deliveryService.GetMyDeliveriesAsync(userId, query);
                 return Ok(result);
             }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
             catch (UnauthorizedAccessException ex)
             {
                 return Unauthorized(new { message = ex.Message });

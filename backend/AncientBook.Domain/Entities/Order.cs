@@ -19,6 +19,7 @@ namespace AncientBook.Domain.Entities
         public string? PayUrl { get; set; }
         public bool IsPaid { get; set; } = false;
         public int? ShipperId { get; set; } 
+        public string? PackingIssue { get; set; }
         public Shipper? Shipper { get; set; } 
         // Navigation properties
         public User? User { get; set; }

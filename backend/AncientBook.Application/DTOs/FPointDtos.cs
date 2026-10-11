@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace AncientBook.Application.DTOs
 {
-    // ===== UC22: Xem số dư điểm =====
     public class FPointBalanceDto
     {
         public int UserId { get; set; }
@@ -14,7 +13,6 @@ namespace AncientBook.Application.DTOs
         public decimal TotalSpent { get; set; }
     }
 
-    // ===== UC22: Lịch sử biến động điểm =====
     public class FPointTransactionDto
     {
         public int Id { get; set; }
@@ -26,7 +24,7 @@ namespace AncientBook.Application.DTOs
         public DateTime CreatedAt { get; set; }
     }
 
-    // ===== UC22: Sử dụng điểm khi checkout =====
+    // Dữ liệu xem trước mức giảm giá, chưa làm thay đổi số dư điểm.
     public class UseFPointRequest
     {
         public int PointsToUse { get; set; }
@@ -41,7 +39,6 @@ namespace AncientBook.Application.DTOs
         public string Message { get; set; } = string.Empty;
     }
 
-    // ===== UC22: Hạng thành viên =====
     public class MembershipTierDto
     {
         public int Id { get; set; }
