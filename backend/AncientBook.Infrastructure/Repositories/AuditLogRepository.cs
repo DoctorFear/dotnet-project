@@ -39,6 +39,7 @@ namespace AncientBook.Infrastructure.Repositories
                                          a.EntityName.ToLower().Contains(kw) ||
                                          (a.RecordId != null && a.RecordId.ToLower().Contains(kw)) ||
                                          (a.Details != null && a.Details.ToLower().Contains(kw)) ||
+                                         (a.User != null && a.User.Username.ToLower().Contains(kw)) || // <-- THÊM TÌM USERNAME
                                          (a.User != null && a.User.Email.ToLower().Contains(kw)));
             }
 

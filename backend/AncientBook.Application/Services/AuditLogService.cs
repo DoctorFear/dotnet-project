@@ -43,6 +43,7 @@ namespace AncientBook.Application.Services
                     Id = a.Id,
                     Timestamp = a.Timestamp,
                     UserId = a.UserId,
+                    PerformerUsername = a.User != null ? a.User.Username : "System",
                     PerformerEmail = a.User != null ? a.User.Email : "System",
                     PerformerFullName = a.User != null ? a.User.FullName : "Hệ thống",
                     PerformerRole = a.User != null ? a.User.Role.ToString() : "System",
@@ -89,7 +90,7 @@ namespace AncientBook.Application.Services
                 NewValues = newValues,
                 Details = details,
                 IpAddress = ipAddress ?? "127.0.0.1",
-                Timestamp = DateTime.UtcNow
+                Timestamp = TimeZoneHelper.GetVietnamTime()
             };
 
             await _auditLogRepository.AddAsync(log);
