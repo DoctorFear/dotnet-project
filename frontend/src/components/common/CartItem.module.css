@@ -1,0 +1,149 @@
+.cartItemRow {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px;
+    background: #fafcff;
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    transition: border-color 0.15s ease;
+}
+.cartItemRow:hover {
+    border-color: var(--egyptian);
+}
+
+.cartItemCheckbox {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--egyptian);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.cartItemImg {
+    width: 65px;
+    height: 85px;
+    object-fit: contain;
+    background: #fff;
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.cartItemDetails {
+    flex: 1;
+}
+
+.cartItemTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--catalina);
+    margin-bottom: 3px;
+}
+
+.cartItemAuthor {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+}
+
+.cartItemPriceSet {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.itemSalePrice {
+    font-size: 14.5px;
+    font-weight: 800;
+    color: var(--egyptian);
+}
+
+.rentalLabel {
+    font-size: 12px;
+    color: #888;
+    margin-left: 8px;
+}
+
+.cartItemActions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.formatSelect {
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+}
+
+.dynamicControlWrapper {
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+}
+
+.durationSelect {
+    padding: 6px;
+    border-radius: 4px;
+    border: 2px solid #ccc;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+}
+
+.qtySelector {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    background: #fff;
+    overflow: hidden;
+}
+.qtyBtn {
+    background: #f4f7fc;
+    border: none;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--catalina);
+    transition: background 0.1s;
+}
+.qtyBtn:hover {
+    background: var(--hairline);
+}
+.qtyInput {
+    width: 36px;
+    text-align: center;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    outline: none;
+}
+
+.btnRemoveItem {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    margin-left: 16px;
+    transition: color 0.15s, background 0.15s;
+}
+.btnRemoveItem:hover {
+    color: var(--danger);
+    background: var(--danger-bg);
+}
+
+@media (max-width: 768px) {
+    .cartItemRow {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

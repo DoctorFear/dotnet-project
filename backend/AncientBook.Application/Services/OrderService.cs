@@ -196,7 +196,7 @@ namespace AncientBook.Application.Services
             if (query.PageSize < 1) query.PageSize = 10;
             if (query.PageSize > 100) query.PageSize = 100;
 
-            var (items, totalCount) = await _orderRepository.GetPagedOrdersAsync(query.PageNumber, query.PageSize, query.Status?.ToString());
+            var (items, totalCount) = await _orderRepository.GetPagedOrdersAsync(query.PageNumber, query.PageSize, query.Status?.ToString(), query.UserId);
 
             return new PagedResult<Order>
             (

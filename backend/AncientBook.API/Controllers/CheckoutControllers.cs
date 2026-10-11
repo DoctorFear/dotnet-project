@@ -94,5 +94,23 @@ namespace AncientBook.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpGet("{orderId}/is-paid")]
+        public async Task<IActionResult> CheckIsPaid(int orderId)
+        {
+            try
+            {
+                var isPaid = await _checkoutService.IsOrderOnlinePaidAsync(orderId);
+                return Ok(new { isPaid });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi hệ thống.", details = ex.Message });
+            }
+        }
     }
 }

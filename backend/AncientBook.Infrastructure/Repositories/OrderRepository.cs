@@ -76,9 +76,14 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<(List<Order> items, int totalCount)> GetPagedOrdersAsync(int pageIndex, int pageSize, string? status)
+        public async Task<(List<Order> items, int totalCount)> GetPagedOrdersAsync(int pageIndex, int pageSize, string? status, int? userId)
         {
             var query = _context.Orders.Include(o => o.OrderItems).AsQueryable();
+
+            if (userId != null)
+            {
+                query = query.Where(o => o.UserId == userId.Value);
+            }
 
             if (!string.IsNullOrWhiteSpace(status))
             {

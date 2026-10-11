@@ -1,18 +1,3 @@
-:root {
-    --alice: #F2F7FF;
-    --egyptian: #0B409C;
-    --catalina: #0D226B;
-    --ink: #071233;
-    --saffron: #FDBE34;
-    --muted: #5b6e99;
-    --hairline: #dce6f7;
-    --white: #ffffff;
-    --danger: #d93838;
-    --danger-bg: #fdf2f2;
-    --success: #15803d;
-    --success-bg: #ecfdf5;
-}
-
 .cartBody {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     background: var(--alice);
@@ -23,7 +8,6 @@
     box-sizing: border-box;
 }
 
-/* 3. MAIN CART SELECTOR LAYOUT */
 .cartPageContainer {
     max-width: 1300px;
     width: 100%;
@@ -48,7 +32,6 @@
     text-decoration: underline;
 }
 
-/* MAIN CONTENT BOX OF SAVED ITEMS */
 .cartMainBox {
     background: var(--white);
     border: 1px solid var(--hairline);
@@ -89,124 +72,6 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-}
-
-.cartItemRow {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 14px;
-    background: #fafcff;
-    border: 1px solid var(--hairline);
-    border-radius: 8px;
-    transition: border-color 0.15s ease;
-}
-.cartItemRow:hover {
-    border-color: var(--egyptian);
-}
-
-.cartItemCheckbox {
-    width: 16px;
-    height: 16px;
-    accent-color: var(--egyptian);
-    cursor: pointer;
-    flex-shrink: 0;
-}
-
-.cartItemImg {
-    width: 65px;
-    height: 85px;
-    object-fit: contain;
-    background: #fff;
-    border: 1px solid var(--hairline);
-    border-radius: 4px;
-    flex-shrink: 0;
-}
-
-.cartItemDetails {
-    flex: 1;
-}
-
-.cartItemTitle {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--catalina);
-    margin-bottom: 3px;
-}
-
-.cartItemAuthor {
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 6px;
-}
-
-.cartItemPriceSet {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-}
-
-.itemSalePrice {
-    font-size: 14.5px;
-    font-weight: 800;
-    color: var(--egyptian);
-}
-
-.itemOrigPrice {
-    font-size: 12px;
-    color: var(--muted);
-    text-decoration: line-through;
-}
-
-.cartItemActions {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.qtySelector {
-    display: flex;
-    align-items: center;
-    border: 1px solid var(--hairline);
-    border-radius: 6px;
-    background: #fff;
-    overflow: hidden;
-}
-.qtyBtn {
-    background: #f4f7fc;
-    border: none;
-    padding: 4px 10px;
-    cursor: pointer;
-    font-weight: 700;
-    color: var(--catalina);
-    transition: background 0.1s;
-}
-.qtyBtn:hover {
-    background: var(--hairline);
-}
-.qtyInput {
-    width: 36px;
-    text-align: center;
-    border: none;
-    font-size: 13px;
-    font-weight: 600;
-    outline: none;
-}
-
-.btnRemoveItem {
-    background: none;
-    border: none;
-    color: var(--muted);
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    transition: color 0.15s, background 0.15s;
-}
-.btnRemoveItem:hover {
-    color: var(--danger);
-    background: var(--danger-bg);
 }
 
 .cartSummaryFooter {
@@ -262,10 +127,6 @@
 }
 
 @media (max-width: 768px) {
-    .cartItemRow {
-        flex-direction: column;
-        align-items: flex-start;
-    }
     .cartSummaryFooter {
         flex-direction: column;
         gap: 16px;

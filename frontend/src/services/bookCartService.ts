@@ -23,11 +23,37 @@ export const addBookToCart = (book: PurchasableBook, selection: BookPurchaseSele
     return requestApi<{ message: string }>('/cart/items', {
         method: 'POST',
         body: JSON.stringify({
-            userId: getCurrentUserId(),
+            userId: 1,
             bookId: book.id,
             quantity: selection.format === 'physical' ? selection.quantity : 1,
             purchaseType: selection.format === 'physical' ? 1 : 2,
             rentalDuration: selection.format === 'rental' ? { week: 1, month: 2, year: 3 }[selection.duration] : null,
         }),
+    });
+};
+
+export const getCart = async (): Promise<any> => {
+    // const userId = getCurrentUserId();
+    const userId = 1;
+    return requestApi<any>(`/cart/${userId}`);
+};
+
+export const updateCart = async (
+    cartItemId: number,
+    data: { quantity: number; purchaseType: number; rentalDuration?: number | null, isSelected: Boolean }
+): Promise<{ message: string }> => {
+    // const userId = getCurrentUserId();
+    const userId = 1;
+    return requestApi<{ message: string }>(`/cart/items/${cartItemId}?userId=${userId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    });
+};
+
+export const deleteItemsCart = async (cartItemId: number): Promise<{ message: string }> => {
+    // const userId = getCurrentUserId();
+    const userId = 1;
+    return requestApi<{ message: string }>(`/cart/items/${cartItemId}?userId=${userId}`, {
+        method: 'DELETE',
     });
 };
