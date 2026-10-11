@@ -94,3 +94,5 @@ public class TtsGenerateResultDto
     public string Message { get; set; } = string.Empty;
     public int TotalSegmentsGenerated { get; set; }
 }   
+
+

@@ -1,14 +1,29 @@
-﻿using AncientBook.Application.Common.Interfaces.Repositories;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using AncientBook.Application.Common.Interfaces.Repositories;
+using AncientBook.Application.DTOs;
 using AncientBook.Domain.Entities;
 using AncientBook.Domain.Interfaces;
-
 
 namespace AncientBook.Infrastructure.Services
 {
     public interface IEbookTtsService
     {
-        Task<TtsGenerateResultDto> GenerateTtsAsync(int editionId, string language, CancellationToken ct = default);
-        Task<List<PageTtsResponseDto>> GetPageSegmentsAsync(int editionId, int pageNumber, CancellationToken ct = default);
+        Task<TtsGenerateResultDto> GenerateTtsAsync(
+            int editionId,
+            string language = "vi",
+            int? fromPage = null,
+            int? toPage = null,
+            CancellationToken ct = default);
+
+        Task<List<PageTtsResponseDto>> GetPageSegmentsAsync(
+            int editionId,
+            int pageNumber,
+            CancellationToken ct = default);
     }
 
     public class EbookTtsService : IEbookTtsService
@@ -33,7 +48,12 @@ namespace AncientBook.Infrastructure.Services
             _fileStorageService = fileStorageService;
         }
 
-        public async Task<TtsGenerateResultDto> GenerateTtsAsync(int editionId, string language, CancellationToken ct = default)
+        public async Task<TtsGenerateResultDto> GenerateTtsAsync(
+            int editionId,
+            string language = "vi",
+            int? fromPage = null,
+            int? toPage = null,
+            CancellationToken ct = default)
         {
             // 1. Lấy thông tin ấn bản sách qua Repo
             var edition = await _editionRepo.GetByIdAsync(editionId, ct);
@@ -58,14 +78,7 @@ namespace AncientBook.Infrastructure.Services
                 throw new InvalidOperationException($"Không thể tải sách từ Dropbox: {ex.Message}", ex);
             }
 
-            // 3. Dọn dẹp bản ghi cũ nếu admin bấm tạo lại
-            var oldSegments = await _segmentRepo.GetByEditionIdAsync(editionId, ct);
-            if (oldSegments.Any())
-            {
-                await _segmentRepo.DeleteRangeAsync(oldSegments, ct);
-            }
-
-            // 4. Bóc tách các khối văn bản (Overlap = 0)
+            // 3. Bóc tách toàn bộ khối văn bản (Overlap = 0)
             List<TtsSegmentDto> rawSegments;
             using (bookStream)
             {
@@ -75,6 +88,31 @@ namespace AncientBook.Infrastructure.Services
             if (rawSegments == null || !rawSegments.Any())
             {
                 throw new InvalidOperationException("Không trích xuất được khối văn bản nào từ tệp sách.");
+            }
+
+            // Lọc theo dải trang nếu Staff có chỉ định (chống nghẽn / timeout)
+            if (fromPage.HasValue)
+            {
+                rawSegments = rawSegments.Where(s => s.PageNumber >= fromPage.Value).ToList();
+            }
+            if (toPage.HasValue)
+            {
+                rawSegments = rawSegments.Where(s => s.PageNumber <= toPage.Value).ToList();
+            }
+
+            if (!rawSegments.Any())
+            {
+                throw new InvalidOperationException("Không có khối văn bản nào nằm trong khoảng trang đã chọn.");
+            }
+
+            // 4. Dọn dẹp bản ghi cũ trong phạm vi dải trang đang chạy lại
+            var existingSegments = await _segmentRepo.GetByEditionIdAsync(editionId, ct);
+            var targetPages = rawSegments.Select(s => s.PageNumber).Distinct().ToHashSet();
+            var segmentsToDelete = existingSegments.Where(s => targetPages.Contains(s.PageNumber)).ToList();
+
+            if (segmentsToDelete.Any())
+            {
+                await _segmentRepo.DeleteRangeAsync(segmentsToDelete, ct);
             }
 
             // 5. Sinh giọng đọc AI & Upload từng đoạn MP3 lên thư mục Dropbox: tts-audio/{editionId}
@@ -92,12 +130,12 @@ namespace AncientBook.Infrastructure.Services
                 // Giọng nữ
                 var femaleBytes = await _ttsAudioService.SynthesizeSpeechAsync(seg.TextContent, "female", language, ct);
                 var urlFemale = await _fileStorageService.SaveBytesFileAsync(femaleBytes, fileFemaleName, ttsSubFolder);
-                await Task.Delay(150, ct);
+                await Task.Delay(120, ct);
 
                 // Giọng nam
                 var maleBytes = await _ttsAudioService.SynthesizeSpeechAsync(seg.TextContent, "male", language, ct);
                 var urlMale = await _fileStorageService.SaveBytesFileAsync(maleBytes, fileMaleName, ttsSubFolder);
-                await Task.Delay(150, ct);
+                await Task.Delay(120, ct);
 
                 newSegments.Add(new BookTtsSegment
                 {
@@ -106,24 +144,28 @@ namespace AncientBook.Infrastructure.Services
                     SegmentIndex = seg.SegmentIndex,
                     TextContent = seg.TextContent,
                     AudioUrlFemale = urlFemale,
-                    AudioUrlMale = urlMale
+                    AudioUrlMale = urlMale,
+                    CreatedAt = DateTime.UtcNow
                 });
             }
 
-            // 6. Lưu segments mới & đánh dấu sách đã bật TTS
+            // 6. Lưu segments mới vào database
             await _segmentRepo.AddRangeAsync(newSegments, ct);
-            edition.IsTtsEnabled = true;
-
-            // Nếu IEbookEditionRepository có hàm Update đồng bộ thì mở comment dòng này:
-            // _editionRepo.Update(edition);
-
-            // Lưu toàn bộ thay đổi (gồm cả newSegments và cờ edition.IsTtsEnabled)
             await _segmentRepo.SaveChangesAsync(ct);
+
+            // 7. Đồng bộ cờ IsTtsEnabled = true cho EbookEdition
+            edition.IsTtsEnabled = true;
+            _editionRepo.Update(edition);
+            await _editionRepo.SaveChangesAsync(ct);
+
+            string pageRangeInfo = fromPage.HasValue || toPage.HasValue
+                ? $" (Trang {fromPage?.ToString() ?? "đầu"} đến {toPage?.ToString() ?? "cuối"})"
+                : "";
 
             return new TtsGenerateResultDto
             {
                 Success = true,
-                Message = $"Tạo âm thanh TTS ({language}) và đồng bộ lên Dropbox thành công.",
+                Message = $"Tạo âm thanh TTS ({language}){pageRangeInfo} và đồng bộ lên Dropbox thành công.",
                 TotalSegmentsGenerated = newSegments.Count
             };
         }

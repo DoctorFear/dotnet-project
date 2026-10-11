@@ -1,21 +1,21 @@
-﻿using AncientBook.Application.Common.Interfaces;
-using AncientBook.Application.Common.Interfaces.Repositories;
-using AncientBook.Application.Common.Models;
-using AncientBook.Domain.Entities;
-using AncientBook.Domain.Enums;
-using AncientBook.Infrastructure.Persistence;
-using AncientBook.Infrastructure.Storage;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
+using AncientBook.Application.Common.Interfaces;
+using AncientBook.Application.Common.Interfaces.Repositories;
+using AncientBook.Domain.Common;
+using AncientBook.Domain.Entities;
+using AncientBook.Domain.Enums;
+using AncientBook.Infrastructure.Persistence;
+using AncientBook.Infrastructure.Storage;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace AncientBook.API.Controllers
 {
@@ -53,6 +53,7 @@ namespace AncientBook.API.Controllers
         /// Bước 1: Tải tệp PDF/EPUB lên server để trích xuất metadata kỹ thuật và lưu bản nháp
         /// </summary>
         [HttpPost("upload")]
+        [Authorize(Roles = "Staff")]
         [Consumes("multipart/form-data")]
         [RequestSizeLimit(104_857_600)]
         public async Task<IActionResult> UploadEditionFile(
@@ -130,6 +131,7 @@ namespace AncientBook.API.Controllers
         /// Bước 2: Lưu nháp cấu hình đã chọn (PresetType) khi chưa muốn công khai ngay
         /// </summary>
         [HttpPut("{editionId}/draft")]
+        [Authorize(Roles = "Staff")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> SaveDraft(
@@ -159,6 +161,7 @@ namespace AncientBook.API.Controllers
         /// Bước 3: Xuất bản ấn bản (Bóc tách văn bản, nạp Vector RAG và mở bán sách)
         /// </summary>
         [HttpPost("{editionId}/publish")]
+        [Authorize(Roles = "Staff")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -198,6 +201,7 @@ namespace AncientBook.API.Controllers
         /// Hỏi đáp AI Copilot dựa trên RAG + Bôi đen (SelectedText) + Trang hiện tại (CurrentPage)
         /// </summary>
         [HttpPost("{editionId}/ask-copilot")]
+        [Authorize]
         [ProducesResponseType(typeof(CopilotQueryResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> AskCopilot(
@@ -245,7 +249,7 @@ namespace AncientBook.API.Controllers
                 SelectedText = request.SelectedText,
                 Question = request.Question,
                 Answer = aiAnswer,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = TimeZoneHelper.GetVietnamTime()
             };
 
             _context.CopilotChatHistories.Add(historyRecord);
@@ -259,7 +263,7 @@ namespace AncientBook.API.Controllers
                 TotalMatches = relevantChunks.Count,
                 Citations = relevantChunks.Select(c => new BookEmbeddingCitationDto
                 {
-                    PageNumber = c.PageNumber,
+                    PageNumber = c.PageNumber ?? 0,
                     ChunkIndex = c.ChunkIndex,
                     ChunkContent = c.ChunkContent
                 }).ToList()
@@ -272,6 +276,7 @@ namespace AncientBook.API.Controllers
         /// Lấy lịch sử trò chuyện với AI Copilot cho ấn bản sách này
         /// </summary>
         [HttpGet("{editionId}/copilot-history")]
+        [Authorize]
         [ProducesResponseType(typeof(List<CopilotHistoryItemDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetCopilotHistory(
             [FromRoute] int editionId,
@@ -307,33 +312,5 @@ namespace AncientBook.API.Controllers
 
             return Ok(histories);
         }
-    }
-
-    // =========================================================================
-    // DTOs CHO TÍNH NĂNG AI COPILOT
-    // =========================================================================
-    public class CopilotQueryResponse
-    {
-        public string Question { get; set; } = string.Empty;
-        public string Answer { get; set; } = string.Empty;
-        public int TotalMatches { get; set; }
-        public List<BookEmbeddingCitationDto> Citations { get; set; } = new();
-    }
-
-    public class BookEmbeddingCitationDto
-    {
-        public int? PageNumber { get; set; }
-        public int ChunkIndex { get; set; }
-        public string ChunkContent { get; set; } = string.Empty;
-    }
-
-    public class CopilotHistoryItemDto
-    {
-        public int Id { get; set; }
-        public int? CurrentPage { get; set; }
-        public string? SelectedText { get; set; }
-        public string Question { get; set; } = string.Empty;
-        public string Answer { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; }
     }
 }
