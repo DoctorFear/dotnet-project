@@ -43,7 +43,8 @@ namespace AncientBook.API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
         {
-            var result = await _authService.LoginAsync(request);
+            string ipAddress = GetClientIpAddress();
+            var result = await _authService.LoginAsync(request, ipAddress);
             if (!result.Success)
                 return BadRequest(result);
 
@@ -78,7 +79,8 @@ namespace AncientBook.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto request)
         {
-            var result = await _authService.ResetPasswordAsync(request);
+            string ipAddress = GetClientIpAddress();
+            var result = await _authService.ResetPasswordAsync(request, ipAddress);
             if (!result.Success)
                 return BadRequest(result);
 
@@ -95,8 +97,20 @@ namespace AncientBook.API.Controllers
                 return Unauthorized(ApiResponse<bool>.Fail("Không xác định được danh tính người dùng."));
             }
 
-            var result = await _authService.LogoutAsync(userId);
+            string ipAddress = GetClientIpAddress();
+            var result = await _authService.LogoutAsync(userId, ipAddress);
             return Ok(result);
+        }
+
+        private string GetClientIpAddress()
+        {
+            if (Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedHeader))
+            {
+                var ip = forwardedHeader.ToString().Split(',')[0].Trim();
+                if (!string.IsNullOrEmpty(ip)) return ip;
+            }
+
+            return HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
         }
     }
 }

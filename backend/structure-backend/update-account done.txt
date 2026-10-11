@@ -1,0 +1,51 @@
+backend/
+│
+├── AncientBook.Domain/                         # [Lớp 1: Core Domain & Entities]
+│   ├── Common/
+│   │   └── BaseEntity.cs                       # Id, CreatedAt, UpdatedAt
+│   ├── Entities/
+│   │   ├── User.cs                             # Username, Email, FullName, PhoneNumber, PasswordHash, Role, IsActive...[cite: 9]
+│   │   ├── Address.cs                          # Địa chỉ nhận hàng (UserId, Province, Ward, StreetAddress, IsDefault...)[cite: 39]
+│   │   └── AuditLog.cs                         # Bảng vết lịch sử an ninh (Action, Module, RecordId, IpAddress...)[cite: 9, 36]
+│   └── Enums/
+│       └── UserRole.cs                         # Member = 1, Staff = 2, Shipper = 3, Admin = 4[cite: 38]
+│
+├── AncientBook.Application/                    # [Lớp 2: Application / Contracts & DTOs]
+│   ├── Common/
+│   │   ├── ApiResponse.cs                      # Chuẩn hóa phản hồi API (Success, Data, Message...)[cite: 39]
+│   │   └── Interfaces/
+│   │       ├── IPasswordHasher.cs              # Hợp đồng băm & kiểm tra mật khẩu (BCrypt)[cite: 32, 39]
+│   │       └── IUserRepository.cs              # Hợp đồng truy vấn User kèm Addresses[cite: 32, 39]
+│   ├── DTOs/User/
+│   │   └── UserProfileDtos.cs                  # Toàn bộ DTOs của phân hệ thông tin tài khoản:[cite: 41]
+│   │                                           # - AddressDto[cite: 41]
+│   │                                           # - UserProfileResponseDto[cite: 41]
+│   │                                           # - UpdateProfileRequestDto[cite: 41]
+│   │                                           # - ChangePasswordRequestDto[cite: 41]
+│   │                                           # - SetPasswordRequestDto[cite: 41]
+│   ├── Interfaces/
+│   │   ├── IUserService.cs                     # Hợp đồng nghiệp vụ hồ sơ & mật khẩu cá nhân[cite: 32]
+│   │   └── IAuditLogService.cs                 # Hợp đồng ghi nhật ký an ninh hệ thống[cite: 32, 37]
+│   └── Services/
+│       └── UserService.cs                      # Xử lý quy tắc nghiệp vụ:[cite: 39]
+│                                               # - Khóa sửa Username & Email[cite: 39]
+│                                               # - Validate SĐT 10 số VN & Tối đa 2 địa chỉ cho Member[cite: 39]
+│                                               # - Đổi/Đặt mật khẩu & Tự động ghi AuditLog[cite: 36, 39]
+│
+├── AncientBook.Infrastructure/                 # [Lớp 3: Infrastructure / Persistence & Security]
+│   ├── Identity/
+│   │   └── BcryptPasswordHasher.cs             # Hiện thực mã hóa mật khẩu qua BCrypt.Net[cite: 32]
+│   └── Persistence/
+│       ├── ApplicationDbContext.cs             # Cấu hình bảng Users, Addresses, AuditLogs[cite: 9]
+│       └── Repositories/
+│           ├── UserRepository.cs               # GetByIdWithAddressesAsync, SaveChangesAsync...[cite: 32, 39]
+│           └── AuditLogRepository.cs           # Lưu vết AuditLog vào SQL Server[cite: 32, 36]
+│
+└── AncientBook.API/                            # [Lớp 4: Web API Presentation Layer]
+    ├── Controllers/
+    │   └── UserController.cs                   # Endpoints: [Authorize][cite: 40]
+    │                                           # - GET  /api/User/profile          (Xem hồ sơ)[cite: 40]
+    │                                           # - PUT  /api/User/profile          (Cập nhật họ tên, SĐT, địa chỉ)[cite: 40]
+    │                                           # - POST /api/User/change-password  (Đổi mật khẩu)[cite: 40]
+    │                                           # - POST /api/User/set-password     (Thiết lập mật khẩu lần đầu)[cite: 40]
+    └── Program.cs                              # Đăng ký DI IUserService, IAuditLogService, IUserRepository...[cite: 32]

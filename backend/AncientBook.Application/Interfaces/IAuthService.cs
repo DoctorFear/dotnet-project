@@ -8,9 +8,9 @@ namespace AncientBook.Application.Interfaces
     public interface IAuthService
     {
         Task<ApiResponse<RegisterResponseDto>> RegisterAsync(RegisterRequestDto request);
-        Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto request);
+        Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto request, string? ipAddress = null);
         Task<ApiResponse<bool>> ForgotPasswordAsync(ForgotPasswordRequestDto request);
-        Task<ApiResponse<bool>> ResetPasswordAsync(ResetPasswordRequestDto request);
+        Task<ApiResponse<bool>> ResetPasswordAsync(ResetPasswordRequestDto request, string? ipAddress = null);
         Task<ApiResponse<LoginResponseDto>> RefreshTokenAsync(string refreshToken);
         Task<ApiResponse<bool>> LogoutAsync(int userId, string? ipAddress = null);
 

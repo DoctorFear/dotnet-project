@@ -1,0 +1,41 @@
+backend/
+│
+├── AncientBook.Domain/                         # [Lớp 1: Core Domain]
+│   ├── Entities/
+│   │   ├── ChatSession.cs                      # Thực thể phiên hỗ trợ (CustomerId, StaffId, Status, RowVersion, InternalNote...)[cite: 29]
+│   │   ├── ChatMessage.cs                      # Thực thể tin nhắn (ChatSessionId, SenderId, SenderRole, Content, AttachmentUrl...)[cite: 28]
+│   │   └── ChatSessionEvent.cs                 # Thực thể sự kiện vòng đời phiên (Accepted, Transferred, Left, Closed...)[cite: 30]
+│   └── Enums/
+│       ├── ChatEventType.cs                    # Enum sự kiện: Created, Accepted, Transferred, Left, Closed[cite: 31]
+│       └── ChatSessionStatus.cs                # Enum trạng thái phiên: Pending, Active, Closed[cite: 32]
+│
+├── AncientBook.Application/                    # [Lớp 2: Business Logic & DTOs]
+│   ├── Common/Interfaces/
+│   │   └── IChatRepository.cs                  # Hợp đồng lưu trữ dữ liệu Chat (Db operations)[cite: 35]
+│   ├── DTOs/Chat/
+│   │   └── ChatDto.cs                          # Tập hợp các DTOs phục vụ luồng Chat:[cite: 26]
+│   │                                           # - SendMessageRequestDto, TransferSessionRequestDto, UpdateSessionNoteRequestDto[cite: 26]
+│   │                                           # - ChatQueueFilterDto (phân trang hàng đợi)[cite: 26]
+│   │                                           # - ChatMessageDto, ChatSessionEventDto, ChatTimelineItemDto[cite: 26]
+│   │                                           # - CustomerChatSessionDto, StaffChatSessionDto, OnlineStaffDto[cite: 26]
+│   ├── Interfaces/
+│   │   └── IChatService.cs                     # Interface nghiệp vụ Live Chat (UC23 & UC24)[cite: 23, 24]
+│   └── Services/
+│       └── ChatService.cs                      # Xử lý logic tạo phiên, gửi tin nhắn, nhận phiên, chuyển ca, timeline[cite: 27]
+│
+├── AncientBook.Infrastructure/                 # [Lớp 3: Database & External Services]
+│   ├── Persistence/
+│   │   ├── ApplicationDbContext.cs              # Khai báo DbSets (ChatSessions, ChatMessages, ChatSessionEvents) & Fluent API[cite: 36]
+│   │   └── Repositories/
+│   │       └── ChatRepository.cs               # Triển khai IChatRepository (truy vấn DB qua EF Core)[cite: 35]
+│   └── Storage/
+│       ├── IFileStorageService.cs              # Interface quản lý tệp đính kèm[cite: 34]
+│       └── DropboxStorageService.cs            # Upload ảnh đính kèm chat lên Dropbox (thư mục chat_customer, chat_staff)[cite: 23, 24, 34]
+│
+└── AncientBook.API/                            # [Lớp 4: Web API & Real-time Hub]
+    ├── Controllers/
+    │   ├── CustomerChatController.cs           # API dành cho Khách hàng: /api/chat (lấy phiên, gửi tin, upload ảnh, đọc tin)[cite: 24]
+    │   └── StaffChatController.cs              # API dành cho Nhân viên: /api/staff/chat (hàng đợi, tiếp nhận, chuyển ca, đóng phiên)[cite: 23]
+    ├── Hubs/
+    │   └── LiveChatHub.cs                      # SignalR Hub: kết nối socket, quản lý phòng chat, quản lý Staff online[cite: 25]
+    └── Program.cs                              # Đăng ký SignalR, ánh xạ /hubs/chat và xử lý JWT access_token qua query string[cite: 38]

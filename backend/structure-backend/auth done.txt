@@ -1,0 +1,47 @@
+backend/
+├── AncientBook.Domain/
+│   ├── Entities/
+│   │   └── User.cs                          # Entity User (chứa Username, Email, PasswordHash, RefreshToken, TokenVersion...)
+│   └── Enums/
+│       └── UserRole.cs                      # Enum vai trò (Member, Staff, Shipper, Admin)
+│
+├── AncientBook.Application/
+│   ├── Common/
+│   │   ├── ApiResponse.cs                   # Định dạng phản hồi chuẩn ApiResponse<T>
+│   │   └── Interfaces/
+│   │       └── ITokenService.cs             # Interface sinh JWT access token
+│   ├── DTOs/
+│   │   └── Auth/
+│   │       ├── RegisterRequestDto.cs        # Request đăng ký (Username, Email, Password, FullName, PhoneNumber)
+│   │       ├── RegisterResponseDto.cs       # Response sau khi đăng ký thành công
+│   │       ├── LoginRequestDto.cs           # Request đăng nhập (Username, Password)
+│   │       ├── LoginResponseDto.cs          # Response đăng nhập (AccessToken, RefreshToken, User info)
+│   │       ├── RefreshTokenRequestDto.cs    # Request làm mới access token
+│   │       ├── ForgotPasswordRequestDto.cs  # Request quên mật khẩu (Username, Email)
+│   │       └── ResetPasswordRequestDto.cs   # Request đặt lại mật khẩu (Token, NewPassword, ConfirmPassword)
+│   ├── Interfaces/
+│   │   ├── IAuthService.cs                  # Interface nghiệp vụ Auth
+│   │   ├── IUserRepository.cs               # Interface truy vấn bảng Users
+│   │   ├── IPasswordHasher.cs               # Interface mã hóa mật khẩu
+│   │   ├── IEmailService.cs                 # Interface gửi email xác nhận / reset
+│   │   └── IAuditLogService.cs              # Interface ghi nhật ký hệ thống
+│   └── Services/
+│       └── AuthService.cs                   # Xử lý logic Register, Login, Refresh, Forgot/Reset Password, Logout
+│
+├── AncientBook.Infrastructure/
+│   ├── Identity/
+│   │   └── BcryptPasswordHasher.cs          # Triển khai BCrypt hash mật khẩu
+│   ├── Persistence/
+│   │   ├── ApplicationDbContext.cs          # DbContext và cấu hình Fluent API cho Users table
+│   │   └── DatabaseSeeder.cs                # Khởi tạo dữ liệu người dùng mặc định (SuperAdmin, Staff, Shipper, Member)
+│   ├── Repositories/
+│   │   └── UserRepository.cs                # Triển khai truy vấn dữ liệu Users qua EF Core
+│   └── Services/
+│       ├── TokenService.cs                  # Sinh JWT Token chứa claims (UserId, Role, TokenVersion...)
+│       └── EmailService.cs                  # Kết nối SMTP gửi email khôi phục mật khẩu
+│
+└── AncientBook.API/
+    ├── Controllers/
+    │   └── AuthController.cs                # Tiếp nhận HTTP requests: /api/Auth (register, login, refresh-token, forgot/reset-password, logout)
+    ├── appsettings.json                     # Cấu hình chuỗi kết nối, JwtSettings (Secret, Issuer, Audience), EmailSettings (SMTP)
+    └── Program.cs                           # Đăng ký DI cho IAuthService, IUserRepository, ITokenService, IPasswordHasher...

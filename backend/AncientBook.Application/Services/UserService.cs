@@ -1,10 +1,14 @@
 ﻿using AncientBook.Application.Common;
 using AncientBook.Application.Common.Interfaces;
-    using AncientBook.Application.DTOs.User;
+using AncientBook.Application.DTOs.User;
 using AncientBook.Application.Interfaces;
 using AncientBook.Domain.Entities;
-using System.Net;
+using AncientBook.Domain.Enums;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace AncientBook.Application.Services;
 
@@ -12,11 +16,16 @@ public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IAuditLogService _auditLogService;
 
-    public UserService(IUserRepository userRepository, IPasswordHasher passwordHasher)
+    public UserService(
+        IUserRepository userRepository,
+        IPasswordHasher passwordHasher,
+        IAuditLogService auditLogService)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
+        _auditLogService = auditLogService;
     }
 
     public async Task<ApiResponse<UserProfileResponseDto>> GetProfileAsync(int userId)
@@ -66,7 +75,7 @@ public class UserService : IUserService
         user.PhoneNumber = request.PhoneNumber.Trim();
 
         // 2. Xử lý địa chỉ nhận hàng theo Role (BR04)
-        if (user.Role.ToString() == "Member")
+        if (user.Role == UserRole.Member)
         {
             var addresses = request.Addresses ?? new List<AddressDto>();
 
@@ -107,7 +116,7 @@ public class UserService : IUserService
         return ApiResponse<bool>.Ok(true, "Thay đổi thành công!");
     }
 
-    public async Task<ApiResponse<bool>> ChangePasswordAsync(int userId, ChangePasswordRequestDto request)
+    public async Task<ApiResponse<bool>> ChangePasswordAsync(int userId, ChangePasswordRequestDto request, string? ipAddress = null)
     {
         var user = await _userRepository.GetByIdAsync(userId);
         if (user == null)
@@ -142,16 +151,28 @@ public class UserService : IUserService
         user.PasswordHash = _passwordHasher.HashPassword(request.NewPassword);
         await _userRepository.SaveChangesAsync();
 
+        await _auditLogService.LogAsync(
+            action: "CHANGE_PASSWORD",
+            module: "USER",
+            entityName: "Users",
+            recordId: user.Id.ToString(),
+            oldValues: "***",
+            newValues: "***",
+            details: $"Tài khoản @{user.Username} ({user.Role}) đã đổi mật khẩu thành công",
+            userId: user.Id,
+            ipAddress: ipAddress
+        );
+
         return ApiResponse<bool>.Ok(true, "Đổi mật khẩu thành công!");
     }
 
-    public async Task<ApiResponse<bool>> SetPasswordAsync(int userId, SetPasswordRequestDto request)
+    public async Task<ApiResponse<bool>> SetPasswordAsync(int userId, SetPasswordRequestDto request, string? ipAddress = null)
     {
         var user = await _userRepository.GetByIdAsync(userId);
         if (user == null)
             return ApiResponse<bool>.Fail("Không tìm thấy người dùng.");
 
-        // BR05: Chỉ dành cho tài khoản Google chưa có mật khẩu
+        // BR05: Chỉ dành cho tài khoản chưa có mật khẩu
         if (!string.IsNullOrEmpty(user.PasswordHash))
             return ApiResponse<bool>.Fail("Tài khoản đã có mật khẩu nội bộ. Vui lòng dùng chức năng Đổi mật khẩu.");
 
@@ -167,6 +188,18 @@ public class UserService : IUserService
 
         user.PasswordHash = _passwordHasher.HashPassword(request.NewPassword);
         await _userRepository.SaveChangesAsync();
+
+        await _auditLogService.LogAsync(
+            action: "SET_PASSWORD",
+            module: "USER",
+            entityName: "Users",
+            recordId: user.Id.ToString(),
+            oldValues: null,
+            newValues: "***",
+            details: $"Tài khoản @{user.Username} ({user.Role}) đã thiết lập mật khẩu ban đầu thành công",
+            userId: user.Id,
+            ipAddress: ipAddress
+        );
 
         return ApiResponse<bool>.Ok(true, "Thiết lập mật khẩu thành công!");
     }

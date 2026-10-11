@@ -4,9 +4,7 @@ using AncientBook.Application.DTOs.Auth;
 using AncientBook.Application.Interfaces;
 using AncientBook.Domain.Entities;
 using AncientBook.Domain.Enums;
-using Google.Apis.Auth;
 using System;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace AncientBook.Application.Services
@@ -19,7 +17,12 @@ namespace AncientBook.Application.Services
         private readonly ITokenService _tokenService;
         private readonly IAuditLogService _auditLogService;
 
-        public AuthService(IUserRepository userRepository, IPasswordHasher passwordHasher, IEmailService emailService, ITokenService tokenService, IAuditLogService auditLogService)
+        public AuthService(
+            IUserRepository userRepository,
+            IPasswordHasher passwordHasher,
+            IEmailService emailService,
+            ITokenService tokenService,
+            IAuditLogService auditLogService)
         {
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
@@ -36,7 +39,7 @@ namespace AncientBook.Application.Services
                 return ApiResponse<RegisterResponseDto>.Fail("Tên đăng nhập đã tồn tại trên hệ thống.");
             }
 
-            // 2. Kiểm tra Email (đảm bảo mỗi email chỉ liên kết 1 tài khoản để phục vụ Quên mật khẩu)
+            // 2. Kiểm tra Email
             if (await _userRepository.ExistsByEmailAsync(request.Email))
             {
                 return ApiResponse<RegisterResponseDto>.Fail("Địa chỉ email này đã được sử dụng.");
@@ -73,9 +76,8 @@ namespace AncientBook.Application.Services
             return ApiResponse<RegisterResponseDto>.Ok(responseData, "Đăng ký tài khoản thành công!");
         }
 
-        public async Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto request)
+        public async Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto request, string? ipAddress = null)
         {
-            // Chỉ tìm người dùng qua Username (Không tìm qua Email)
             var user = await _userRepository.GetByUsernameAsync(request.Username);
 
             if (user == null || string.IsNullOrEmpty(user.PasswordHash) || !_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
@@ -94,6 +96,26 @@ namespace AncientBook.Application.Services
             await _userRepository.SaveChangesAsync();
 
             var accessToken = _tokenService.GenerateAccessToken(user);
+
+            // =========================================================================
+            // ĐIỀU KIỆN AUDIT LOG:
+            // Chỉ ghi nhận khi Admin / Staff / Shipper đăng nhập thành công.
+            // Khách hàng (Member) đăng nhập: BỎ QUA HOÀN TOÀN
+            // =========================================================================
+            if (user.Role != UserRole.Member)
+            {
+                await _auditLogService.LogAsync(
+                    action: "LOGIN",
+                    module: "AUTH",
+                    entityName: "Users",
+                    recordId: user.Id.ToString(),
+                    oldValues: null,
+                    newValues: null,
+                    details: $"Tài khoản nội bộ @{user.Username} ({user.Role}) đăng nhập thành công vào hệ thống",
+                    userId: user.Id,
+                    ipAddress: ipAddress
+                );
+            }
 
             var responseData = new LoginResponseDto
             {
@@ -120,7 +142,7 @@ namespace AncientBook.Application.Services
 
             var newRefreshToken = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
             user.RefreshToken = newRefreshToken;
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(3); // Gia hạn tiếp 3 ngày
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(3);
             await _userRepository.SaveChangesAsync();
 
             var newAccessToken = _tokenService.GenerateAccessToken(user);
@@ -138,32 +160,27 @@ namespace AncientBook.Application.Services
 
             return ApiResponse<LoginResponseDto>.Ok(responseData, "Làm mới phiên thành công!");
         }
+
         public async Task<ApiResponse<bool>> ForgotPasswordAsync(ForgotPasswordRequestDto request)
         {
-            // E1: Kiểm tra tính hợp lệ cơ bản
             if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Email))
             {
                 return ApiResponse<bool>.Fail("Tên đăng nhập và Email không được để trống.");
             }
 
-            // Bước 5: Kiểm tra cặp Tên đăng nhập và Email có cùng thuộc về 1 tài khoản không
             var user = await _userRepository.GetByUsernameAsync(request.Username);
 
-            // A1: Chống dò quét tài khoản (Dù sai hay đúng email/username đều trả về một thông báo chung thành công ở bước 7)
             if (user == null || !user.Email.Equals(request.Email.Trim(), StringComparison.OrdinalIgnoreCase))
             {
-                // Vẫn trả về true (thành công giả lập) để kẻ xấu không dò ra tài khoản nào tồn tại thực tế trong hệ thống
                 return ApiResponse<bool>.Ok(true, "Nếu thông tin chính xác, liên kết đặt lại mật khẩu đã được gửi về email của bạn.");
             }
 
-            // Bước 6: Tạo mã xác thực ngẫu nhiên (hoặc JWT Reset Token) có thời hạn 15 phút (BR02)
             var resetToken = Guid.NewGuid().ToString();
             user.PasswordResetToken = resetToken;
-            user.ResetTokenExpires = DateTime.UtcNow.AddMinutes(15); // Hạn đúng 15 phút
+            user.ResetTokenExpires = DateTime.UtcNow.AddMinutes(15);
 
             await _userRepository.SaveChangesAsync();
 
-            // Gửi email chứa liên kết (Ví dụ: https://yourdomain.com/reset-password?token=...)
             try
             {
                 string resetLink = $"https://localhost:7001/api/auth/reset-password?token={resetToken}";
@@ -173,23 +190,20 @@ namespace AncientBook.Application.Services
             }
             catch (Exception)
             {
-                // E2: Lỗi gửi email
                 return ApiResponse<bool>.Fail("Lỗi gián đoạn dịch vụ gửi email. Vui lòng thử lại sau.");
             }
 
             return ApiResponse<bool>.Ok(true, "Liên kết đặt lại mật khẩu đã được gửi về email của bạn. Vui lòng kiểm tra hộp thư.");
         }
 
-        public async Task<ApiResponse<bool>> ResetPasswordAsync(ResetPasswordRequestDto request)
+        public async Task<ApiResponse<bool>> ResetPasswordAsync(ResetPasswordRequestDto request, string? ipAddress = null)
         {
-            // E3: Kiểm tra token có tồn tại không
             var user = await _userRepository.GetByResetTokenAsync(request.Token);
             if (user == null || user.ResetTokenExpires < DateTime.UtcNow)
             {
                 return ApiResponse<bool>.Fail("Liên kết đã hết hạn hoặc không hợp lệ. Vui lòng gửi lại yêu cầu mới.");
             }
 
-            // E4 & BR04: Kiểm tra quy tắc mật khẩu mới (tối thiểu 6 ký tự, trùng khớp xác nhận)
             if (string.IsNullOrWhiteSpace(request.NewPassword) || request.NewPassword.Length < 6)
             {
                 return ApiResponse<bool>.Fail("Mật khẩu mới phải có độ dài tối thiểu từ 6 ký tự trở lên.");
@@ -200,17 +214,23 @@ namespace AncientBook.Application.Services
                 return ApiResponse<bool>.Fail("Mật khẩu xác nhận không trùng khớp.");
             }
 
-            // Bước 12 & BR03: Cập nhật mật khẩu mới, HỦY MẬT KHẨU CŨ, vô hiệu hóa token ngay lập tức (dùng 1 lần duy nhất)
             user.PasswordHash = _passwordHasher.HashPassword(request.NewPassword);
-            user.PasswordResetToken = null; // Xóa token để không bao giờ dùng lại được nữa (BR02)
+            user.PasswordResetToken = null;
             user.ResetTokenExpires = null;
-
-            // (Nếu hệ thống có bảng lưu phiên đăng nhập hoặc refreshToken, bạn sẽ tiến hành Revoke/Xóa toàn bộ phiên cũ của user này tại đây theo BR03)
 
             await _userRepository.SaveChangesAsync();
 
-            // Bước 13: Ghi nhận Audit Log (nếu có service log)
-            // _auditLogService.Log(user.Id, "Đổi mật khẩu thành công qua tính năng Quên mật khẩu");
+            await _auditLogService.LogAsync(
+                action: "RESET_PASSWORD",
+                module: "AUTH",
+                entityName: "Users",
+                recordId: user.Id.ToString(),
+                oldValues: "***",
+                newValues: "***",
+                details: $"Tài khoản @{user.Username} ({user.Role}) đã đặt lại mật khẩu thành công qua Quên mật khẩu",
+                userId: user.Id,
+                ipAddress: ipAddress
+            );
 
             return ApiResponse<bool>.Ok(true, "Đổi mật khẩu thành công! Vui lòng đăng nhập lại.");
         }
@@ -223,24 +243,9 @@ namespace AncientBook.Application.Services
                 return ApiResponse<bool>.Fail("Không tìm thấy người dùng.");
             }
 
-            // 1. Vô hiệu hóa Refresh Token của phiên hiện tại
             user.RefreshToken = null;
             user.RefreshTokenExpiryTime = null;
-            await _userRepository.SaveChangesAsync();
-
-            // 2. Ghi vết vào Audit Log (UC07)
-            await _auditLogService.LogAsync(
-                action: "LOGOUT",
-                module: "AUTH",
-                entityName: "Users",
-                recordId: user.Id.ToString(),
-                oldValues: null,
-                newValues: null,
-                details: $"Người dùng @{user.Username} ({user.Role}) đã đăng xuất khỏi hệ thống",
-                userId: user.Id,
-                ipAddress: ipAddress
-            );
-
+            await _userRepository.SaveChangesAsync();   
             return ApiResponse<bool>.Ok(true, "Đăng xuất thành công.");
         }
     }
