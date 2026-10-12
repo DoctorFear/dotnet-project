@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styles from './Header.module.css';
 import Badge from '../common/Badge';
 import { useUser } from '../../context/UserContext';
+import { useAuthAction } from '../../hooks/useAuthAction';
 import { Search, Heart, ShoppingBag, User } from 'lucide-react';
 
 export interface HeaderProps {
@@ -15,8 +16,6 @@ export interface HeaderProps {
     onNavigateProfile?: () => void;
     onNavigateOrders?: () => void;
     onNavigateLibrary?: () => void;
-    onLoginClick?: () => void;
-    onRegisterClick?: () => void;
     className?: string;
 }
 
@@ -30,13 +29,11 @@ export const Header: React.FC<HeaderProps> = ({
     onNavigateProfile,
     onNavigateOrders,
     onNavigateLibrary,
-    onLoginClick,
-    onRegisterClick,
     className = '',
 }) => {
     const navigate = useNavigate();
-    // Tự động lấy trạng thái đăng nhập & username từ UserContext gốc
-    const { isLoggedIn, user, logout } = useUser();
+    const { isLoggedIn, user } = useUser();
+    const { handleLogout } = useAuthAction();
     const [searchKeyword, setSearchKeyword] = useState('');
 
     const handleSearchTrigger = () => {
@@ -53,8 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
     const handleWishlistClick = (e: React.MouseEvent) => {
         e.preventDefault();
         if (!isLoggedIn) {
-            alert('Vui lòng đăng nhập để xem danh sách Yêu thích!');
-            onLoginClick?.();
+            navigate('/login');
             return;
         }
         if (onNavigateWishlist) onNavigateWishlist();
@@ -64,8 +60,7 @@ export const Header: React.FC<HeaderProps> = ({
     const handleLibraryClick = (e: React.MouseEvent) => {
         e.preventDefault();
         if (!isLoggedIn) {
-            alert('Vui lòng đăng nhập để truy cập Tủ sách cá nhân!');
-            onLoginClick?.();
+            navigate('/login');
             return;
         }
         if (onNavigateLibrary) onNavigateLibrary();
@@ -95,19 +90,19 @@ export const Header: React.FC<HeaderProps> = ({
                         onKeyDown={(e) => e.key === 'Enter' && handleSearchTrigger()}
                     />
                     <button type="button" className={styles.searchBtn} title="Tìm kiếm" onClick={handleSearchTrigger}>
-                        <Search/>
+                        <Search />
                     </button>
                 </div>
 
                 <div className={styles.navActions}>
                     <span className={styles.navActionLink} title="Sách yêu thích" onClick={handleWishlistClick} style={{ cursor: 'pointer' }}>
-                        <Heart/>
+                        <Heart />
                         <span>Yêu thích</span>
                         {isLoggedIn && <Badge count={wishlistCount} variant="count" />}
                     </span>
 
                     <span className={styles.navActionLink} title="Giỏ hàng" onClick={handleCartClick} style={{ cursor: 'pointer' }}>
-                        <ShoppingBag/>
+                        <ShoppingBag />
                         <span>Giỏ hàng</span>
                         <Badge count={cartCount} variant="count" />
                     </span>
@@ -123,23 +118,28 @@ export const Header: React.FC<HeaderProps> = ({
                                 alt="Avatar"
                             />
                             <span className={styles.userNameText}>
-                                {isLoggedIn ? user?.username || 'Tài khoản' : 'Tài khoản'}
+                                {isLoggedIn ? user?.fullName || user?.username : 'Tài khoản'}
                             </span>
-                            <User/>
+                            <User />
                         </div>
 
                         <ul className={styles.userDropdownMenu}>
                             {isLoggedIn ? (
                                 <>
+                                    {user?.role === 'Admin' && (
+                                        <li className={styles.dropdownItemLink} onClick={() => navigate('/admin/books')}>
+                                            Trang Quản trị (Admin)
+                                        </li>
+                                    )}
                                     <li className={styles.dropdownItemLink} onClick={onNavigateProfile}>Hồ sơ & Đổi mật khẩu</li>
                                     <li className={styles.dropdownItemLink} onClick={handleLibraryClick}>Tủ sách của tôi</li>
                                     <li className={styles.dropdownItemLink} onClick={onNavigateOrders}>Lịch sử đơn đặt sách</li>
-                                    <li className={styles.dropdownItemLinkDanger} onClick={logout}>Đăng xuất tài khoản</li>
+                                    <li className={styles.dropdownItemLinkDanger} onClick={handleLogout}>Đăng xuất tài khoản</li>
                                 </>
                             ) : (
                                 <>
-                                    <li className={styles.dropdownItemLink} onClick={onLoginClick}>Đăng nhập</li>
-                                    <li className={styles.dropdownItemLink} onClick={onRegisterClick}>Đăng ký tài khoản</li>
+                                    <li className={styles.dropdownItemLink} onClick={() => navigate('/login')}>Đăng nhập</li>
+                                    <li className={styles.dropdownItemLink} onClick={() => navigate('/register')}>Đăng ký tài khoản</li>
                                 </>
                             )}
                         </ul>

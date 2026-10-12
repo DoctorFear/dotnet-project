@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './Navbar.module.css';
+import { useUser } from '../../context/UserContext';
 
 export interface CategoryItem {
     id: string;
@@ -14,13 +15,19 @@ export interface PublisherItem {
 export interface NavbarProps {
     categories?: CategoryItem[];
     publishers?: PublisherItem[];
-    membershipRank?: string;
-    fPoints?: number;
     onSelectCategory?: (categoryName: string) => void;
     onSelectPublisher?: (publisherName: string) => void;
     onSelectPromotion?: () => void;
     className?: string;
 }
+
+// Hàm tính hạng thành viên tự động dựa theo điểm FPoints
+const getMembershipRank = (points: number): string => {
+    if (points >= 1000) return 'Hạng Kim Cương';
+    if (points >= 500) return 'Hạng Vàng';
+    if (points >= 200) return 'Hạng Bạc';
+    return 'Hạng Đồng';
+};
 
 export const Navbar: React.FC<NavbarProps> = ({
     categories = [
@@ -33,7 +40,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         { id: '7', name: 'Lịch sử & Khảo cổ' },
         { id: '8', name: 'Bí ẩn' },
         { id: '9', name: 'Truyện tâm linh' },
-        { id: '10', name: 'Sách Kỹ năng sống' } 
+        { id: '10', name: 'Sách Kỹ năng sống' }
     ],
     publishers = [
         { id: '1', name: 'NXB Giáo dục' },
@@ -45,13 +52,16 @@ export const Navbar: React.FC<NavbarProps> = ({
         { id: '7', name: 'NXB Văn Học' },
         { id: '8', name: 'NXB Tổng Hợp' }
     ],
-    membershipRank = 'Hạng Bạc',
-    fPoints = 240,
     onSelectCategory,
     onSelectPublisher,
-    onSelectPromotion,
     className = '',
 }) => {
+    const { isLoggedIn, user } = useUser();
+
+    // Lấy điểm thực tế từ UserContext
+    const currentPoints = isLoggedIn && user ? user.fPoints ?? 0 : 0;
+    const currentRank = getMembershipRank(currentPoints);
+
     return (
         <div className={`${styles.navbarSub} ${className}`}>
             <div className={styles.subNavContent}>
@@ -111,7 +121,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                 {/* Khối Điểm thưởng thành viên */}
                 <div className={styles.membershipInfo}>
-                    Thành viên: <strong className={styles.membershipRankText}>{membershipRank} ({fPoints} F-Points)</strong>
+                    {isLoggedIn ? (
+                        <>
+                            Thành viên: <strong className={styles.membershipRankText}>{currentRank} ({currentPoints} F-Points)</strong>
+                        </>
+                    ) : (
+                        <span>Đăng nhập để tích lũy điểm <strong>F-Points</strong></span>
+                    )}
                 </div>
             </div>
         </div>
