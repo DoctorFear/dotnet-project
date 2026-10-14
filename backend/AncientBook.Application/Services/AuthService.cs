@@ -1,4 +1,4 @@
-﻿using AncientBook.Application.Common;
+using AncientBook.Application.Common;
 using AncientBook.Application.Common.Interfaces;
 using AncientBook.Application.DTOs.Auth;
 using AncientBook.Application.Interfaces;
@@ -120,6 +120,7 @@ namespace AncientBook.Application.Services
                 Email = user.Email,
                 FullName = user.FullName,
                 Role = user.Role.ToString(),
+                FPoints = user.FPoints,
                 AccessToken = accessToken,
                 RefreshToken = refreshToken
             };
@@ -150,6 +151,7 @@ namespace AncientBook.Application.Services
                 Email = user.Email,
                 FullName = user.FullName,
                 Role = user.Role.ToString(),
+                FPoints = user.FPoints,
                 AccessToken = newAccessToken,
                 RefreshToken = newRefreshToken
             };
@@ -179,7 +181,7 @@ namespace AncientBook.Application.Services
 
             try
             {
-                string resetLink = $"https://localhost:7001/api/auth/reset-password?token={resetToken}";
+                string resetLink = $"http://localhost:5173/reset-password?token={resetToken}";
                 string emailBody = $"Chào {user.FullName},<br>Bạn đã yêu cầu khôi phục mật khẩu. Vui lòng bấm vào liên kết sau để đặt lại mật khẩu (có hiệu lực trong 15 phút): <a href='{resetLink}'>Đặt lại mật khẩu</a>";
 
                 await _emailService.SendEmailAsync(user.Email, "Khôi phục mật khẩu hệ thống", emailBody);

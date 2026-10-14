@@ -1,4 +1,4 @@
-﻿using AncientBook.Application.Common;
+using AncientBook.Application.Common;
 using AncientBook.Application.Common.Interfaces;
 using AncientBook.Application.DTOs.User;
 using AncientBook.Application.Interfaces;
@@ -55,26 +55,26 @@ public class UserService : IUserService
         return ApiResponse<UserProfileResponseDto>.Ok(response);
     }
 
-    public async Task<ApiResponse<bool>> UpdateProfileAsync(int userId, UpdateProfileRequestDto request)
+    public async Task<ApiResponse<UserProfileResponseDto>> UpdateProfileAsync(int userId, UpdateProfileRequestDto request)
     {
         // 1. Kiểm tra BR02: Họ tên không để trống
         if (string.IsNullOrWhiteSpace(request.FullName))
-            return ApiResponse<bool>.Fail("Họ và tên không được để trống.");
+            return ApiResponse<UserProfileResponseDto>.Fail("Họ và tên không được để trống.");
 
         // [MỚI] Kiểm tra Email không để trống và đúng định dạng
         if (string.IsNullOrWhiteSpace(request.Email))
-            return ApiResponse<bool>.Fail("Email không được để trống.");
+            return ApiResponse<UserProfileResponseDto>.Fail("Email không được để trống.");
 
         if (!Regex.IsMatch(request.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
-            return ApiResponse<bool>.Fail("Địa chỉ email không đúng định dạng.");
+            return ApiResponse<UserProfileResponseDto>.Fail("Địa chỉ email không đúng định dạng.");
 
         // Kiểm tra BR02: Số điện thoại chuẩn VN (10 chữ số, đầu 03, 05, 07, 08, 09)
         if (string.IsNullOrWhiteSpace(request.PhoneNumber) || !Regex.IsMatch(request.PhoneNumber, @"^(0[3|5|7|8|9])[0-9]{8}$"))
-            return ApiResponse<bool>.Fail("Số điện thoại không hợp lệ (phải đủ 10 chữ số).");
+            return ApiResponse<UserProfileResponseDto>.Fail("Số điện thoại không hợp lệ (phải đủ 10 chữ số).");
 
         var user = await _userRepository.GetByIdWithAddressesAsync(userId);
         if (user == null)
-            return ApiResponse<bool>.Fail("Không tìm thấy người dùng.");
+            return ApiResponse<UserProfileResponseDto>.Fail("Không tìm thấy người dùng.");
 
         // [CẬP NHẬT TẠI ĐÂY] Cho phép đổi Email, giữ nguyên Username (không check trùng Email vì chấp nhận dùng chung)
         user.FullName = request.FullName.Trim();
@@ -88,18 +88,18 @@ public class UserService : IUserService
 
             // BR04: Tối đa 2 địa chỉ
             if (addresses.Count > 2)
-                return ApiResponse<bool>.Fail("Khách hàng chỉ được lưu tối đa 2 địa chỉ nhận hàng.");
+                return ApiResponse<UserProfileResponseDto>.Fail("Khách hàng chỉ được lưu tối đa 2 địa chỉ nhận hàng.");
 
             // Kiểm tra tính hợp lệ của từng địa chỉ (E1)
             for (int i = 0; i < addresses.Count; i++)
             {
                 var addr = addresses[i];
                 if (string.IsNullOrWhiteSpace(addr.Province))
-                    return ApiResponse<bool>.Fail($"Vui lòng chọn Tỉnh/Thành phố cho Địa chỉ {i + 1}.");
+                    return ApiResponse<UserProfileResponseDto>.Fail($"Vui lòng chọn Tỉnh/Thành phố cho Địa chỉ {i + 1}.");
                 if (string.IsNullOrWhiteSpace(addr.Ward))
-                    return ApiResponse<bool>.Fail($"Vui lòng chọn Phường/Xã cho Địa chỉ {i + 1}.");
+                    return ApiResponse<UserProfileResponseDto>.Fail($"Vui lòng chọn Phường/Xã cho Địa chỉ {i + 1}.");
                 if (string.IsNullOrWhiteSpace(addr.StreetAddress))
-                    return ApiResponse<bool>.Fail($"Vui lòng nhập Số nhà tên đường cho Địa chỉ {i + 1}.");
+                    return ApiResponse<UserProfileResponseDto>.Fail($"Vui lòng nhập Số nhà tên đường cho Địa chỉ {i + 1}.");
             }
 
             // Đồng bộ dữ liệu địa chỉ
@@ -120,7 +120,26 @@ public class UserService : IUserService
         }
 
         await _userRepository.SaveChangesAsync();
-        return ApiResponse<bool>.Ok(true, "Thay đổi thành công!");
+
+        var response = new UserProfileResponseDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            FullName = user.FullName ?? string.Empty,
+            PhoneNumber = user.PhoneNumber ?? string.Empty,
+            Role = user.Role.ToString(),
+            Addresses = user.Addresses?.Select(a => new AddressDto
+            {
+                Id = a.Id,
+                Province = a.Province,
+                Ward = a.Ward,
+                StreetAddress = a.StreetAddress,
+                IsDefault = a.IsDefault
+            }).ToList() ?? new List<AddressDto>()
+        };
+
+        return ApiResponse<UserProfileResponseDto>.Ok(response, "Cập nhật hồ sơ thành công!");
     }
 
     public async Task<ApiResponse<bool>> ChangePasswordAsync(int userId, ChangePasswordRequestDto request, string? ipAddress = null)

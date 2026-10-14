@@ -1,0 +1,46 @@
+frontend/src/
+├── types/
+│   └── user.ts                    # Toàn bộ DTOs:
+│                                  # - Auth: LoginRequestDto, LoginResponseDto, RegisterRequestDto,
+│                                  #   RegisterResponseDto, ForgotPasswordRequestDto, ResetPasswordRequestDto
+│                                  # - Profile: UserProfileResponseDto, UpdateProfileRequestDto,
+│                                  #   AddressDto, ChangePasswordRequestDto
+│                                  # - Chung: UserInfo, UserRole, ApiResponse<T>
+│
+├── services/
+│   ├── apiClient.ts               # Core HTTP client: đính kèm Bearer token, bóc tách lỗi ApiResponse.Fail[cite: 2]
+│   ├── authService.ts             # Gọi API /Auth: login, register, logout, refresh-token,[cite: 2]
+│   │                              # forgot-password, reset-password[cite: 2]
+│   └── userService.ts             # Gọi API /User: getProfile, updateProfile, changePassword
+│
+├── context/
+│   └── UserContext.tsx            # Global State: lưu user, token, fPoints, cấp loginSuccess, logoutClient, updateUser[cite: 2]
+│
+├── hooks/
+│   ├── useToastNotifications.ts   # Hook quản lý hàng đợi và hiển thị thông báo Toast[cite: 2]
+│   └── useAuthAction.ts           # Nghiệp vụ Auth: handleLogin, handleRegister, handleLogout,[cite: 2]
+│                                  # handleForgotPassword, handleResetPassword[cite: 2]
+│
+├── components/
+│   ├── common/
+│   │   ├── ProtectedRoute.tsx     # Route Guard bảo vệ route theo đăng nhập và vai trò (Role)[cite: 2]
+│   │   └── ToastNotification.tsx  # Component hiển thị UI popup toast[cite: 2]
+│   └── layout/
+│       ├── Header.tsx             # Menu tài khoản, nút login/register, menu chuyển sang /profile[cite: 2]
+│       ├── Header.module.css
+│       ├── Navbar.tsx             # Thanh menu điều hướng, hiển thị điểm F-Points & hạng thành viên[cite: 2]
+│       ├── Navbar.module.css
+│       ├── AdminLayout.tsx        # Layout trang Admin tích hợp nút và Modal đổi thông tin Admin
+│       └── AdminLayout.module.css # Styles cho Admin layout và Modal chỉnh sửa thông tin
+│
+├── pages/
+│   ├── LoginPage.tsx              # Giao diện Đăng nhập[cite: 2]
+│   ├── RegisterPage.tsx           # Giao diện Đăng ký tài khoản[cite: 2]
+│   ├── ForgotPasswordPage.tsx     # Giao diện Quên mật khẩu (gửi token về email)[cite: 2]
+│   ├── ResetPasswordPage.tsx      # Giao diện Đặt lại mật khẩu mới qua token[cite: 2]
+│   ├── LoginPage.module.css       # Style CSS dùng chung cho các màn hình Auth[cite: 2]
+│   ├── ProfilePage.tsx            # Giao diện Quản lý hồ sơ cá nhân, sổ địa chỉ (BR04) & Đổi mật khẩu
+│   └── ProfilePage.module.css     # Style CSS cho trang Hồ sơ cá nhân
+│
+└── App.tsx                        # Khai báo Routes công khai (/login, /register, /forgot-password, /reset-password)[cite: 2]
+                                   # và Routes bảo vệ (/profile, /admin/...) bọc trong ProtectedRoute[cite: 2]
