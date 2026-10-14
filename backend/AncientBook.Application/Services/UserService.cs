@@ -42,7 +42,6 @@ public class UserService : IUserService
             FullName = user.FullName ?? string.Empty,
             PhoneNumber = user.PhoneNumber ?? string.Empty,
             Role = user.Role.ToString(),
-            HasPassword = !string.IsNullOrWhiteSpace(user.PasswordHash),
             Addresses = user.Addresses?.Select(a => new AddressDto
             {
                 Id = a.Id,
@@ -62,6 +61,13 @@ public class UserService : IUserService
         if (string.IsNullOrWhiteSpace(request.FullName))
             return ApiResponse<bool>.Fail("Họ và tên không được để trống.");
 
+        // [MỚI] Kiểm tra Email không để trống và đúng định dạng
+        if (string.IsNullOrWhiteSpace(request.Email))
+            return ApiResponse<bool>.Fail("Email không được để trống.");
+
+        if (!Regex.IsMatch(request.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+            return ApiResponse<bool>.Fail("Địa chỉ email không đúng định dạng.");
+
         // Kiểm tra BR02: Số điện thoại chuẩn VN (10 chữ số, đầu 03, 05, 07, 08, 09)
         if (string.IsNullOrWhiteSpace(request.PhoneNumber) || !Regex.IsMatch(request.PhoneNumber, @"^(0[3|5|7|8|9])[0-9]{8}$"))
             return ApiResponse<bool>.Fail("Số điện thoại không hợp lệ (phải đủ 10 chữ số).");
@@ -70,9 +76,10 @@ public class UserService : IUserService
         if (user == null)
             return ApiResponse<bool>.Fail("Không tìm thấy người dùng.");
 
-        // Cập nhật thông tin cá nhân (BR01: Username & Email không bị thay đổi)
+        // [CẬP NHẬT TẠI ĐÂY] Cho phép đổi Email, giữ nguyên Username (không check trùng Email vì chấp nhận dùng chung)
         user.FullName = request.FullName.Trim();
         user.PhoneNumber = request.PhoneNumber.Trim();
+        user.Email = request.Email.Trim().ToLower();
 
         // 2. Xử lý địa chỉ nhận hàng theo Role (BR04)
         if (user.Role == UserRole.Member)
@@ -164,43 +171,5 @@ public class UserService : IUserService
         );
 
         return ApiResponse<bool>.Ok(true, "Đổi mật khẩu thành công!");
-    }
-
-    public async Task<ApiResponse<bool>> SetPasswordAsync(int userId, SetPasswordRequestDto request, string? ipAddress = null)
-    {
-        var user = await _userRepository.GetByIdAsync(userId);
-        if (user == null)
-            return ApiResponse<bool>.Fail("Không tìm thấy người dùng.");
-
-        // BR05: Chỉ dành cho tài khoản chưa có mật khẩu
-        if (!string.IsNullOrEmpty(user.PasswordHash))
-            return ApiResponse<bool>.Fail("Tài khoản đã có mật khẩu nội bộ. Vui lòng dùng chức năng Đổi mật khẩu.");
-
-        // E5: Kiểm tra bỏ trống và xác nhận
-        if (string.IsNullOrWhiteSpace(request.NewPassword) || string.IsNullOrWhiteSpace(request.ConfirmNewPassword))
-            return ApiResponse<bool>.Fail("Vui lòng nhập mật khẩu mới và xác nhận mật khẩu.");
-
-        if (request.NewPassword != request.ConfirmNewPassword)
-            return ApiResponse<bool>.Fail("Mật khẩu xác nhận không khớp.");
-
-        if (request.NewPassword.Length < 6)
-            return ApiResponse<bool>.Fail("Mật khẩu phải từ 6 ký tự trở lên.");
-
-        user.PasswordHash = _passwordHasher.HashPassword(request.NewPassword);
-        await _userRepository.SaveChangesAsync();
-
-        await _auditLogService.LogAsync(
-            action: "SET_PASSWORD",
-            module: "USER",
-            entityName: "Users",
-            recordId: user.Id.ToString(),
-            oldValues: null,
-            newValues: "***",
-            details: $"Tài khoản @{user.Username} ({user.Role}) đã thiết lập mật khẩu ban đầu thành công",
-            userId: user.Id,
-            ipAddress: ipAddress
-        );
-
-        return ApiResponse<bool>.Ok(true, "Thiết lập mật khẩu thành công!");
     }
 }

@@ -6,7 +6,7 @@ export interface UserInfo {
     email: string;
     fullName: string;
     role: UserRole;
-    fPoints: number; // Khớp từ backend LoginResponseDto
+    fPoints: number;
     avatarUrl?: string;
 }
 
@@ -16,13 +16,12 @@ export interface ApiResponse<T> {
     data?: T | null;
 }
 
-// Khớp AncientBook.Application.DTOs.Auth.LoginRequestDto
+// --- DTOs Phân hệ Xác thực (Auth) ---
 export interface LoginRequestDto {
     username: string;
     password: string;
 }
 
-// Khớp AncientBook.Application.DTOs.Auth.LoginResponseDto
 export interface LoginResponseDto {
     userId: number;
     username: string;
@@ -34,17 +33,15 @@ export interface LoginResponseDto {
     refreshToken: string;
 }
 
-// Khớp AncientBook.Application.DTOs.Auth.RegisterRequestDto
 export interface RegisterRequestDto {
     fullName: string;
     username: string;
     email: string;
     phoneNumber?: string;
     password: string;
-    confirmPassword: string; // Backend bắt buộc có trường này để validate [Compare]
+    confirmPassword: string;
 }
 
-// Khớp AncientBook.Application.DTOs.Auth.RegisterResponseDto
 export interface RegisterResponseDto {
     userId: number;
     username: string;
@@ -53,4 +50,48 @@ export interface RegisterResponseDto {
     role: string;
     fPoints: number;
     createdAt: string;
+}
+
+export interface ForgotPasswordRequestDto {
+    username: string;
+    email: string;
+}
+
+export interface ResetPasswordRequestDto {
+    token: string;
+    newPassword: string;
+    confirmPassword: string;
+}
+
+// --- DTOs Phân hệ Quản lý Hồ sơ & Mật khẩu (User Profile) ---
+export interface AddressDto {
+    id?: number;
+    province: string;
+    ward: string;
+    streetAddress: string;
+    isDefault: boolean;
+}
+
+export interface UserProfileResponseDto {
+    id: number;
+    username: string;
+    email: string;
+    fullName: string;
+    phoneNumber: string;
+    role: string;
+    hasPassword: boolean;
+    addresses: AddressDto[];
+}
+
+export interface UpdateProfileRequestDto {
+    fullName: string;
+    email: string;
+    phoneNumber: string;
+    addresses?: AddressDto[];
+}
+
+export interface ChangePasswordRequestDto {
+    currentPassword: string;
+    newPassword: string;
+    confirmNewPassword: string;
 }

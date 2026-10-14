@@ -14,6 +14,9 @@ import AdminBookManagementPage from './pages/AdminBookManagementPage';
 import AdminSettingsPage from './pages/AdminSettingsPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import ProfilePage from './pages/ProfilePage';
 
 export const App: React.FC = () => {
     return (
@@ -26,6 +29,8 @@ export const App: React.FC = () => {
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
                     <Route path="/cart" element={<CartPage />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                    <Route path="/reset-password" element={<ResetPasswordPage />} />
 
                     {/* 2. Customer Routes: Dành cho độc giả (Member) hoặc tài khoản quản trị khi mua sắm */}
                     <Route element={<ProtectedRoute allowedRoles={['Member']} />}>
@@ -33,11 +38,14 @@ export const App: React.FC = () => {
                         <Route path="/my-library" element={<MyLibraryPage />} />
                         <Route path="/checkout" element={<CheckoutPage />} />
                         <Route path="/refund" element={<RefundPage />} />
+                        <Route path="/profile" element={<ProfilePage />} />
+                        
                     </Route>
 
                     {/* 3. Staff Routes: Quản lý sách, catalog và tài liệu */}
                     <Route element={<ProtectedRoute allowedRoles={['Staff']} />}>
                         <Route path="/admin/books" element={<AdminBookManagementPage />} />
+                        
                     </Route>
 
                     {/* 4. Shipper Routes: Quản lý đơn hàng và giao nhận */}

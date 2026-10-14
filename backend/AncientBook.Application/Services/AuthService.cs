@@ -33,17 +33,13 @@ namespace AncientBook.Application.Services
 
         public async Task<ApiResponse<RegisterResponseDto>> RegisterAsync(RegisterRequestDto request)
         {
-            // 1. Kiểm tra Username
+            // 1. Kiểm tra Username (bắt buộc duy nhất)
             if (await _userRepository.ExistsByUsernameAsync(request.Username))
             {
                 return ApiResponse<RegisterResponseDto>.Fail("Tên đăng nhập đã tồn tại trên hệ thống.");
             }
 
-            // 2. Kiểm tra Email
-            if (await _userRepository.ExistsByEmailAsync(request.Email))
-            {
-                return ApiResponse<RegisterResponseDto>.Fail("Địa chỉ email này đã được sử dụng.");
-            }
+            // 2. BỎ bước kiểm tra ExistsByEmailAsync ở đây để cho phép trùng Email
 
             var passwordHash = _passwordHasher.HashPassword(request.Password);
 

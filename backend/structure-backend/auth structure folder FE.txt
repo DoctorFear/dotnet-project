@@ -1,0 +1,30 @@
+frontend/src/
+├── types/
+│   └── user.ts                    # DTOs: LoginRequestDto, RegisterRequestDto, LoginResponseDto, 
+│                                  # RegisterResponseDto, UserInfo, UserRole, ApiResponse<T>
+│
+├── services/
+│   ├── apiClient.ts               # Xử lý token Bearer, bóc tách thông điệp lỗi ApiResponse.Fail
+│   └── authService.ts             # Gọi API /Auth/login, /Auth/register, /Auth/logout, /Auth/refresh-token
+│
+├── context/
+│   └── UserContext.tsx            # Global state: lưu user, token, fPoints từ localStorage; cấp loginSuccess, logoutClient
+│
+├── hooks/
+│   ├── useToastNotifications.ts   # Quản lý hàng đợi thông báo toast (đã dùng chung)
+│   └── useAuthAction.ts           # Nghiệp vụ: submit login/register/logout, loading, toast, redirect
+│
+├── components/
+│   ├── common/
+│   │   ├── ProtectedRoute.tsx     # Route Guard chặn truy cập theo login state và role
+│   │   └── ToastNotification.tsx  # Hiển thị thông báo popup UI (đã dùng chung)
+│   └── layout/
+│       ├── Header.tsx             # Menu tài khoản, nút Đăng nhập/Đăng ký, gọi handleLogout, nút vào Admin
+│       └── Navbar.tsx             # Hiển thị số điểm F-Points và Hạng thành viên lấy động từ UserContext
+│
+├── pages/
+│   ├── LoginPage.tsx              # Giao diện Form Đăng nhập
+│   ├── RegisterPage.tsx           # Giao diện Form Đăng ký
+│   └── LoginPage.module.css       # Style CSS cho trang Đăng nhập & Đăng ký
+│
+└── App.tsx                        # Khai báo Route /login, /register và bọc ProtectedRoute

@@ -4,7 +4,9 @@ import type {
     LoginRequestDto, 
     LoginResponseDto, 
     RegisterRequestDto, 
-    RegisterResponseDto 
+    RegisterResponseDto,
+    ForgotPasswordRequestDto,
+    ResetPasswordRequestDto
 } from '../types/user';
 
 export const authService = {
@@ -32,6 +34,22 @@ export const authService = {
         return requestApi<ApiResponse<LoginResponseDto>>('/Auth/refresh-token', {
             method: 'POST',
             body: JSON.stringify({ refreshToken }),
+        });
+    },
+
+    // Quên mật khẩu: Gửi email chứa liên kết xác nhận
+    forgotPassword: async (payload: ForgotPasswordRequestDto): Promise<ApiResponse<boolean>> => {
+        return requestApi<ApiResponse<boolean>>('/Auth/forgot-password', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+    },
+
+    // Đặt lại mật khẩu mới thông qua Token từ email
+    resetPassword: async (payload: ResetPasswordRequestDto): Promise<ApiResponse<boolean>> => {
+        return requestApi<ApiResponse<boolean>>('/Auth/reset-password', {
+            method: 'POST',
+            body: JSON.stringify(payload),
         });
     }
 };

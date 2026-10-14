@@ -7,17 +7,39 @@ import styles from './LoginPage.module.css';
 export const LoginPage: React.FC = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const { isLoading, toasts, dismissToast, handleLogin } = useAuthAction();
+    const { isLoading, toasts, dismissToast, notify, handleLogin } = useAuthAction();
 
     const onSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!username.trim() || !password) return;
-        handleLogin({ username: username.trim(), password });
+
+        const trimmedUsername = username.trim();
+
+        // 1. Kiểm tra Username: [Required]
+        if (!trimmedUsername) {
+            notify('Tên đăng nhập không được để trống', 'error');
+            return;
+        }
+
+        if (trimmedUsername.length > 50) {
+            notify('Tên đăng nhập tối đa 50 ký tự', 'error');
+            return;
+        }
+
+        // 2. Kiểm tra Password: [Required]
+        if (!password) {
+            notify('Mật khẩu không được để trống', 'error');
+            return;
+        }
+
+        // Gửi thông tin đăng nhập đã hợp lệ
+        handleLogin({ 
+            username: trimmedUsername, 
+            password 
+        });
     };
 
     return (
         <div className={styles.authContainer}>
-            {/* Sửa onDismiss thành onClose để khớp với ToastProps */}
             <ToastNotification toasts={toasts} onClose={dismissToast} />
             <div className={styles.authCard}>
                 <div className={styles.brandTitle}>
@@ -26,27 +48,32 @@ export const LoginPage: React.FC = () => {
                 <h2 className={styles.formTitle}>Đăng nhập hệ thống</h2>
                 <p className={styles.formSubtitle}>Sử dụng tên đăng nhập và mật khẩu nội bộ</p>
 
-                <form onSubmit={onSubmit} className={styles.form}>
+                <form onSubmit={onSubmit} className={styles.form} noValidate>
                     <div className={styles.formGroup}>
-                        <label>Tên đăng nhập</label>
+                        <label>Tên đăng nhập *</label>
                         <input
                             type="text"
                             placeholder="Nhập tên đăng nhập của bạn"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            required
+                            maxLength={50}
                         />
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label>Mật khẩu</label>
+                        <label>Mật khẩu *</label>
                         <input
                             type="password"
                             placeholder="Nhập mật khẩu"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            required
                         />
+                    </div>
+
+                    <div style={{ textAlign: 'right', marginTop: '4px', marginBottom: '16px' }}>
+                        <Link to="/forgot-password" style={{ fontSize: '13px', color: '#6366f1', textDecoration: 'none' }}>
+                            Quên mật khẩu?
+                        </Link>
                     </div>
 
                     <button type="submit" className={styles.submitBtn} disabled={isLoading}>

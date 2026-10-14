@@ -61,12 +61,4 @@ public class UserController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
-    [HttpPost("set-password")]
-    public async Task<IActionResult> SetPassword([FromBody] SetPasswordRequestDto request)
-    {
-        var userId = GetCurrentUserId();
-        string ipAddress = GetClientIpAddress();
-        var result = await _userService.SetPasswordAsync(userId, request, ipAddress);
-        return result.Success ? Ok(result) : BadRequest(result);
-    }
 }

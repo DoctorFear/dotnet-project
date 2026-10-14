@@ -7,6 +7,7 @@ interface UserContextType {
     user: UserInfo | undefined;
     loginSuccess: (authData: LoginResponseDto) => void;
     logoutClient: () => void;
+    updateUser: (updatedData: Partial<UserInfo>) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -55,8 +56,17 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoggedIn(false);
     };
 
+    const updateUser = (updatedData: Partial<UserInfo>) => {
+        setUser((prev) => {
+            if (!prev) return undefined;
+            const newUser = { ...prev, ...updatedData };
+            localStorage.setItem('currentUser', JSON.stringify(newUser));
+            return newUser;
+        });
+    };
+
     return (
-        <UserContext.Provider value={{ isLoggedIn, user, loginSuccess, logoutClient }}>
+        <UserContext.Provider value={{ isLoggedIn, user, loginSuccess, logoutClient, updateUser }}>
             {children}
         </UserContext.Provider>
     );

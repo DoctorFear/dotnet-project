@@ -3,7 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { useUser } from '../context/UserContext';
 import { useToastNotifications } from './useToastNotifications';
-import type { LoginRequestDto, RegisterRequestDto } from '../types/user';
+import type { 
+    LoginRequestDto, 
+    RegisterRequestDto, 
+    ForgotPasswordRequestDto, 
+    ResetPasswordRequestDto 
+} from '../types/user';
 
 export const useAuthAction = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -11,7 +16,7 @@ export const useAuthAction = () => {
     const { toasts, notify, dismissToast } = useToastNotifications();
     const navigate = useNavigate();
 
-const handleLogin = async (payload: LoginRequestDto) => {
+    const handleLogin = async (payload: LoginRequestDto) => {
         setIsLoading(true);
         try {
             const res = await authService.login(payload);
@@ -21,7 +26,6 @@ const handleLogin = async (payload: LoginRequestDto) => {
                 loginSuccess(authData);
                 notify('Đăng nhập thành công!', 'success');
                 setTimeout(() => {
-                    // Trong handleLogin của useAuthAction.ts:
                     if (authData.role === 'Admin') {
                         navigate('/admin/settings');
                     } else if (authData.role === 'Staff') {
@@ -29,7 +33,6 @@ const handleLogin = async (payload: LoginRequestDto) => {
                     } else if (authData.role === 'Shipper') {
                         navigate('/shipper/orders');
                     } else {
-                        // Member
                         navigate('/');
                     }
                 }, 400);
@@ -74,6 +77,39 @@ const handleLogin = async (payload: LoginRequestDto) => {
         }
     };
 
+    const handleForgotPassword = async (payload: ForgotPasswordRequestDto) => {
+        setIsLoading(true);
+        try {
+            const res = await authService.forgotPassword(payload);
+            if (res.success) {
+                notify(res.message || 'Liên kết đặt lại mật khẩu đã được gửi về email của bạn. Vui lòng kiểm tra hộp thư.', 'success');
+            } else {
+                notify(res.message || 'Không thể gửi yêu cầu đặt lại mật khẩu.', 'error');
+            }
+        } catch (err: any) {
+            notify(err.message || 'Lỗi kết nối máy chủ.', 'error');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleResetPassword = async (payload: ResetPasswordRequestDto) => {
+        setIsLoading(true);
+        try {
+            const res = await authService.resetPassword(payload);
+            if (res.success) {
+                notify(res.message || 'Đặt lại mật khẩu thành công! Vui lòng đăng nhập lại.', 'success');
+                setTimeout(() => navigate('/login'), 1200);
+            } else {
+                notify(res.message || 'Đặt lại mật khẩu thất bại.', 'error');
+            }
+        } catch (err: any) {
+            notify(err.message || 'Lỗi kết nối máy chủ.', 'error');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return {
         isLoading,
         toasts,
@@ -81,6 +117,8 @@ const handleLogin = async (payload: LoginRequestDto) => {
         dismissToast,
         handleLogin,
         handleRegister,
-        handleLogout
+        handleLogout,
+        handleForgotPassword,
+        handleResetPassword
     };
 };

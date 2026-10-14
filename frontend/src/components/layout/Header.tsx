@@ -131,7 +131,9 @@ export const Header: React.FC<HeaderProps> = ({
                                             Trang Quản trị (Admin)
                                         </li>
                                     )}
-                                    <li className={styles.dropdownItemLink} onClick={onNavigateProfile}>Hồ sơ & Đổi mật khẩu</li>
+                                    <li className={styles.dropdownItemLink} onClick={onNavigateProfile || (() => navigate('/profile'))}>
+                                        Hồ sơ & Đổi mật khẩu
+                                    </li>
                                     <li className={styles.dropdownItemLink} onClick={handleLibraryClick}>Tủ sách của tôi</li>
                                     <li className={styles.dropdownItemLink} onClick={onNavigateOrders}>Lịch sử đơn đặt sách</li>
                                     <li className={styles.dropdownItemLinkDanger} onClick={handleLogout}>Đăng xuất tài khoản</li>
