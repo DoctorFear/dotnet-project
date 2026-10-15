@@ -37,6 +37,8 @@ namespace AncientBook.Application.DTOs
         public int? PublicationYear { get; set; }
         public string? Description { get; set; }
         public string? EBookFilePath { get; set; }
+        public string? Language { get; set; }
+        public string? Dimensions { get; set; }
         public List<string> GalleryImages { get; set; } = new List<string>();
     }
 
@@ -64,5 +66,7 @@ namespace AncientBook.Application.DTOs
         public string? Description { get; set; }
         public string? EBookFilePath { get; set; }
         public List<string>? GalleryImages { get; set; }
+        public string? Language { get; set; }
+        public string? Dimensions { get; set; }
     }
 }

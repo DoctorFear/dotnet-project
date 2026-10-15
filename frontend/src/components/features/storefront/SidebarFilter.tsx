@@ -1,22 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Funnel } from 'lucide-react';
 import styles from './SidebarFilter.module.css';
 import PriceRangeSlider from './PriceRangeSlider';
 
-export interface FilterParams {
-    categoryIds: number[];
-    publisherIds: number[];
-    minPrice: number;
-    maxPrice: number;
-    publishYear: string;
-    minRating: number;
-    maxRatingExclusive?: number;
-    hasPhysical: boolean;
-    hasEBook: boolean;
-    hasRental: boolean;
-}
+import type { StorefrontFilterParams as FilterParams } from '../../../types/book';
 
 interface SidebarFilterProps {
+    publicationYears?: number[];
+    filters?: Partial<FilterParams>;
     categoriesList?: { id: number; name: string }[];
     publishersList?: { id: number; name: string }[];
     onFilterChange: (filters: Partial<FilterParams>) => void;
@@ -30,18 +21,18 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
     onFilterChange,
     onResetFilters,
     className = '',
+    filters = {},
+    publicationYears = [],
 }) => {
-    const [minPrice, setMinPrice] = useState<number>(0);
-    const [maxPrice, setMaxPrice] = useState<number>(1000000);
-    const [ratingGroup, setRatingGroup] = useState('all');
+    const minPrice = filters.minPrice ?? 0;
+    const maxPrice = filters.maxPrice ?? 1000000;
+    const ratingGroup = filters.maxRatingExclusive === 3 ? 'below3' : filters.minRating ? String(filters.minRating) : 'all';
 
-    // State lưu danh sách các thể loại và NXB được tích chọn (hỗ trợ nhiều item khi lấy từ DB)
-    const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
-    const [selectedPublishers, setSelectedPublishers] = useState<number[]>([]);
+    // Lựa chọn thể loại và nhà xuất bản do bộ điều khiển trang quản lý.
+    const selectedCategories = filters.categoryIds ?? [];
+    const selectedPublishers = filters.publisherIds ?? [];
 
     const handlePriceChange = (min: number, max: number) => {
-        setMinPrice(min);
-        setMaxPrice(max);
         onFilterChange({ minPrice: min, maxPrice: max });
     };
 
@@ -51,7 +42,6 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
             ? selectedCategories.filter((id) => id !== categoryId)
             : [...selectedCategories, categoryId];
 
-        setSelectedCategories(nextCategories);
         onFilterChange({ categoryIds: nextCategories });
     };
 
@@ -61,17 +51,11 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
             ? selectedPublishers.filter((id) => id !== publisherId)
             : [...selectedPublishers, publisherId];
 
-        setSelectedPublishers(nextPublishers);
         onFilterChange({ publisherIds: nextPublishers });
     };
 
     // Xóa sạch trạng thái chọn khi Reset bộ lọc
     const handleResetAll = () => {
-        setSelectedCategories([]);
-        setSelectedPublishers([]);
-        setMinPrice(0);
-        setMaxPrice(1000000);
-        setRatingGroup('all');
         onResetFilters();
     };
 
@@ -127,12 +111,11 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
                 <label className={styles.filterLabel}>Năm xuất bản</label>
                 <select
                     className={styles.sidebarInput}
+                    value={filters.publishYear ?? ''}
                     onChange={(e) => onFilterChange({ publishYear: e.target.value })}
                 >
                     <option value="">Tất cả các năm</option>
-                    <option value="2026">2026</option>
-                    <option value="2025">2025</option>
-                    <option value="2024">2024</option>
+                    {publicationYears.map(year => <option key={year} value={year}>{year}</option>)}
                 </select>
             </div>
 
@@ -140,7 +123,7 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
             <div className={styles.filterGroup}>
                 <label className={styles.filterLabel}>Đánh giá sao</label>
                 <label className={styles.starFilterOption}>
-                    <input type="radio" name="starFilter" checked={ratingGroup === 'all'} onChange={() => { setRatingGroup('all'); onFilterChange({ minRating: 0, maxRatingExclusive: undefined }); }} />
+                    <input type="radio" name="starFilter" checked={ratingGroup === 'all'} onChange={() => onFilterChange({ minRating: 0, maxRatingExclusive: undefined })} />
                     <span>Tất cả đánh giá</span>
                 </label>
                 {[
@@ -150,7 +133,7 @@ export const SidebarFilter: React.FC<SidebarFilterProps> = ({
                     { value: 'below3', label: 'Dưới 3 sao', stars: '★★☆☆☆', min: 0, max: 3 },
                 ].map((option) => (
                     <label key={option.value} className={styles.starFilterOption}>
-                        <input type="radio" name="starFilter" checked={ratingGroup === option.value} onChange={() => { setRatingGroup(option.value); onFilterChange({ minRating: option.min, maxRatingExclusive: option.max }); }} />
+                        <input type="radio" name="starFilter" checked={ratingGroup === option.value} onChange={() => onFilterChange({ minRating: option.min, maxRatingExclusive: option.max })} />
                         <span className={styles.starsGold}>{option.stars}</span> {option.label}
                     </label>
                 ))}

@@ -15,15 +15,15 @@ namespace AncientBook.API.Controllers
     public class BookController : ControllerBase
     {
         private readonly IBookService _bookService;
-        private readonly IFileStorageService _fileStorageService;
+        private readonly IBookImageService _images;
 
-        public BookController(IBookService bookService, IFileStorageService fileStorageService)
+        public BookController(IBookService bookService, IBookImageService images)
         {
             _bookService = bookService;
-            _fileStorageService = fileStorageService;
+            _images = images;
         }
 
-        // Tra cứu, lọc nâng cao và phân trang danh sách sách (UC02 Storefront & UC06 Admin)
+        // Tra cứu, lọc nâng cao và phân trang danh sách sách.
         [HttpGet]
         public async Task<IActionResult> GetFiltered([FromQuery] BookFilterRequestDto filter)
         {
@@ -31,7 +31,10 @@ namespace AncientBook.API.Controllers
             return Ok(result);
         }
 
-        // Xem thông tin chi tiết sách và thư viện ảnh gallery (UC03)
+        [HttpGet("publication-years")]
+        public async Task<IActionResult> GetPublicationYears() => Ok(await _bookService.GetPublicationYearsAsync());
+
+        // Xem thông tin chi tiết sách và thư viện ảnh.
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -40,9 +43,9 @@ namespace AncientBook.API.Controllers
             return Ok(result);
         }
 
-        // Upload Ảnh bìa, Gallery hoặc Tệp E-Book PDF/EPUB lên Server (UC06)
+        // Upload ảnh bìa/gallery; ấn bản PDF/EPUB dùng API EbookEditions.
         [HttpPost("upload-file")]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> UploadFile(IFormFile file, [FromQuery] string folder = "books")
         {
             try
@@ -50,7 +53,7 @@ namespace AncientBook.API.Controllers
                 if (file == null || file.Length == 0)
                     return BadRequest(new { message = "Vui lòng chọn tệp tin cần tải lên!" });
 
-                var fileUrl = await _fileStorageService.SaveFileAsync(file, folder);
+                var fileUrl = await _images.UploadAsync(file);
                 return Ok(new { fileUrl });
             }
             catch (Exception ex)
@@ -59,9 +62,9 @@ namespace AncientBook.API.Controllers
             }
         }
 
-        // Thêm đầu sách mới (UC06)
+        // Thêm đầu sách mới.
         [HttpPost]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Create([FromBody] SaveBookDto dto)
         {
             try
@@ -76,9 +79,9 @@ namespace AncientBook.API.Controllers
             }
         }
 
-        // Cập nhật thông tin chi tiết sách & file E-book (UC06)
+        // Cập nhật thông tin sách, thể loại và ảnh.
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Update(int id, [FromBody] SaveBookDto dto)
         {
             try
@@ -94,9 +97,9 @@ namespace AncientBook.API.Controllers
             }
         }
 
-        // Đổi nhanh trạng thái kinh doanh của sách (UC06)
+        // Đổi nhanh trạng thái kinh doanh của sách.
         [HttpPatch("{id}/status")]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] string status)
         {
             try
@@ -112,9 +115,9 @@ namespace AncientBook.API.Controllers
             }
         }
 
-        // Xóa sách - Nếu có đơn hàng thì chuyển sang 'Stopped' (UC06)
+        // Xóa sách hoặc ngừng kinh doanh nếu đã có đơn hàng.
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Delete(int id)
         {
             try

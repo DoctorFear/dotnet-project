@@ -8,6 +8,7 @@ namespace AncientBook.Application.Interfaces
     public interface IBookService
     {
         Task<PagedResult<BookListDto>> GetFilteredBooksAsync(BookFilterRequestDto filter);
+        Task<List<int>> GetPublicationYearsAsync();
         Task<BookDetailDto?> GetBookDetailByIdAsync(int id);
         Task<BookDetailDto> CreateBookAsync(SaveBookDto dto, int currentUserId);
         Task<BookDetailDto?> UpdateBookAsync(int id, SaveBookDto dto, int currentUserId);

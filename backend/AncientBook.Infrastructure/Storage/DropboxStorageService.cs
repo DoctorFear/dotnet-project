@@ -2,6 +2,7 @@
 using Dropbox.Api.Files;
 using Dropbox.Api.Sharing;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -274,10 +275,12 @@ namespace AncientBook.Infrastructure.Storage
         {
             if (string.IsNullOrEmpty(dropboxUrl)) return string.Empty;
 
-            if (dropboxUrl.Contains("?dl=0")) return dropboxUrl.Replace("?dl=0", "?raw=1");
-            if (dropboxUrl.Contains("?dl=1")) return dropboxUrl.Replace("?dl=1", "?raw=1");
-
-            return $"{dropboxUrl}?raw=1";
+            var uri = new UriBuilder(dropboxUrl);
+            var query = QueryHelpers.ParseQuery(uri.Query);
+            query.Remove("dl");
+            query["raw"] = "1";
+            uri.Query = string.Empty;
+            return QueryHelpers.AddQueryString(uri.Uri.AbsoluteUri, query);
         }
 
         public async Task<string> SaveBytesFileAsync(byte[] bytes, string fileName, string folder)

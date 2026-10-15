@@ -36,6 +36,8 @@ export interface BookDetailData extends BookData {
     weight: number | null; // Dùng để tính phí vận chuyển
     publicationYear: number | null;
     description: string | null;
+    language: string | null;
+    dimensions: string | null;
     eBookFilePath: string | null;
     galleryImages: string[];
 }
@@ -43,11 +45,12 @@ export interface BookDetailData extends BookData {
 // Model DTO hiển thị giao diện Khách hàng (Storefront)
 export type ProductData = BookData & { isWishlisted?: boolean };
 export type AdminBookStatus = BookData['status'];
-// Thực thể Sách đầy đủ dữ liệu trong CSDL hệ thống (3NF)
+// Kiểu dữ liệu sách dùng chung cho giao diện quản lý.
 export type AdminBookData = BookData & Partial<Omit<BookDetailData, keyof BookData>> & { orderCount?: number };
 
 export interface BookFilterParams {
     searchTerm?: string;
+    author?: string;
     categoryIds?: number[];
     publisherIds?: number[];
     minPrice?: number;
@@ -63,3 +66,38 @@ export interface BookFilterParams {
 
 export type SaveBookRequest = Omit<BookData, 'id' | 'publisher' | 'categories' | 'rating' | 'reviewsCount' | 'stockStatus' | 'stockCount'>
     & Partial<Omit<BookDetailData, keyof BookData>>;
+
+export interface StorefrontFilterParams {
+    categoryIds: number[];
+    publisherIds: number[];
+    minPrice: number;
+    maxPrice: number;
+    publishYear: string;
+    minRating: number;
+    maxRatingExclusive?: number;
+    hasPhysical: boolean;
+    hasEBook: boolean;
+    hasRental: boolean;
+}
+
+export interface BookEditionUpload {
+    editionId: number;
+    bookId: number;
+    fileTitle: string;
+    format: string;
+    totalPages: number;
+    fileSizeBytes: number;
+    status: string;
+    suggestedPresetType: string;
+}
+
+export interface BookReviewData {
+    id: number;
+    rating: number;
+    title: string | null;
+    content: string;
+    userFullName: string;
+    createdAt: string;
+    imageUrls: string | null;
+    verificationLabel: string | null;
+}

@@ -15,11 +15,20 @@ import BookPurchaseOptions from '../components/features/storefront/BookPurchaseO
 import BookPurchaseDialog from '../components/features/storefront/BookPurchaseDialog';
 import type { ProductData } from '../types/book';
 import styles from './BookDetailPage.module.css';
+import { useWishlist } from '../hooks/useWishList';
+import WishListButton from '../components/common/WishListButton';
+import BookGallery from '../components/features/storefront/BookGallery';
+import BookReviews from '../components/features/storefront/BookReviews';
+import WishlistLoginPrompt from '../components/features/storefront/WishlistLoginPrompt';
+import { useBookFilterOptions } from '../hooks/useBookFilterOptions';
+import StockAvailabilityBadge from '../components/common/StockAvailabilityBadge';
 
 export const BookDetailPage: React.FC = () => {
     const { id } = useParams();
-    const { book: bookData, relatedBooks, isLoading, error } = useBookDetail(id);
+    const { book: bookData, relatedBooks, sameAuthorBooks, isLoading, error } = useBookDetail(id);
     const navigate = useNavigate();
+    const wishlist = useWishlist();
+    const options = useBookFilterOptions();
     const purchaseData = bookData;
     const selection = useBookPurchaseSelection(purchaseData);
     const { toasts, notify, dismissToast } = useToastNotifications();
@@ -27,9 +36,7 @@ export const BookDetailPage: React.FC = () => {
     const [purchaseBook, setPurchaseBook] = useState<ProductData | null>(null);
     const [activeTab, setActiveTab] = useState<'desc' | 'specs' | 'reviews'>('desc');
 
-    const [mainImg, setMainImg] = useState('');
     const galleryImages = bookData ? [...new Set([bookData.coverImg, ...bookData.galleryImages].filter(Boolean))] : [];
-    const displayedImage = galleryImages.includes(mainImg) ? mainImg : galleryImages[0];
 
     if (isLoading) {
         return <div className={styles.containerDetail}>Đang tải thông tin sách...</div>;
@@ -40,57 +47,48 @@ export const BookDetailPage: React.FC = () => {
     }
 
 
+    const canPurchase = bookData.status === 'selling' && !(selection.format === 'physical' && bookData.stockCount < selection.quantity);
     return (
-        <div style={{ background: 'var(--alice, #F2F7FF)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            {!purchaseBook && <ToastNotification toasts={toasts} onClose={dismissToast} />}
+        <div className={styles.page}>
+            {wishlist.loginPromptOpen && <WishlistLoginPrompt onClose={wishlist.closeLoginPrompt} onLogin={wishlist.goToLogin} />}
+            {!purchaseBook && <ToastNotification toasts={[...wishlist.toasts, ...toasts]} onClose={id => { wishlist.dismissToast(id); dismissToast(id); }} />}
             {purchaseBook && <BookPurchaseDialog key={purchaseBook.id} book={purchaseBook} isSubmitting={isSubmitting} onClose={() => setPurchaseBook(null)} onConfirm={submitPurchase}><ToastNotification toasts={toasts} onClose={dismissToast} /></BookPurchaseDialog>}
             <TopBar />
-            <Header />
-            <Navbar />
+            <Header wishlistCount={wishlist.wishlistCount} onSearch={term => navigate(`/?search=${encodeURIComponent(term)}`)} />
+            <Navbar onSelectCategory={name => { const category = options.categories.find(item => item.name === name); if (category) navigate(`/?category=${category.id}`); }} onSelectPublisher={name => { const publisher = options.publishers.find(item => item.name === name); if (publisher) navigate(`/?publisher=${publisher.id}`); }} categories={options.categories.map(({ id, name }) => ({ id: String(id), name }))} publishers={options.publishers.map(({ id, name }) => ({ id: String(id), name }))} />
 
             <main className={styles.containerDetail}>
                 <Breadcrumb
                     items={[
                         { label: 'Trang chủ', link: '/' },
-                        { label: 'Văn học Việt Nam', link: '#' },
+                        { label: bookData.categories[0] || 'Sách', link: bookData.categoryIds[0] ? `/?category=${bookData.categoryIds[0]}` : '/' },
                         { label: bookData.title },
                     ]}
                 />
 
                 <div className={styles.detailPanel}>
                     <div className={styles.galleryWrap}>
-                        <div className={styles.mainImgBox}>
-                            <img src={displayedImage} alt={bookData.title} className={styles.mainImg} />
-                        </div>
-                        <div className={styles.thumbList}>
-                            {galleryImages.map((img, idx) => (
-                                <img
-                                    key={idx}
-                                    src={img}
-                                    alt={`Thumbnail ${idx}`}
-                                    className={`${styles.thumbItem} ${displayedImage === img ? styles.thumbItemActive : ''}`}
-                                    onClick={() => setMainImg(img)}
-                                />
-                            ))}
-                        </div>
+                        <BookGallery title={bookData.title} images={galleryImages} />
                     </div>
 
                     <div className={styles.detailInfo}>
                         <h1 className={styles.detailTitle}>{bookData.title}</h1>
+                        <WishListButton isWishlisted={wishlist.wishlistIds.includes(bookData.id)} onToggle={() => void wishlist.toggleWishlist(bookData)} />
                         <div className={styles.detailMeta}>
                             <span>Tác giả: <strong>{bookData.author}</strong></span>
-                            <span>NXB: <strong>{bookData.publisher}</strong></span>
+                            <span>NXB: <a href={`/?publisher=${bookData.publisherId}`}>{bookData.publisher}</a></span>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '6px', margin: '8px 0' }}>
+                        <div className={styles.categories}>
                             {bookData.categories.map((cat, i) => (
-                                <span key={i} style={{ background: '#eef2ff', color: '#3730a3', fontSize: '11px', fontWeight: 700, padding: '3px 8px', borderRadius: '4px' }}>
+                                <a key={i} href={`/?category=${bookData.categoryIds[i]}`}>
                                     {cat}
-                                </span>
+                                </a>
                             ))}
                         </div>
 
                         <StarRating rating={bookData.rating} reviewsCount={bookData.reviewsCount} />
+                        <StockAvailabilityBadge book={bookData} />
 
                         <div className={styles.priceBoxPanel}>
                             <span className={styles.detailSalePrice}>
@@ -98,13 +96,14 @@ export const BookDetailPage: React.FC = () => {
                             </span>
                         </div>
 
-                        {purchaseData && <BookPurchaseOptions book={purchaseData} selection={selection} disabled={isSubmitting} />}
+                        {bookData.status !== 'selling' && <p role="status">{bookData.status === 'stopped' ? 'Sách đã ngừng kinh doanh.' : 'Sách sắp phát hành.'}</p>}
+                        {bookData.status === 'selling' && purchaseData && <BookPurchaseOptions book={purchaseData} selection={selection} disabled={isSubmitting} />}
 
-                        <div className={styles.actionBtnsGroup}>
+                        {bookData.status === 'selling' && <div className={styles.actionBtnsGroup}>
                             <button
                                 type="button"
                                 className={styles.btnAddCartLg}
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || !canPurchase}
                                 onClick={() => { if (purchaseData) void submitPurchase(purchaseData, selection); }}
                             >
                                 Thêm vào giỏ hàng
@@ -112,12 +111,12 @@ export const BookDetailPage: React.FC = () => {
                             <button
                                 type="button"
                                 className={styles.btnBuyNowLg}
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || !canPurchase}
                                 onClick={async () => { if (purchaseData && await submitPurchase(purchaseData, selection)) navigate('/cart'); }}
                             >
                                 Mua ngay
                             </button>
-                        </div>
+                        </div>}
                     </div>
                 </div>
 
@@ -143,7 +142,7 @@ export const BookDetailPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {activeTab === 'desc' && <p style={{ fontSize: '13.5px', lineHeight: '1.7' }}>{bookData.description}</p>}
+                    {activeTab === 'desc' && <p className={styles.description}>{bookData.description || 'Chưa có mô tả nội dung.'}</p>}
 
                     {activeTab === 'specs' && (
                         <table className={styles.specsTable}>
@@ -152,16 +151,16 @@ export const BookDetailPage: React.FC = () => {
                                 <tr><td>Thể loại</td><td>{bookData.categories.join(', ')}</td></tr>
                                 <tr><td>Nhà xuất bản</td><td>{bookData.publisher}</td></tr>
                                 <tr><td>Năm xuất bản</td><td>{bookData.publicationYear || 'Chưa cập nhật'}</td></tr>
-                                <tr><td>Số trang</td><td>{bookData.pages} trang</td></tr>
+                                <tr><td>Số trang</td><td>{bookData.pages ? `${bookData.pages} trang` : 'Chưa cập nhật'}</td></tr>
                                 <tr><td>Trọng lượng</td><td>{bookData.weight ? `${bookData.weight} g` : 'Chưa cập nhật'}</td></tr>
+                                <tr><td>Ngôn ngữ</td><td>{bookData.language || 'Chưa cập nhật'}</td></tr>
+                                <tr><td>Kích thước</td><td>{bookData.dimensions || 'Chưa cập nhật'}</td></tr>
                             </tbody>
                         </table>
                     )}
 
                     {activeTab === 'reviews' && (
-                        <div style={{ fontSize: '13px' }}>
-                            <p><strong>Đánh giá trung bình:</strong> ★ {bookData.rating} / 5 ({bookData.reviewsCount} bình luận)</p>
-                        </div>
+                        <BookReviews key={bookData.id} bookId={bookData.id} />
                     )}
                 </div>
 
@@ -169,10 +168,14 @@ export const BookDetailPage: React.FC = () => {
                     <h3 className={styles.relatedTitle}>Sách Cùng Thể Loại Gợi Ý</h3>
                     <div className={styles.relatedGrid}>
                         {relatedBooks.map((book) => (
-                            <ProductCard key={book.id} product={book} onSelectBook={(bookId) => navigate(`/books/${bookId}`)} onAddToCart={() => setPurchaseBook(book)} />
+                            <ProductCard key={book.id} product={book} isWishlisted={wishlist.wishlistIds.includes(book.id)} onToggleWishlist={() => void wishlist.toggleWishlist(book)} onSelectBook={(bookId) => navigate(`/books/${bookId}`)} onAddToCart={() => setPurchaseBook(book)} />
                         ))}
                     </div>
                 </section>
+                {sameAuthorBooks.length > 0 && <section className={styles.relatedSection}>
+                    <h3 className={styles.relatedTitle}>Sách cùng tác giả</h3>
+                    <div className={styles.relatedGrid}>{sameAuthorBooks.map(book => <ProductCard key={book.id} product={book} isWishlisted={wishlist.wishlistIds.includes(book.id)} onToggleWishlist={() => void wishlist.toggleWishlist(book)} onSelectBook={bookId => navigate(`/books/${bookId}`)} onAddToCart={() => setPurchaseBook(book)} />)}</div>
+                </section>}
             </main>
         </div>
     );

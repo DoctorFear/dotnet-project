@@ -27,9 +27,9 @@ namespace AncientBook.API.Controllers
             return Ok(result);
         }
 
-        // Lấy danh sách danh mục phân trang và tìm kiếm (UC04 Admin)
+        // Lấy danh sách thể loại có phân trang và tìm kiếm.
         [HttpGet("paged")]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> GetPaged([FromQuery] string? searchTerm, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var result = await _categoryService.GetPagedCategoriesAsync(searchTerm, pageNumber, pageSize);
@@ -45,9 +45,9 @@ namespace AncientBook.API.Controllers
             return Ok(result);
         }
 
-        // Thêm danh mục thể loại mới (UC04)
+        // Thêm thể loại mới.
         [HttpPost]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Create([FromBody] SaveCategoryDto dto)
         {
             try
@@ -62,9 +62,9 @@ namespace AncientBook.API.Controllers
             }
         }
 
-        // Cập nhật danh mục thể loại (UC04)
+        // Cập nhật thể loại.
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Update(int id, [FromBody] SaveCategoryDto dto)
         {
             try
@@ -80,9 +80,9 @@ namespace AncientBook.API.Controllers
             }
         }
 
-        // Xóa danh mục thể loại - Ràng buộc kiểm tra sách (UC04)
+        // Xóa thể loại sau khi kiểm tra các liên kết.
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Delete(int id)
         {
             try
