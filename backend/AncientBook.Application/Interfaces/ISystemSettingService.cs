@@ -3,11 +3,11 @@ using AncientBook.Application.DTOs;
 
 namespace AncientBook.Application.Interfaces
 {
-    // Interface xử lý Cài đặt hệ thống 4 tham số 
+    // Xử lý đọc, cập nhật và khôi phục cài đặt hệ thống.
     public interface ISystemSettingService
     {
         Task<SystemSettingsDto> GetSettingsAsync();
-        Task<bool> UpdateSettingsAsync(SystemSettingsDto dto, int currentUserId);
-        Task<bool> RestoreDefaultSettingsAsync(int currentUserId);
+        Task<bool> UpdateSettingsAsync(SystemSettingsDto dto, int currentUserId, string? ipAddress = null);
+        Task<bool> RestoreDefaultSettingsAsync(int currentUserId, string? ipAddress = null);
     }
 }

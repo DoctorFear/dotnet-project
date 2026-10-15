@@ -6,7 +6,7 @@ namespace AncientBook.Application.Interfaces
     // Interface xử lý Thống kê & Báo cáo PDF 
     public interface IReportService
     {
-        Task<DashboardReportDto> GetDashboardReportAsync();
-        Task<byte[]> ExportPdfReportAsync();
+        Task<DashboardReportDto> GetDashboardReportAsync(ReportFilterDto? filter = null);
+        Task<byte[]> ExportPdfReportAsync(ReportFilterDto? filter = null, string exportedBy = "Admin", bool detailed = false);
     }
 }

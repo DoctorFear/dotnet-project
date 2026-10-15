@@ -1,82 +1,20 @@
-import React, { useState } from 'react';
-import { RotateCcw, Save, AlertTriangle, CheckCircle2, AlertCircle, Award, TrendingUp } from 'lucide-react';
+import React from 'react';
+import { useSystemSettingsController } from '../../../hooks/useSystemSettingsController';
+import ToastNotification from '../../common/ToastNotification';
+import ConfirmDialog from '../../common/ConfirmDialog';
+import { RotateCcw, Save, AlertTriangle, Award, TrendingUp } from 'lucide-react';
 import styles from './AdminSettingsManagement.module.css';
 
-// Giá trị mặc định chuẩn hệ thống
-const defaultSettings = {
-    lowStockThreshold: 5,
-    pointRateBronze: 5,
-    pointRateSilver: 10,
-    pointRateGold: 15,
-    maxPointsPerOrder: 20000,
-    maxReturnDays: 7,
-    memberUpgradeSpendingBronze: 0,
-    memberUpgradeSpendingSilver: 1000000,
-    memberUpgradeSpendingGold: 5000000,
-};
-
-// Khởi tạo tùy chọn phần trăm tích điểm 0% - 100%
-const percentOptions = Array.from({ length: 21 }, (_, index) => index * 5);
-
+const percentOptions = Array.from({ length: 101 }, (_, index) => index);
 export const AdminSettingsManagement: React.FC = () => {
-    // Trạng thái các tham số cài đặt
-    const [lowStockThreshold, setLowStockThreshold] = useState(defaultSettings.lowStockThreshold);
-    const [bronzeRate, setBronzeRate] = useState(defaultSettings.pointRateBronze);
-    const [silverRate, setSilverRate] = useState(defaultSettings.pointRateSilver);
-    const [goldRate, setGoldRate] = useState(defaultSettings.pointRateGold);
-    const [maxPoints, setMaxPoints] = useState(defaultSettings.maxPointsPerOrder);
-    const [maxReturnDays, setMaxReturnDays] = useState(defaultSettings.maxReturnDays);
-    const [bronzeUpgradeSpending, setBronzeUpgradeSpending] = useState(defaultSettings.memberUpgradeSpendingBronze);
-    const [silverUpgradeSpending, setSilverUpgradeSpending] = useState(defaultSettings.memberUpgradeSpendingSilver);
-    const [goldUpgradeSpending, setGoldUpgradeSpending] = useState(defaultSettings.memberUpgradeSpendingGold);
-
-    // Trạng thái thông báo Toast
-    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-
-    // Hiển thị thông báo Toast
-    const showToastNotification = (message: string, type: 'success' | 'error' = 'success') => {
-        setToast({ message, type });
-        window.setTimeout(() => setToast(null), 3000);
-    };
-
-    // Khôi phục giá trị mặc định
-    const handleRestoreDefault = () => {
-        setLowStockThreshold(defaultSettings.lowStockThreshold);
-        setBronzeRate(defaultSettings.pointRateBronze);
-        setSilverRate(defaultSettings.pointRateSilver);
-        setGoldRate(defaultSettings.pointRateGold);
-        setMaxPoints(defaultSettings.maxPointsPerOrder);
-        setMaxReturnDays(defaultSettings.maxReturnDays);
-        setBronzeUpgradeSpending(defaultSettings.memberUpgradeSpendingBronze);
-        setSilverUpgradeSpending(defaultSettings.memberUpgradeSpendingSilver);
-        setGoldUpgradeSpending(defaultSettings.memberUpgradeSpendingGold);
-        showToastNotification('Đã khôi phục cài đặt về giá trị mặc định.', 'success');
-    };
-
-    // Lưu cài đặt hệ thống
-    const handleSaveSettings = () => {
-        // Kiểm tra ràng buộc hợp lệ dữ liệu
-        if (
-            lowStockThreshold < 0 ||
-            bronzeRate < 0 || bronzeRate > 100 ||
-            silverRate < 0 || silverRate > 100 ||
-            goldRate < 0 || goldRate > 100 ||
-            maxPoints < 0 ||
-            maxReturnDays < 1 ||
-            bronzeUpgradeSpending < 0 ||
-            silverUpgradeSpending < bronzeUpgradeSpending ||
-            goldUpgradeSpending < silverUpgradeSpending
-        ) {
-            showToastNotification('Giá trị cài đặt không hợp lệ. Vui lòng kiểm tra lại!', 'error');
-            return;
-        }
-
-        showToastNotification('Cập nhật cài đặt hệ thống thành công.', 'success');
-    };
-
+    const controller = useSystemSettingsController();
+    if (controller.error) return <p role="alert">{controller.error}</p>;
+    if (!controller.settings) return <p>Đang tải cài đặt...</p>;
+    const { lowStockThreshold, pointRateBronze: bronzeRate, pointRateSilver: silverRate, pointRateGold: goldRate, maxPointsPerOrder: maxPoints, maxReturnDays, memberUpgradeSpendingBronze: bronzeUpgradeSpending, memberUpgradeSpendingSilver: silverUpgradeSpending, memberUpgradeSpendingGold: goldUpgradeSpending } = controller.settings;
+    const notification = <ToastNotification toasts={controller.notifications.toasts} onClose={controller.notifications.dismissToast} />;
     return (
         <div className={styles.settingsContainer}>
-            {/* 1. Cấu hình Cảnh báo Kho & Vận chuyển (Huy & Sơn) */}
+            {/* Cảnh báo tồn kho và quy định đổi trả */}
             <section className={styles.settingsCard}>
                 <div className={styles.cardHeader}>
                     <AlertTriangle className={styles.headerIcon} size={18} />
@@ -92,13 +30,13 @@ export const AdminSettingsManagement: React.FC = () => {
                                 Số lượng tồn kho tối thiểu để hệ thống đưa ra cảnh báo cho nhân viên kho.
                             </span>
                             <div className={styles.inputWrapper}>
-                                <input
+                                <input disabled={controller.isBusy}
                                     id="lowStockThreshold"
                                     type="number"
                                     className={styles.inputControl}
                                     value={lowStockThreshold}
                                     min={0}
-                                    onChange={(e) => setLowStockThreshold(Number(e.target.value))}
+                                    onChange={(e) => controller.change('lowStockThreshold', Number(e.target.value))}
                                 />
                                 <span className={styles.unitText}>Cuốn</span>
                             </div>
@@ -112,13 +50,13 @@ export const AdminSettingsManagement: React.FC = () => {
                                 Số ngày tối đa khách hàng được gửi yêu cầu hoàn trả kể từ khi giao thành công.
                             </span>
                             <div className={styles.inputWrapper}>
-                                <input
+                                <input disabled={controller.isBusy}
                                     id="maxReturnDays"
                                     type="number"
                                     className={styles.inputControl}
                                     value={maxReturnDays}
                                     min={1}
-                                    onChange={(e) => setMaxReturnDays(Number(e.target.value))}
+                                    onChange={(e) => controller.change('maxReturnDays', Number(e.target.value))}
                                 />
                                 <span className={styles.unitText}>Ngày</span>
                             </div>
@@ -127,7 +65,7 @@ export const AdminSettingsManagement: React.FC = () => {
                 </div>
             </section>
 
-            {/* 2. Cấu hình Tích điểm & Hạn mức F-Point (MPhương) */}
+            {/* Chính sách tích điểm và hạn mức F-Point */}
             <section className={styles.settingsCard}>
                 <div className={styles.cardHeader}>
                     <Award className={styles.headerIcon} size={18} />
@@ -143,11 +81,11 @@ export const AdminSettingsManagement: React.FC = () => {
                                 Tỉ lệ phần trăm tích điểm cho thành viên Hạng Đồng.
                             </span>
                             <div className={styles.inputWrapper}>
-                                <select
+                                <select disabled={controller.isBusy}
                                     id="bronzeRate"
                                     className={styles.selectControl}
                                     value={bronzeRate}
-                                    onChange={(e) => setBronzeRate(Number(e.target.value))}
+                                    onChange={(e) => controller.change('pointRateBronze', Number(e.target.value))}
                                 >
                                     {percentOptions.map((opt) => (
                                         <option key={opt} value={opt}>{opt}</option>
@@ -165,11 +103,11 @@ export const AdminSettingsManagement: React.FC = () => {
                                 Tỉ lệ phần trăm tích điểm cho thành viên Hạng Bạc.
                             </span>
                             <div className={styles.inputWrapper}>
-                                <select
+                                <select disabled={controller.isBusy}
                                     id="silverRate"
                                     className={styles.selectControl}
                                     value={silverRate}
-                                    onChange={(e) => setSilverRate(Number(e.target.value))}
+                                    onChange={(e) => controller.change('pointRateSilver', Number(e.target.value))}
                                 >
                                     {percentOptions.map((opt) => (
                                         <option key={opt} value={opt}>{opt}</option>
@@ -187,11 +125,11 @@ export const AdminSettingsManagement: React.FC = () => {
                                 Tỉ lệ phần trăm tích điểm cho thành viên Hạng Vàng.
                             </span>
                             <div className={styles.inputWrapper}>
-                                <select
+                                <select disabled={controller.isBusy}
                                     id="goldRate"
                                     className={styles.selectControl}
                                     value={goldRate}
-                                    onChange={(e) => setGoldRate(Number(e.target.value))}
+                                    onChange={(e) => controller.change('pointRateGold', Number(e.target.value))}
                                 >
                                     {percentOptions.map((opt) => (
                                         <option key={opt} value={opt}>{opt}</option>
@@ -209,13 +147,13 @@ export const AdminSettingsManagement: React.FC = () => {
                                 Số F-Point tối đa được quy đổi trừ tiền trên một đơn hàng.
                             </span>
                             <div className={styles.inputWrapper}>
-                                <input
+                                <input disabled={controller.isBusy}
                                     id="maxPoints"
                                     type="number"
                                     className={styles.inputControl}
                                     value={maxPoints}
                                     min={0}
-                                    onChange={(e) => setMaxPoints(Number(e.target.value))}
+                                    onChange={(e) => controller.change('maxPointsPerOrder', Number(e.target.value))}
                                 />
                                 <span className={styles.unitText}>F-Point</span>
                             </div>
@@ -236,13 +174,13 @@ export const AdminSettingsManagement: React.FC = () => {
                                     Tổng chi tiêu tối thiểu để khách hàng đạt Hạng Đồng.
                                 </span>
                                 <div className={styles.inputWrapper}>
-                                    <input
+                                    <input disabled={controller.isBusy}
                                         id="bronzeUpgradeSpending"
                                         type="number"
                                         className={styles.inputControl}
                                         value={bronzeUpgradeSpending}
                                         min={0}
-                                        onChange={(e) => setBronzeUpgradeSpending(Number(e.target.value))}
+                                        onChange={(e) => controller.change('memberUpgradeSpendingBronze', Number(e.target.value))}
                                     />
                                     <span className={styles.unitText}>VNĐ</span>
                                 </div>
@@ -256,13 +194,13 @@ export const AdminSettingsManagement: React.FC = () => {
                                     Tổng chi tiêu tối thiểu để khách hàng đạt Hạng Bạc.
                                 </span>
                                 <div className={styles.inputWrapper}>
-                                    <input
+                                    <input disabled={controller.isBusy}
                                         id="silverUpgradeSpending"
                                         type="number"
                                         className={styles.inputControl}
                                         value={silverUpgradeSpending}
                                         min={0}
-                                        onChange={(e) => setSilverUpgradeSpending(Number(e.target.value))}
+                                        onChange={(e) => controller.change('memberUpgradeSpendingSilver', Number(e.target.value))}
                                     />
                                     <span className={styles.unitText}>VNĐ</span>
                                 </div>
@@ -276,13 +214,13 @@ export const AdminSettingsManagement: React.FC = () => {
                                     Tổng chi tiêu tối thiểu để khách hàng đạt Hạng Vàng.
                                 </span>
                                 <div className={styles.inputWrapper}>
-                                    <input
+                                    <input disabled={controller.isBusy}
                                         id="goldUpgradeSpending"
                                         type="number"
                                         className={styles.inputControl}
                                         value={goldUpgradeSpending}
                                         min={0}
-                                        onChange={(e) => setGoldUpgradeSpending(Number(e.target.value))}
+                                        onChange={(e) => controller.change('memberUpgradeSpendingGold', Number(e.target.value))}
                                     />
                                     <span className={styles.unitText}>VNĐ</span>
                                 </div>
@@ -293,29 +231,18 @@ export const AdminSettingsManagement: React.FC = () => {
                 </div>
 
                 <div className={styles.cardFooter}>
-                    <button type="button" className={styles.btnSecondary} onClick={handleRestoreDefault}>
+                    <button type="button" className={styles.btnSecondary} disabled={controller.isBusy} onClick={() => controller.setRestoreOpen(true)}>
                         <RotateCcw size={16} /> Khôi phục mặc định
                     </button>
-                    <button type="button" className={styles.btnPrimary} onClick={handleSaveSettings}>
+                    <button type="button" className={styles.btnPrimary} disabled={controller.isBusy} onClick={() => void controller.save()}>
                         <Save size={16} /> Lưu thay đổi
                     </button>
                 </div>
             </section>
 
-            {/* Cấu trúc Toast Notification thống nhất */}
-            {toast && (
-                <div
-                    className={`${styles.toastNotification} ${toast.type === 'success' ? styles.toastSuccess : styles.toastError
-                        }`}
-                >
-                    {toast.type === 'success' ? (
-                        <CheckCircle2 size={18} color="#22c55e" />
-                    ) : (
-                        <AlertCircle size={18} color="#d93838" />
-                    )}
-                    <span>{toast.message}</span>
-                </div>
-            )}
+            {!controller.restoreOpen && notification}
+            {controller.restoreOpen && <ConfirmDialog title="Khôi phục cài đặt mặc định?" message="Thao tác này thay thế các cấu hình hiện tại trong database." busy={controller.isBusy} onClose={() => controller.setRestoreOpen(false)} onConfirm={() => void controller.restore()}>{notification}</ConfirmDialog>}
+
         </div>
     );
 };

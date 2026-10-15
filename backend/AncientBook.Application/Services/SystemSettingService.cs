@@ -2,23 +2,29 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
+using System.Text.Json;
 using AncientBook.Application.DTOs;
 using AncientBook.Application.Interfaces;
 using AncientBook.Domain.Common;
 using AncientBook.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace AncientBook.Application.Services
 {
     public class SystemSettingService : ISystemSettingService
     {
         private readonly ISystemSettingRepository _systemSettingRepository;
+        private readonly IAuditLogService _auditLogs;
+        private readonly IWorkflowDbContext _workflow;
 
-        public SystemSettingService(ISystemSettingRepository systemSettingRepository)
+        public SystemSettingService(ISystemSettingRepository systemSettingRepository, IAuditLogService auditLogs, IWorkflowDbContext workflow)
         {
             _systemSettingRepository = systemSettingRepository;
+            _auditLogs = auditLogs;
+            _workflow = workflow;
         }
 
-        // Lấy thông tin 4 tham số cài đặt hệ thống 
+        // Lấy các tham số cài đặt hệ thống.
         public async Task<SystemSettingsDto> GetSettingsAsync()
         {
             var settings = await _systemSettingRepository.GetAllAsync();
@@ -60,8 +66,8 @@ namespace AncientBook.Application.Services
             return dto;
         }
 
-        // Cập nhật 4 tham số cài đặt hệ thống 
-        public async Task<bool> UpdateSettingsAsync(SystemSettingsDto dto, int currentUserId)
+        // Lưu toàn bộ cấu hình và nhật ký trong cùng giao dịch.
+        public async Task<bool> UpdateSettingsAsync(SystemSettingsDto dto, int currentUserId, string? ipAddress = null)
         {
             if (dto.LowStockThreshold < 0 || dto.MaxPointsPerOrder < 0 || dto.MaxReturnDays < 1 ||
                 dto.PointRateBronze < 0 || dto.PointRateBronze > 100 ||
@@ -71,7 +77,7 @@ namespace AncientBook.Application.Services
                 dto.MemberUpgradeSpendingSilver < dto.MemberUpgradeSpendingBronze ||
                 dto.MemberUpgradeSpendingGold < dto.MemberUpgradeSpendingSilver)
             {
-                throw new Exception("Dữ liệu cài đặt hệ thống không hợp lệ!");
+                throw new ArgumentException("Dữ liệu cài đặt hệ thống không hợp lệ!");
             }
 
             var dict = new Dictionary<string, (string Value, string DataType)>
@@ -87,6 +93,7 @@ namespace AncientBook.Application.Services
                 { "MEMBER_UPGRADE_SPENDING_GOLD", (dto.MemberUpgradeSpendingGold.ToString(CultureInfo.InvariantCulture), "DECIMAL") }
             };
 
+            await using var transaction = _workflow.Database.CurrentTransaction == null ? await _workflow.Database.BeginTransactionAsync() : null;
             foreach (var item in dict)
             {
                 var setting = await _systemSettingRepository.GetByKeyAsync(item.Key);
@@ -100,14 +107,9 @@ namespace AncientBook.Application.Services
                         CreatedBy = currentUserId.ToString()
                     };
                     _systemSettingRepository.Add(setting);
-                    _systemSettingRepository.AddAuditLog(new AuditLog
-                    {
-                        UserId = currentUserId,
-                        Action = "Tạo cài đặt hệ thống",
-                        EntityName = "SystemSetting",
-                        RecordId = item.Key,
-                        Details = $"Giá trị mới: {item.Value.Value}"
-                    });
+                    await _auditLogs.LogAsync("Tạo cài đặt hệ thống", "SystemSettings", "SystemSetting", item.Key,
+                        newValues: JsonSerializer.Serialize(new { SettingValue = item.Value.Value }),
+                        details: $"Giá trị mới: {item.Value.Value}", userId: currentUserId, ipAddress: ipAddress);
                 }
                 else
                 {
@@ -119,26 +121,23 @@ namespace AncientBook.Application.Services
                     setting.DataType = item.Value.DataType;
                     setting.UpdatedAt = TimeZoneHelper.GetVietnamTime();
                     setting.UpdatedBy = currentUserId.ToString();
-                    _systemSettingRepository.AddAuditLog(new AuditLog
-                    {
-                        UserId = currentUserId,
-                        Action = "Cập nhật cài đặt hệ thống",
-                        EntityName = "SystemSetting",
-                        RecordId = item.Key,
-                        Details = $"Giá trị cũ: {previousValue}; Giá trị mới: {item.Value.Value}"
-                    });
+                    await _auditLogs.LogAsync("Cập nhật cài đặt hệ thống", "SystemSettings", "SystemSetting", item.Key,
+                        oldValues: JsonSerializer.Serialize(new { SettingValue = previousValue }),
+                        newValues: JsonSerializer.Serialize(new { SettingValue = item.Value.Value }),
+                        details: $"Giá trị cũ: {previousValue}; Giá trị mới: {item.Value.Value}", userId: currentUserId, ipAddress: ipAddress);
                 }
             }
 
             await _systemSettingRepository.SaveChangesAsync();
+            if (transaction != null) await transaction.CommitAsync();
             return true;
         }
 
         // Khôi phục tham số mặc định 
-        public async Task<bool> RestoreDefaultSettingsAsync(int currentUserId)
+        public async Task<bool> RestoreDefaultSettingsAsync(int currentUserId, string? ipAddress = null)
         {
             var defaultDto = new SystemSettingsDto();
-            return await UpdateSettingsAsync(defaultDto, currentUserId);
+            return await UpdateSettingsAsync(defaultDto, currentUserId, ipAddress);
         }
     }
 }

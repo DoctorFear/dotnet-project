@@ -1,6 +1,6 @@
 namespace AncientBook.Application.DTOs
 {
-    // DTO hiển thị & cập nhật 4 tham số cài đặt chung
+    // DTO hiển thị và cập nhật các tham số cài đặt chung.
     public class SystemSettingsDto
     {
         public int LowStockThreshold { get; set; } = 5;

@@ -9,7 +9,6 @@ namespace AncientBook.Application.Interfaces
         Task<List<SystemSetting>> GetAllAsync();
         Task<SystemSetting?> GetByKeyAsync(string settingKey);
         void Add(SystemSetting setting);
-        void AddAuditLog(AuditLog auditLog);
         Task SaveChangesAsync();
     }
 }
