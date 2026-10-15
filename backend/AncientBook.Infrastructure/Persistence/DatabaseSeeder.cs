@@ -18,6 +18,7 @@ namespace AncientBook.Infrastructure.Persistence
 
             if (await context.Users.AnyAsync())
             {
+                await InventorySeeder.SeedAsync(context);
                 return;
             }
 
@@ -296,6 +297,7 @@ namespace AncientBook.Infrastructure.Persistence
 
             await context.Users.AddRangeAsync(users);
             await context.SaveChangesAsync();
+            await InventorySeeder.SeedAsync(context);
         }
     }
 }

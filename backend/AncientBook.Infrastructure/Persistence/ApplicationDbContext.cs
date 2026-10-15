@@ -71,6 +71,13 @@ namespace AncientBook.Infrastructure.Persistence
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<WishlistItem>(entity =>
+            {
+                entity.ToTable("WishlistItems");
+                entity.HasKey(x => new { x.UserId, x.BookId });
+                entity.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(x => x.Book).WithMany().HasForeignKey(x => x.BookId).OnDelete(DeleteBehavior.Cascade);
+            });
 
             modelBuilder.Entity<Shipper>().HasOne(s => s.User).WithMany()
                 .HasForeignKey(s => s.UserId).OnDelete(DeleteBehavior.Restrict);
@@ -353,7 +360,7 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.Property(b => b.StockStatus).HasConversion<string>().HasMaxLength(20);
 
                 entity.HasOne(b => b.PublisherEntity)
-                    .WithMany()
+                    .WithMany(p => p.Books)
                     .HasForeignKey(b => b.PublisherId)
                     .OnDelete(DeleteBehavior.SetNull);
             });

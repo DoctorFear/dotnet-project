@@ -68,11 +68,11 @@ const tryRefreshToken = async (): Promise<string | null> => {
     return refreshPromise;
 };
 
-export const requestApi = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
+const sendRequest = async (path: string, options: RequestInit = {}): Promise<Response> => {
     const headers = new Headers(options.headers);
-    headers.set('Accept', 'application/json');
+    if (!headers.has('Accept')) headers.set('Accept', 'application/json');
 
-    if (options.body && !headers.has('Content-Type')) {
+    if (options.body && !(options.body instanceof FormData) && !headers.has('Content-Type')) {
         headers.set('Content-Type', 'application/json');
     }
 
@@ -95,7 +95,7 @@ export const requestApi = async <T>(path: string, options: RequestInit = {}): Pr
     }
 
     if (response.ok) {
-        return response.status === 204 ? (undefined as T) : (response.json() as Promise<T>);
+        return response;
     }
 
     const body = (await response.json().catch(() => ({}))) as ApiErrorBody;
@@ -119,3 +119,10 @@ export const requestApi = async <T>(path: string, options: RequestInit = {}): Pr
 
     throw new Error(body.title || 'Không thể kết nối đến hệ thống.');
 };
+
+export const requestApi = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
+    const response = await sendRequest(path, options);
+    return response.status === 204 ? undefined as T : response.json() as Promise<T>;
+};
+
+export const requestBlob = async (path: string, options: RequestInit = {}): Promise<Blob> => (await sendRequest(path, options)).blob();
