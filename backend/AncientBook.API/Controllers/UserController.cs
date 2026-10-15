@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using System.Threading.Tasks;
 using AncientBook.Application.DTOs.User;
 using AncientBook.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -24,6 +25,17 @@ public class UserController : ControllerBase
         return int.TryParse(claim, out int userId) ? userId : 0;
     }
 
+    private string GetClientIpAddress()
+    {
+        if (Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedHeader))
+        {
+            var ip = forwardedHeader.ToString().Split(',')[0].Trim();
+            if (!string.IsNullOrEmpty(ip)) return ip;
+        }
+
+        return HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+    }
+
     [HttpGet("profile")]
     public async Task<IActionResult> GetProfile()
     {
@@ -44,15 +56,9 @@ public class UserController : ControllerBase
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto request)
     {
         var userId = GetCurrentUserId();
-        var result = await _userService.ChangePasswordAsync(userId, request);
+        string ipAddress = GetClientIpAddress();
+        var result = await _userService.ChangePasswordAsync(userId, request, ipAddress);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
-    [HttpPost("set-password")]
-    public async Task<IActionResult> SetPassword([FromBody] SetPasswordRequestDto request)
-    {
-        var userId = GetCurrentUserId();
-        var result = await _userService.SetPasswordAsync(userId, request);
-        return result.Success ? Ok(result) : BadRequest(result);
-    }
 }

@@ -107,8 +107,11 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.Property(u => u.IsSuperAdmin).HasDefaultValue(false);
                 entity.Property(u => u.TotalSpent).HasPrecision(18, 2).HasDefaultValue(0);
 
+                // Duy nhất định danh bằng Username
                 entity.HasIndex(u => u.Username).IsUnique().HasDatabaseName("IX_Users_Username");
-                entity.HasIndex(u => u.Email).IsUnique().HasDatabaseName("IX_Users_Email");
+
+                // Cho phép trùng Email: chuyển thành Non-Unique Index để tăng tốc độ tìm kiếm
+                entity.HasIndex(u => u.Email).HasDatabaseName("IX_Users_Email");
 
                 // UC22: Quan hệ 1-N với MembershipTier
                 entity.HasOne(u => u.MembershipTier)

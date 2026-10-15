@@ -4,7 +4,9 @@ using AncientBook.Application.DTOs.User;
 using AncientBook.Application.Interfaces;
 using AncientBook.Domain.Entities;
 using AncientBook.Domain.Enums;
-using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace AncientBook.Application.Services;
 
@@ -15,9 +17,9 @@ public class AdminUserService : IAdminUserService
     private readonly IAuditLogService _auditLogService;
 
     public AdminUserService(
-            IUserRepository userRepository,
-            IPasswordHasher passwordHasher,
-            IAuditLogService auditLogService)
+        IUserRepository userRepository,
+        IPasswordHasher passwordHasher,
+        IAuditLogService auditLogService)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
@@ -38,7 +40,6 @@ public class AdminUserService : IAdminUserService
             Role = u.Role.ToString(),
             IsActive = u.IsActive,
             CreatedAt = u.CreatedAt,
-            // Đọc trực tiếp từ cột IsSuperAdmin trong database
             IsSuperAdmin = u.IsSuperAdmin
         }).ToList();
 
@@ -52,7 +53,7 @@ public class AdminUserService : IAdminUserService
         return ApiResponse<PagedResult<UserManagementItemDto>>.Ok(pagedResult);
     }
 
-    public async Task<ApiResponse<UserManagementItemDto>> CreateInternalUserAsync(int adminId, CreateInternalUserRequestDto request)
+    public async Task<ApiResponse<UserManagementItemDto>> CreateInternalUserAsync(int adminId, CreateInternalUserRequestDto request, string? ipAddress = null)
     {
         // BR02: Chỉ được tạo nhân sự nội bộ (Admin, Staff, Shipper)
         if (request.Role == UserRole.Member)
@@ -70,7 +71,6 @@ public class AdminUserService : IAdminUserService
         if (await _userRepository.ExistsByPhoneAsync(request.PhoneNumber.Trim()))
             return ApiResponse<UserManagementItemDto>.Fail("Số điện thoại này đã được sử dụng.");
 
-        // Mật khẩu khởi tạo mặc định cho nhân sự mới
         string defaultPassword = "Password@123";
         var newUser = new User
         {
@@ -81,7 +81,7 @@ public class AdminUserService : IAdminUserService
             PasswordHash = _passwordHasher.HashPassword(defaultPassword),
             Role = request.Role,
             IsActive = true,
-            IsSuperAdmin = false, // Nhân sự mới tạo không bao giờ là Super Admin
+            IsSuperAdmin = false,
             TokenVersion = 1,
             FPoints = 0,
             CreatedAt = DateTime.UtcNow
@@ -91,8 +91,17 @@ public class AdminUserService : IAdminUserService
         await _userRepository.SaveChangesAsync();
 
         // BR05: Ghi nhận Audit Log
-        await RecordAuditLogAsync(adminId, "CREATE_INTERNAL_USER", "Users", newUser.Id.ToString(),
-            $"Tạo nhân sự mới: @{newUser.Username} với vai trò {newUser.Role}");
+        await _auditLogService.LogAsync(
+            action: "CREATE_INTERNAL_USER",
+            module: "AUTH",
+            entityName: "Users",
+            recordId: newUser.Id.ToString(),
+            oldValues: null,
+            newValues: $"{{\"Role\":\"{newUser.Role}\",\"IsActive\":true}}",
+            details: $"Tạo nhân sự mới: @{newUser.Username} với vai trò {newUser.Role}",
+            userId: adminId,
+            ipAddress: ipAddress
+        );
 
         var resultDto = new UserManagementItemDto
         {
@@ -110,7 +119,7 @@ public class AdminUserService : IAdminUserService
         return ApiResponse<UserManagementItemDto>.Ok(resultDto, $"Tạo tài khoản nhân sự @{newUser.Username} thành công!");
     }
 
-    public async Task<ApiResponse<bool>> UpdateRoleAsync(int adminId, int targetUserId, ChangeUserRoleRequestDto request)
+    public async Task<ApiResponse<bool>> UpdateRoleAsync(int adminId, int targetUserId, ChangeUserRoleRequestDto request, string? ipAddress = null)
     {
         // E2: Chặn tự thao tác trên chính mình
         if (adminId == targetUserId)
@@ -160,14 +169,23 @@ public class AdminUserService : IAdminUserService
 
         await _userRepository.SaveChangesAsync();
 
-        // BR05: Ghi Audit Log
-        await RecordAuditLogAsync(adminId, "CHANGE_ROLE", "Users", targetUser.Id.ToString(),
-            $"Đã chuyển @{targetUser.Username} từ {oldRole} sang vai trò: {targetUser.Role}");
+        // BR05: Ghi Audit Log LƯU RÕ RÀNG OLD ROLE VÀ NEW ROLE
+        await _auditLogService.LogAsync(
+            action: "CHANGE_ROLE",
+            module: "AUTH",
+            entityName: "Users",
+            recordId: targetUser.Id.ToString(),
+            oldValues: $"{{\"Role\":\"{oldRole}\"}}",
+            newValues: $"{{\"Role\":\"{targetUser.Role}\"}}",
+            details: $"Đã chuyển @{targetUser.Username} từ {oldRole} sang vai trò: {targetUser.Role}",
+            userId: adminId,
+            ipAddress: ipAddress
+        );
 
         return ApiResponse<bool>.Ok(true, $"Đã chuyển @{targetUser.Username} sang vai trò: {targetUser.Role}");
     }
 
-    public async Task<ApiResponse<bool>> ToggleStatusAsync(int adminId, int targetUserId, ToggleUserStatusRequestDto request)
+    public async Task<ApiResponse<bool>> ToggleStatusAsync(int adminId, int targetUserId, ToggleUserStatusRequestDto request, string? ipAddress = null)
     {
         // E2: Chặn tự khóa chính mình
         if (adminId == targetUserId && !request.IsActive)
@@ -195,9 +213,10 @@ public class AdminUserService : IAdminUserService
             }
         }
 
+        bool oldStatus = targetUser.IsActive;
         targetUser.IsActive = request.IsActive;
 
-        // BR04: Nếu thao tác là KHÓA, lập tức hủy phiên làm việc
+        // BR04: Nếu thao tác là KHÓA, lập tức tăng TokenVersion để TokenValidationMiddleware đá ra ngay
         if (!request.IsActive)
         {
             targetUser.TokenVersion++;
@@ -210,24 +229,19 @@ public class AdminUserService : IAdminUserService
         string actionName = request.IsActive ? "UNLOCK_USER" : "LOCK_USER";
         string statusText = request.IsActive ? "Mở khóa" : "Khóa";
 
-        // BR05: Ghi Audit Log
-        await RecordAuditLogAsync(adminId, actionName, "Users", targetUser.Id.ToString(),
-            $"{statusText} tài khoản @{targetUser.Username}");
+        // BR05: Ghi Audit Log LƯU RÕ RÀNG TRẠNG THÁI CŨ VÀ MỚI
+        await _auditLogService.LogAsync(
+            action: actionName,
+            module: "AUTH",
+            entityName: "Users",
+            recordId: targetUser.Id.ToString(),
+            oldValues: $"{{\"IsActive\":{oldStatus.ToString().ToLower()}}}",
+            newValues: $"{{\"IsActive\":{targetUser.IsActive.ToString().ToLower()}}}",
+            details: $"{statusText} tài khoản @{targetUser.Username} ({targetUser.Role})",
+            userId: adminId,
+            ipAddress: ipAddress
+        );
 
         return ApiResponse<bool>.Ok(true, $"{statusText} tài khoản @{targetUser.Username} thành công!");
-    }
-
-    private async Task RecordAuditLogAsync(int adminId, string action, string entityName, string recordId, string details)
-    {
-        await _auditLogService.LogAsync(
-            action: action,
-            module: "AUTH",
-            entityName: entityName,
-            recordId: recordId,
-            oldValues: null,
-            newValues: null,
-            details: details,
-            userId: adminId
-        );
     }
 }

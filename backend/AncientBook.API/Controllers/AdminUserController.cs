@@ -1,7 +1,7 @@
-﻿// AncientBook.API/Controllers/AdminUsersController.cs
-using AncientBook.Application.DTOs.User;
+﻿using AncientBook.Application.DTOs.User;
 using AncientBook.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -22,7 +22,18 @@ namespace AncientBook.API.Controllers
 
         private int CurrentAdminId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        // 1. Lấy danh sách tài khoản kèm tìm kiếm, lọc & phân trang (Main Flow, A1)
+        private string GetClientIpAddress()
+        {
+            if (Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedHeader))
+            {
+                var ip = forwardedHeader.ToString().Split(',')[0].Trim();
+                if (!string.IsNullOrEmpty(ip)) return ip;
+            }
+
+            return HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+        }
+
+        // 1. Lấy danh sách tài khoản kèm tìm kiếm, lọc & phân trang
         [HttpGet]
         public async Task<IActionResult> GetUsers([FromQuery] UserFilterDto filter)
         {
@@ -34,30 +45,33 @@ namespace AncientBook.API.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateInternalUser([FromBody] CreateInternalUserRequestDto request)
         {
-            var result = await _adminUserService.CreateInternalUserAsync(CurrentAdminId, request);
-            if (!result.Success) // <-- Đổi IsSuccess thành Success
+            string ipAddress = GetClientIpAddress();
+            var result = await _adminUserService.CreateInternalUserAsync(CurrentAdminId, request, ipAddress);
+            if (!result.Success)
                 return BadRequest(result);
 
             return Ok(result);
         }
 
-        // 3. Phân vai trò nội bộ
+        // 3. Phân vai trò nội bộ (Lưu Old/New Role, đá token ngay)
         [HttpPatch("{id}/role")]
         public async Task<IActionResult> UpdateRole(int id, [FromBody] ChangeUserRoleRequestDto request)
         {
-            var result = await _adminUserService.UpdateRoleAsync(CurrentAdminId, id, request);
-            if (!result.Success) // <-- Đổi IsSuccess thành Success
+            string ipAddress = GetClientIpAddress();
+            var result = await _adminUserService.UpdateRoleAsync(CurrentAdminId, id, request, ipAddress);
+            if (!result.Success)
                 return BadRequest(result);
 
             return Ok(result);
         }
 
-        // 4. Khóa hoặc Mở khóa tài khoản
+        // 4. Khóa hoặc Mở khóa tài khoản (Lưu Old/New Status, khóa là đá token ngay)
         [HttpPatch("{id}/status")]
         public async Task<IActionResult> ToggleStatus(int id, [FromBody] ToggleUserStatusRequestDto request)
         {
-            var result = await _adminUserService.ToggleStatusAsync(CurrentAdminId, id, request);
-            if (!result.Success) // <-- Đổi IsSuccess thành Success
+            string ipAddress = GetClientIpAddress();
+            var result = await _adminUserService.ToggleStatusAsync(CurrentAdminId, id, request, ipAddress);
+            if (!result.Success)
                 return BadRequest(result);
 
             return Ok(result);

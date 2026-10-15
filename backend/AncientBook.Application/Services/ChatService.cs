@@ -186,7 +186,8 @@ public class ChatService : IChatService
         var messages = await _chatRepository.GetMessagesBySessionIdAsync(sessionId);
         var events = await _chatRepository.GetEventsBySessionIdAsync(sessionId);
 
-        var timeline = BuildStaffTimeline(messages, events);
+        // Truyền thêm session.CustomerId vào đây:
+        var timeline = BuildStaffTimeline(messages, events, session.CustomerId);
 
         var sessionDto = new StaffChatSessionDto
         {
@@ -482,12 +483,32 @@ public class ChatService : IChatService
         return timeline.OrderBy(t => t.Timestamp).ToList();
     }
 
-    private static List<ChatTimelineItemDto> BuildStaffTimeline(List<ChatMessage> messages, List<ChatSessionEvent> events)
+    private static List<ChatTimelineItemDto> BuildStaffTimeline(
+        List<ChatMessage> messages,
+        List<ChatSessionEvent> events,
+        int? customerId = null)
     {
         var timeline = new List<ChatTimelineItemDto>();
 
         foreach (var msg in messages)
         {
+            // Xác định tên người gửi hiển thị phía Staff:
+            string senderName;
+
+            // Nếu tin nhắn có vai trò Staff nhưng SenderId lại là CustomerId -> Tin nhắn chào tự động
+            if (msg.SenderRole == UserRole.Staff && customerId.HasValue && msg.SenderId == customerId.Value)
+            {
+                senderName = "Hệ thống"; // Hoặc "Tư vấn viên (Tự động)"
+            }
+            else if (msg.SenderRole == UserRole.Member)
+            {
+                senderName = msg.Sender?.FullName ?? "Khách hàng";
+            }
+            else
+            {
+                senderName = msg.Sender?.FullName ?? "Tư vấn viên";
+            }
+
             timeline.Add(new ChatTimelineItemDto
             {
                 ItemType = "Message",
@@ -497,7 +518,7 @@ public class ChatService : IChatService
                     Id = msg.Id,
                     ChatSessionId = msg.ChatSessionId,
                     SenderId = msg.SenderId,
-                    SenderName = msg.Sender?.FullName ?? (msg.SenderRole == UserRole.Member ? "Khách hàng" : "Tư vấn viên"),
+                    SenderName = senderName, // <-- Dùng tên đã chuẩn hóa
                     SenderRole = msg.SenderRole,
                     Content = msg.Content,
                     AttachmentUrl = msg.AttachmentUrl,

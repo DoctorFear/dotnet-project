@@ -1,0 +1,48 @@
+backend/
+│
+├── AncientBook.Domain/                         # [Lớp 1: Core Domain & Entities]
+│   ├── Entities/
+│   │   ├── BookTtsSegment.cs                   # Thực thể lưu từng đoạn đọc (EditionId, PageNumber, SegmentIndex, TextContent, AudioUrlFemale, AudioUrlMale...)[cite: 44]
+│   │   └── EbookEdition.cs                     # Thực thể ấn bản sách điện tử (cột IsTtsEnabled, DropboxPath...)[cite: 45]
+│   ├── Interfaces/
+│   │   └── IBookTtsSegmentRepository.cs        # Interface thao tác dữ liệu TTS Segment[cite: 42]
+│   └── Enums/
+│       └── EbookPresetType.cs                  # Enum loại preset: EpubStandard, PdfStandard, ScannedBook[cite: 29]
+│
+├── AncientBook.Application/                    # [Lớp 2: Application / Contracts & DTOs]
+│   ├── Common/Interfaces/
+│   │   ├── ITtsDocumentExtractorService.cs     # Interface bóc tách các dòng/khối văn bản[cite: 41, 46]
+│   │   ├── ITtsAudioService.cs                 # Interface gọi sinh âm thanh TTS qua proxy[cite: 40, 46]
+│   │   └── Repositories/
+│   │       └── IEbookEditionRepository.cs      # Interface truy vấn và cập nhật ấn bản sách[cite: 23, 46]
+│   ├── DTOs/
+│   │   └── AIFlowDto.cs                        # Các DTO phục vụ phân hệ TTS:[cite: 47]
+│   │                                           # - TtsSegmentDto (PageNumber, SegmentIndex, TextContent)[cite: 47]
+│   │                                           # - PageTtsResponseDto (AudioUrlFemale, AudioUrlMale...)[cite: 47]
+│   │                                           # - TtsGenerateResultDto (Success, TotalSegmentsGenerated...)[cite: 47]
+│   └── Interfaces/
+│       └── IEbookTtsService.cs                 # Interface điều phối luồng tổng hợp và đọc TTS[cite: 46]
+│
+├── AncientBook.Infrastructure/                 # [Lớp 3: Infrastructure / Storage & Processing]
+│   ├── Persistence/
+│   │   ├── ApplicationDbContext.cs             # Khai báo DbSet<BookTtsSegment> và chỉ mục[cite: 43]
+│   │   └── Repositories/
+│   │       ├── BookTtsSegmentRepository.cs     # Triển khai IBookTtsSegmentRepository qua EF Core[cite: 42]
+│   │       └── EbookEditionRepository.cs       # Triển khai IEbookEditionRepository[cite: 23]
+│   ├── Storage/
+│   │   ├── IFileStorageService.cs              # Hợp đồng lưu trữ tệp đám mây[cite: 39]
+│   │   └── DropboxStorageService.cs            # Lưu byte mảng MP3 vào tts-audio/{editionId} và xuất link ?raw=1[cite: 39, 46]
+│   └── Services/
+│       ├── TtsDocumentExtractorService.cs      # Bóc tách từng khối dòng từ EPUB (HtmlAgilityPack) và PDF (PdfPig)[cite: 41]
+│       ├── TtsAudioService.cs                  # Gửi HTTP POST sang máy chủ Python lấy mảng byte MP3[cite: 40]
+│       └── EbookTtsService.cs                  # Điều phối: Đọc sách -> Bóc tách -> Tạo MP3 nam/nữ -> Lưu Dropbox -> Lưu DB[cite: 46]
+│
+├── AncientBook.API/                            # [Lớp 4: Web API Presentation Layer]
+│   ├── Controllers/
+│   │   └── EbookTtsController.cs               # API Endpoints:[cite: 49]
+│   │                                           # - POST /api/EbookEditions/{editionId}/tts/generate        [Authorize(Roles = "Staff")][cite: 49]
+│   │                                           # - GET  /api/EbookEditions/{editionId}/tts/pages/{page}/segments  [Authorize][cite: 49]
+│   └── Program.cs                              # Đăng ký Dependency Injection các service và repository TTS[cite: 48]
+│
+└── tts_service/                                # [Microservice phụ trợ Python]
+    └── tts_server.py                           # FastAPI Proxy (cổng 5050) sử dụng edge-tts sinh âm thanh đa ngôn ngữ, đa giọng đọc[cite: 38]

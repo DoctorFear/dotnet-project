@@ -1,0 +1,29 @@
+backend/
+│
+├── AncientBook.Domain/
+│   └── Entities/
+│       └── AuditLog.cs                      # Thực thể lưu vết (UserId, Action, Module, Timestamp, RecordId...)[cite: 20]
+│
+├── AncientBook.Application/
+│   ├── DTOs/
+│   │   └── AuditLogDtos.cs                  # AuditLogFilterDto (bộ lọc) & AuditLogItemDto (kết quả hiển thị)[cite: 19]
+│   │
+│   ├── Interfaces/
+│   │   ├── IAuditLogRepository.cs           # Hợp đồng truy vấn cơ sở dữ liệu cho AuditLog
+│   │   └── IAuditLogService.cs              # Hợp đồng ghi log (LogAsync) & đọc log (GetAuditLogsAsync)[cite: 18]
+│   │
+│   └── Services/
+│       └── AuditLogService.cs               # Triển khai ghi log, che mật khẩu (***), trả kết quả phân trang[cite: 18]
+│
+├── AncientBook.Infrastructure/
+│   ├── Persistence/
+│   │   └── ApplicationDbContext.cs          # Khai báo DbSet<AuditLog> & index IX_AuditLogs_Timestamp[cite: 21]
+│   │
+│   └── Repositories/
+│       └── AuditLogRepository.cs            # Truy vấn lọc theo Module, Keyword, Date range & phân trang[cite: 22]
+│
+└── AncientBook.API/
+    ├── Controllers/
+    │   └── AuditLogController.cs            # API GET /api/admin/audit-logs [Authorize(Roles = "Admin")][cite: 17]
+    │
+    └── Program.cs                           # Đăng ký DI (AddScoped IAuditLogRepository, IAuditLogService)

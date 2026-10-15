@@ -18,6 +18,7 @@ namespace AncientBook.Application.DTOs
         public int Id { get; set; }
         public DateTime Timestamp { get; set; }
         public int? UserId { get; set; }
+        public string PerformerUsername { get; set; } = "System"; // <-- THÊM MỚI
         public string PerformerEmail { get; set; } = "System";
         public string PerformerFullName { get; set; } = "Hệ thống";
         public string PerformerRole { get; set; } = "System";

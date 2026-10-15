@@ -58,8 +58,6 @@ builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IChatRepository, ChatRepository>();
 builder.Services.AddScoped<IChatService, ChatService>();
-builder.Services.AddScoped<IEbookEditionRepository, EbookEditionRepository>();
-builder.Services.AddScoped<IBookEmbeddingRepository, BookEmbeddingRepository>();
 
 // 1. Repositories
 builder.Services.AddScoped<IEbookEditionRepository, EbookEditionRepository>();
@@ -79,7 +77,6 @@ builder.Services.AddScoped<ITtsDocumentExtractorService, TtsDocumentExtractorSer
 builder.Services.AddScoped<ITtsAudioService, TtsAudioService>();
 builder.Services.AddScoped<IEbookTtsService, EbookTtsService>();
 builder.Services.AddScoped<IBookTtsSegmentRepository, BookTtsSegmentRepository>();
-builder.Services.AddScoped<IEbookTtsService, EbookTtsService>();
 
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IPhysicalOrderService, PhysicalOrderService>();
@@ -126,7 +123,6 @@ builder.Services.AddHostedService<TierUpgradeBackgroundService>();
 
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IPublisherRepository, PublisherRepository>();
-builder.Services.AddScoped<ISystemSettingRepository, SystemSettingRepository>();
 builder.Services.AddScoped<IReportRepository, ReportRepository>();
 builder.Services.AddScoped<IReportPdfExporter, ReportPdfExporter>();
 
@@ -135,7 +131,6 @@ builder.Services.AddScoped<IPublisherService, PublisherService>();
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<ISystemSettingService, SystemSettingService>();
 builder.Services.AddScoped<IReportService, ReportService>();
-builder.Services.AddScoped<IFileStorageService, DropboxStorageService>();
 builder.Services.AddScoped<IFileStorageServices, LocalFileStorageService>();
 
 builder.Services.AddHttpClient();
@@ -167,6 +162,21 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings["Audience"],
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero
+    };
+
+    // BỔ SUNG ĐOẠN NÀY ĐỂ KẾT NỐI ĐƯỢC SIGNALR:
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/chat"))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
     };
 });
 

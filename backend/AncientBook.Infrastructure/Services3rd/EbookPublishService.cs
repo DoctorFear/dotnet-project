@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using AncientBook.Application.Common.Interfaces;
 using AncientBook.Application.Common.Interfaces.Repositories;
+using AncientBook.Domain.Common;
 using AncientBook.Domain.Entities;
 using AncientBook.Domain.Enums;
 using AncientBook.Infrastructure.Persistence;
@@ -66,12 +68,14 @@ namespace AncientBook.Infrastructure.Services
                 {
                     var vector = await _geminiService.GetEmbeddingAsync(chunk.Text, ct);
 
+                    // Gán tường minh cả EmbeddingJson để lưu trực tiếp vào SQL Server
                     embeddingsToInsert.Add(new BookEmbedding
                     {
                         EditionId = edition.Id,
                         PageNumber = chunk.PageNumber,
                         ChunkIndex = chunk.ChunkIndex,
                         ChunkContent = chunk.Text,
+                        EmbeddingJson = JsonSerializer.Serialize(vector),
                         Vector = vector
                     });
 
@@ -135,7 +139,7 @@ namespace AncientBook.Infrastructure.Services
             }
 
             edition.Status = EditionPublishStatus.Published;
-            edition.PublishedAt = DateTime.UtcNow;
+            edition.PublishedAt = TimeZoneHelper.GetVietnamTime();
 
             if (edition.Book != null)
             {

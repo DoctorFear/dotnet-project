@@ -1,0 +1,41 @@
+backend/
+│
+├── AncientBook.Domain/                         # [Lớp 1: Core Domain]
+│   ├── Entities/
+│   │   ├── User.cs                             # Chứa Role (UserRole), IsSuperAdmin (bool), TokenVersion (int), IsActive (bool)...[cite: 9]
+│   │   └── AuditLog.cs                         # Ghi nhận vết lịch sử thay đổi quyền, tạo nhân sự, khóa tài khoản[cite: 20]
+│   └── Enums/
+│       └── UserRole.cs                         # Enum: Member = 1, Staff = 2, Shipper = 3, Admin = 4[cite: 10]
+│
+├── AncientBook.Application/                    # [Lớp 2: Application / Use Cases]
+│   ├── Common/
+│   │   ├── ApiResponse.cs                      # Chuẩn hóa phản hồi API (Success, Message, Data...)[cite: 6]
+│   │   └── PagedResult.cs                      # Cấu trúc kết quả phân trang[cite: 6]
+│   ├── DTOs/User/                              # Các DTO phục vụ phân quyền & quản trị
+│   │   ├── UserFilterDto.cs                    # Lọc theo Keyword, Role, IsActive, PageNumber, PageSize[cite: 1, 6]
+│   │   ├── UserManagementItemDto.cs            # Hiển thị thông tin user (kèm Role, IsSuperAdmin, IsActive)[cite: 6]
+│   │   ├── CreateInternalUserRequestDto.cs     # Tạo nhân sự mới (Admin, Staff, Shipper)[cite: 1, 6]
+│   │   ├── ChangeUserRoleRequestDto.cs         # Đổi vai trò cho tài khoản nhân sự[cite: 1, 6]
+│   │   └── ToggleUserStatusRequestDto.cs       # Khóa hoặc mở khóa tài khoản[cite: 1, 6]
+│   ├── Interfaces/
+│   │   ├── IAdminUserService.cs                # Hợp đồng nghiệp vụ quản trị nhân sự & phân quyền[cite: 1, 6]
+│   │   ├── IUserRepository.cs                  # Truy vấn user, đếm số Admin hoạt động (CountActiveAdminsAsync)...[cite: 6, 16]
+│   │   ├── IPasswordHasher.cs                  # Băm mật khẩu khởi tạo mặc định (Password@123)[cite: 6, 11]
+│   │   └── IAuditLogService.cs                 # Ghi nhận Audit Log hành động phân quyền[cite: 6, 18]
+│   └── Services/
+│       └── AdminUserService.cs                 # Cài đặt quy tắc nghiệp vụ (BR) & ràng buộc bảo vệ Super Admin[cite: 6]
+│
+├── AncientBook.Infrastructure/                 # [Lớp 3: Infrastructure & Persistence]
+│   ├── Persistence/
+│   │   ├── ApplicationDbContext.cs             # Cấu hình bảng Users, cột IsSuperAdmin (default false), Index...[cite: 14]
+│   │   └── Seeders/
+│   │       └── DatabaseSeeder.cs               # Seed tài khoản SuperAdmin mẫu (IsSuperAdmin = true)[cite: 15]
+│   └── Repositories/
+│       └── UserRepository.cs                   # Lấy danh sách phân trang (GetPagedUsersAsync), CountActiveAdminsAsync...[cite: 6, 16]
+│
+└── AncientBook.API/                            # [Lớp 4: Web API & Middleware]
+    ├── Controllers/
+    │   └── AdminUsersController.cs             # Endpoint: /api/admin/users [Authorize(Roles = "Admin")][cite: 1]
+    ├── Middlewares/
+    │   └── TokenValidationMiddleware.cs        # Chặn token cũ ngay lập tức bằng TokenVersion khi bị đổi quyền hoặc bị khóa[cite: 33]
+    └── Program.cs                              # Đăng ký DI IAdminUserService, Middleware & JWT ClaimTypes.Role[cite: 33]

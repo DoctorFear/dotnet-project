@@ -1,0 +1,158 @@
+.profileContainer {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.profileCard {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+    padding: 32px;
+    margin-bottom: 28px;
+}
+
+.headerSection {
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 14px;
+    margin-bottom: 24px;
+}
+
+.headerTitle {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 6px 0;
+}
+
+.headerSubtitle {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0;
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+}
+
+.formGroup.fullWidth {
+    grid-column: span 2;
+}
+
+.formGroup label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 6px;
+}
+
+.formGroup input {
+    padding: 10px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.formGroup input:focus {
+    border-color: #6366f1;
+}
+
+.formGroup input:read-only {
+    background-color: #f1f5f9;
+    color: #64748b;
+    cursor: not-allowed;
+}
+
+.addressSection {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px dashed #cbd5e1;
+}
+
+.addressHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.addressCardItem {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 14px;
+}
+
+.addressCardItem.defaultAddress {
+    border-color: #6366f1;
+    background: #faf5ff;
+}
+
+.addressRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr auto;
+    gap: 12px;
+    align-items: center;
+}
+
+.btnGroup {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.btnPrimary {
+    background-color: #6366f1;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 24px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btnPrimary:hover {
+    background-color: #4f46e5;
+}
+
+.btnPrimary:disabled {
+    background-color: #a5b4fc;
+    cursor: not-allowed;
+}
+
+.btnSecondary {
+    background-color: #e2e8f0;
+    color: #334155;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.btnDanger {
+    background-color: #fee2e2;
+    color: #dc2626;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.badgeDefault {
+    font-size: 12px;
+    color: #6366f1;
+    font-weight: 600;
+}

@@ -1,0 +1,59 @@
+backend/
+│
+├── AncientBook.Domain/                         # [Lớp 1: Core Domain & Entities]
+│   ├── Common/
+│   │   └── BaseEntity.cs                       # Định nghĩa Id, CreatedAt, UpdatedAt
+│   ├── Entities/
+│   │   ├── Book.cs                             # Thực thể đầu sách (liên kết 1-N với EbookEditions)
+│   │   ├── EbookEdition.cs                     # Ấn bản số hóa (Format, DropboxPath, PresetType, Status, IsTtsEnabled...)
+│   │   ├── BookEmbedding.cs                    # Các chunk văn bản, số trang và vector nạp tri thức (EmbeddingJson, Vector)
+│   │   └── CopilotChatHistory.cs               # Lịch sử hội thoại hỏi-đáp AI (EditionId, UserId, SelectedText, Question, Answer...)
+│   └── Enums/
+│       ├── EbookFormat.cs                      # Epub = 1, Pdf = 2
+│       ├── EbookPresetType.cs                  # EpubStandard = 1, PdfStandard = 2, ScannedBook = 3
+│       └── EditionPublishStatus.cs             # Draft = 0, Processing = 1, Published = 2, Failed = 3
+│
+├── AncientBook.Application/                    # [Lớp 2: Application / Contracts & DTOs]
+│   ├── Common/
+│   │   ├── Interfaces/
+│   │   │   ├── IDocumentExtractor.cs           # Interface bóc tách trang và nội dung sách PDF/EPUB
+│   │   │   ├── ITextChunker.cs                 # Interface chia đoạn văn bản
+│   │   │   ├── IGeminiEmbeddingService.cs      # Interface gọi Gemini API (Embedding & LLM Response)
+│   │   │   ├── IRagSearchService.cs            # Interface tìm kiếm Cosine Similarity
+│   │   │   └── IEbookPublishService.cs         # Interface luồng quy trình xuất bản
+│   │   └── Models/
+│   │       └── DocumentChunk.cs                # Model trung gian của chunk (PageNumber, ChunkIndex, Text)
+│   └── DTOs/
+│       └── AIFlowDto.cs                        # Toàn bộ DTOs của luồng E-Book & Copilot:
+│                                               # - UploadEditionRequest / UploadEditionResponse
+│                                               # - SaveDraftRequest / PublishEditionRequest
+│                                               # - CopilotQueryRequest / CopilotQueryResponse
+│                                               # - BookEmbeddingCitationDto
+│                                               # - CopilotHistoryItemDto
+│
+├── AncientBook.Infrastructure/                 # [Lớp 3: Infrastructure / Processing & Persistence]
+│   ├── Persistence/
+│   │   ├── ApplicationDbContext.cs             # Cấu hình EF Core DbSets (EbookEditions, BookEmbeddings, CopilotChatHistories)
+│   │   └── Repositories/
+│   │       ├── EbookEditionRepository.cs       # Truy vấn dữ liệu ấn bản (IEbookEditionRepository)
+│   │       └── BookEmbeddingRepository.cs      # Thao tác lưu/truy vấn vector embeddings (IBookEmbeddingRepository)
+│   ├── Storage/
+│   │   ├── IFileStorageService.cs              # Hợp đồng quản lý tệp lưu trữ
+│   │   └── DropboxStorageService.cs            # Tải tệp lên Dropbox, bóc tách direct link và đọc luồng stream
+│   └── Services/                               # Hiện thực hóa các Pipeline AI & bóc tách
+│       ├── DocumentExtractorService.cs         # Sử dụng PdfPig & VersOne.Epub bóc tách văn bản
+│       ├── TextChunker.cs                      # Cắt text theo ChunkSize (450) & ChunkOverlap (90)
+│       ├── GeminiEmbeddingService.cs           # Gọi Google Gemini (gemini-embedding-001 & gemini-flash)
+│       ├── RagSearchService.cs                 # Thuật toán tính độ tương đồng Cosine Similarity
+│       └── EbookPublishService.cs              # Xử lý quy trình: Extract -> Chunk -> Embed -> Clean Replace -> Publish
+│
+└── AncientBook.API/                            # [Lớp 4: Web API Presentation Layer]
+    ├── Controllers/
+    │   └── EbookEditionsController.cs          # Các API Endpoints:
+    │                                           # - POST /api/EbookEditions/upload         [Authorize(Roles = "Staff")]
+    │                                           # - PUT  /api/EbookEditions/{id}/draft    [Authorize(Roles = "Staff")]
+    │                                           # - POST /api/EbookEditions/{id}/publish  [Authorize(Roles = "Staff")]
+    │                                           # - POST /api/EbookEditions/{id}/ask-copilot      [Authorize]
+    │                                           # - GET  /api/EbookEditions/{id}/copilot-history  [Authorize]
+    ├── appsettings.json                        # Cấu hình Gemini ApiKey, Dropbox, RagSettings (TopK, MinSimilarityScore...)
+    └── Program.cs                              # Đăng ký Dependency Injection và HTTP Pipeline
