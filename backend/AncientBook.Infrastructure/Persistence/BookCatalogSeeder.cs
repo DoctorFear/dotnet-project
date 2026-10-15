@@ -60,7 +60,7 @@ public static class BookCatalogSeeder
             var isbn = $"978-604-99-{index + 1:0000}-0";
             if (existingIsbns.Contains(isbn)) continue;
             var sample = samples[index];
-            context.Books.Add(new Book
+            var newBook = new Book
             {
                 Isbn = isbn, Title = sample.Title, Author = sample.Author,
                 PublisherId = publishers[index % publishers.Count].Id,
@@ -71,8 +71,17 @@ public static class BookCatalogSeeder
                 MonthlyRentalPrice = 25000, YearlyRentalPrice = 80000,
                 Rating = new double[] { 5, 4.5, 3.5, 2.5 }[index % 4], ReviewsCount = 10 + index,
                 PublicationYear = 2024 + index % 3,
+                StockCount = 50,
                 Description = $"Dữ liệu mẫu giới thiệu sách {sample.Title} của {sample.Author}.",
                 BookCategories = [new BookCategory { CategoryId = categories[sample.Category] }]
+            };
+            context.Books.Add(newBook);
+            
+            context.Inventories.Add(new Inventory
+            {
+                Book = newBook, // <-- EF Core will map the ID automatically
+                QuantityOnHand = 50,
+                ReorderLevel = 5,
             });
             remaining--;
         }

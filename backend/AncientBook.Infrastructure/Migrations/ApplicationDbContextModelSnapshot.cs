@@ -1850,7 +1850,6 @@ namespace AncientBook.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
-                        .IsUnique()
                         .HasDatabaseName("IX_Users_Email");
 
                     b.HasIndex("MembershipTierId");
