@@ -12,6 +12,7 @@ using AncientBook.Application.DTOs;
 using AncientBook.Application.Interfaces;
 using AncientBook.Domain.Entities;
 using AncientBook.Domain.Enums;
+using AncientBook.Infrastructure.Repositories;
 
 namespace AncientBook.Application.Services
 {
@@ -21,17 +22,19 @@ namespace AncientBook.Application.Services
         private readonly IInventoryRepository _inventoryRepository;
         private readonly IOrderRepository _orderRepository;
         private readonly IFPointRepository _fpointRepository;
+        private readonly ICartRepository _cartRepository;
         private readonly IHmacSha256Hasher _hasher;
         private readonly HttpClient _httpClient;
         private readonly ILogger<CheckoutService> _logger;
         private readonly IWorkflowDbContext _workflow;
         private readonly IFPointService _loyalty;
 
-        public CheckoutService(IBookRepository bookRepository, IInventoryRepository inventoryRepository, IOrderRepository orderRepository, IFPointRepository fpointRepository, IUserRepository userRepository, IHmacSha256Hasher hasher, HttpClient httpClient, ILogger<CheckoutService> logger, IWorkflowDbContext workflow, IFPointService loyalty)
+        public CheckoutService(IBookRepository bookRepository, IInventoryRepository inventoryRepository, IOrderRepository orderRepository, IFPointRepository fpointRepository, IUserRepository userRepository, ICartRepository cartRepository, IHmacSha256Hasher hasher, HttpClient httpClient, ILogger<CheckoutService> logger, IWorkflowDbContext workflow, IFPointService loyalty)
         {
             _bookRepository = bookRepository;
             _inventoryRepository = inventoryRepository;
             _orderRepository = orderRepository;
+            _cartRepository = cartRepository;
             _fpointRepository = fpointRepository;
             _httpClient = httpClient;
             _hasher = hasher;
@@ -175,6 +178,28 @@ namespace AncientBook.Application.Services
 
                 await _workflow.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                try 
+                {
+                    var cart = await _cartRepository.GetByUserIdAsync(request.UserId);
+                    if (cart != null && cart.CartItems != null)
+                    {
+                        foreach (var itemDto in request.Items)
+                        {
+                            var cartItem = cart.CartItems.FirstOrDefault(ci => 
+                                ci.BookId == itemDto.BookId && ci.PurchaseType == itemDto.PurchaseType);
+                                
+                            if (cartItem != null)
+                            {
+                                await _cartRepository.RemoveItemAsync(cartItem);
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Lỗi hệ thống: Không thể xóa sản phẩm khỏi giỏ hàng cho đơn hàng #{OrderId}", order.Id);
+                }
 
                 return new CreateCheckoutResponse
                 {
@@ -369,6 +394,16 @@ namespace AncientBook.Application.Services
 
             await _orderRepository.UpdateAsync(order);
             if (resultCode == 0) await _loyalty.ProcessPaidDigitalOrderAsync(order.Id);
+        }
+
+        public async Task<bool> IsOrderOnlinePaidAsync(int orderId)
+        {
+            var order = await _orderRepository.GetByIdAsync(orderId);
+            if (order == null)
+            {
+                throw new KeyNotFoundException($"Không tìm thấy đơn hàng {orderId}");
+            }
+            return order.IsPaid;
         }
     }
 }

@@ -14,5 +14,6 @@ namespace AncientBook.Domain.Entities
         public int Quantity { get; set; } = 1;
         public PurchaseType PurchaseType { get; set; } = PurchaseType.Physical;
         public RentalDurationType? RentalDuration { get; set; }
+        public Boolean isSelected { get; set; } = true;
     }
 }

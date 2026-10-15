@@ -11,5 +11,6 @@ namespace AncientBook.Application.Interfaces
         Task<CreateMomoResponse> CreatePaymentUrlAsync(int orderId);
         Task HandleMoMoIpnAsync(JsonElement ipnData);
         Task<GetMomoResponse> QueryMoMoPaymentStatusAsync(int orderId);
+        Task<bool> IsOrderOnlinePaidAsync(int orderId);
     }
 }

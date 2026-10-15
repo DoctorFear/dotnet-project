@@ -39,6 +39,12 @@ builder.Services.AddScoped<AncientBook.Application.Interfaces.IApplicationDbCont
     provider.GetRequiredService<ApplicationDbContext>());
 builder.Services.AddScoped<IWorkflowDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
+
 // DI Service & Repository & Hasher
 builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
 builder.Services.AddScoped<IHmacSha256Hasher, HmacSha256Hasher>();
@@ -177,6 +183,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpContextAccessor();
+
 
 // Cấu hình Swagger hỗ trợ nhập Token JWT Bearer
 builder.Services.AddSwaggerGen(c =>

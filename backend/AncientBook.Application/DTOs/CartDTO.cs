@@ -7,6 +7,7 @@ namespace AncientBook.Application.DTOs
         public int Quantity { get; set; } = 1;
         public PurchaseType PurchaseType { get; set; }
         public RentalDurationType? RentalDuration { get; set; }
+        public Boolean isSelected { get; set; }
     }
 
     public class AddToCartRequest
@@ -37,5 +38,6 @@ namespace AncientBook.Application.DTOs
         public RentalDurationType? RentalDuration { get; set; }
         public decimal UnitPrice { get; set; }
         public decimal TotalPrice => UnitPrice * Quantity;
+        public Boolean isSelected { get; set; }
     }
 }

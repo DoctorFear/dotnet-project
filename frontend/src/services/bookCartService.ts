@@ -31,3 +31,26 @@ export const addBookToCart = (book: PurchasableBook, selection: BookPurchaseSele
         }),
     });
 };
+
+export const getCart = async (): Promise<any> => {
+    const userId = getCurrentUserId();
+    return requestApi<any>(`/cart/${userId}`);
+};
+
+export const updateCart = async (
+    cartItemId: number,
+    data: { quantity: number; purchaseType: number; rentalDuration?: number | null, isSelected: Boolean }
+): Promise<{ message: string }> => {
+    const userId = getCurrentUserId();
+    return requestApi<{ message: string }>(`/cart/items/${cartItemId}?userId=${userId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    });
+};
+
+export const deleteItemsCart = async (cartItemId: number): Promise<{ message: string }> => {
+    const userId = getCurrentUserId();
+    return requestApi<{ message: string }>(`/cart/items/${cartItemId}?userId=${userId}`, {
+        method: 'DELETE',
+    });
+};

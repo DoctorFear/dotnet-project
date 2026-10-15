@@ -14,6 +14,6 @@ namespace AncientBook.Application.Interfaces
         Task UpdateAsync(Order order);
         void Update(Order order);
         Task SaveChangesAsync();
-        Task<(List<Order> items, int totalCount)> GetPagedOrdersAsync(int pageIndex, int pageSize, string? status); // Bổ sung
+        Task<(List<Order> items, int totalCount)> GetPagedOrdersAsync(int pageIndex, int pageSize, string? status, int? userId);
     }
 }

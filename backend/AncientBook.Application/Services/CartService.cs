@@ -101,15 +101,15 @@ namespace AncientBook.Application.Services
                 decimal unitPrice = 0;
                 if (ci.PurchaseType == PurchaseType.Physical)
                 {
-                    unitPrice = ci.Book.PhysicalPrice; //[cite: 7]
+                    unitPrice = ci.Book.PhysicalPrice; 
                 }
                 else if (ci.PurchaseType == PurchaseType.Rental)
                 {
                     unitPrice = ci.RentalDuration switch
                     {
-                        RentalDurationType.Weekly => ci.Book.WeeklyRentalPrice,   //[cite: 7]
-                        RentalDurationType.Monthly => ci.Book.MonthlyRentalPrice, //[cite: 7]
-                        RentalDurationType.Yearly => ci.Book.YearlyRentalPrice,   //[cite: 7]
+                        RentalDurationType.Weekly => ci.Book.WeeklyRentalPrice,   
+                        RentalDurationType.Monthly => ci.Book.MonthlyRentalPrice, 
+                        RentalDurationType.Yearly => ci.Book.YearlyRentalPrice,   
                         _ => 0
                     };
                 }
@@ -127,7 +127,8 @@ namespace AncientBook.Application.Services
                     PurchaseType = ci.PurchaseType,
                     Quantity = ci.Quantity,
                     RentalDuration = ci.RentalDuration,
-                    UnitPrice = unitPrice
+                    UnitPrice = unitPrice,
+                    isSelected = ci.isSelected
                 });
             }
 
@@ -169,12 +170,12 @@ namespace AncientBook.Application.Services
 
             if (request.PurchaseType == PurchaseType.Physical)
             {
-                if (!book.IsPhysicalAvailable) throw new InvalidOperationException("Sách này không hỗ trợ mua bản vật lý."); //[cite: 7]
+                if (!book.IsPhysicalAvailable) throw new InvalidOperationException("Sách này không hỗ trợ mua bản vật lý."); 
                 if (request.Quantity < 1) request.Quantity = 1;
             }
             else if (request.PurchaseType == PurchaseType.Rental)
             {
-                if (!book.IsRentalAvailable) throw new InvalidOperationException("Sách này không hỗ trợ cho thuê online."); //[cite: 7]
+                if (!book.IsRentalAvailable) throw new InvalidOperationException("Sách này không hỗ trợ cho thuê online."); 
                 if (!request.RentalDuration.HasValue) throw new ArgumentException("Vui lòng chọn thời gian thuê.");
                 request.Quantity = 1;
             }
@@ -191,6 +192,7 @@ namespace AncientBook.Application.Services
             cartItem.PurchaseType = request.PurchaseType;
             cartItem.Quantity = request.Quantity;
             cartItem.RentalDuration = request.RentalDuration;
+            cartItem.isSelected = request.isSelected;
 
             await _cartRepository.UpdateItemAsync(cartItem);
         }

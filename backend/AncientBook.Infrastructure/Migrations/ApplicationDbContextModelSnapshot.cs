@@ -525,6 +525,9 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("isSelected")
+                        .HasColumnType("bit");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BookId");
@@ -1847,7 +1850,6 @@ namespace AncientBook.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
-                        .IsUnique()
                         .HasDatabaseName("IX_Users_Email");
 
                     b.HasIndex("MembershipTierId");
