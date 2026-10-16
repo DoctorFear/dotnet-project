@@ -179,5 +179,40 @@ namespace AncientBook.API.Controllers
                 return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống.", details = ex.Message });
             }
         }
+
+        [HttpGet("{id}")]
+        [Authorize]
+        public async Task<IActionResult> GetOrderById(int id)
+        {
+            try
+            {
+                var currentUserIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? 
+                                        User.FindFirst("sub")?.Value;
+                var userRoleClaim = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+
+                if (string.IsNullOrEmpty(currentUserIdClaim) || !int.TryParse(currentUserIdClaim, out int currentUserId))
+                {
+                    return Unauthorized(new { message = "Không thể xác thực thông tin người dùng." });
+                }
+
+                var order = await _orderService.GetOrderByIdAsync(id);
+                if (order == null)
+                {
+                    return NotFound(new { message = $"Không tìm thấy đơn hàng #{id}." });
+                }
+
+                bool isAdmin = userRoleClaim == "Admin";
+                if (!isAdmin && order.UserId != currentUserId)
+                {
+                    return Forbid();
+                }
+
+                return Ok(order);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống.", details = ex.Message });
+            }
+        }
     }
 }

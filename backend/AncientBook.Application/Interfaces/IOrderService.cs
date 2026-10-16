@@ -13,5 +13,6 @@ namespace AncientBook.Application.Interfaces
         Task<bool> RequestRefundOrder(int orderId);
         Task<PagedResult<Order>> GetPagedOrdersAsync(GetOrdersQuery query);
         Task<bool> ApproveReturnOrderAsync(int orderId, string adminUser);
+        Task<Order?> GetOrderByIdAsync(int orderId);
     }
 }

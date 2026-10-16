@@ -17,6 +17,8 @@ import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProfilePage from './pages/ProfilePage';
+import OrderHistoryPage from './pages/OrderHistoryPage';
+import OrderDetailPage from './pages/OrderDetailsPage';
 
 export const App: React.FC = () => {
     return (
@@ -39,6 +41,8 @@ export const App: React.FC = () => {
                         <Route path="/checkout" element={<CheckoutPage />} />
                         <Route path="/refund" element={<RefundPage />} />
                         <Route path="/profile" element={<ProfilePage />} />
+                        <Route path="/order-history" element={<OrderHistoryPage />} />
+                        <Route path="/order-history/:id" element={<OrderDetailPage />} />
                         
                     </Route>
 

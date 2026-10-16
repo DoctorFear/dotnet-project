@@ -187,6 +187,8 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
+    max-height: 300px;
+    overflow: auto;
 }
 
 .cartItemCard {

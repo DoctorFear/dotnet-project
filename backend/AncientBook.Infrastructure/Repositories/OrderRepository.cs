@@ -23,7 +23,9 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
         {
             return await _context.Orders
                 .Include(o => o.Shipper)
+                .Include(o => o.User)
                 .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Book)
                 .FirstOrDefaultAsync(o => o.Id == id);
         }
 
@@ -78,7 +80,7 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
 
         public async Task<(List<Order> items, int totalCount)> GetPagedOrdersAsync(int pageIndex, int pageSize, string? status, int? userId)
         {
-            var query = _context.Orders.Include(o => o.OrderItems).AsQueryable();
+            var query = _context.Orders.Include(o => o.OrderItems).ThenInclude(oi => oi.Book).AsQueryable();
 
             if (userId != null)
             {
@@ -104,7 +106,9 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
         {
             var dbQuery = _context.Orders
                 .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Book)
                 .Include(o => o.User)
+                .AsNoTracking()
                 .AsQueryable();
 
             if (query.UserId.HasValue)

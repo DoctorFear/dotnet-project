@@ -207,6 +207,11 @@ namespace AncientBook.Application.Services
             );
         }
 
+        public async Task<Order?> GetOrderByIdAsync(int orderId)
+        {
+            return await _orderRepository.GetByIdAsync(orderId);
+        }
+
         private async Task ProcessMoMoRefundAsync(Order order)
         {
             try
