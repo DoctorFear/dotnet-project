@@ -1,0 +1,2 @@
+.fallback { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 12px; width: 100%; height: 100%; padding: 12px; color: var(--muted); background: var(--alice); overflow: hidden; }
+.fallback span { font-size: 12px; text-align: center; overflow: hidden; max-height: 3.6em; line-height: 1.2; }

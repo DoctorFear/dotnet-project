@@ -10,7 +10,7 @@ namespace AncientBook.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin")]
     public class SystemSettingsController : ControllerBase
     {
         private readonly ISystemSettingService _settingService;
@@ -20,7 +20,7 @@ namespace AncientBook.API.Controllers
             _settingService = settingService;
         }
 
-        // Lấy thông tin 4 tham số cấu hình cài đặt vận hành hiện tại (UC23)
+        // Lấy cấu hình cài đặt vận hành hiện tại.
         [HttpGet]
         public async Task<IActionResult> GetSettings()
         {
@@ -28,33 +28,33 @@ namespace AncientBook.API.Controllers
             return Ok(result);
         }
 
-        // Cập nhật 4 tham số cài đặt hệ thống (UC23)
+        // Cập nhật các tham số cài đặt hệ thống.
         [HttpPut]
         public async Task<IActionResult> UpdateSettings([FromBody] SystemSettingsDto dto)
         {
             try
             {
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-                await _settingService.UpdateSettingsAsync(dto, userId);
+                await _settingService.UpdateSettingsAsync(dto, userId, HttpContext.Connection.RemoteIpAddress?.ToString());
                 return Ok(new { message = "Cập nhật cài đặt hệ thống thành công!" });
             }
-            catch (Exception ex)
+            catch (ArgumentException ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
         }
 
-        // Khôi phục tham số cài đặt về mặc định (UC23)
+        // Khôi phục các tham số cài đặt về mặc định.
         [HttpPost("restore-default")]
         public async Task<IActionResult> RestoreDefault()
         {
             try
             {
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
-                await _settingService.RestoreDefaultSettingsAsync(userId);
+                await _settingService.RestoreDefaultSettingsAsync(userId, HttpContext.Connection.RemoteIpAddress?.ToString());
                 return Ok(new { message = "Khôi phục cài đặt mặc định thành công!" });
             }
-            catch (Exception ex)
+            catch (ArgumentException ex)
             {
                 return BadRequest(new { message = ex.Message });
             }

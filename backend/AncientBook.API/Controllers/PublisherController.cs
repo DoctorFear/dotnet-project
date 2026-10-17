@@ -27,9 +27,9 @@ namespace AncientBook.API.Controllers
             return Ok(result);
         }
 
-        // Lấy danh sách NXB phân trang (UC05 Admin)
+        // Lấy danh sách nhà xuất bản có phân trang.
         [HttpGet("paged")]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> GetPaged([FromQuery] string? searchTerm, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var result = await _publisherService.GetPagedPublishersAsync(searchTerm, pageNumber, pageSize);
@@ -45,9 +45,9 @@ namespace AncientBook.API.Controllers
             return Ok(result);
         }
 
-        // Thêm Nhà xuất bản mới (UC05)
+        // Thêm nhà xuất bản mới.
         [HttpPost]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Create([FromBody] SavePublisherDto dto)
         {
             try
@@ -62,9 +62,9 @@ namespace AncientBook.API.Controllers
             }
         }
 
-        // Cập nhật thông tin NXB (UC05)
+        // Cập nhật nhà xuất bản.
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Update(int id, [FromBody] SavePublisherDto dto)
         {
             try
@@ -80,9 +80,9 @@ namespace AncientBook.API.Controllers
             }
         }
 
-        // Xóa NXB - Kiểm tra ràng buộc sách liên kết (UC05)
+        // Xóa nhà xuất bản sau khi kiểm tra sách liên kết.
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Delete(int id)
         {
             try

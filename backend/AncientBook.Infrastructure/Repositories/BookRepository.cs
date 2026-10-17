@@ -50,6 +50,9 @@ namespace AncientBook.Infrastructure.Repositories
         {
             return _context.Books
                 .Include(book => book.OrderItems)
+                .Include(book => book.BookCategories)
+                .Include(book => book.BookImages)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(book => book.Id == id);
         }
 

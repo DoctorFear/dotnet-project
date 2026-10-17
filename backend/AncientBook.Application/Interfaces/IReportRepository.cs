@@ -6,10 +6,7 @@ namespace AncientBook.Application.Interfaces
 {
     public interface IReportRepository
     {
-        Task<int> CountBooksAsync();
-        Task<int> CountSellingBooksAsync();
-        Task<int> CountLowStockBooksAsync(int threshold);
-        Task<decimal> GetTotalRevenueAsync();
-        Task<List<TopSellingBookDto>> GetTopSellingBooksAsync(int take);
+        Task<DashboardReportDto> GetDashboardAsync(ReportFilterDto filter, int threshold);
+        Task<AncientBook.Application.Common.PagedResult<LowStockBookDto>> GetLowStockBooksAsync(ReportFilterDto filter, int threshold, int page, int pageSize);
     }
 }

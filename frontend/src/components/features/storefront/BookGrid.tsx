@@ -43,6 +43,7 @@ export const BookGrid: React.FC<BookGridProps> = ({
                     >
                         <option value="newest">Mới nhất (Mặc định)</option>
                         <option value="bestseller">Bán chạy nhất</option>
+                        <option value="rating">Đánh giá cao nhất</option>
                         <option value="price_asc">Giá từ thấp đến cao</option>
                         <option value="price_desc">Giá từ cao đến thấp</option>
                     </select>

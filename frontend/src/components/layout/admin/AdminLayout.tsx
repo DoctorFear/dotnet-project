@@ -19,7 +19,7 @@ import { useToastNotifications } from '../../../hooks/useToastNotifications';
 import { ToastNotification } from '../../common/ToastNotification';
 import { userService } from '../../../services/userService';
 
-type AdminPageKey = 'books' | 'settings';
+type AdminPageKey = 'books' | 'settings' | 'reports';
 
 interface AdminLayoutProps {
     activePage: AdminPageKey;
@@ -30,7 +30,7 @@ interface AdminLayoutProps {
 }
 
 const adminMenuItems = [
-    { label: 'Tổng quan', icon: BarChart3 },
+    { label: 'Thống kê & Báo cáo', icon: BarChart3, page: 'reports' as AdminPageKey, path: '/admin/reports' },
     { label: 'Quản lý & Phân quyền', icon: UserCog },
     { label: 'Quản lý sách', icon: BookOpen, page: 'books' as AdminPageKey, path: '/admin/books' },
     { label: 'Quản lý kho sách', icon: Warehouse },
@@ -202,14 +202,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
             <aside className={styles.adminSidebar}>
                 <div className={styles.sidebarHeader}>
-                    <button type="button" className={styles.brandName} onClick={() => navigate('/admin/books')}>
+                    <button type="button" className={styles.brandName} onClick={() => navigate(user?.role === 'Admin' ? '/admin/reports' : '/staff/books')}>
                         ancient<span className={styles.bookText}>BOOK</span><span className={styles.accentDot}></span>
                     </button>
-                    <div><span className={styles.adminBadge}>Admin Portal</span></div>
+                    <div><span className={styles.adminBadge}>{user?.role === 'Admin' ? 'Admin Portal' : 'Staff Portal'}</span></div>
                 </div>
 
                 <ul className={styles.sidebarMenu}>
-                    {adminMenuItems.map((item) => {
+                    {adminMenuItems.filter(item => user?.role === 'Admin' ? ['reports', 'settings'].includes(item.page ?? '') || item.icon === UserCog : !['reports', 'settings'].includes(item.page ?? '') && item.icon !== UserCog).map((item) => {
                         const Icon = item.icon;
                         const isActive = item.page === activePage;
                         return (

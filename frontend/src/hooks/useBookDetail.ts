@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { getBookById, getBooks } from '../services/bookService';
 import type { BookDetailData, ProductData } from '../types/book';
+import { useStockPolicyRefresh } from './useStockPolicyRefresh';
 
 
 export const useBookDetail = (bookId?: string) => {
+    const stockPolicyVersion = useStockPolicyRefresh();
     const [book, setBook] = useState<BookDetailData | null>(null);
     const [relatedBooks, setRelatedBooks] = useState<ProductData[]>([]);
+    const [sameAuthorBooks, setSameAuthorBooks] = useState<ProductData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -24,20 +27,26 @@ export const useBookDetail = (bookId?: string) => {
         void Promise.resolve().then(() => {
             if (isMounted) {
                 setIsLoading(true);
+                setBook(null);
+                setRelatedBooks([]);
+                setSameAuthorBooks([]);
                 setError('');
             }
         });
 
         getBookById(id)
             .then(async (detail) => {
+                if (!isMounted) return;
+                setBook(detail);
                 const related = detail.categoryIds.length > 0
                     ? await getBooks({ categoryIds: detail.categoryIds, pageNumber: 1, pageSize: 4 })
                     : await getBooks({ pageNumber: 1, pageSize: 4 });
                 if (!isMounted) return;
-                setBook(detail);
                 setRelatedBooks(related.items
                     .filter((item) => item.id !== detail.id)
                     .slice(0, 3));
+                const authorBooks = await getBooks({ author: detail.author, pageNumber: 1, pageSize: 4 });
+                if (isMounted) setSameAuthorBooks(authorBooks.items.filter(item => item.id !== detail.id).slice(0, 3));
             })
             .catch((requestError: Error) => {
                 if (isMounted) setError(requestError.message);
@@ -49,7 +58,7 @@ export const useBookDetail = (bookId?: string) => {
         return () => {
             isMounted = false;
         };
-    }, [bookId]);
+    }, [bookId, stockPolicyVersion]);
 
-    return { book, relatedBooks, isLoading, error };
+    return { book, relatedBooks, sameAuthorBooks, isLoading, error };
 };

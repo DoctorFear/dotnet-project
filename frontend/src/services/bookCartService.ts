@@ -39,7 +39,7 @@ export const getCart = async (): Promise<any> => {
 
 export const updateCart = async (
     cartItemId: number,
-    data: { quantity: number; purchaseType: number; rentalDuration?: number | null, isSelected: Boolean }
+    data: { quantity: number; purchaseType: number; rentalDuration?: number | null, isSelected?: Boolean }
 ): Promise<{ message: string }> => {
     const userId = getCurrentUserId();
     return requestApi<{ message: string }>(`/cart/items/${cartItemId}?userId=${userId}`, {

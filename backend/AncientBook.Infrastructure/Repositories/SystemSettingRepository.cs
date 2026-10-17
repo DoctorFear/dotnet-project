@@ -31,11 +31,6 @@ namespace AncientBook.Infrastructure.Repositories
             _context.SystemSettings.Add(setting);
         }
 
-        public void AddAuditLog(AuditLog auditLog)
-        {
-            _context.AuditLogs.Add(auditLog);
-        }
-
         public Task SaveChangesAsync()
         {
             return _context.SaveChangesAsync();

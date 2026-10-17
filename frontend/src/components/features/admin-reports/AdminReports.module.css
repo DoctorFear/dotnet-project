@@ -1,0 +1,62 @@
+.reports { display: grid; gap: 20px; min-width: 0; }
+.filters, .panel { background: var(--white); padding: 18px 20px; border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); min-width: 0; }
+.filters { display: grid; gap: 14px; }
+.filterRow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 12px; align-items: end; }
+.filterRow:last-child { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.filters label { display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
+.filters input, .filters select { width: 100%; min-width: 0; height: 36px; border: 1px solid var(--hairline); padding: 6px 10px; border-radius: 4px; font-family: inherit; font-size: 13px; color: var(--ink); background: var(--white); }
+.filters input:disabled { background: var(--alice); color: var(--muted); }
+.commands { display: flex; gap: 8px; }
+.primary, .iconButton { height: 36px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--hairline); cursor: pointer; font: inherit; font-size: 13px; }
+.primary { color: var(--white); background: var(--egyptian); padding: 0 14px; border-color: var(--egyptian); white-space: nowrap; }
+.iconButton { width: 36px; color: var(--egyptian); background: var(--white); }
+.primary:disabled { opacity: .55; cursor: not-allowed; }
+.scope { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.metric { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--hairline); border-radius: 8px; background: var(--white); min-width: 0; }
+.metricTitle { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.metricValue { font-size: 23px; line-height: 1.3; color: var(--catalina); overflow-wrap: anywhere; }
+.muted { font-size: 12px; color: var(--muted); }
+.money, .paper { color: var(--egyptian); }
+.orders { color: var(--success); }
+.rental { color: #a16207; }
+.panelHeader { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; }
+.panelHeader h2 { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 14px; color: var(--catalina); }
+.segmented { display: inline-flex; border: 1px solid var(--hairline); border-radius: 4px; overflow: hidden; }
+.segmented button { background: var(--white); color: var(--muted); padding: 6px 12px; border: 0; font-size: 12px; font-family: inherit; cursor: pointer; }
+.segmented button[aria-pressed=true] { background: var(--alice); color: var(--egyptian); font-weight: 700; }
+.legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 2px; }
+.paperSwatch, .paperBar { background: var(--egyptian); }
+.rentalSwatch, .rentalBar { background: var(--saffron); }
+.chartScroll { overflow-x: auto; }
+.chart { display: grid; grid-template-columns: repeat(var(--bar-count), minmax(44px, 1fr)); height: 232px; padding: 20px 0 0; border-bottom: 1px solid var(--hairline); }
+.chartPoint { display: flex; flex-direction: column; position: relative; min-width: 0; }
+.bars { height: 180px; display: flex; justify-content: center; align-items: flex-end; gap: 3px; border-bottom: 1px solid var(--hairline); background: repeating-linear-gradient(to top, transparent 0, transparent 59px, var(--alice) 59px, var(--alice) 60px); }
+.bars span { width: 12px; max-width: 32%; border-radius: 2px 2px 0 0; }
+.chartLabel { text-align: center; margin-top: 9px; color: var(--muted); font-size: 10px; white-space: nowrap; }
+.chartTooltip { display: none; position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); background: var(--catalina); color: var(--white); padding: 7px 10px; font-size: 11px; border-radius: 4px; white-space: nowrap; z-index: 1; }
+.chartPoint:hover .chartTooltip, .chartPoint:focus .chartTooltip { display: block; }
+.chartEmpty { min-height: 232px; display: flex; align-items: center; justify-content: center; gap: 12px; color: var(--muted); font-size: 13px; text-align: center; }
+.tables { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.tableScroll { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.table th { background: var(--alice); text-align: left; font-weight: 600; padding: 10px 8px; color: var(--catalina); white-space: nowrap; }
+.table td { padding: 12px 8px; border-bottom: 1px solid var(--hairline); vertical-align: middle; }
+.bookCell { display: flex; gap: 8px; align-items: center; min-width: 150px; }
+.bookCell strong { font-size: 12px; line-height: 1.5; }
+.bookCell small { display: block; color: var(--muted); font-size: 10px; margin-top: 2px; }
+.cover { flex-shrink: 0; width: 28px; height: 38px; object-fit: cover; border-radius: 2px; }
+.cover span { display: none; }
+.numeric { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.emptyCell { height: 120px; text-align: center; color: var(--muted); }
+.threshold { background: #fef3c7; color: #92400e; padding: 3px 6px; border-radius: 4px; font-size: 11px; }
+.inventoryMeta { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+.exportModes { display: grid; gap: 10px; margin: 12px 0; font-size: 13px; }
+.exportModes label { display: flex; align-items: center; gap: 8px; }
+.loading, .error { padding: 36px 20px; background: var(--white); border-top: 1px solid var(--hairline); text-align: center; font-size: 14px; }
+.error { color: var(--danger); }
+.error button { display: block; margin: 14px auto 0; padding: 7px 14px; border: 1px solid var(--hairline); background: var(--white); color: var(--egyptian); border-radius: 4px; cursor: pointer; }
+@media (max-width: 1200px) { .tables { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) { .filterRow, .filterRow:last-child { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .commands { justify-content: flex-end; } .summary { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .filters, .panel { padding: 14px; } .metric { padding: 12px; } .metricValue { font-size: 19px; } }

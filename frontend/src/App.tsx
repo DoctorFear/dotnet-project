@@ -12,6 +12,7 @@ import { CheckoutPage } from './pages/CheckoutPage';
 import RefundPage from './pages/RefundPage';
 import AdminBookManagementPage from './pages/AdminBookManagementPage';
 import AdminSettingsPage from './pages/AdminSettingsPage';
+import AdminReportsPage from './pages/AdminReportsPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -49,6 +50,7 @@ export const App: React.FC = () => {
                     {/* 3. Staff Routes: Quản lý sách, catalog và tài liệu */}
                     <Route element={<ProtectedRoute allowedRoles={['Staff']} />}>
                         <Route path="/admin/books" element={<AdminBookManagementPage />} />
+                        <Route path="/staff/books" element={<AdminBookManagementPage />} />
                         
                     </Route>
 
@@ -60,6 +62,7 @@ export const App: React.FC = () => {
                     {/* 5. Admin Only Routes: Chỉ Super Admin / Quản trị viên tối cao cấu hình hệ thống */}
                     <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
                         <Route path="/admin/settings" element={<AdminSettingsPage />} />
+                        <Route path="/admin/reports" element={<AdminReportsPage />} />
                     </Route>
                 </Routes>
             </Router>

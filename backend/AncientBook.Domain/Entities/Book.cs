@@ -36,6 +36,8 @@ namespace AncientBook.Domain.Entities
         public int? Weight { get; set; }
         public int? PublicationYear { get; set; }
         public string? Description { get; set; }
+        public string? Language { get; set; }
+        public string? Dimensions { get; set; }
 
         // --- Navigation properties (Quan hệ bảng) ---
 
@@ -46,7 +48,7 @@ namespace AncientBook.Domain.Entities
         public ICollection<BookCategory> BookCategories { get; set; } = new List<BookCategory>();
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 
-        // [MỚI CẬP NHẬT]: Quan hệ 1-N với các ấn bản E-Book số hóa
+        // Quan hệ một-nhiều với các ấn bản E-book.
         public ICollection<EbookEdition> EbookEditions { get; set; } = new List<EbookEdition>();
     }
 }

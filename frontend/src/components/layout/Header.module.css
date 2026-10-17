@@ -237,6 +237,10 @@
 }
 
 @media (max-width: 640px) {
+    .navActions { width: 100%; flex-wrap: wrap; gap: 4px; justify-content: space-between; }
+    .navActionLink { padding: 7px 4px; }
+    .userDropdownTrigger { max-width: 160px; }
+    .userNameText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
     .navbarMain {
         padding: 8px 16px;
         flex-wrap: wrap;

@@ -1,0 +1,87 @@
+.priceSliderWidget {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          width: 100%;
+        }
+
+        .priceInputsDisplay {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .priceBoxView {
+          flex: 1;
+          background: #fafcff;
+          border: 1px solid var(--hairline, #dce6f7);
+          border-radius: 4px;
+          padding: 6px 8px;
+          font-size: 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .priceBoxView span {
+          font-size: 10px;
+          color: var(--muted, #5b6e99);
+          font-weight: 500;
+        }
+
+        .priceBoxView strong {
+          font-weight: 700;
+          color: var(--catalina, #0D226B);
+        }
+
+        .sliderTrackWrapper {
+          position: relative;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          margin: 0 4px;
+        }
+
+        .customSliderTrack {
+          position: absolute;
+          height: 6px;
+          width: 100%;
+          border-radius: 5px;
+          pointer-events: none;
+          z-index: 1;
+        }
+
+        .rangeSliderInput {
+          position: absolute;
+          width: 100%;
+          background: none;
+          pointer-events: none;
+          -webkit-appearance: none;
+          appearance: none;
+          outline: none;
+          z-index: 2;
+          margin: 0;
+        }
+
+        .rangeSliderInput::-webkit-slider-thumb {
+          height: 16px;
+          width: 16px;
+          border-radius: 50%;
+          background: var(--egyptian, #0B409C);
+          pointer-events: auto;
+          -webkit-appearance: none;
+          cursor: pointer;
+          box-shadow: 0 1px 4px rgba(7, 12, 51, 0.2);
+        }
+
+        .rangeSliderInput::-moz-range-thumb {
+          height: 16px;
+          width: 16px;
+          border: none;
+          border-radius: 50%;
+          background: var(--egyptian, #0B409C);
+          pointer-events: auto;
+          -moz-appearance: none;
+          cursor: pointer;
+          box-shadow: 0 1px 4px rgba(7, 12, 51, 0.2);
+        }

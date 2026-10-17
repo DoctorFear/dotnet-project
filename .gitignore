@@ -523,5 +523,3 @@ lerna-debug.log*
 # App settings with secrets
 **/appsettings.json
 **/appsettings.Development.json
-
-Migrations/

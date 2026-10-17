@@ -1,0 +1,7 @@
+.dialog { margin: auto; width: min(420px, calc(100% - 32px)); padding: 32px 24px 24px; border: 1px solid var(--hairline); border-radius: 8px; color: var(--ink); }
+.dialog::backdrop { background: rgb(7 18 51 / 45%); }
+.dialog h2 { font-size: 18px; padding-right: 20px; }
+.close { position: absolute; top: 12px; right: 12px; border: 0; background: transparent; cursor: pointer; }
+.actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
+.actions button { padding: 8px 16px; border: 1px solid var(--hairline); border-radius: 4px; background: var(--white); color: var(--egyptian); cursor: pointer; }
+.actions button:last-child { background: var(--egyptian); color: var(--white); }

@@ -10,5 +10,6 @@ namespace AncientBook.Domain.Entities
         public string? Phone { get; set; }
         public string? Email { get; set; }
         public string? Description { get; set; }
+        public ICollection<Book> Books { get; set; } = new List<Book>();
     }
 }

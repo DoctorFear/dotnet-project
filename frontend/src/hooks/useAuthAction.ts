@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { useUser } from '../context/UserContext';
 import { useToastNotifications } from './useToastNotifications';
@@ -15,6 +15,7 @@ export const useAuthAction = () => {
     const { loginSuccess, logoutClient } = useUser();
     const { toasts, notify, dismissToast } = useToastNotifications();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const handleLogin = async (payload: LoginRequestDto) => {
         setIsLoading(true);
@@ -33,7 +34,10 @@ export const useAuthAction = () => {
                     } else if (authData.role === 'Shipper') {
                         navigate('/shipper/orders');
                     } else {
-                        navigate('/');
+                        const from = location.state?.from;
+                        const pathname = typeof from?.pathname === 'string' ? from.pathname : '/';
+                        const allowed = pathname === '/' || pathname === '/wishlist' || /^\/books\/\d+$/.test(pathname);
+                        navigate(allowed ? pathname + (typeof from?.search === 'string' ? from.search : '') : '/');
                     }
                 }, 400);
             } else {

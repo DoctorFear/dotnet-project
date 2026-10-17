@@ -1,0 +1,6 @@
+.field { display: grid; gap: 8px; font-size: 13px; }
+.field label { display: grid; gap: 8px; }
+.field input { max-width: 100%; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.row button { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--hairline); border-radius: 4px; background: var(--alice); color: var(--egyptian); padding: 8px 12px; cursor: pointer; }
+.field [role=alert] { color: var(--danger); }

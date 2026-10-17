@@ -2,6 +2,8 @@ import React from 'react';
 import WishListButton from './WishListButton';
 import StarRating from './StarRating';
 import Badge from './Badge';
+import BookCover from './BookCover';
+import StockAvailabilityBadge from './StockAvailabilityBadge';
 import styles from './ProductCard.module.css';
 import type { ProductData } from '../../types/book';
 
@@ -24,7 +26,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     showRemoveWishlistBtn = false,
     onRemoveWishlist,
 }) => {
-    const displayPrice = product.physicalPrice ?? product.eBookPrice ?? product.weeklyRentalPrice ?? 0;
+    const displayPrice = product.isPhysicalAvailable ? product.physicalPrice : product.isEBookAvailable ? product.eBookPrice : product.weeklyRentalPrice;
     const activeWishlistState = product.isWishlisted ?? isWishlisted;
 
     return (
@@ -51,7 +53,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             </div>
 
             <div className={styles.bookCoverWrap}>
-                <img src={product.coverImg} alt={product.title} className={styles.bookCoverImg} />
+                <BookCover src={product.coverImg} title={product.title} className={styles.bookCoverImg} />
             </div>
 
             {product.categories && product.categories.length > 0 && (
@@ -82,16 +84,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 <StarRating rating={product.rating} reviewsCount={product.reviewsCount} size="sm" />
             )}
 
-            {product.stockStatus === 'low_stock' && (
-                <div>
-                    <Badge variant="stock_warning" text={`Chỉ còn ${product.stockCount || 3} cuốn`} />
-                </div>
-            )}
-            {product.stockStatus === 'in_stock' && (
-                <div>
-                    <Badge variant="stock_ok" text="Còn hàng" />
-                </div>
-            )}
+            <StockAvailabilityBadge book={product} />
 
             <div className={styles.priceRow}>
                 <span className={styles.salePrice}>{displayPrice.toLocaleString('vi-VN')} đ</span>
@@ -105,12 +98,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <button
                 type="button"
                 className={styles.btnAddCartFast}
+                disabled={product.status !== 'selling'}
                 onClick={(e) => {
                     e.stopPropagation();
                     onAddToCart?.(product.id);
                 }}
             >
-                Thêm vào giỏ
+                {product.status === 'stopped' ? 'Ngừng kinh doanh' : product.status === 'upcoming' ? 'Sắp phát hành' : 'Thêm vào giỏ'}
             </button>
         </div>
     );

@@ -11,6 +11,7 @@ export interface HeaderProps {
     wishlistCount?: number;
     cartCount?: number;
     onSearch?: (keyword: string) => void;
+    initialSearch?: string;
     onNavigateHome?: () => void;
     onNavigateWishlist?: () => void;
     onNavigateCart?: () => void;
@@ -24,6 +25,7 @@ export const Header: React.FC<HeaderProps> = ({
     wishlistCount = 0,
     cartCount: initialCartCount = 2,
     onSearch,
+    initialSearch = '',
     onNavigateHome,
     onNavigateWishlist,
     onNavigateCart,
@@ -35,7 +37,7 @@ export const Header: React.FC<HeaderProps> = ({
     const navigate = useNavigate();
     const { isLoggedIn, user } = useUser();
     const { handleLogout } = useAuthAction();
-    const [searchKeyword, setSearchKeyword] = useState('');
+    const [searchKeyword, setSearchKeyword] = useState(initialSearch);
 
     const [cartCount, setCartCount] = useState<number>(initialCartCount);
 
@@ -54,9 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
     }, [isLoggedIn]);
 
     const handleSearchTrigger = () => {
-        if (searchKeyword.trim()) {
-            onSearch?.(searchKeyword.trim());
-        }
+        onSearch?.(searchKeyword.trim());
     };
 
     const handleHomeClick = () => {
@@ -67,7 +67,7 @@ export const Header: React.FC<HeaderProps> = ({
     const handleWishlistClick = (e: React.MouseEvent) => {
         e.preventDefault();
         if (!isLoggedIn) {
-            navigate('/login');
+            navigate('/login', { state: { from: { pathname: '/wishlist', search: '' } } });
             return;
         }
         if (onNavigateWishlist) onNavigateWishlist();
@@ -153,9 +153,10 @@ export const Header: React.FC<HeaderProps> = ({
                         <ul className={styles.userDropdownMenu}>
                             {isLoggedIn ? (
                                 <>
-                                    {user?.role === 'Admin' && (
-                                        <li className={styles.dropdownItemLink} onClick={() => navigate('/admin/books')}>
-                                            Trang Quản trị (Admin)
+                                    {user?.role === 'Admin' && <li className={styles.dropdownItemLink} onClick={() => navigate('/admin/reports')}>Thống kê & Báo cáo</li>}
+                                    {(user?.role === 'Admin' || user?.role === 'Staff') && (
+                                        <li className={styles.dropdownItemLink} onClick={() => navigate(user.role === 'Staff' ? '/staff/books' : '/admin/settings')}>
+                                            {user.role === 'Staff' ? 'Quản lý sách' : 'Cài đặt hệ thống'}
                                         </li>
                                     )}
                                     <li className={styles.dropdownItemLink} onClick={onNavigateProfile || (() => navigate('/profile'))}>

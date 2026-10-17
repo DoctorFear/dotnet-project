@@ -6,6 +6,7 @@ namespace AncientBook.Application.DTOs
     public class BookFilterRequestDto
     {
         public string? SearchTerm { get; set; }
+        public string? Author { get; set; }
         public List<int>? CategoryIds { get; set; }
         public List<int>? PublisherIds { get; set; }
         public decimal? MinPrice { get; set; }
