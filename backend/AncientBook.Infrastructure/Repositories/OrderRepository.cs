@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using AncientBook.Application.Interfaces;
 using AncientBook.Domain.Entities;
-using AncientBook.Domain.Enums; // Hoặc namespace chứa enum OrderStatus
-using AncientBook.Application.DTOs; // Hoặc AncientBook.Application.Features.Orders.Queries (nơi chứa GetOrdersQuery)
+using AncientBook.Domain.Enums;
+using AncientBook.Application.DTOs;
 
 namespace AncientBook.Infrastructure.Persistence.Repositories
 {
@@ -22,11 +22,56 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
         public async Task<Order?> GetByIdAsync(int id)
         {
             return await _context.Orders
-                .Include(o => o.Shipper)
-                .Include(o => o.User)
                 .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.Book)
                 .FirstOrDefaultAsync(o => o.Id == id);
+        }
+
+        public async Task<OrderResponseDto?> GetOrderDtoByIdAsync(int orderId)
+        {
+            return await _context.Orders
+                .Where(o => o.Id == orderId)
+                .Select(o => new OrderResponseDto
+                {
+                    Id = o.Id,
+                    OrderDate = o.OrderDate,
+                    SubTotal = o.SubTotal,
+                    DiscountAmount = o.DiscountAmount,
+                    FinalAmount = o.FinalAmount,
+                    ShippingAddress = o.ShippingAddress,
+                    Status = o.Status,
+                    IsPaid = o.IsPaid,
+                    PayUrl = o.PayUrl,
+                    PackingIssue = o.PackingIssue,
+                    
+                    User = o.User == null ? null : new OrderUserDto
+                    {
+                        Id = o.User.Id,
+                        FullName = o.User.FullName,
+                        Email = o.User.Email,
+                        PhoneNumber = o.User.PhoneNumber
+                    },
+
+                    OrderItems = o.OrderItems.Select(oi => new OrderItemResponseDto
+                    {
+                        Id = oi.Id,
+                        Quantity = oi.Quantity,
+                        UnitPrice = oi.UnitPrice,
+                        PurchaseType = oi.PurchaseType,
+                        RentalDuration = oi.RentalDuration,
+                        RentalStartDate = oi.RentalStartDate,
+                        RentalEndDate = oi.RentalEndDate,
+                        
+                        Book = oi.Book == null ? null : new OrderBookDto
+                        {
+                            Id = oi.Book.Id,
+                            Isbn = oi.Book.Isbn,
+                            Title = oi.Book.Title,
+                            Author = oi.Book.Author,
+                            CoverImg = oi.Book.CoverImg
+                        }
+                    }).ToList()
+                })
+                .FirstOrDefaultAsync();
         }
 
         public async Task<List<Order>> GetAllAsync()
@@ -78,38 +123,45 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<(List<Order> items, int totalCount)> GetPagedOrdersAsync(int pageIndex, int pageSize, string? status, int? userId)
-        {
-            var query = _context.Orders.Include(o => o.OrderItems).ThenInclude(oi => oi.Book).AsQueryable();
+        // public async Task<(List<Order> items, int totalCount)> GetPagedOrdersAsync(int pageIndex, int pageSize, string? status, int? userId, string? searchKeyword)
+        // {
+        //     var query = _context.Orders.Include(o => o.OrderItems).ThenInclude(oi => oi.Book).AsQueryable();
 
-            if (userId != null)
-            {
-                query = query.Where(o => o.UserId == userId.Value);
-            }
+        //     if (userId != null)
+        //     {
+        //         query = query.Where(o => o.UserId == userId.Value);
+        //     }
 
-            if (!string.IsNullOrWhiteSpace(status))
-            {
-                query = query.Where(o => o.Status.ToString() == status);
-            }
+        //     if (!string.IsNullOrWhiteSpace(status))
+        //     {
+        //         query = query.Where(o => o.Status.ToString() == status);
+        //     }
 
-            int totalCount = await query.CountAsync();
-            var items = await query
-                .OrderByDescending(o => o.OrderDate)
-                .Skip((pageIndex - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+        //     if (!string.IsNullOrWhiteSpace(searchKeyword))
+        //     {
+        //         searchKeyword = searchKeyword.Trim().ToLower();
+                
+        //         bool isNumeric = int.TryParse(searchKeyword, out int orderIdSearch);
+                
+        //         query = query.Where(o => 
+        //             (isNumeric && o.Id == orderIdSearch) || 
+        //             (o.ShippingAddress != null && o.ShippingAddress.ToLower().Contains(searchKeyword))
+        //         );
+        //     }
 
-            return (items, totalCount);
-        }
+        //     int totalCount = await query.CountAsync();
+        //     var items = await query
+        //         .OrderByDescending(o => o.OrderDate)
+        //         .Skip((pageIndex - 1) * pageSize)
+        //         .Take(pageSize)
+        //         .ToListAsync();
+
+        //     return (items, totalCount);
+        // }
         
-        public async Task<(List<Order> Items, int TotalCount)> GetPagedOrdersAsync(GetOrdersQuery query)
+        public async Task<(List<OrderResponseDto> Items, int TotalCount)> GetPagedOrdersAsync(GetOrdersQuery query)
         {
-            var dbQuery = _context.Orders
-                .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.Book)
-                .Include(o => o.User)
-                .AsNoTracking()
-                .AsQueryable();
+            var dbQuery = _context.Orders.AsNoTracking().AsQueryable();
 
             if (query.UserId.HasValue)
             {
@@ -138,6 +190,47 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
                 .OrderByDescending(o => o.OrderDate)
                 .Skip((query.PageNumber - 1) * query.PageSize)
                 .Take(query.PageSize)
+                .Select(o => new OrderResponseDto
+                {
+                    Id = o.Id,
+                    OrderDate = o.OrderDate,
+                    SubTotal = o.SubTotal,
+                    DiscountAmount = o.DiscountAmount,
+                    FinalAmount = o.FinalAmount,
+                    ShippingAddress = o.ShippingAddress,
+                    Status = o.Status,
+                    IsPaid = o.IsPaid,
+                    PayUrl = o.PayUrl,
+                    PackingIssue = o.PackingIssue,
+                    
+                    User = o.User == null ? null : new OrderUserDto
+                    {
+                        Id = o.User.Id,
+                        FullName = o.User.FullName,
+                        Email = o.User.Email,
+                        PhoneNumber = o.User.PhoneNumber
+                    },
+
+                    OrderItems = o.OrderItems.Select(oi => new OrderItemResponseDto
+                    {
+                        Id = oi.Id,
+                        Quantity = oi.Quantity,
+                        UnitPrice = oi.UnitPrice,
+                        PurchaseType = oi.PurchaseType,
+                        RentalDuration = oi.RentalDuration,
+                        RentalStartDate = oi.RentalStartDate,
+                        RentalEndDate = oi.RentalEndDate,
+                        
+                        Book = oi.Book == null ? null : new OrderBookDto
+                        {
+                            Id = oi.Book.Id,
+                            Isbn = oi.Book.Isbn,
+                            Title = oi.Book.Title,
+                            Author = oi.Book.Author,
+                            CoverImg = oi.Book.CoverImg
+                        }
+                    }).ToList()
+                })
                 .ToListAsync();
 
             return (items, totalCount);

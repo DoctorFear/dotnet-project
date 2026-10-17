@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AncientBook.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20261014190206_AddBookTechnicalMetadata")]
-    partial class AddBookTechnicalMetadata
+    [Migration("20261017100014_udpateOrder")]
+    partial class udpateOrder
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -533,6 +533,9 @@ namespace AncientBook.Infrastructure.Migrations
 
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("isSelected")
+                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 

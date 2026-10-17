@@ -6,6 +6,7 @@ using AncientBook.Application.DTOs;
 using AncientBook.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using AncientBook.Domain.Entities;
 
 namespace AncientBook.API.Controllers
 {
@@ -77,6 +78,7 @@ namespace AncientBook.API.Controllers
 
         [HttpPut("{id}/status")]
         [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] UpdateOrderStatusRequest request)
         {
             if (request == null)
@@ -111,6 +113,7 @@ namespace AncientBook.API.Controllers
 
         [HttpPut("{id}/approve-refund")]
         [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> ApproveReturnOrderAsync(int id)
         {
             try
@@ -155,7 +158,7 @@ namespace AncientBook.API.Controllers
                     return Unauthorized(new { message = "Không thể xác thực thông tin người dùng." });
                 }
 
-                bool isAdmin = userRoleClaim == "Admin";
+                bool isAdmin = userRoleClaim == "Admin" || userRoleClaim == "Staff" || userRoleClaim == "Shipper";
 
                 if (!isAdmin)
                 {
@@ -168,7 +171,8 @@ namespace AncientBook.API.Controllers
                     PageNumber = pageNumber,
                     PageSize = pageSize,
                     UserId = userId,
-                    Status = status
+                    Status = status,
+                    SearchKeyword = searchKeyword
                 };
 
                 var result = await _orderService.GetPagedOrdersAsync(query);
@@ -201,8 +205,8 @@ namespace AncientBook.API.Controllers
                     return NotFound(new { message = $"Không tìm thấy đơn hàng #{id}." });
                 }
 
-                bool isAdmin = userRoleClaim == "Admin";
-                if (!isAdmin && order.UserId != currentUserId)
+                bool isAdmin = userRoleClaim == "Admin" || userRoleClaim == "Staff" || userRoleClaim == "Shipper";
+                if (!isAdmin && order.User?.Id != currentUserId)
                 {
                     return Forbid();
                 }

@@ -72,8 +72,8 @@ public static class BookCatalogSeeder
                 MonthlyRentalPrice = 25000, YearlyRentalPrice = 80000,
                 Rating = new double[] { 5, 4.5, 3.5, 2.5 }[index % 4], ReviewsCount = 10 + index,
                 PublicationYear = 2024 + index % 3,
-                StockCount = 0,
-                StockStatus = StockStatus.OutOfStock,
+                StockCount = 50,
+                StockStatus = StockStatus.InStock,
                 Description = $"Dữ liệu mẫu giới thiệu sách {sample.Title} của {sample.Author}.",
                 BookCategories = [new BookCategory { CategoryId = categories[sample.Category] }]
             };
@@ -82,7 +82,7 @@ public static class BookCatalogSeeder
             context.Inventories.Add(new Inventory
             {
                 Book = newBook,
-                QuantityOnHand = 0,
+                QuantityOnHand = 50,
                 ReorderLevel = 5,
             });
             remaining--;
@@ -257,8 +257,8 @@ public static class BookCatalogSeeder
                 book.YearlyRentalPrice = 95000 + (index * 5000);
                 book.Rating = 4.2 + ((index % 4) * 0.2);
                 book.ReviewsCount = 12 + (index * 7);
-                book.StockCount = 0;
-                book.StockStatus = StockStatus.OutOfStock;
+                book.StockCount = 50;
+                book.StockStatus = StockStatus.InStock;
                 book.PublicationYear = 2020 + (index % 6);
                 book.Description = $"Ấn bản giới thiệu tác phẩm {book.Title}.";
                 book.BookCategories.Add(new BookCategory { CategoryId = categories[index % categories.Count].Id });
@@ -274,7 +274,7 @@ public static class BookCatalogSeeder
                 inventories.Add(new Inventory
                 {
                     BookId = book.Id,
-                    QuantityOnHand = 0,
+                    QuantityOnHand = 50,
                     ReorderLevel = 5,
                     CreatedAt = DateTime.UtcNow,
                     LastUpdated = DateTime.UtcNow

@@ -23,7 +23,7 @@ export interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
     wishlistCount = 0,
-    cartCount: initialCartCount = 2,
+    cartCount: passedCartCount = 0,
     onSearch,
     initialSearch = '',
     onNavigateHome,
@@ -39,7 +39,25 @@ export const Header: React.FC<HeaderProps> = ({
     const { handleLogout } = useAuthAction();
     const [searchKeyword, setSearchKeyword] = useState(initialSearch);
 
-    const [cartCount, setCartCount] = useState<number>(initialCartCount);
+    const [cartCount, setCartCount] = useState<number>(passedCartCount);
+
+    useEffect(() => {
+        const handleCartUpdate = (e: Event) => {
+            const detail = (e as CustomEvent).detail;
+            
+            if (typeof detail === 'number') {
+                setCartCount(detail);
+            } else {
+                fetchCartCount();
+            }
+        };
+
+        window.addEventListener('cartUpdated', handleCartUpdate);
+        
+        return () => {
+            window.removeEventListener('cartUpdated', handleCartUpdate);
+        };
+    }, [isLoggedIn, passedCartCount]);
 
     const fetchCartCount = async () => {
         if (!isLoggedIn) return;

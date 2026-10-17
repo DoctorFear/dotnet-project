@@ -20,6 +20,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProfilePage from './pages/ProfilePage';
 import OrderHistoryPage from './pages/OrderHistoryPage';
 import OrderDetailPage from './pages/OrderDetailsPage';
+import AdminOrderManagementPage from './pages/AdminOrderManagementPage';
 
 export const App: React.FC = () => {
     return (
@@ -51,7 +52,8 @@ export const App: React.FC = () => {
                     <Route element={<ProtectedRoute allowedRoles={['Staff']} />}>
                         <Route path="/admin/books" element={<AdminBookManagementPage />} />
                         <Route path="/staff/books" element={<AdminBookManagementPage />} />
-                        
+                        <Route path="/admin/orders" element={<AdminOrderManagementPage />} />
+                        <Route path="/staff/orders" element={<AdminOrderManagementPage />} />
                     </Route>
 
                     {/* 4. Shipper Routes: Quản lý đơn hàng và giao nhận */}

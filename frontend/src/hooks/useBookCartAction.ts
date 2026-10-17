@@ -6,6 +6,7 @@ import type { ToastMessage } from '../components/common/ToastNotification';
 export const useBookCartAction = (notify: (message: string, type?: ToastMessage['type']) => void) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const pending = useRef(false);
+    
     const submitPurchase = async (book: PurchasableBook, selection: BookPurchaseSelection) => {
         if (pending.current) return false;
         pending.current = true;
@@ -13,6 +14,9 @@ export const useBookCartAction = (notify: (message: string, type?: ToastMessage[
         try {
             await addBookToCart(book, selection);
             notify(`Đã thêm ${book.title} vào giỏ hàng.`, 'success');
+            
+            window.dispatchEvent(new CustomEvent('cartUpdated'));
+            
             return true;
         } catch (error) {
             notify(error instanceof Error ? error.message : 'Không thể thêm sách vào giỏ hàng.', 'error');
@@ -22,6 +26,7 @@ export const useBookCartAction = (notify: (message: string, type?: ToastMessage[
             setIsSubmitting(false);
         }
     };
+    
     return { isSubmitting, submitPurchase };
 };
 
@@ -41,7 +46,9 @@ export const useCartData = () => {
             }));
             
             setItems(mappedItems);
-            console.log(mappedItems)
+            
+            window.dispatchEvent(new CustomEvent('cartUpdated', { detail: mappedItems.length }));
+            
         } catch (err: any) {
             setError(err.message || 'Đã xảy ra lỗi khi tải giỏ hàng.');
         } finally {

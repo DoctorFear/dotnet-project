@@ -68,10 +68,9 @@ export const useCheckout = (cartItems: any[]) => {
 
             if (paymentMethod === 'momo') {
                 try {
-                    console.log(data.orderId)
                     const momoData = await getMomoPaymentUrl(data.orderId);
                     if (momoData.payUrl) {
-                        window.location.href = momoData.payUrl;
+                        window.open(momoData.payUrl.payUrl, '_blank');
                         return;
                     }
                 } catch (momoErr) {

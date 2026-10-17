@@ -215,7 +215,23 @@ export const OrderDetailPage: React.FC = () => {
                                 <p className={styles.infoRow}>
                                     <strong>Trạng thái:</strong>
                                     <span className={order.isPaid ? styles.textPaid : styles.textUnpaid}>
-                                        {order.isPaid ? 'Đã thanh toán (MoMo)' : 'Chưa thanh toán (Thanh toán khi nhận hàng / COD)'}
+                                        {order.isPaid ? (
+                                            'Đã thanh toán (MoMo)'
+                                        ) : order.payUrl ? (
+                                            <>
+                                                Chưa thanh toán:{' '}
+                                                <a 
+                                                    href={order.payUrl} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    style={{ textDecoration: 'underline', color: 'inherit' }} // You can move this to your CSS modules
+                                                >
+                                                    Nhấn vào đây để thanh toán
+                                                </a>
+                                            </>
+                                        ) : (
+                                            'Chưa thanh toán (Thanh toán khi nhận hàng / COD)'
+                                        )}
                                     </span>
                                 </p>
                             </div>

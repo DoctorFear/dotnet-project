@@ -84,7 +84,7 @@ namespace AncientBook.Application.Services
                 throw new KeyNotFoundException($"Không tìm thấy đơn hàng với ID: {orderId}");
             }
 
-            if (order.Status != OrderStatus.Pending || order.Status != OrderStatus.Confirmed || order.Status != OrderStatus.Prepared)
+            if (order.Status != OrderStatus.Pending && order.Status != OrderStatus.Confirmed && order.Status != OrderStatus.Prepared)
             {
                 throw new InvalidOperationException($"Không thể hủy đơn hàng đã ở trạng thái hiện tại ({order.Status}).");
             }
@@ -120,6 +120,11 @@ namespace AncientBook.Application.Services
             if (order.IsPaid)
             {
                 await ProcessMoMoRefundAsync(order);
+                order.IsPaid = false;
+            }
+            else
+            {
+                _logger.LogInformation("Đơn hàng #{OrderId} CHƯA thanh toán, bỏ qua bước hoàn tiền MoMo.", orderId);
             }
 
             await _orderRepository.UpdateAsync(order);
@@ -190,15 +195,16 @@ namespace AncientBook.Application.Services
             return true;
         }
         
-        public async Task<PagedResult<Order>> GetPagedOrdersAsync(GetOrdersQuery query)
+        public async Task<PagedResult<OrderResponseDto>> GetPagedOrdersAsync(GetOrdersQuery query)
         {
             if (query.PageNumber < 1) query.PageNumber = 1;
             if (query.PageSize < 1) query.PageSize = 10;
             if (query.PageSize > 100) query.PageSize = 100;
 
-            var (items, totalCount) = await _orderRepository.GetPagedOrdersAsync(query.PageNumber, query.PageSize, query.Status?.ToString(), query.UserId);
+            // var (items, totalCount) = await _orderRepository.GetPagedOrdersAsync(query.PageNumber, query.PageSize, query.Status?.ToString(), query.UserId, query.SearchKeyword);
+            var (items, totalCount) = await _orderRepository.GetPagedOrdersAsync(query);
 
-            return new PagedResult<Order>
+            return new PagedResult<OrderResponseDto>
             (
                 items,
                 query.PageNumber,
@@ -207,9 +213,9 @@ namespace AncientBook.Application.Services
             );
         }
 
-        public async Task<Order?> GetOrderByIdAsync(int orderId)
+        public async Task<OrderResponseDto?> GetOrderByIdAsync(int orderId)
         {
-            return await _orderRepository.GetByIdAsync(orderId);
+            return await _orderRepository.GetOrderDtoByIdAsync(orderId);
         }
 
         private async Task ProcessMoMoRefundAsync(Order order)

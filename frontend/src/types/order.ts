@@ -36,6 +36,7 @@ export interface Order {
     isPaid: boolean;
     packingIssue?: string;
     orderItems: OrderItem[];
+    payUrl?: string;
 }
 
 export interface PagedResult<T> {
