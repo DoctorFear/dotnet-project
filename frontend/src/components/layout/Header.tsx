@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Header.module.css';
 import Badge from '../common/Badge';
 import { useUser } from '../../context/UserContext';
 import { useAuthAction } from '../../hooks/useAuthAction';
 import { Search, Heart, ShoppingBag, User } from 'lucide-react';
+import { getCart } from '../../services/bookCartService';
 
 export interface HeaderProps {
     wishlistCount?: number;
@@ -21,7 +22,7 @@ export interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
     wishlistCount = 0,
-    cartCount = 2,
+    cartCount: initialCartCount = 2,
     onSearch,
     onNavigateHome,
     onNavigateWishlist,
@@ -35,6 +36,22 @@ export const Header: React.FC<HeaderProps> = ({
     const { isLoggedIn, user } = useUser();
     const { handleLogout } = useAuthAction();
     const [searchKeyword, setSearchKeyword] = useState('');
+
+    const [cartCount, setCartCount] = useState<number>(initialCartCount);
+
+    const fetchCartCount = async () => {
+        if (!isLoggedIn) return;
+        try {
+            const data = await getCart();
+            setCartCount(data.items.length);
+        } catch (error: any) {
+            console.error(error.message || 'Lỗi khi tải giỏ hàng');
+        }
+    };
+
+    useEffect(() => {
+        fetchCartCount();
+    }, [isLoggedIn]);
 
     const handleSearchTrigger = () => {
         if (searchKeyword.trim()) {
@@ -70,6 +87,16 @@ export const Header: React.FC<HeaderProps> = ({
     const handleCartClick = () => {
         if (onNavigateCart) onNavigateCart();
         else navigate('/cart');
+    };
+
+    const handleNavigateOrders = (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (!isLoggedIn) {
+            navigate('/login');
+            return;
+        }
+        if (onNavigateOrders) onNavigateOrders();
+        else navigate('/order-history');
     };
 
     return (
@@ -135,7 +162,7 @@ export const Header: React.FC<HeaderProps> = ({
                                         Hồ sơ & Đổi mật khẩu
                                     </li>
                                     <li className={styles.dropdownItemLink} onClick={handleLibraryClick}>Tủ sách của tôi</li>
-                                    <li className={styles.dropdownItemLink} onClick={onNavigateOrders}>Lịch sử đơn đặt sách</li>
+                                    <li className={styles.dropdownItemLink} onClick={handleNavigateOrders}>Lịch sử đơn đặt sách</li>
                                     <li className={styles.dropdownItemLinkDanger} onClick={handleLogout}>Đăng xuất tài khoản</li>
                                 </>
                             ) : (

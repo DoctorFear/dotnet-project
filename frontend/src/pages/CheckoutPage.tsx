@@ -4,6 +4,8 @@ import styles from './CheckoutPage.module.css';
 import TopBar from '../components/layout/TopBar';
 import Header from '../components/layout/Header';
 import { useCheckout } from '../hooks/useCheckout';
+import type { OrderItem } from '../types/order';
+import { Clock } from 'lucide-react';
 
 export const CheckoutPage: React.FC = () => {
     const location = useLocation();
@@ -35,6 +37,42 @@ export const CheckoutPage: React.FC = () => {
             navigate('/cart');
         }
     }, [cartItems, navigate]);
+
+    const renderPurchaseFormat = (item: OrderItem) => {
+        const isEbook = item.purchaseType === 2 || item.purchaseType === '2' || item.purchaseType === 'Rental' || !!item.rentalDuration;
+
+        if (isEbook) {
+            const durationMap: Record<string | number, string> = {
+                1: '1 Tuần (7 ngày)',
+                2: '1 Tháng (30 ngày)',
+                3: '1 Năm (365 ngày)',
+                'Weekly': '1 Tuần (7 ngày)',
+                'Monthly': '1 Tháng (30 ngày)',
+                'Yearly': '1 Năm (365 ngày)',
+            };
+            const durationText = item.rentalDuration ? (durationMap[item.rentalDuration] || `${item.rentalDuration}`) : '1 Tuần (7 ngày)';
+
+            
+            return (
+                <div className={styles.formatWrapper}>
+                    <span className={styles.badgeEbook}>Thuê đọc E-Book</span>
+                    <span className={styles.metaDuration}>
+                        <Clock size={14} /> 
+                        <div>Thời hạn thuê: <strong>{durationText}</strong></div>
+                    </span>
+                </div>
+            );
+        }
+
+        return (
+            <div className={styles.formatWrapper}>
+                <span className={styles.badgePhysical}>Sách vật lý</span>
+                <span className={styles.metaQty}>
+                    Số lượng đặt: <strong>x{item.quantity}</strong> cuốn
+                </span>
+            </div>
+        );
+    };
 
     return (
         <div className={styles.checkoutBody}>
@@ -78,7 +116,7 @@ export const CheckoutPage: React.FC = () => {
                                     <div className={styles.cartItemInfo}>
                                         <h4 className={styles.cartItemTitle}>{item.title}</h4>
                                         <div className={styles.cartItemQtyPrice}>
-                                            <span>Số lượng: <strong>{item.quantity}</strong></span>
+                                            {renderPurchaseFormat(item)}
                                             <strong style={{ color: '#0B409C' }}>{item.unitPrice?.toLocaleString()} đ</strong>
                                         </div>
                                     </div>
