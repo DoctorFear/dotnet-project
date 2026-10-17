@@ -18,6 +18,9 @@ import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProfilePage from './pages/ProfilePage';
+import OrderHistoryPage from './pages/OrderHistoryPage';
+import OrderDetailPage from './pages/OrderDetailsPage';
+import AdminOrderManagementPage from './pages/AdminOrderManagementPage';
 
 export const App: React.FC = () => {
     return (
@@ -40,6 +43,8 @@ export const App: React.FC = () => {
                         <Route path="/checkout" element={<CheckoutPage />} />
                         <Route path="/refund" element={<RefundPage />} />
                         <Route path="/profile" element={<ProfilePage />} />
+                        <Route path="/order-history" element={<OrderHistoryPage />} />
+                        <Route path="/order-history/:id" element={<OrderDetailPage />} />
                         
                     </Route>
 
@@ -47,7 +52,8 @@ export const App: React.FC = () => {
                     <Route element={<ProtectedRoute allowedRoles={['Staff']} />}>
                         <Route path="/admin/books" element={<AdminBookManagementPage />} />
                         <Route path="/staff/books" element={<AdminBookManagementPage />} />
-                        
+                        <Route path="/admin/orders" element={<AdminOrderManagementPage />} />
+                        <Route path="/staff/orders" element={<AdminOrderManagementPage />} />
                     </Route>
 
                     {/* 4. Shipper Routes: Quản lý đơn hàng và giao nhận */}

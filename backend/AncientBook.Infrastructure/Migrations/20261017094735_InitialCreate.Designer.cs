@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AncientBook.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20261010093257_HuyWorkflowSafety")]
-    partial class HuyWorkflowSafety
+    [Migration("20261017094735_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -139,6 +139,9 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Dimensions")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("EBookPrice")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("decimal(18,2)")
@@ -157,6 +160,9 @@ namespace AncientBook.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Language")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("MonthlyRentalPrice")
                         .ValueGeneratedOnAdd()
@@ -390,6 +396,9 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("VerifiedPurchaseType")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedAt")
@@ -524,6 +533,9 @@ namespace AncientBook.Infrastructure.Migrations
 
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("isSelected")
+                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 
@@ -1847,7 +1859,6 @@ namespace AncientBook.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
-                        .IsUnique()
                         .HasDatabaseName("IX_Users_Email");
 
                     b.HasIndex("MembershipTierId");
@@ -1857,6 +1868,24 @@ namespace AncientBook.Infrastructure.Migrations
                         .HasDatabaseName("IX_Users_Username");
 
                     b.ToTable("Users", (string)null);
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.WishlistItem", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("UserId", "BookId");
+
+                    b.HasIndex("BookId");
+
+                    b.ToTable("WishlistItems", (string)null);
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.Address", b =>
@@ -1882,7 +1911,7 @@ namespace AncientBook.Infrastructure.Migrations
             modelBuilder.Entity("AncientBook.Domain.Entities.Book", b =>
                 {
                     b.HasOne("AncientBook.Domain.Entities.Publisher", "PublisherEntity")
-                        .WithMany()
+                        .WithMany("Books")
                         .HasForeignKey("PublisherId")
                         .OnDelete(DeleteBehavior.SetNull);
 
@@ -2292,6 +2321,23 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Navigation("MembershipTier");
                 });
 
+            modelBuilder.Entity("AncientBook.Domain.Entities.WishlistItem", b =>
+                {
+                    b.HasOne("AncientBook.Domain.Entities.Book", "Book")
+                        .WithMany()
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AncientBook.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Book");
+                });
+
             modelBuilder.Entity("AncientBook.Domain.Entities.Book", b =>
                 {
                     b.Navigation("BookCategories");
@@ -2340,6 +2386,11 @@ namespace AncientBook.Infrastructure.Migrations
             modelBuilder.Entity("AncientBook.Domain.Entities.Order", b =>
                 {
                     b.Navigation("OrderItems");
+                });
+
+            modelBuilder.Entity("AncientBook.Domain.Entities.Publisher", b =>
+                {
+                    b.Navigation("Books");
                 });
 
             modelBuilder.Entity("AncientBook.Domain.Entities.PurchaseOrder", b =>

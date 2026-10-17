@@ -70,10 +70,11 @@ export const useCheckout = (cartItems: any[]) => {
                 try {
                     const momoData = await getMomoPaymentUrl(data.orderId);
                     if (momoData.payUrl) {
-                        window.location.href = momoData.payUrl;
+                        window.open(momoData.payUrl.payUrl, '_blank');
                         return;
                     }
                 } catch (momoErr) {
+                    console.log(momoErr)
                     alert("Không thể khởi tạo thanh toán MoMo. Đơn hàng đã được lưu dưới dạng COD.");
                 }
             }

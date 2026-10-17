@@ -187,6 +187,8 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
+    max-height: 300px;
+    overflow: auto;
 }
 
 .cartItemCard {
@@ -397,6 +399,39 @@
     font-size: 14px;
     cursor: pointer;
     text-decoration: none;
+}
+
+.formatWrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
+
+.badgePhysical {
+    background: #eef2ff;
+    color: #3730a3;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.badgeEbook {
+    background: #f0fdf4;
+    color: #166534;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.metaDuration {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    align-items: center;
 }
 
 @media (max-width: 1024px) {

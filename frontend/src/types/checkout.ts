@@ -28,4 +28,5 @@ export interface CreateMomoResponse {
     qrCodeUrl: string;
     amount: number;
     message: string;
+    
 }

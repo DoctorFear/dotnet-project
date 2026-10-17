@@ -11,7 +11,8 @@ namespace AncientBook.Application.Interfaces
         Task<bool> UpdateOrderStatusAsync(int orderId, OrderStatus newStatus, string? updatedBy = null);
         Task<bool> CancelOrder(int orderId);
         Task<bool> RequestRefundOrder(int orderId);
-        Task<PagedResult<Order>> GetPagedOrdersAsync(GetOrdersQuery query);
+        Task<PagedResult<OrderResponseDto>> GetPagedOrdersAsync(GetOrdersQuery query);
         Task<bool> ApproveReturnOrderAsync(int orderId, string adminUser);
+        Task<OrderResponseDto?> GetOrderByIdAsync(int orderId);
     }
 }

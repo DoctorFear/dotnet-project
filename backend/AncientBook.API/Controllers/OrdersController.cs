@@ -6,6 +6,7 @@ using AncientBook.Application.DTOs;
 using AncientBook.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using AncientBook.Domain.Entities;
 
 namespace AncientBook.API.Controllers
 {
@@ -77,6 +78,7 @@ namespace AncientBook.API.Controllers
 
         [HttpPut("{id}/status")]
         [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] UpdateOrderStatusRequest request)
         {
             if (request == null)
@@ -111,6 +113,7 @@ namespace AncientBook.API.Controllers
 
         [HttpPut("{id}/approve-refund")]
         [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> ApproveReturnOrderAsync(int id)
         {
             try
@@ -155,7 +158,7 @@ namespace AncientBook.API.Controllers
                     return Unauthorized(new { message = "Không thể xác thực thông tin người dùng." });
                 }
 
-                bool isAdmin = userRoleClaim == "Admin";
+                bool isAdmin = userRoleClaim == "Admin" || userRoleClaim == "Staff" || userRoleClaim == "Shipper";
 
                 if (!isAdmin)
                 {
@@ -168,11 +171,47 @@ namespace AncientBook.API.Controllers
                     PageNumber = pageNumber,
                     PageSize = pageSize,
                     UserId = userId,
-                    Status = status
+                    Status = status,
+                    SearchKeyword = searchKeyword
                 };
 
                 var result = await _orderService.GetPagedOrdersAsync(query);
                 return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống.", details = ex.Message });
+            }
+        }
+
+        [HttpGet("{id}")]
+        [Authorize]
+        public async Task<IActionResult> GetOrderById(int id)
+        {
+            try
+            {
+                var currentUserIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? 
+                                        User.FindFirst("sub")?.Value;
+                var userRoleClaim = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+
+                if (string.IsNullOrEmpty(currentUserIdClaim) || !int.TryParse(currentUserIdClaim, out int currentUserId))
+                {
+                    return Unauthorized(new { message = "Không thể xác thực thông tin người dùng." });
+                }
+
+                var order = await _orderService.GetOrderByIdAsync(id);
+                if (order == null)
+                {
+                    return NotFound(new { message = $"Không tìm thấy đơn hàng #{id}." });
+                }
+
+                bool isAdmin = userRoleClaim == "Admin" || userRoleClaim == "Staff" || userRoleClaim == "Shipper";
+                if (!isAdmin && order.User?.Id != currentUserId)
+                {
+                    return Forbid();
+                }
+
+                return Ok(order);
             }
             catch (Exception ex)
             {

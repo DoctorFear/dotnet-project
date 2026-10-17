@@ -5,7 +5,7 @@
 namespace AncientBook.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddSourceKeyToFPoints : Migration
+    public partial class udpateOrder : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
