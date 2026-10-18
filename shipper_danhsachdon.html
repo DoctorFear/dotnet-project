@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ancientBOOK — Đơn hàng của tôi (Shipper)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --alice: #F2F7FF;
+    --egyptian: #0B409C;
+    --catalina: #0D226B;
+    --ink: #071233;
+    --saffron: #FDBE34;
+    --muted: #5b6e99;
+    --hairline: #dce6f7;
+    --white: #ffffff;
+    --danger: #d93838;
+    --danger-bg: #fdf2f2;
+    --success: #15803d;
+    --success-bg: #ecfdf5;
+    --shadow: 0 8px 24px rgba(13, 34, 107, .07);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--alice);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+  button, input { font: inherit; }
+  button { cursor: pointer; border: 0; }
+  .icon { width: 17px; height: 17px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* NAVBAR SHIPPER */
+  .shipper-navbar {
+    height: 64px;
+    background: var(--catalina);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .shipper-brand {
+    display: inline-flex;
+    align-items: baseline;
+    text-decoration: none;
+    color: #fff;
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 800;
+  }
+  .shipper-brand .book-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 19px;
+    font-weight: 900;
+    color: var(--saffron);
+    letter-spacing: 1.2px;
+    margin-left: 2px;
+  }
+  .shipper-brand .accent-dot {
+    width: 6px; height: 6px;
+    background: var(--saffron);
+    border-radius: 50%;
+    display: inline-block;
+    margin-left: 4px;
+  }
+  .shipper-user {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px;
+  }
+  .shipper-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--saffron); color: var(--catalina);
+    display: grid; place-items: center;
+    font-weight: 800; font-size: 13px;
+    border: 2px solid rgba(253, 190, 52, .4);
+  }
+
+  /* CONTAINER */
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 24px 20px 80px;
+  }
+
+  /* PAGE INTRO */
+  .page-intro {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 20px;
+    gap: 16px;
+  }
+  .page-intro h1 {
+    font-family: 'Fraunces', serif;
+    color: var(--catalina);
+    font-size: 26px;
+    font-weight: 800;
+  }
+  .page-intro p {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 5px;
+  }
+  .refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    color: var(--egyptian);
+    border: 1px solid var(--hairline);
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 700;
+    transition: all .15s;
+  }
+  .refresh-btn:hover { background: var(--alice); border-color: var(--egyptian); }
+
+  /* STATS */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .stat {
+    background: #fff;
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+  }
+  .stat-title {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--muted);
+    letter-spacing: .4px;
+    text-transform: uppercase;
+  }
+  .stat-number {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--egyptian);
+    margin-top: 4px;
+  }
+  .stat-note { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* FILTER TABS */
+  .filter-tabs {
+    display: flex;
+    gap: 4px;
+    background: #fff;
+    padding: 5px;
+    border-radius: 10px;
+    border: 1px solid var(--hairline);
+    box-shadow: var(--shadow);
+    overflow-x: auto;
+    margin-bottom: 16px;
+  }
+  .tab-btn {
+    flex: 1;
+    min-width: 110px;
+    padding: 10px 12px;
+    background: transparent;
+    border-radius: 7px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--muted);
+    transition: all .15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .tab-btn:hover { background: var(--alice); color: var(--egyptian); }
+  .tab-btn.active { background: var(--egyptian); color: #fff; }
+  .tab-btn .tab-count {
+    font-size: 11px;
+    font-weight: 800;
+    opacity: .8;
+  }
+  .tab-btn.active .tab-count { opacity: 1; color: var(--saffron); }
+
+  /* SEARCH */
+  .search-wrap {
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .search-wrap .icon {
+    position: absolute;
+    left: 14px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+  }
+  .search-input {
+    width: 100%;
+    height: 44px;
+    border: 1.5px solid var(--hairline);
+    background: #fff;
+    border-radius: 10px;
+    padding: 0 14px 0 42px;
+    outline: none;
+    font-size: 13.5px;
+    box-shadow: var(--shadow);
+  }
+  .search-input:focus { border-color: var(--egyptian); }
+
+  /* ORDER LIST */
+  .order-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .order-card {
+    background: #fff;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: all .15s;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 14px;
+    align-items: center;
+  }
+  .order-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--egyptian);
+    box-shadow: 0 12px 28px rgba(11, 64, 156, .12);
+  }
+  .order-id {
+    font-size: 15px;
+    font-weight: 900;
+    color: var(--catalina);
+  }
+  .order-customer {
+    font-size: 13.5px;
+    color: var(--ink);
+    font-weight: 600;
+    margin: 4px 0;
+  }
+  .order-address {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .order-meta {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .order-cod {
+    color: var(--danger);
+    font-weight: 800;
+  }
+
+  .badge {
+    display: inline-flex;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  .b-prepared { background: #e8f1ff; color: var(--egyptian); }
+  .b-shipping { background: var(--success-bg); color: var(--success); }
+  .b-completed { background: #e7f7ee; color: #167344; }
+  .b-failed { background: var(--danger-bg); color: var(--danger); }
+
+  .empty-state {
+    background: #fff;
+    border: 1px dashed var(--hairline);
+    border-radius: 12px;
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--muted);
+  }
+  .empty-state h3 {
+    font-size: 15px;
+    color: var(--catalina);
+    margin-bottom: 6px;
+  }
+  .empty-state p { font-size: 13px; }
+
+  @media (max-width: 768px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .page-intro { flex-direction: column; align-items: flex-start; }
+    .order-card { grid-template-columns: 1fr; }
+  }
+
+  :root { --danger:#d93838; --danger-bg:#fdf2f2; --success:#15803d; --success-bg:#ecfdf5; }
+  body { font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+  button,input,select,textarea { font:inherit; }
+  button,a,input,select,textarea { -webkit-tap-highlight-color:transparent; }
+  button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible { outline:3px solid var(--saffron); outline-offset:3px; }
+  button:disabled { cursor:not-allowed; opacity:.5; }
+  [hidden] { display:none!important; }
+  .muted { color:var(--muted); }
+  .shipper-brand .accent-dot { width:6px; height:6px; background:var(--saffron); border-radius:50%; display:inline-block; margin-left:4px; }
+  .sr-only { position:absolute; left:0; top:0; width:1px; height:1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  .button-link { text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+  .demo-caption { font-size:11px; color:var(--muted); margin:18px 0 0; line-height:1.7; }
+  .page-tools { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .control-label { font-size:12px; color:var(--muted); font-weight:600; }
+  .select-control { background:#fff; border:1px solid var(--hairline); border-radius:6px; padding:8px 10px; color:var(--ink); }
+  .pagination { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-top:18px; font-size:12px; color:var(--muted); }
+  .pagination-buttons { display:flex; align-items:center; gap:12px; }
+  .small-btn { border:1px solid var(--hairline); padding:8px 12px; border-radius:6px; background:#fff; color:var(--catalina); font-size:12px; font-weight:700; }
+  .notice { padding:14px 16px; border:1px solid var(--hairline); border-radius:8px; background:var(--alice); font-size:13px; line-height:1.7; color:var(--catalina); }
+  .notice.success { background:var(--success-bg); border-color:#bbf7d0; color:var(--success); }
+  .notice.danger { background:var(--danger-bg); border-color:#fecaca; color:var(--danger); }
+  .field-error { color:var(--danger); font-size:12px; line-height:1.6; margin-top:8px; }
+  .field-label { display:block; font-size:12px; font-weight:700; color:var(--catalina); margin:16px 0 8px; }
+  .text-control { width:100%; border:1px solid var(--hairline); border-radius:6px; padding:10px 12px; background:#fff; color:var(--ink); resize:vertical; }
+  .demo-toast { position:fixed; bottom:24px; left:24px; z-index:5000; max-width:min(480px,calc(100vw - 48px)); padding:13px 18px; border-radius:6px; background:var(--success); color:#fff; font-size:13px; line-height:1.6; box-shadow:0 6px 20px #07123325; }
+  .demo-toast.error { background:var(--danger); }
+  dialog { margin:auto; border:0; border-radius:12px; padding:24px; width:min(460px,calc(100% - 32px)); max-height:calc(100dvh - 32px); overflow:auto; color:var(--ink); box-shadow:0 20px 60px #07123333; }
+  dialog::backdrop { background:rgba(7,18,51,.45); }
+  dialog h2 { font-family:'Fraunces',serif; font-size:20px; color:var(--catalina); margin:0 0 10px; }
+  dialog p { font-size:13px; color:var(--muted); line-height:1.7; margin:0 0 16px; }
+  .dialog-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+  .dialog-btn { padding:10px 16px; border-radius:6px; font-size:13px; font-weight:700; border:1px solid var(--hairline); background:#fff; color:var(--catalina); }
+  .dialog-btn.primary { background:var(--egyptian); border-color:var(--egyptian); color:#fff; }
+  .dialog-btn.danger { background:var(--danger); border-color:var(--danger); color:#fff; }
+  @media(max-width:600px) { .shipper-navbar { padding:0 16px; gap:12px; } .shipper-user>span { display:none; } .page-intro h1 { font-size:23px; } .dialog-actions { flex-wrap:wrap; } }
+
+
+  .shipper-brand>span { display:inline-flex; align-items:baseline; }
+  .list-toolbar { display:flex; gap:14px; align-items:center; margin-bottom:12px; }
+  .list-toolbar .search-wrap { flex:1; margin:0; }
+  .list-summary { margin:0 0 12px; color:var(--muted); font-size:12px; }
+  .order-card { text-decoration:none; color:inherit; }
+  .order-end { display:flex; align-items:flex-end; flex-direction:column; gap:16px; }
+  .order-link { color:var(--egyptian); font-size:12px; font-weight:700; }
+  .sr-only { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  @media(max-width:600px) { .list-toolbar { flex-direction:column; align-items:stretch; } .list-toolbar .control-label { align-self:flex-end; } .order-end { align-items:flex-start; gap:10px; } }
+
+</style>
+</head>
+<body>
+<nav class="shipper-navbar" aria-label="Điều hướng Shipper">
+  <a href="#" class="shipper-brand"><span>ancient<span class="book-text">BOOK</span><span class="accent-dot"></span></span></a>
+  
+  <div class="shipper-user"><span>Shipper Portal</span><span class="shipper-avatar" title="Nguyễn Văn Nam">NV</span></div>
+</nav>
+<main class="container">
+  <div class="page-intro"><div><h1>Đơn hàng của tôi</h1><p>Theo dõi và xử lý các đơn hàng được phân công cho bạn.</p></div>
+    <button class="refresh-btn" id="refreshList" type="button"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 6a8 8 0 0 1 14 6M18 18A8 8 0 0 1 4 12"/></svg> Tải lại</button></div>
+  <section class="stats" aria-label="Tổng quan giao hàng">
+    <div class="stat"><div class="stat-title">Tổng đơn</div><div class="stat-number" id="statTotal">0</div><div class="stat-note">Được phân công</div></div><div class="stat"><div class="stat-title">Chờ lấy hàng</div><div class="stat-number" id="statPrepared">0</div><div class="stat-note">Đã chuẩn bị xong</div></div><div class="stat"><div class="stat-title">Đang giao</div><div class="stat-number" id="statShipping">0</div><div class="stat-note">Trên đường giao</div></div><div class="stat"><div class="stat-title">Hoàn thành</div><div class="stat-number" id="statCompleted">0</div><div class="stat-note">Giao thành công</div></div>
+  </section>
+  <div class="filter-tabs" id="filterTabs" role="group" aria-label="Lọc theo trạng thái">
+    <button type="button" class="tab-btn active" data-status="All" aria-pressed="true"><span>Tất cả</span><span class="tab-count" id="countAll">0</span></button><button type="button" class="tab-btn" data-status="Prepared" aria-pressed="false"><span>Chờ lấy hàng</span><span class="tab-count" id="countPrepared">0</span></button><button type="button" class="tab-btn" data-status="Shipping" aria-pressed="false"><span>Đang giao</span><span class="tab-count" id="countShipping">0</span></button><button type="button" class="tab-btn" data-status="Completed" aria-pressed="false"><span>Hoàn thành</span><span class="tab-count" id="countCompleted">0</span></button><button type="button" class="tab-btn" data-status="Failed" aria-pressed="false"><span>Thất bại</span><span class="tab-count" id="countFailed">0</span></button>
+  </div>
+  <div class="list-toolbar"><div class="search-wrap"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><label class="sr-only" for="searchInput">Tìm đơn hàng</label><input type="search" class="search-input" id="searchInput" placeholder="Mã đơn, tên khách hoặc số điện thoại..."></div>
+    <label class="control-label" for="pageSize">Số đơn/trang <select class="select-control" id="pageSize"><option value="5">5</option><option value="10">10</option><option value="20">20</option></select></label></div>
+  <p class="list-summary" id="listSummary" role="status"></p>
+  <section class="order-list" id="orderList" aria-label="Danh sách đơn hàng"></section>
+  <nav class="pagination" aria-label="Phân trang"><span id="pageSummary"></span><div class="pagination-buttons"><button class="small-btn" id="prevPage" type="button">Trước</button><span id="pageNumber"></span><button class="small-btn" id="nextPage" type="button">Sau</button></div></nav>
+  <p class="demo-caption">Giao diện minh họa · Dữ liệu mẫu chỉ dùng trong trang đang mở.</p>
+</main>
+<div id="demoToast" class="demo-toast" role="status" aria-live="polite" hidden></div>
+<script>
+const SHIPPER_USER_ID = 24;
+const MEMBER_USER_ID = 16;
+const STATUS_LABELS = { Prepared: 'Đã chuẩn bị xong', Shipping: 'Đang giao', Completed: 'Hoàn thành', Failed: 'Thất bại' };
+const FAILURE_REASONS = [
+  { id: 1, reasonText: 'Không liên hệ được người nhận' },
+  { id: 2, reasonText: 'Người nhận từ chối nhận hàng' },
+  { id: 3, reasonText: 'Địa chỉ giao hàng không chính xác' },
+  { id: 4, reasonText: 'Kiện hàng bị hư hỏng khi giao' }
+];
+const DEFAULT_TIERS = [
+  { id: 1, tierName: 'Đồng', minSpending: 0, pointRate: 5, benefits: 'Tích 5% giá trị thực trả thành F-Point.' },
+  { id: 2, tierName: 'Bạc', minSpending: 5000000, pointRate: 10, benefits: 'Tích 10% giá trị thực trả thành F-Point.' },
+  { id: 3, tierName: 'Vàng', minSpending: 20000000, pointRate: 15, benefits: 'Tích 15% giá trị thực trả thành F-Point.' }
+];
+function money(value) { return Number(value).toLocaleString('vi-VN') + ' đ'; }
+function dateTime(value) { return value ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date(value)) : '—'; }
+function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char])); }
+function clone(value) { return JSON.parse(JSON.stringify(value)); }
+function makeDemoState() {
+  const order = (id, name, phone, status, paid, items, day, userId = 17, shipperId = SHIPPER_USER_ID) => ({
+    orderId: id, orderCode: 'ORD-' + id, customerName: name, receiverPhone: phone,
+    shippingAddress: id % 2 ? '28 Nguyễn Huệ, phường Sài Gòn, TP. Hồ Chí Minh' : '42 Nguyễn Thị Thập, phường Tân Hưng, TP. Hồ Chí Minh',
+    status, isPaid: paid, items, finalAmount: items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+    orderDate: `2026-10-${day}T09:30:00+07:00`, createdAt: `2026-10-${day}T09:30:00+07:00`,
+    completedAt: ['Completed', 'Failed'].includes(status) ? `2026-10-${day}T16:15:00+07:00` : null,
+    failureReason: status === 'Failed' ? FAILURE_REASONS[0].reasonText : null,
+    failureNote: status === 'Failed' ? 'Đã gọi nhiều lần trong ngày nhưng chưa liên hệ được.' : null,
+    userId, shipperUserId: shipperId, history: [{ status: 'Prepared', at: `2026-10-${day}T10:00:00+07:00` }]
+  });
+  const item = (bookId, bookTitle, unitPrice, quantity = 1) => ({ bookId, bookTitle, unitPrice, quantity });
+  const orders = [
+    order(1023, 'Nguyễn Minh Anh', '0909123456', 'Shipping', false, [item(1, 'Nhà giả kim', 120000), item(3, 'Đắc nhân tâm', 95000)], '17'),
+    order(1024, 'Phan Thúy An', '0904000001', 'Prepared', false, [item(4, 'Tuổi trẻ đáng giá bao nhiêu', 180000)], '17', MEMBER_USER_ID),
+    order(1025, 'Lê Thu Hà', '0912345678', 'Prepared', true, [item(2, 'Đại Việt Sử Ký Toàn Thư', 120000), item(3, 'Đắc nhân tâm', 95000), item(4, 'Tuổi trẻ đáng giá bao nhiêu', 180000)], '16', 18),
+    order(1012, 'Phạm Minh Đức', '0977001122', 'Completed', true, [item(1, 'Nhà giả kim', 120000), item(5, 'Tội ác và hình phạt', 180000), item(6, 'Số đỏ', 180000)], '14', 19),
+    order(1005, 'Đỗ Thị Hương', '0933221144', 'Failed', false, [item(1, 'Nhà giả kim', 120000), item(7, 'Dế Mèn phiêu lưu ký', 90000)], '13', 20),
+    order(1026, 'Trần Gia Huy', '0988776655', 'Shipping', true, [item(2, 'Đại Việt Sử Ký Toàn Thư', 120000, 2)], '16', 21),
+    order(1027, 'Võ Ngọc Mai', '0902112233', 'Prepared', false, [item(8, 'Lược sử thời gian', 150000)], '15', 22),
+    order(1028, 'Nguyễn Thanh Bình', '0906778899', 'Prepared', false, [item(2, 'Đại Việt Sử Ký Toàn Thư', 120000)], '17', 23, 25)
+  ];
+  orders.forEach(order => {
+    if (['Shipping', 'Completed', 'Failed'].includes(order.status)) order.history.push({ status: 'Shipping', at: order.createdAt.slice(0, 10) + 'T13:00:00+07:00' });
+    if (order.completedAt) order.history.push({ status: order.status, at: order.completedAt });
+  });
+  return {
+    version: 1, tiers: clone(DEFAULT_TIERS), orders,
+    member: { userId: MEMBER_USER_ID, tierId: 2, currentPoints: 1250, totalPointsEarned: 1250, totalSpent: 8500000 },
+    tierHistory: [{ fromTier: 'Đồng', toTier: 'Bạc', at: '2026-06-15T10:30:00+07:00', totalSpent: 5000000 }],
+    awardedOrders: [], restoredOrders: [], pointTransactions: [], notifications: [], configHistory: []
+  };
+}
+// Dữ liệu chỉ nằm trong trang đang mở; tải lại trang sẽ trở về mẫu ban đầu.
+let pageDemoState = makeDemoState();
+function readDemoState() { return clone(pageDemoState); }
+function saveDemoState(state) { pageDemoState = clone(state); }
+function badgeClass(status) { return 'b-' + status.toLowerCase(); }
+function showToast(message, error = false) {
+  const toast = document.getElementById('demoToast');
+  clearTimeout(showToast.timer);
+  toast.textContent = message;
+  toast.className = 'demo-toast' + (error ? ' error' : '');
+  toast.hidden = false;
+  showToast.timer = setTimeout(() => { toast.hidden = true; }, 4000);
+}
+function showFieldError(id, message) { const field = document.getElementById(id); field.textContent = message; field.hidden = !message; }
+function eligibleOrders(state) { return state.orders.filter(order => order.shipperUserId === SHIPPER_USER_ID); }
+function codAmount(order) { return order.isPaid ? 0 : order.finalAmount; }
+function changeOrderStatus(orderId, nextStatus, reasonId, note = '') {
+  const state = readDemoState();
+  const order = state.orders.find(order => order.orderId === orderId);
+  if (!order || order.shipperUserId !== SHIPPER_USER_ID) throw new Error('Bạn không có quyền xử lý đơn hàng này.');
+  const valid = order.status === 'Prepared' && nextStatus === 'Shipping' || order.status === 'Shipping' && ['Completed', 'Failed'].includes(nextStatus);
+  if (!valid) throw new Error('Đơn đã được xử lý hoặc không còn ở trạng thái hợp lệ. Vui lòng tải lại.');
+  const at = new Date().toISOString();
+  if (nextStatus === 'Failed') {
+    const reason = FAILURE_REASONS.find(reason => reason.id === Number(reasonId));
+    if (!reason) throw new Error('Vui lòng chọn lý do giao thất bại.');
+    if (note.length > 500) throw new Error('Ghi chú tối đa 500 ký tự.');
+    order.failureReason = reason.reasonText;
+    order.failureNote = note.trim();
+    if (!state.restoredOrders.includes(orderId)) state.restoredOrders.push(orderId);
+  }
+  order.status = nextStatus;
+  order.history.push({ status: nextStatus, at });
+  if (['Completed', 'Failed'].includes(nextStatus)) order.completedAt = at;
+  if (nextStatus === 'Completed') order.isPaid = true;
+  saveDemoState(state);
+  return order;
+}
+document.querySelectorAll('[data-close-dialog]').forEach(button => button.addEventListener('click', () => document.getElementById(button.dataset.closeDialog).close()));
+document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click', event => { if (event.target === dialog) { const rect = dialog.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close(); } }));
+
+// Matches GET /api/Delivery/my-deliveries: PageNumber, PageSize, Keyword, Status.
+let pageNumber = 1;
+let currentFilter = 'All';
+let currentSearch = '';
+const pageSizeControl = document.getElementById('pageSize');
+function renderList() {
+  const orders = eligibleOrders(readDemoState());
+  document.getElementById('statTotal').textContent = orders.length;
+  document.getElementById('countAll').textContent = orders.length;
+  ['Prepared', 'Shipping', 'Completed', 'Failed'].forEach(status => {
+    const count = orders.filter(order => order.status === status).length;
+    const stat = document.getElementById('stat' + status);
+    if (stat) stat.textContent = count;
+    document.getElementById('count' + status).textContent = count;
+  });
+  document.querySelectorAll('[data-status]').forEach(button => {
+    const active = button.dataset.status === currentFilter;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', active);
+  });
+  const keyword = currentSearch.trim().toLocaleLowerCase('vi-VN').replace(/^#?ord-/, '');
+  const active = order => ['Prepared', 'Shipping'].includes(order.status) ? 0 : 1;
+  const matches = orders.filter(order => (currentFilter === 'All' || order.status === currentFilter) &&
+    (!keyword || String(order.orderId).includes(keyword) || order.customerName.toLocaleLowerCase('vi-VN').includes(keyword) || order.receiverPhone.includes(keyword)))
+    .sort((a, b) => active(a) - active(b) || new Date(b.createdAt) - new Date(a.createdAt) || b.orderId - a.orderId);
+  const pageSize = Number(pageSizeControl.value);
+  const totalPages = Math.max(1, Math.ceil(matches.length / pageSize));
+  pageNumber = Math.min(Math.floor(pageNumber), totalPages);
+  const start = (pageNumber - 1) * pageSize;
+  const items = matches.slice(start, start + pageSize);
+  document.getElementById('listSummary').textContent = matches.length + ' đơn phù hợp · Đơn đang xử lý được hiển thị trước';
+  document.getElementById('orderList').innerHTML = items.length ? items.map(order => `
+    <a class="order-card" href="#" aria-label="Xem đơn ${escapeHtml(order.orderCode)} của ${escapeHtml(order.customerName)}">
+      <div><div class="order-id">#${escapeHtml(order.orderCode)}</div><div class="order-customer">${escapeHtml(order.customerName)}</div><div class="order-address">${escapeHtml(order.shippingAddress)}</div>
+      <div class="order-meta"><span>${order.items.reduce((sum, item) => sum + item.quantity, 0)} cuốn sách</span><span>${dateTime(order.orderDate)}</span><span>${escapeHtml(order.receiverPhone)}</span>
+      ${order.status === 'Completed' ? '<span style="color:var(--success);font-weight:700">Đã thanh toán</span>' : order.status === 'Failed' ? '<span>Đơn đã kết thúc</span>' : order.isPaid ? '<span style="color:var(--success);font-weight:700">Đã thanh toán · Không thu COD</span>' : `<span class="order-cod">Cần thu: ${money(codAmount(order))}</span>`}</div></div>
+      <div class="order-end"><span class="badge ${badgeClass(order.status)}">${STATUS_LABELS[order.status]}</span><span class="order-link">Xem chi tiết →</span></div>
+    </a>`).join('') : '<div class="empty-state"><h3>Không tìm thấy đơn hàng</h3><p>Thử đổi trạng thái hoặc từ khóa tìm kiếm.</p></div>';
+  document.getElementById('pageSummary').textContent = matches.length ? `Hiển thị ${start + 1}–${Math.min(start + pageSize, matches.length)} / ${matches.length} đơn` : '0 đơn hàng';
+  document.getElementById('pageNumber').textContent = `Trang ${pageNumber} / ${totalPages}`;
+  document.getElementById('prevPage').disabled = pageNumber <= 1;
+  document.getElementById('nextPage').disabled = pageNumber >= totalPages;
+}
+document.getElementById('filterTabs').addEventListener('click', event => {
+  const button = event.target.closest('[data-status]');
+  if (!button) return;
+  currentFilter = button.dataset.status; pageNumber = 1; renderList();
+});
+document.getElementById('searchInput').addEventListener('input', event => { currentSearch = event.target.value; pageNumber = 1; renderList(); });
+pageSizeControl.addEventListener('change', () => { pageNumber = 1; renderList(); });
+document.getElementById('prevPage').addEventListener('click', () => { pageNumber--; renderList(); });
+document.getElementById('nextPage').addEventListener('click', () => { pageNumber++; renderList(); });
+document.getElementById('refreshList').addEventListener('click', () => { renderList(); showToast('Đã tải lại danh sách đơn hàng.'); });
+window.addEventListener('pageshow', renderList);
+renderList();
+
+document.addEventListener('click', event => { const link = event.target.closest('a[href="#"]'); if (link) event.preventDefault(); });
+</script>
+</body>
+</html>

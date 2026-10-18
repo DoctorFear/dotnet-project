@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ancientBOOK — Chi tiết đơn hàng (Shipper)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --alice: #F2F7FF;
+    --egyptian: #0B409C;
+    --catalina: #0D226B;
+    --ink: #071233;
+    --saffron: #FDBE34;
+    --muted: #5b6e99;
+    --hairline: #dce6f7;
+    --white: #ffffff;
+    --danger: #d93838;
+    --danger-bg: #fdf2f2;
+    --success: #15803d;
+    --success-bg: #ecfdf5;
+    --shadow: 0 8px 24px rgba(13, 34, 107, .07);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--alice);
+    color: var(--ink);
+    min-height: 100vh;
+    padding-bottom: 100px;
+  }
+  button { cursor: pointer; border: 0; font: inherit; }
+  .icon { width: 17px; height: 17px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  .shipper-navbar {
+    height: 64px;
+    background: var(--catalina);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: background .15s;
+  }
+  .back-btn:hover { background: rgba(255,255,255,.1); }
+  .shipper-brand {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: baseline;
+    color: #fff;
+    text-decoration: none;
+  }
+  .shipper-brand .book-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 17px;
+    font-weight: 900;
+    color: var(--saffron);
+    letter-spacing: 1.2px;
+    margin-left: 2px;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+  }
+
+  .card {
+    background: #fff;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .card-head {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .card-head h2 {
+    font-size: 15.5px;
+    color: var(--catalina);
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+  }
+  .card-body { padding: 18px; }
+
+  .detail-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .detail-id {
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--catalina);
+    font-family: 'Fraunces', serif;
+  }
+  .detail-date {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .badge {
+    display: inline-flex;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  .b-prepared { background: #e8f1ff; color: var(--egyptian); }
+  .b-shipping { background: var(--success-bg); color: var(--success); }
+  .b-completed { background: #e7f7ee; color: #167344; }
+  .b-failed { background: var(--danger-bg); color: var(--danger); }
+
+  .tracking-box {
+    margin-top: 14px;
+    background: var(--alice);
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+  }
+  .tracking-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .tracking-code {
+    font-size: 14px;
+    color: var(--catalina);
+    font-weight: 900;
+    margin-top: 3px;
+  }
+  .copy-btn {
+    background: #fff;
+    color: var(--egyptian);
+    border: 1px solid var(--hairline);
+    padding: 7px 11px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .copy-btn:hover { background: var(--alice); }
+
+  .timeline {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    margin: 24px 0 8px;
+    position: relative;
+  }
+  .timeline:before {
+    content: "";
+    position: absolute;
+    top: 13px;
+    left: 12.5%; right: 12.5%;
+    height: 3px;
+    background: var(--hairline);
+  }
+  .step {
+    position: relative;
+    text-align: center;
+    font-size: 11px;
+    color: #9aa7bf;
+    z-index: 1;
+  }
+  .step.done, .step.current {
+    color: var(--catalina);
+    font-weight: 800;
+  }
+  .dot {
+    width: 27px; height: 27px;
+    border-radius: 50%;
+    background: #dce6f7;
+    color: #fff;
+    display: grid; place-items: center;
+    margin: 0 auto 7px;
+    font-size: 12px;
+    font-weight: 900;
+    border: 3px solid #fff;
+  }
+  .step.done .dot { background: var(--egyptian); }
+  .step.current .dot { background: var(--saffron); color: var(--catalina); }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 11px 0;
+    border-bottom: 1px dashed var(--hairline);
+    font-size: 13.5px;
+  }
+  .info-row:last-child { border-bottom: 0; }
+  .info-row span { color: var(--muted); }
+  .info-row b { color: var(--ink); font-weight: 700; text-align: right; }
+  .call-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid #bbf7d0;
+    padding: 4px 9px;
+    border-radius: 5px;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-decoration: none;
+    margin-left: 8px;
+  }
+  .call-btn:hover { background: var(--success); color: #fff; }
+
+  .product-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--hairline);
+    font-size: 13.5px;
+  }
+  .product-row:last-child { border-bottom: 0; }
+  .total-row {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 12px;
+    margin-top: 4px;
+    border-top: 1px solid var(--hairline);
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--catalina);
+  }
+
+  .action-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-top: 1px solid var(--hairline);
+    padding: 14px 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 50;
+    box-shadow: 0 -8px 24px rgba(13, 34, 107, .08);
+  }
+  .action-bar-inner {
+    max-width: 720px;
+    margin: 0 auto;
+    width: 100%;
+    display: flex;
+    gap: 10px;
+  }
+  .btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    border: none;
+    transition: all .15s;
+  }
+  .btn-primary { background: var(--egyptian); color: #fff; }
+  .btn-primary:hover { background: var(--catalina); }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { background: #166534; }
+  .btn-danger {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1.5px solid #fca5a5;
+  }
+  .btn-danger:hover { background: var(--danger); color: #fff; }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 18, 51, 0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: #fff;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 440px;
+    padding: 24px;
+  }
+  .modal-title {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--catalina);
+    margin-bottom: 6px;
+  }
+  .modal-subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .reason-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .reason-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--hairline);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+  }
+  .reason-item:hover { border-color: var(--egyptian); background: var(--alice); }
+  .reason-item input { accent-color: var(--egyptian); }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+  .btn-cancel {
+    padding: 10px 18px;
+    background: #fff;
+    color: var(--ink);
+    border: 1.5px solid var(--hairline);
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-confirm-danger {
+    padding: 10px 18px;
+    background: var(--danger);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  @media (max-width: 600px) {
+    .timeline { min-width: 100%; overflow: auto; }
+  }
+
+  :root { --danger:#d93838; --danger-bg:#fdf2f2; --success:#15803d; --success-bg:#ecfdf5; }
+  body { font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+  button,input,select,textarea { font:inherit; }
+  button,a,input,select,textarea { -webkit-tap-highlight-color:transparent; }
+  button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible { outline:3px solid var(--saffron); outline-offset:3px; }
+  button:disabled { cursor:not-allowed; opacity:.5; }
+  [hidden] { display:none!important; }
+  .muted { color:var(--muted); }
+  .shipper-brand .accent-dot { width:6px; height:6px; background:var(--saffron); border-radius:50%; display:inline-block; margin-left:4px; }
+  .sr-only { position:absolute; left:0; top:0; width:1px; height:1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  .button-link { text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+  .demo-caption { font-size:11px; color:var(--muted); margin:18px 0 0; line-height:1.7; }
+  .page-tools { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .control-label { font-size:12px; color:var(--muted); font-weight:600; }
+  .select-control { background:#fff; border:1px solid var(--hairline); border-radius:6px; padding:8px 10px; color:var(--ink); }
+  .pagination { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-top:18px; font-size:12px; color:var(--muted); }
+  .pagination-buttons { display:flex; align-items:center; gap:12px; }
+  .small-btn { border:1px solid var(--hairline); padding:8px 12px; border-radius:6px; background:#fff; color:var(--catalina); font-size:12px; font-weight:700; }
+  .notice { padding:14px 16px; border:1px solid var(--hairline); border-radius:8px; background:var(--alice); font-size:13px; line-height:1.7; color:var(--catalina); }
+  .notice.success { background:var(--success-bg); border-color:#bbf7d0; color:var(--success); }
+  .notice.danger { background:var(--danger-bg); border-color:#fecaca; color:var(--danger); }
+  .field-error { color:var(--danger); font-size:12px; line-height:1.6; margin-top:8px; }
+  .field-label { display:block; font-size:12px; font-weight:700; color:var(--catalina); margin:16px 0 8px; }
+  .text-control { width:100%; border:1px solid var(--hairline); border-radius:6px; padding:10px 12px; background:#fff; color:var(--ink); resize:vertical; }
+  .demo-toast { position:fixed; bottom:24px; left:24px; z-index:5000; max-width:min(480px,calc(100vw - 48px)); padding:13px 18px; border-radius:6px; background:var(--success); color:#fff; font-size:13px; line-height:1.6; box-shadow:0 6px 20px #07123325; }
+  .demo-toast.error { background:var(--danger); }
+  dialog { margin:auto; border:0; border-radius:12px; padding:24px; width:min(460px,calc(100% - 32px)); max-height:calc(100dvh - 32px); overflow:auto; color:var(--ink); box-shadow:0 20px 60px #07123333; }
+  dialog::backdrop { background:rgba(7,18,51,.45); }
+  dialog h2 { font-family:'Fraunces',serif; font-size:20px; color:var(--catalina); margin:0 0 10px; }
+  dialog p { font-size:13px; color:var(--muted); line-height:1.7; margin:0 0 16px; }
+  .dialog-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+  .dialog-btn { padding:10px 16px; border-radius:6px; font-size:13px; font-weight:700; border:1px solid var(--hairline); background:#fff; color:var(--catalina); }
+  .dialog-btn.primary { background:var(--egyptian); border-color:var(--egyptian); color:#fff; }
+  .dialog-btn.danger { background:var(--danger); border-color:var(--danger); color:#fff; }
+  @media(max-width:600px) { .shipper-navbar { padding:0 16px; gap:12px; } .shipper-user>span { display:none; } .page-intro h1 { font-size:23px; } .dialog-actions { flex-wrap:wrap; } }
+
+
+  .shipper-brand>span { display:inline-flex; align-items:baseline; }
+  .shipper-user { display:flex; align-items:center; gap:8px; font-size:12px; }
+  .shipper-avatar { display:grid; place-items:center; width:32px; height:32px; border-radius:50%; background:var(--saffron); color:var(--catalina); font-weight:800; }
+  .timeline { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .timeline:before { left:16.66%; right:16.66%; }
+  .step.failed { color:var(--danger); font-weight:800; }
+  .step.failed .dot { background:var(--danger); }
+  .reason-fieldset { border:0; padding:0; margin:0; }
+  .reason-list { margin-bottom:0; }
+  .reason-item:has(input:checked) { border-color:var(--egyptian); background:var(--alice); }
+  .card-title-small { font-size:14px; font-weight:800; color:var(--catalina); margin:0; }
+  .product-name { display:flex; flex-direction:column; gap:5px; min-width:0; }
+  .product-name small { color:var(--muted); }
+  .product-row>strong { flex-shrink:0; }
+  .detail-info { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .detail-info .card { margin-bottom:0; }
+  .detail-info .info-row { flex-direction:column; gap:6px; }
+  .detail-info .info-row b { text-align:left; line-height:1.7; }
+  .detail-section { margin-bottom:14px; }
+  .record-list { list-style:none; }
+  .record-list li { display:flex; align-items:flex-start; gap:12px; padding:12px 0; border-bottom:1px dashed var(--hairline); font-size:12px; }
+  .record-list li:last-child { border:0; }
+  .record-list time { color:var(--muted); min-width:130px; line-height:1.6; }
+  .record-list strong { color:var(--catalina); line-height:1.6; }
+  .empty-state { padding:50px 20px; background:#fff; border:1px dashed var(--hairline); border-radius:12px; text-align:center; }
+  .empty-state h1 { font-size:21px; color:var(--catalina); margin-bottom:10px; }
+  .empty-state p { font-size:13px; color:var(--muted); margin-bottom:20px; }
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+  @media(max-width:600px) { .detail-info { grid-template-columns:1fr; } .shipper-navbar { padding:0 12px; } .back-btn { padding-left:0; font-size:12px; } .shipper-brand { font-size:17px; } .shipper-brand .book-text { font-size:14px; } .shipper-user { display:none; } .record-list li { flex-direction:column; gap:4px; } }
+
+</style>
+</head>
+<body>
+<nav class="shipper-navbar" aria-label="Điều hướng Shipper">
+  <a href="#" class="back-btn"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg> Danh sách đơn</a>
+  <a href="#" class="shipper-brand"><span>ancient<span class="book-text">BOOK</span><span class="accent-dot"></span></span></a>
+  <div class="shipper-user"><span>Shipper Portal</span><span class="shipper-avatar" title="Nguyễn Văn Nam">NV</span></div>
+</nav>
+<main class="container" id="detailContainer"></main>
+<dialog id="statusDialog" aria-labelledby="statusDialogTitle"><h2 id="statusDialogTitle"></h2><p id="statusDialogDescription"></p>
+  <div class="notice" id="statusDialogSummary"></div><p class="field-error" id="statusError" role="alert" hidden></p>
+  <div class="dialog-actions"><button class="dialog-btn" type="button" data-close-dialog="statusDialog">Hủy</button><button class="dialog-btn primary" type="button" id="confirmStatus">Xác nhận</button></div></dialog>
+<dialog id="failureDialog" aria-labelledby="failureDialogTitle"><h2 id="failureDialogTitle">Ghi nhận giao thất bại</h2><p>Chọn một lý do trong danh sách. Đơn sẽ kết thúc và sách giấy được hoàn về kho.</p>
+  <form id="failureForm" novalidate><fieldset class="reason-fieldset"><legend class="sr-only">Lý do giao thất bại</legend><div class="reason-list" id="reasonList"></div></fieldset>
+    <label class="field-label" for="failureNote">Ghi chú thêm <span class="muted">(không bắt buộc)</span></label><textarea class="text-control" id="failureNote" rows="3" maxlength="500" placeholder="Thông tin cần lưu ý khi nhận lại kiện hàng..."></textarea>
+    <p class="field-error" id="failureError" role="alert" hidden></p><div class="dialog-actions"><button class="dialog-btn" type="button" data-close-dialog="failureDialog">Hủy</button><button class="dialog-btn danger" type="submit" id="confirmFailure">Xác nhận thất bại</button></div>
+  </form></dialog>
+<div id="demoToast" class="demo-toast" role="status" aria-live="polite" hidden></div>
+<script>
+const SHIPPER_USER_ID = 24;
+const MEMBER_USER_ID = 16;
+const STATUS_LABELS = { Prepared: 'Đã chuẩn bị xong', Shipping: 'Đang giao', Completed: 'Hoàn thành', Failed: 'Thất bại' };
+const FAILURE_REASONS = [
+  { id: 1, reasonText: 'Không liên hệ được người nhận' },
+  { id: 2, reasonText: 'Người nhận từ chối nhận hàng' },
+  { id: 3, reasonText: 'Địa chỉ giao hàng không chính xác' },
+  { id: 4, reasonText: 'Kiện hàng bị hư hỏng khi giao' }
+];
+const DEFAULT_TIERS = [
+  { id: 1, tierName: 'Đồng', minSpending: 0, pointRate: 5, benefits: 'Tích 5% giá trị thực trả thành F-Point.' },
+  { id: 2, tierName: 'Bạc', minSpending: 5000000, pointRate: 10, benefits: 'Tích 10% giá trị thực trả thành F-Point.' },
+  { id: 3, tierName: 'Vàng', minSpending: 20000000, pointRate: 15, benefits: 'Tích 15% giá trị thực trả thành F-Point.' }
+];
+function money(value) { return Number(value).toLocaleString('vi-VN') + ' đ'; }
+function dateTime(value) { return value ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date(value)) : '—'; }
+function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char])); }
+function clone(value) { return JSON.parse(JSON.stringify(value)); }
+function makeDemoState() {
+  const order = (id, name, phone, status, paid, items, day, userId = 17, shipperId = SHIPPER_USER_ID) => ({
+    orderId: id, orderCode: 'ORD-' + id, customerName: name, receiverPhone: phone,
+    shippingAddress: id % 2 ? '28 Nguyễn Huệ, phường Sài Gòn, TP. Hồ Chí Minh' : '42 Nguyễn Thị Thập, phường Tân Hưng, TP. Hồ Chí Minh',
+    status, isPaid: paid, items, finalAmount: items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+    orderDate: `2026-10-${day}T09:30:00+07:00`, createdAt: `2026-10-${day}T09:30:00+07:00`,
+    completedAt: ['Completed', 'Failed'].includes(status) ? `2026-10-${day}T16:15:00+07:00` : null,
+    failureReason: status === 'Failed' ? FAILURE_REASONS[0].reasonText : null,
+    failureNote: status === 'Failed' ? 'Đã gọi nhiều lần trong ngày nhưng chưa liên hệ được.' : null,
+    userId, shipperUserId: shipperId, history: [{ status: 'Prepared', at: `2026-10-${day}T10:00:00+07:00` }]
+  });
+  const item = (bookId, bookTitle, unitPrice, quantity = 1) => ({ bookId, bookTitle, unitPrice, quantity });
+  const orders = [
+    order(1023, 'Nguyễn Minh Anh', '0909123456', 'Shipping', false, [item(1, 'Nhà giả kim', 120000), item(3, 'Đắc nhân tâm', 95000)], '17'),
+    order(1024, 'Phan Thúy An', '0904000001', 'Prepared', false, [item(4, 'Tuổi trẻ đáng giá bao nhiêu', 180000)], '17', MEMBER_USER_ID),
+    order(1025, 'Lê Thu Hà', '0912345678', 'Prepared', true, [item(2, 'Đại Việt Sử Ký Toàn Thư', 120000), item(3, 'Đắc nhân tâm', 95000), item(4, 'Tuổi trẻ đáng giá bao nhiêu', 180000)], '16', 18),
+    order(1012, 'Phạm Minh Đức', '0977001122', 'Completed', true, [item(1, 'Nhà giả kim', 120000), item(5, 'Tội ác và hình phạt', 180000), item(6, 'Số đỏ', 180000)], '14', 19),
+    order(1005, 'Đỗ Thị Hương', '0933221144', 'Failed', false, [item(1, 'Nhà giả kim', 120000), item(7, 'Dế Mèn phiêu lưu ký', 90000)], '13', 20),
+    order(1026, 'Trần Gia Huy', '0988776655', 'Shipping', true, [item(2, 'Đại Việt Sử Ký Toàn Thư', 120000, 2)], '16', 21),
+    order(1027, 'Võ Ngọc Mai', '0902112233', 'Prepared', false, [item(8, 'Lược sử thời gian', 150000)], '15', 22),
+    order(1028, 'Nguyễn Thanh Bình', '0906778899', 'Prepared', false, [item(2, 'Đại Việt Sử Ký Toàn Thư', 120000)], '17', 23, 25)
+  ];
+  orders.forEach(order => {
+    if (['Shipping', 'Completed', 'Failed'].includes(order.status)) order.history.push({ status: 'Shipping', at: order.createdAt.slice(0, 10) + 'T13:00:00+07:00' });
+    if (order.completedAt) order.history.push({ status: order.status, at: order.completedAt });
+  });
+  return {
+    version: 1, tiers: clone(DEFAULT_TIERS), orders,
+    member: { userId: MEMBER_USER_ID, tierId: 2, currentPoints: 1250, totalPointsEarned: 1250, totalSpent: 8500000 },
+    tierHistory: [{ fromTier: 'Đồng', toTier: 'Bạc', at: '2026-06-15T10:30:00+07:00', totalSpent: 5000000 }],
+    awardedOrders: [], restoredOrders: [], pointTransactions: [], notifications: [], configHistory: []
+  };
+}
+// Dữ liệu chỉ nằm trong trang đang mở; tải lại trang sẽ trở về mẫu ban đầu.
+let pageDemoState = makeDemoState();
+function readDemoState() { return clone(pageDemoState); }
+function saveDemoState(state) { pageDemoState = clone(state); }
+function badgeClass(status) { return 'b-' + status.toLowerCase(); }
+function showToast(message, error = false) {
+  const toast = document.getElementById('demoToast');
+  clearTimeout(showToast.timer);
+  toast.textContent = message;
+  toast.className = 'demo-toast' + (error ? ' error' : '');
+  toast.hidden = false;
+  showToast.timer = setTimeout(() => { toast.hidden = true; }, 4000);
+}
+function showFieldError(id, message) { const field = document.getElementById(id); field.textContent = message; field.hidden = !message; }
+function eligibleOrders(state) { return state.orders.filter(order => order.shipperUserId === SHIPPER_USER_ID); }
+function codAmount(order) { return order.isPaid ? 0 : order.finalAmount; }
+function changeOrderStatus(orderId, nextStatus, reasonId, note = '') {
+  const state = readDemoState();
+  const order = state.orders.find(order => order.orderId === orderId);
+  if (!order || order.shipperUserId !== SHIPPER_USER_ID) throw new Error('Bạn không có quyền xử lý đơn hàng này.');
+  const valid = order.status === 'Prepared' && nextStatus === 'Shipping' || order.status === 'Shipping' && ['Completed', 'Failed'].includes(nextStatus);
+  if (!valid) throw new Error('Đơn đã được xử lý hoặc không còn ở trạng thái hợp lệ. Vui lòng tải lại.');
+  const at = new Date().toISOString();
+  if (nextStatus === 'Failed') {
+    const reason = FAILURE_REASONS.find(reason => reason.id === Number(reasonId));
+    if (!reason) throw new Error('Vui lòng chọn lý do giao thất bại.');
+    if (note.length > 500) throw new Error('Ghi chú tối đa 500 ký tự.');
+    order.failureReason = reason.reasonText;
+    order.failureNote = note.trim();
+    if (!state.restoredOrders.includes(orderId)) state.restoredOrders.push(orderId);
+  }
+  order.status = nextStatus;
+  order.history.push({ status: nextStatus, at });
+  if (['Completed', 'Failed'].includes(nextStatus)) order.completedAt = at;
+  if (nextStatus === 'Completed') order.isPaid = true;
+  saveDemoState(state);
+  return order;
+}
+document.querySelectorAll('[data-close-dialog]').forEach(button => button.addEventListener('click', () => document.getElementById(button.dataset.closeDialog).close()));
+document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click', event => { if (event.target === dialog) { const rect = dialog.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close(); } }));
+
+// Mirrors GET/PUT /api/Delivery/my-deliveries/{orderId}; only the data source is simulated.
+const orderId = 1023;
+let pendingStatus = null;
+let savingStatus = false;
+function backUrl() { return '#'; }
+function currentOrder() { return readDemoState().orders.find(order => order.orderId === orderId && order.shipperUserId === SHIPPER_USER_ID); }
+function renderDetail() {
+  const order = currentOrder();
+  if (!order) {
+    document.getElementById('detailContainer').innerHTML = `<section class="empty-state"><h1>Không thể xem đơn hàng</h1><p>Đơn không tồn tại hoặc không được phân công cho bạn.</p><a class="small-btn button-link" href="#">Quay lại danh sách</a></section>`;
+    return;
+  }
+  const isFinal = ['Completed', 'Failed'].includes(order.status);
+  const stepIndex = order.status === 'Prepared' ? 0 : order.status === 'Shipping' ? 1 : 2;
+  const timeline = ['Đã chuẩn bị xong', 'Đang giao', order.status === 'Failed' ? 'Thất bại' : 'Hoàn thành'].map((label, index) => {
+    const cls = index < stepIndex || order.status === 'Completed' ? 'done' : index === stepIndex ? order.status === 'Failed' ? 'failed' : 'current' : '';
+    return `<div class="step ${cls}"${index === stepIndex ? ' aria-current="step"' : ''}><div class="dot">${order.status === 'Failed' && index === 2 ? '×' : cls === 'done' ? '✓' : index + 1}</div>${label}</div>`;
+  }).join('');
+  const actions = order.status === 'Prepared' ? '<button type="button" class="btn btn-primary" data-next="Shipping">Bắt đầu giao</button>' : order.status === 'Shipping' ? '<button type="button" class="btn btn-success" data-next="Completed">Giao thành công</button><button type="button" class="btn btn-danger" id="openFailure">Giao thất bại</button>' : '';
+  const terminalNotice = order.status === 'Failed' ? `<div class="notice danger"><strong>Đơn đã kết thúc · Chỉ được xem</strong><br>Lý do: ${escapeHtml(order.failureReason || 'Chưa có thông tin')}<br>${order.failureNote ? `Ghi chú: ${escapeHtml(order.failureNote)}<br>` : ''}Thời điểm: ${dateTime(order.completedAt)}<br>Đã ghi nhận hoàn sách giấy về kho.</div>` : order.status === 'Completed' ? `<div class="notice success"><strong>Giao hàng thành công · Chỉ được xem</strong><br>Hoàn thành lúc ${dateTime(order.completedAt)}. Đã xác nhận thanh toán, ghi nhận điểm và quyền đọc E-Book tặng kèm nếu sách có bản điện tử.</div>` : '';
+  document.getElementById('detailContainer').innerHTML = `
+    <section class="card"><div class="card-body"><div class="detail-head"><div><h1 class="detail-id">#${escapeHtml(order.orderCode)}</h1><p class="detail-date">Ngày đặt: ${dateTime(order.orderDate)}</p></div><span class="badge ${badgeClass(order.status)}">${STATUS_LABELS[order.status]}</span></div><div class="timeline" aria-label="Tiến trình giao hàng">${timeline}</div></div></section>
+    ${terminalNotice ? `<section class="detail-section">${terminalNotice}</section>` : ''}
+    <div class="detail-info detail-section"><section class="card"><div class="card-head"><h2>Thông tin người nhận</h2></div><div class="card-body"><div class="info-row"><span>Họ và tên</span><b>${escapeHtml(order.customerName)}</b></div><div class="info-row"><span>Số điện thoại</span><b>${escapeHtml(order.receiverPhone)}<a href="tel:${escapeHtml(order.receiverPhone)}" class="call-btn">Gọi</a></b></div><div class="info-row"><span>Địa chỉ giao hàng</span><b>${escapeHtml(order.shippingAddress)}</b></div></div></section>
+    <section class="card"><div class="card-head"><h2>Thông tin thanh toán</h2></div><div class="card-body"><div class="info-row"><span>Giá trị đơn hàng</span><b>${money(order.finalAmount)}</b></div><div class="info-row"><span>Thanh toán</span><b>${order.isPaid ? 'Đã thanh toán' : order.status === 'Failed' ? 'Chưa thu tiền · Giao thất bại' : 'Chưa thanh toán · Thu COD'}</b></div><div class="info-row"><span>${order.status === 'Failed' ? 'Tiền cần thu sau khi kết thúc' : 'Tiền COD cần thu'}</span><b style="color:${order.isPaid || order.status === 'Failed' ? 'var(--success)' : 'var(--danger)'}">${money(order.status === 'Failed' ? 0 : codAmount(order))}</b></div><p class="detail-date">${isFinal ? 'Đơn đã kết thúc, không thể cập nhật thêm.' : order.isPaid ? 'Khách đã thanh toán, không thu thêm tiền.' : 'Chỉ xác nhận giao thành công sau khi đã thu đủ tiền COD.'}</p></div></section></div>
+    <section class="card"><div class="card-head"><h2>Sách trong đơn (${order.items.reduce((sum, item) => sum + item.quantity, 0)} cuốn)</h2></div><div class="card-body">${order.items.map(item => `<div class="product-row"><div class="product-name"><span>${escapeHtml(item.bookTitle)}</span><small>${money(item.unitPrice)} × ${item.quantity}</small></div><strong>${money(item.unitPrice * item.quantity)}</strong></div>`).join('')}<div class="total-row"><span>Tổng giá trị</span><span>${money(order.finalAmount)}</span></div></div></section>
+    <section class="card"><div class="card-head"><h2>Lịch sử giao hàng</h2></div><div class="card-body"><ol class="record-list">${order.history.map(item => `<li><time datetime="${escapeHtml(item.at)}">${dateTime(item.at)}</time><strong>${STATUS_LABELS[item.status]}</strong></li>`).join('')}</ol></div></section>
+    <p class="demo-caption">Giao diện minh họa · Các thao tác chỉ đổi dữ liệu mẫu trong trang này.</p>
+    ${actions ? `<div class="action-bar"><div class="action-bar-inner">${actions}</div></div>` : ''}`;
+  document.querySelectorAll('[data-next]').forEach(button => button.addEventListener('click', () => openStatusDialog(button.dataset.next)));
+  document.getElementById('openFailure')?.addEventListener('click', openFailureDialog);
+}
+function openStatusDialog(next) {
+  const order = currentOrder();
+  if (!order) return;
+  pendingStatus = next;
+  showFieldError('statusError', '');
+  document.getElementById('statusDialogTitle').textContent = next === 'Shipping' ? 'Bắt đầu giao đơn hàng?' : 'Xác nhận giao thành công?';
+  document.getElementById('statusDialogDescription').textContent = next === 'Shipping' ? 'Xác nhận bạn đã nhận đủ kiện hàng từ kho và bắt đầu giao cho khách.' : 'Xác nhận đã giao đủ sách cho người nhận. Đơn sẽ kết thúc và không thể chỉnh sửa tiếp.';
+  document.getElementById('statusDialogSummary').textContent = order.orderCode + ' · ' + (next === 'Completed' && !order.isPaid ? 'Cần thu đủ ' + money(order.finalAmount) + ' tiền COD.' : next === 'Shipping' ? 'Chuyển sang trạng thái Đang giao.' : 'Khách đã thanh toán. Không thu thêm tiền.');
+  document.getElementById('statusDialog').showModal();
+}
+document.getElementById('confirmStatus').addEventListener('click', () => {
+  if (savingStatus) return;
+  savingStatus = true;
+  try {
+    const next = pendingStatus;
+    changeOrderStatus(orderId, next);
+    document.getElementById('statusDialog').close();
+    renderDetail();
+    showToast(next === 'Shipping' ? 'Đã bắt đầu giao đơn hàng.' : 'Đã ghi nhận giao thành công và hoàn tất thanh toán.');
+  } catch (error) { showFieldError('statusError', error.message || 'Không thể lưu thay đổi. Vui lòng thử lại.'); }
+  finally { savingStatus = false; }
+});
+function openFailureDialog() {
+  document.getElementById('failureForm').reset();
+  showFieldError('failureError', '');
+  document.getElementById('reasonList').innerHTML = FAILURE_REASONS.map(reason => `<label class="reason-item"><input type="radio" name="failureReason" value="${reason.id}">${escapeHtml(reason.reasonText)}</label>`).join('');
+  document.getElementById('failureDialog').showModal();
+}
+document.getElementById('failureForm').addEventListener('submit', event => {
+  event.preventDefault();
+  if (savingStatus) return;
+  const selected = document.querySelector('input[name="failureReason"]:checked');
+  if (!selected) { showFieldError('failureError', 'Vui lòng chọn lý do giao thất bại.'); return; }
+  savingStatus = true;
+  try {
+    changeOrderStatus(orderId, 'Failed', selected.value, document.getElementById('failureNote').value);
+    document.getElementById('failureDialog').close();
+    renderDetail();
+    showToast('Đã ghi nhận giao thất bại và hoàn sách giấy về kho.');
+  } catch (error) { showFieldError('failureError', error.message || 'Không thể lưu thay đổi. Vui lòng thử lại.'); }
+  finally { savingStatus = false; }
+});
+renderDetail();
+
+document.addEventListener('click', event => { const link = event.target.closest('a[href="#"]'); if (link) event.preventDefault(); });
+</script>
+</body>
+</html>
