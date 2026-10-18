@@ -25,7 +25,7 @@
     button, input, select, textarea { font: inherit; }
     button { cursor: pointer; border: 0; }
     .app { min-height: 100vh; display: flex; }
-    
+
     .icon { width: 17px; height: 17px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 
     /* ---------- SIDEBAR ---------- */
@@ -358,11 +358,74 @@
       .content { padding: 20px 14px; }
       .stats { grid-template-columns: 1fr; }
     }
-  </style>
-</head>
-<body>
-<div class="app">
-  <aside class="admin-sidebar">
+
+
+  :root { --danger:#d93838; --danger-bg:#fdf2f2; --success:#15803d; --success-bg:#ecfdf5; }
+  body { font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+  button,input,select,textarea { font:inherit; }
+  button,a,input,select,textarea { -webkit-tap-highlight-color:transparent; }
+  button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible { outline:3px solid var(--saffron); outline-offset:3px; }
+  button:disabled { cursor:not-allowed; opacity:.5; }
+  [hidden] { display:none!important; }
+  .muted { color:var(--muted); }
+  .shipper-brand .accent-dot { width:6px; height:6px; background:var(--saffron); border-radius:50%; display:inline-block; margin-left:4px; }
+  .sr-only { position:absolute; left:0; top:0; width:1px; height:1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  .button-link { text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+  .demo-caption { font-size:11px; color:var(--muted); margin:18px 0 0; line-height:1.7; }
+  .page-tools { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .control-label { font-size:12px; color:var(--muted); font-weight:600; }
+  .select-control { background:#fff; border:1px solid var(--hairline); border-radius:6px; padding:8px 10px; color:var(--ink); }
+  .pagination { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-top:18px; font-size:12px; color:var(--muted); }
+  .pagination-buttons { display:flex; align-items:center; gap:12px; }
+  .small-btn { border:1px solid var(--hairline); padding:8px 12px; border-radius:6px; background:#fff; color:var(--catalina); font-size:12px; font-weight:700; }
+  .notice { padding:14px 16px; border:1px solid var(--hairline); border-radius:8px; background:var(--alice); font-size:13px; line-height:1.7; color:var(--catalina); }
+  .notice.success { background:var(--success-bg); border-color:#bbf7d0; color:var(--success); }
+  .notice.danger { background:var(--danger-bg); border-color:#fecaca; color:var(--danger); }
+  .field-error { color:var(--danger); font-size:12px; line-height:1.6; margin-top:8px; }
+  .field-label { display:block; font-size:12px; font-weight:700; color:var(--catalina); margin:16px 0 8px; }
+  .text-control { width:100%; border:1px solid var(--hairline); border-radius:6px; padding:10px 12px; background:#fff; color:var(--ink); resize:vertical; }
+  .demo-toast { position:fixed; bottom:24px; left:24px; z-index:5000; max-width:min(480px,calc(100vw - 48px)); padding:13px 18px; border-radius:6px; background:var(--success); color:#fff; font-size:13px; line-height:1.6; box-shadow:0 6px 20px #07123325; }
+  .demo-toast.error { background:var(--danger); }
+  dialog { margin:auto; border:0; border-radius:12px; padding:24px; width:min(460px,calc(100% - 32px)); max-height:calc(100dvh - 32px); overflow:auto; color:var(--ink); box-shadow:0 20px 60px #07123333; }
+  dialog::backdrop { background:rgba(7,18,51,.45); }
+  dialog h2 { font-family:'Fraunces',serif; font-size:20px; color:var(--catalina); margin:0 0 10px; }
+  dialog p { font-size:13px; color:var(--muted); line-height:1.7; margin:0 0 16px; }
+  .dialog-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+  .dialog-btn { padding:10px 16px; border-radius:6px; font-size:13px; font-weight:700; border:1px solid var(--hairline); background:#fff; color:var(--catalina); }
+  .dialog-btn.primary { background:var(--egyptian); border-color:var(--egyptian); color:#fff; }
+  .dialog-btn.danger { background:var(--danger); border-color:var(--danger); color:#fff; }
+  @media(max-width:600px) { .shipper-navbar { padding:0 16px; gap:12px; } .shipper-user>span { display:none; } .page-intro h1 { font-size:23px; } .dialog-actions { flex-wrap:wrap; } }
+
+
+  :root{--hairline:#dce6f7;--border:#dce6f7;--ink:#071233;--muted:#5b6e99;--success:#15803d;--danger:#d93838;}
+  body{margin:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--alice);color:var(--ink);}
+  *{box-sizing:border-box;}button,input,textarea,select{font:inherit;}button{cursor:pointer;}button:disabled{cursor:not-allowed;opacity:.5;}
+  .member-layout{width:100%;max-width:1200px;margin:auto;padding:28px 24px 60px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:24px;align-items:start;}
+  .member-layout>section,.review-grid>*{min-width:0;}
+  .member-sidebar{background:#fff;border:1px solid var(--hairline);border-radius:10px;padding:12px;}
+  .member-identity{display:flex;gap:10px;align-items:center;padding:8px 6px 20px;border-bottom:1px solid var(--hairline);margin-bottom:10px;}
+  .member-identity .avatar{width:36px;height:36px;border-radius:50%;background:var(--egyptian);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;}
+  .member-identity strong{display:block;font-size:13px;color:var(--catalina);}.member-identity span{display:block;font-size:11px;color:var(--muted);margin-top:5px;}
+  .member-sidebar>a{display:flex;gap:9px;align-items:center;padding:12px 10px;font-size:12px;color:var(--muted);text-decoration:none;border-radius:6px;}
+  .member-sidebar>a.active,.member-sidebar>a:hover{background:var(--alice);color:var(--egyptian);}.member-sidebar>a.active{font-weight:700;}
+  .member-heading{margin-bottom:22px;}.member-heading h1{font-size:23px;color:var(--catalina);font-weight:800;margin:8px 0;}.member-heading p{font-size:12px;color:var(--muted);line-height:1.7;}
+  .breadcrumb{font-size:11px;color:var(--muted);}.card{background:#fff;border:1px solid var(--hairline);border-radius:10px;overflow:hidden;margin-bottom:18px;box-shadow:0 8px 24px #0d226b0a;}
+  .card-head{padding:17px 20px;border-bottom:1px solid var(--hairline);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}.card-head h2{font-size:15px;color:var(--catalina);margin:0;}.card-head p{font-size:12px;color:var(--muted);line-height:1.7;margin-top:5px;}.card-body{padding:20px;}
+  .demo-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:18px;}.demo-stat{background:#fff;border:1px solid var(--hairline);border-radius:10px;padding:17px;}.demo-stat span{display:block;font-size:11px;font-weight:700;color:var(--muted);}.demo-stat strong{display:block;font-size:26px;color:var(--egyptian);margin:6px 0;}.demo-stat small{color:var(--muted);font-size:11px;}
+  .form-row{display:flex;gap:12px;align-items:end;flex-wrap:wrap;}.form-row>label{flex:1;min-width:150px;}.field-label{display:block;font-size:12px;font-weight:700;color:var(--catalina);margin:0 0 8px;}.control{display:block;width:100%;padding:10px 12px;background:#fff;border:1px solid var(--hairline);border-radius:6px;color:var(--ink);}.form-field{margin-bottom:16px;}textarea.control{resize:vertical;line-height:1.7;}
+  .demo-btn{display:inline-flex;align-items:center;justify-content:center;padding:9px 14px;border-radius:6px;border:1px solid var(--hairline);background:#fff;color:var(--catalina);font-size:12px;font-weight:700;text-decoration:none;gap:7px;}.demo-btn.primary{background:var(--egyptian);border-color:var(--egyptian);color:#fff;}.demo-btn.danger{background:#fdf2f2;color:var(--danger);border-color:#fecaca;}.actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .hint{font-size:12px;color:var(--muted);line-height:1.8;margin-top:12px;}.badge{display:inline-flex;padding:5px 9px;border-radius:99px;font-size:10px;font-weight:800;white-space:nowrap;}.b-confirmed,.b-prepared{color:var(--egyptian);background:#e8f1ff;}.b-shipping,.b-completed,.b-verified{color:var(--success);background:#ecfdf5;}.b-failed,.b-issue{color:var(--danger);background:#fdf2f2;}.b-muted{color:var(--muted);background:var(--alice);}
+  .table-wrap{overflow:auto;}table{width:100%;border-collapse:collapse;min-width:620px;}th,td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--hairline);font-size:12px;}thead th{font-size:10px;color:var(--muted);background:#f8fafe;text-transform:uppercase;}td strong{color:var(--catalina);}td small{display:block;margin-top:6px;font-size:11px;color:var(--muted);}
+  .info-row{display:flex;justify-content:space-between;gap:16px;font-size:12px;padding:10px 0;border-bottom:1px dashed var(--hairline);line-height:1.7;}.info-row>span{color:var(--muted);}.info-row>strong{text-align:right;color:var(--catalina);}.two-col{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;}.empty{padding:36px 20px;text-align:center;color:var(--muted);font-size:13px;}
+  .store-avatar{display:grid;place-items:center;background:var(--egyptian);color:#fff;font-weight:700;font-size:12px;}.user-menu-wrapper:focus-within .user-dropdown-menu{opacity:1;visibility:visible;transform:translateY(0);}
+  @media(max-width:1000px){.member-layout{grid-template-columns:minmax(0,1fr);}.member-sidebar{display:flex;flex-wrap:wrap;gap:4px;}.member-identity{width:100%;padding-bottom:12px;margin-bottom:4px;}}
+  @media(max-width:650px){.member-layout{padding:20px 16px 40px;}.demo-stats{gap:8px;}.demo-stat{padding:12px;}.demo-stat strong{font-size:22px;}.two-col{grid-template-columns:1fr;}.top-bar{padding:8px 16px;font-size:10px;flex-wrap:wrap;gap:8px;}.navbar-main{padding:12px 16px;flex-wrap:wrap;gap:14px;}.nav-actions{gap:7px;flex-wrap:wrap;}.nav-action-link{font-size:11px;padding:6px;}.user-name-text{display:none;}.member-heading h1{font-size:21px;}.card-head,.card-body{padding:16px;}}
+
+
+  .page-head h1{font-size:24px;}.page-head p{font-size:13px;line-height:1.7;}.content{max-width:1500px;}dialog{width:min(680px,calc(100% - 32px));}.packing-products{margin:16px 0;}.packing-products .info-row{font-size:13px;}.content .card-body{padding:18px 20px;}.form-row>label{min-width:160px;}.table-wrap{position:relative;}@media(max-width:700px){.sidebar-menu{display:flex;flex-wrap:wrap;gap:3px;padding:10px;}.sidebar-footer{display:none;}.sidebar-header{padding:16px 20px;}.menu-link{font-size:11px;padding:8px;}.demo-stats{grid-template-columns:1fr;}.topbar{height:60px;}.user>span{display:none;}.content{padding:20px 16px;}.page-head h1{font-size:22px;}}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,800&family=Inter:wght@400;500;600;700;800;900&display=swap"></head>
+<body><div class="app"><aside class="admin-sidebar">
     <div class="sidebar-header">
       <a href="#" class="brand-name">
         ancient<span class="book-text">BOOK</span><span class="accent-dot"></span>
@@ -421,387 +484,64 @@
         <svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       </button>
     </div>
-  </aside>
+  </aside><main class="main"><header class="topbar"><strong class="crumb">Quản lý đơn hàng</strong><div class="user"><span>Nhân viên kho</span><div class="avatar">NV</div></div></header><section class="content"><div class="page-head"><div><h1>Tiếp nhận &amp; Đóng gói đơn hàng</h1><p>Kiểm tra sách và chuyển đơn đã chuẩn bị sang hàng đợi giao hàng.</p></div></div>
+<section class="demo-stats"><div class="demo-stat"><span>ĐÃ XÁC NHẬN</span><strong id="statConfirmed">0</strong><small>Đang chờ đóng gói</small></div><div class="demo-stat"><span>CÓ SỰ CỐ KHO</span><strong id="statIssues">0</strong><small>Cần kiểm tra trước khi đóng gói</small></div><div class="demo-stat"><span>ĐÃ CHUẨN BỊ</span><strong id="statPrepared">0</strong><small>Chờ vận chuyển tiếp nhận</small></div></section>
+<section class="card"><div class="card-head"><div><h2>Đơn chờ đóng gói</h2><p>Chỉ tiếp nhận đơn sách giấy đang ở trạng thái Đã xác nhận.</p></div></div><div class="card-body"><div class="form-row"><label><span class="field-label">Tìm mã đơn hoặc tên khách</span><input class="control" id="packingSearch" placeholder="VD: ORD-1024 hoặc Phan Thúy An"></label><label><span class="field-label">Từ ngày</span><input class="control" type="date" id="packingFrom"></label><label><span class="field-label">Đến ngày</span><input class="control" type="date" id="packingTo"></label></div><p id="packingFilterError" class="field-error" hidden></p></div><div class="table-wrap"><table><thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Ngày đặt</th><th>Số sách</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="pendingBody"></tbody></table></div></section>
+<section class="card"><div class="card-head"><div><h2>Hàng đợi giao hàng</h2><p>Đơn đã đóng gói, chờ bộ phận vận chuyển cấp mã và phân công Shipper.</p></div></div><div class="table-wrap"><table><thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Tổng tiền</th><th>Trạng thái</th><th>Mã vận đơn</th><th>Shipper</th></tr></thead><tbody id="preparedBody"></tbody></table></div></section><p class="demo-caption">Giao diện minh họa · Các thao tác chỉ dùng dữ liệu mẫu trong trang đang mở.</p><div id="demoToast" class="demo-toast" role="status" aria-live="polite" hidden></div></section></main></div>
+<dialog id="packingDialog" aria-labelledby="packingTitle"><h2 id="packingTitle">Kiểm tra &amp; Đóng gói</h2><div id="packingDetail"></div><label class="field-label" for="packingReason">Lý do sự cố kho <span class="muted">(nhập khi báo sự cố)</span></label><textarea class="text-control" id="packingReason" maxlength="1000" rows="3" placeholder="VD: Sách bị hư, cần kiểm tra lại..."></textarea><p id="packingError" class="field-error" role="alert" hidden></p><div class="dialog-actions"><button class="dialog-btn" data-close-dialog="packingDialog" type="button">Đóng</button><button class="dialog-btn danger" id="reportIssue" type="button">Báo sự cố kho</button><button class="dialog-btn primary" id="confirmPacking" type="button">Xác nhận đóng gói xong</button></div></dialog><script>
+function money(value){return Number(value).toLocaleString('vi-VN')+' đ';}
+function safe(value){return String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));}
+function dateText(value){return new Intl.DateTimeFormat('vi-VN',{dateStyle:'short',timeStyle:'short',timeZone:'Asia/Ho_Chi_Minh'}).format(new Date(value));}
+function notify(message,error=false){const el=document.getElementById('demoToast');clearTimeout(notify.timer);el.textContent=message;el.className='demo-toast'+(error?' error':'');el.hidden=false;notify.timer=setTimeout(()=>el.hidden=true,4000);}
+document.addEventListener('click',event=>{const link=event.target.closest('a[href="#"]');if(link)event.preventDefault();const close=event.target.closest('[data-close-dialog]');if(close)document.getElementById(close.dataset.closeDialog).close();});
 
-  <main class="main">
-    <header class="topbar">
-      <div class="crumb">Quản lý đơn hàng</div>
-      <div class="user">
-        <span>Nhân viên hệ thống</span>
-        <div class="avatar">NV</div>
-      </div>
-    </header>
-
-    <section class="content">
-      <div class="page-head">
-        <div>
-          <h1>Quản lý đơn hàng</h1>
-          <p>Tiếp nhận, đóng gói và đưa đơn đã chuẩn bị vào hàng đợi phân công.</p>
-        </div>
-      </div>
-
-      <div class="stats">
-        <div class="stat">
-          <div class="label">Chờ xử lý</div>
-          <div class="num" id="statPending">03</div>
-        </div>
-        <div class="stat">
-          <div class="label">Đã chuẩn bị xong</div>
-          <div class="num" id="statReady">03</div>
-        </div>
-        <div class="stat">
-          <div class="label">Chờ phân công</div>
-          <div class="num" id="statAssign">03</div>
-        </div>
-        <div class="stat">
-          <div class="label">Đang giao</div>
-          <div class="num">02</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <h2>Đơn hàng chờ tiếp nhận &amp; đóng gói</h2>
-          <div class="toolbar">
-            <input 
-              id="searchPending" 
-              class="input" 
-              style="border-radius:99px;"
-              placeholder="Tìm mã đơn..." 
-              onkeyup="filterPending()"
-            >
-            <button class="btn btn-light" style="border-radius:99px;" onclick="filterPending()">Lọc</button>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table id="pendingTable">
-            <thead>
-              <tr>
-                <th>Mã đơn</th>
-                <th>Khách hàng</th>
-                <th>Ngày đặt</th>
-                <th>Trạng thái</th>
-                <th>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>#DH1028</td>
-                <td>Nguyễn Minh Anh</td>
-                <td>14/09/2026</td>
-                <td><span class="badge b-pending">Chờ xử lý</span></td>
-                <td>
-                  <button 
-                    class="btn btn-primary" 
-                    style="border-radius:99px;"
-                    onclick="openPack('DH1028', 'Nguyễn Minh Anh', 'Quận 1, TP.HCM')"
-                  >
-                    Kiểm tra &amp; đóng gói
-                  </button>
-                </td>
-              </tr>
-              <tr>
-                <td>#DH1027</td>
-                <td>Trần Gia Huy</td>
-                <td>14/09/2026</td>
-                <td><span class="badge b-pending">Chờ xử lý</span></td>
-                <td>
-                  <button 
-                    class="btn btn-primary" 
-                    style="border-radius:99px;"
-                    onclick="openPack('DH1027', 'Trần Gia Huy', 'Quận 7, TP.HCM')"
-                  >
-                    Kiểm tra &amp; đóng gói
-                  </button>
-                </td>
-              </tr>
-              <tr>
-                <td>#DH1024</td>
-                <td>Lê Thu Hà</td>
-                <td>13/09/2026</td>
-                <td><span class="badge b-pending">Chờ xử lý</span></td>
-                <td>
-                  <button 
-                    class="btn btn-primary" 
-                    style="border-radius:99px;"
-                    onclick="openPack('DH1024', 'Lê Thu Hà', 'Bình Thạnh, TP.HCM')"
-                  >
-                    Kiểm tra &amp; đóng gói
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- CARD 2: Cập nhật giao diện gán mã & phân công Shipper giống Hình 2 -->
-      <div class="card">
-        <div class="card-head" style="flex-direction: column; align-items: flex-start; gap: 4px;">
-          <h2>Gán mã vận đơn &amp; phân công Shipper</h2>
-          <p>Đơn đã chuẩn bị xong sẽ được Staff gán mã và phân công Shipper.</p>
-        </div>
-        <div class="card-body">
-          <div class="alert alert-info-border">
-            Staff phân công thủ công dựa trên khu vực và số đơn Shipper đang giao. Sau khi phân công, Shipper có thể bắt đầu giao hàng.
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th><input type="checkbox" id="allReady" onchange="toggleAll(this)"></th>
-                <th>Mã đơn</th>
-                <th>Khách hàng</th>
-                <th>Khu vực</th>
-                <th>Tổng tiền</th>
-                <th>Trạng thái</th>
-                <th>Mã vận đơn</th>
-                <th>Shipper</th>
-              </tr>
-            </thead>
-            <tbody id="readyBody">
-              <tr>
-                <td><input class="ready" type="checkbox" value="DH23987" onchange="updateSelectedCount()"></td>
-                <td><b>#DH23987</b></td>
-                <td>Phạm Minh Đức</td>
-                <td>Quận 1</td>
-                <td><b>420.000 đ</b></td>
-                <td><span class="badge b-ready">Đã chuẩn bị xong</span></td>
-                <td style="color:var(--muted)">Chưa gán</td>
-                <td style="color:var(--muted)">Chưa phân công</td>
-              </tr>
-              <tr>
-                <td><input class="ready" type="checkbox" value="DH23991" onchange="updateSelectedCount()"></td>
-                <td><b>#DH23991</b></td>
-                <td>Đỗ Thị Hương</td>
-                <td>Quận 3</td>
-                <td><b>185.000 đ</b></td>
-                <td><span class="badge b-ready">Đã chuẩn bị xong</span></td>
-                <td style="color:var(--muted)">Chưa gán</td>
-                <td style="color:var(--muted)">Chưa phân công</td>
-              </tr>
-              <tr>
-                <td><input class="ready" type="checkbox" value="DH23995" onchange="updateSelectedCount()"></td>
-                <td><b>#DH23995</b></td>
-                <td>Nguyễn Hải Nam</td>
-                <td>Thủ Đức</td>
-                <td><b>760.000 đ</b></td>
-                <td><span class="badge b-ready">Đã chuẩn bị xong</span></td>
-                <td style="color:var(--muted)">Chưa gán</td>
-                <td style="color:var(--muted)">Chưa phân công</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="assign-section">
-          <div class="assign-title">Thông tin phân công</div>
-          <div class="assign-form-grid">
-            <div class="form-group">
-              <label>Mã vận đơn</label>
-              <input type="text" id="waybillInput" class="input" placeholder="VD: AB240001">
-            </div>
-            <div class="form-group">
-              <label>Chọn Shipper</label>
-              <select id="shipperSelect" class="select">
-                <option value="">Chọn Shipper</option>
-                <option value="Nguyễn Văn Nam">Nguyễn Văn Nam (3 đơn)</option>
-                <option value="Trần Quốc Bảo">Trần Quốc Bảo (5 đơn)</option>
-                <option value="Lê Minh Khoa">Lê Minh Khoa (2 đơn)</option>
-              </select>
-            </div>
-            <button class="btn btn-primary" style="background: #0B409C;" onclick="assignSelected()">
-              Gán mã &amp; phân công
-            </button>
-          </div>
-          <div class="selected-count">
-            Đã chọn: <b id="selectedCountText">0</b> đơn hàng
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <h2>Theo dõi đơn đang giao</h2>
-          <span class="badge b-shipping">Chế độ xem</span>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Mã đơn</th>
-                <th>Shipper</th>
-                <th>Khu vực</th>
-                <th>Trạng thái</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>#DH1012</td>
-                <td>Nguyễn Văn Nam</td>
-                <td>Quận 1</td>
-                <td><span class="badge b-shipping">Đang giao</span></td>
-              </tr>
-              <tr>
-                <td>#DH1008</td>
-                <td>Lê Minh Khoa</td>
-                <td>Quận 5</td>
-                <td><span class="badge b-retry">Chờ giao lại</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-  </main>
-</div>
-
-<div class="modal" id="packModal">
-  <div class="modal-box">
-    <div class="modal-head">
-      <h2 style="margin:0;color:var(--catalina)">
-        Đóng gói <span id="packOrder"></span>
-      </h2>
-      <button class="close" onclick="closePack()">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="grid2">
-        <div>
-          <h3>Chi tiết sách</h3>
-          <div class="detail-list">
-            <div class="detail-row"><span>Nhà giả kim</span><b>1 cuốn</b></div>
-            <div class="detail-row"><span>Đắc nhân tâm</span><b>2 cuốn</b></div>
-          </div>
-        </div>
-        <div>
-          <h3>Thông tin giao hàng</h3>
-          <div class="detail-list">
-            <div class="detail-row">
-              <span>Khách hàng</span>
-              <b id="packCustomer">Nguyễn Minh Anh</b>
-            </div>
-            <div class="detail-row">
-              <span>Địa chỉ</span>
-              <b id="packAddress">Quận 1, TP.HCM</b>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="packMsg"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-danger" onclick="reportMismatch()">
-        Báo sai đơn
-      </button>
-      <button class="btn btn-primary" onclick="completePack()">
-        Xác nhận đóng gói xong
-      </button>
-    </div>
-  </div>
-</div>
-
-<script>
-  let currentActiveId = null;
-
-  function openPack(id, customer, address) {
-    currentActiveId = id;
-    document.getElementById('packOrder').textContent = '#' + id;
-    document.getElementById('packCustomer').textContent = customer;
-    document.getElementById('packAddress').textContent = address;
-    document.getElementById('packMsg').innerHTML = '';
-    document.getElementById('packModal').classList.add('show');
-  }
-
-  function closePack() {
-    document.getElementById('packModal').classList.remove('show');
-  }
-
-  function completePack() {
-    const msg = '<div class="alert alert-success">Đã hoàn tất đóng gói.</div>';
-    document.getElementById('packMsg').innerHTML = msg;
-    
-    setTimeout(() => {
-      closePack();
-      const rows = document.querySelectorAll('#pendingTable tbody tr');
-      rows.forEach(row => {
-        if(row.children[0].textContent.includes(currentActiveId)) {
-          const name = row.children[1].textContent;
-          row.remove();
-          
-          const readyBody = document.getElementById('readyBody');
-          const newTr = document.createElement('tr');
-          newTr.innerHTML = `
-            <td><input class="ready" type="checkbox" value="${currentActiveId}" onchange="updateSelectedCount()"></td>
-            <td><b>#${currentActiveId}</b></td>
-            <td>${name}</td>
-            <td>Quận 1</td>
-            <td><b>300.000 đ</b></td>
-            <td><span class="badge b-ready">Đã chuẩn bị xong</span></td>
-            <td style="color:var(--muted)">Chưa gán</td>
-            <td style="color:var(--muted)">Chưa phân công</td>
-          `;
-          readyBody.appendChild(newTr);
-
-          updateStats(-1, 1, 1);
-        }
-      });
-    }, 800);
-  }
-
-  function reportMismatch() {
-    const msg = '<div class="alert alert-error">Đã ghi nhận sai lệch.</div>';
-    document.getElementById('packMsg').innerHTML = msg;
-  }
-
-  function toggleAll(el) {
-    document.querySelectorAll('.ready').forEach(x => x.checked = el.checked);
-    updateSelectedCount();
-  }
-
-  function updateSelectedCount() {
-    const selected = document.querySelectorAll('.ready:checked').length;
-    document.getElementById('selectedCountText').textContent = selected;
-  }
-
-  function assignSelected() {
-    const selected = [...document.querySelectorAll('.ready:checked')];
-    const waybill = document.getElementById('waybillInput').value.trim();
-    const shipper = document.getElementById('shipperSelect').value;
-    
-    if (!selected.length) return alert('Vui lòng chọn ít nhất 1 đơn hàng.');
-    if (!waybill) return alert('Vui lòng nhập Mã vận đơn.');
-    if (!shipper) return alert('Vui lòng chọn Shipper.');
-    
-    alert(`Đã gán mã vận đơn "${waybill}" và phân công cho shipper: ${shipper}`);
-    selected.forEach(x => x.closest('tr').remove());
-    document.getElementById('allReady').checked = false;
-    document.getElementById('waybillInput').value = '';
-    document.getElementById('shipperSelect').value = '';
-    updateSelectedCount();
-
-    updateStats(0, -selected.length, -selected.length);
-  }
-
-  function updateStats(pDiff, rDiff, aDiff) {
-    const p = parseInt(document.getElementById('statPending').textContent);
-    const r = parseInt(document.getElementById('statReady').textContent);
-    const a = parseInt(document.getElementById('statAssign').textContent);
-
-    document.getElementById('statPending').textContent = 
-      String(Math.max(0, p + pDiff)).padStart(2, '0');
-    document.getElementById('statReady').textContent = 
-      String(Math.max(0, r + rDiff)).padStart(2, '0');
-    document.getElementById('statAssign').textContent = 
-      String(Math.max(0, a + aDiff)).padStart(2, '0');
-  }
-
-  function filterPending() {
-    const q = document.getElementById('searchPending').value.toLowerCase();
-    document.querySelectorAll('#pendingTable tbody tr').forEach(r => {
-      r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
-    });
-  }
-</script>
-</body>
+const packingOrders=[
+  {id:1024,customer:'Phan Thúy An',phone:'0904000001',address:'42 Nguyễn Thị Thập, phường Tân Hưng, TP. Hồ Chí Minh',date:'2026-10-17',status:'Confirmed',issue:'',items:[{title:'Đại Việt Sử Ký Toàn Thư',quantity:1,price:120000}]},
+  {id:1027,customer:'Trần Gia Huy',phone:'0988776655',address:'28 Nguyễn Huệ, phường Sài Gòn, TP. Hồ Chí Minh',date:'2026-10-16',status:'Confirmed',issue:'Sách bị cong bìa, cần kiểm tra trước khi đóng gói.',items:[{title:'Nhà giả kim',quantity:1,price:120000},{title:'Đắc nhân tâm',quantity:1,price:95000}]},
+  {id:1028,customer:'Lê Thu Hà',phone:'0912345678',address:'15 Phan Văn Trị, phường Bình Lợi Trung, TP. Hồ Chí Minh',date:'2026-10-15',status:'Confirmed',issue:'',items:[{title:'Tuổi trẻ đáng giá bao nhiêu',quantity:2,price:180000}]},
+  {id:1022,customer:'Phạm Minh Đức',phone:'0977001122',address:'Quận 3, TP. Hồ Chí Minh',date:'2026-10-14',status:'Prepared',issue:'',items:[{title:'Lược sử thời gian',quantity:1,price:150000}]}
+];
+let selectedPackingId=null;
+function packingTotal(order){return order.items.reduce((sum,item)=>sum+item.quantity*item.price,0);}
+function renderPacking(){
+  document.getElementById('statConfirmed').textContent=packingOrders.filter(order=>order.status==='Confirmed').length;
+  document.getElementById('statIssues').textContent=packingOrders.filter(order=>order.status==='Confirmed'&&order.issue).length;
+  document.getElementById('statPrepared').textContent=packingOrders.filter(order=>order.status==='Prepared').length;
+  const query=document.getElementById('packingSearch').value.trim().toLocaleLowerCase('vi-VN').replace(/^#?ord-/,'');
+  const from=document.getElementById('packingFrom').value;
+  const to=document.getElementById('packingTo').value;
+  const error=from&&to&&from>to;
+  document.getElementById('packingFilterError').hidden=!error;
+  document.getElementById('packingFilterError').textContent=error?'Ngày bắt đầu không được sau ngày kết thúc.':'';
+  const pending=error?[]:packingOrders.filter(order=>order.status==='Confirmed'&&(!query||String(order.id).includes(query)||order.customer.toLocaleLowerCase('vi-VN').includes(query))&&(!from||order.date>=from)&&(!to||order.date<=to));
+  document.getElementById('pendingBody').innerHTML=pending.length?pending.map(order=>`<tr><td><strong>#ORD-${order.id}</strong></td><td>${safe(order.customer)}</td><td>${new Date(order.date+'T00:00:00+07:00').toLocaleDateString('vi-VN')}</td><td>${order.items.reduce((sum,item)=>sum+item.quantity,0)}</td><td><span class="badge b-confirmed">Đã xác nhận</span>${order.issue?'<small><span class="badge b-issue">Có sự cố kho</span></small>':''}</td><td><button class="demo-btn primary" data-pack="${order.id}" type="button">Kiểm tra &amp; Đóng gói</button></td></tr>`).join(''):'<tr><td colspan="6" class="empty">Không có đơn phù hợp với bộ lọc.</td></tr>';
+  const ready=packingOrders.filter(order=>order.status==='Prepared');
+  document.getElementById('preparedBody').innerHTML=ready.length?ready.map(order=>`<tr><td><strong>#ORD-${order.id}</strong></td><td>${safe(order.customer)}</td><td>${money(packingTotal(order))}</td><td><span class="badge b-prepared">Đã chuẩn bị xong</span></td><td><span class="muted">Chờ cấp mã</span></td><td><span class="muted">Chờ phân công</span></td></tr>`).join(''):'<tr><td colspan="6" class="empty">Chưa có đơn chờ giao hàng.</td></tr>';
+}
+function openPacking(id){
+  const order=packingOrders.find(order=>order.id===id&&order.status==='Confirmed');
+  if(!order){notify('Đơn không còn ở trạng thái được phép đóng gói.',true);return;}
+  selectedPackingId=id;
+  document.getElementById('packingTitle').textContent='Đóng gói đơn #ORD-'+id;
+  document.getElementById('packingDetail').innerHTML=`<div class="info-row"><span>Khách hàng</span><strong>${safe(order.customer)}</strong></div><div class="info-row"><span>Số điện thoại</span><strong>${safe(order.phone)}</strong></div><div class="info-row"><span>Địa chỉ</span><strong>${safe(order.address)}</strong></div><div class="packing-products">${order.items.map(item=>`<div class="info-row"><span>${safe(item.title)} × ${item.quantity}</span><strong>${money(item.price*item.quantity)}</strong></div>`).join('')}</div><div class="notice">Đối chiếu đủ sách và số lượng trước khi xác nhận. Đơn sẽ chuyển sang Đã chuẩn bị xong.</div>`;
+  document.getElementById('packingReason').value=order.issue;
+  document.getElementById('packingError').hidden=true;
+  document.getElementById('packingDialog').showModal();
+}
+document.getElementById('pendingBody').addEventListener('click',event=>{const button=event.target.closest('[data-pack]');if(button)openPacking(Number(button.dataset.pack));});
+['packingSearch','packingFrom','packingTo'].forEach(id=>document.getElementById(id).addEventListener('input',renderPacking));
+document.getElementById('reportIssue').addEventListener('click',()=>{
+  const order=packingOrders.find(order=>order.id===selectedPackingId&&order.status==='Confirmed');
+  const reason=document.getElementById('packingReason').value.trim();
+  const error=document.getElementById('packingError');
+  if(!order||!reason||reason.length>1000){error.textContent='Nhập lý do sự cố kho, tối đa 1.000 ký tự.';error.hidden=false;return;}
+  order.issue=reason;renderPacking();document.getElementById('packingDialog').close();notify('Đã báo sự cố kho. Trạng thái đơn vẫn là Đã xác nhận.');
+});
+document.getElementById('confirmPacking').addEventListener('click',()=>{
+  const order=packingOrders.find(order=>order.id===selectedPackingId&&order.status==='Confirmed');
+  if(!order){notify('Đơn đã được xử lý, không thể xác nhận lại.',true);return;}
+  order.status='Prepared';order.issue='';renderPacking();document.getElementById('packingDialog').close();notify('Đã đóng gói xong. Đơn được chuyển sang hàng đợi giao hàng.');
+});
+renderPacking();
+</script></body>
 </html>

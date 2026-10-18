@@ -10,913 +10,346 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
   <style>
-    :root {
-      --alice: #F2F7FF;
-      --egyptian: #0B409C;
-      --catalina: #0D226B;
-      --ink: #071233;
-      --saffron: #FDBE34;
-      --muted: #5b6e99;
-      --hairline: #dce6f7;
-      --green: #15803d;
-      --green-bg: #ecfdf5;
-      --yellow: #956000;
-      --yellow-bg: #fff7df;
-      --red: #c93434;
-      --red-bg: #fdf2f2;
-      --shadow: 0 8px 24px rgba(13, 34, 107, .07);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--alice);
-      color: var(--ink);
-      min-height: 100vh;
-    }
-
-    button, input, textarea, select {
-      font: inherit;
-    }
-
-    button {
-      cursor: pointer;
-      border: 0;
-    }
-
-    /* ---------- NAVBAR ---------- */
-    .navbar {
-      height: 76px;
-      background: #fff;
-      border-bottom: 1px solid var(--hairline);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 7%;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-
-    .brand-logo {
-      display: inline-flex;
-      align-items: baseline;
-      text-decoration: none;
-      color: var(--ink);
-    }
-
-    .brand-name {
-      font-family: 'Fraunces', serif;
-      font-size: 25px;
-      font-weight: 800;
-      letter-spacing: -.5px;
-    }
-
-    .brand-book {
-      font-family: 'Inter', sans-serif;
-      color: var(--saffron);
-      font-size: 22px;
-      font-weight: 900;
-      letter-spacing: 1px;
-    }
-
-    .brand-dot {
-      width: 7px;
-      height: 7px;
-      background: var(--saffron);
-      border-radius: 50%;
-      display: inline-block;
-      margin-left: 4px;
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 30px;
-      align-items: center;
-    }
-
-    .nav-links a {
-      color: var(--ink);
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .nav-links a:hover,
-    .nav-links a.active {
-      color: var(--egyptian);
-      font-weight: 800;
-    }
-
-    .avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: var(--egyptian);
-      color: #fff;
-      display: grid;
-      place-items: center;
-      font-weight: 800;
-      font-size: 13px;
-    }
-
-    /* ---------- CONTAINER & PAGE INTRO ---------- */
-    .container {
-      max-width: 1180px;
-      margin: auto;
-      padding: 34px 22px 70px;
-    }
-
-    .page-intro {
-      margin-bottom: 22px;
-    }
-
-    .page-intro h1 {
-      font-family: 'Fraunces', serif;
-      color: var(--catalina);
-      font-size: 32px;
-      font-weight: 800;
-      letter-spacing: -.5px;
-    }
-
-    .page-intro p {
-      color: var(--muted);
-      font-size: 14px;
-      margin-top: 7px;
-    }
-
-    /* ---------- STATS ---------- */
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-bottom: 22px;
-    }
-
-    .stat {
-      background: #fff;
-      border: 1px solid var(--hairline);
-      border-radius: 10px;
-      padding: 18px;
-      box-shadow: var(--shadow);
-    }
-
-    .stat-title {
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--muted);
-      letter-spacing: .4px;
-    }
-
-    .stat-number {
-      font-size: 27px;
-      font-weight: 900;
-      color: var(--egyptian);
-      margin-top: 5px;
-    }
-
-    .stat-note {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 3px;
-    }
-
-    /* ---------- MAIN GRID & CARDS ---------- */
-    .main-grid {
-      display: grid;
-      grid-template-columns: 1.25fr .75fr;
-      gap: 18px;
-      align-items: start;
-    }
-
-    .card {
-      background: #fff;
-      border: 1px solid var(--hairline);
-      border-radius: 10px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      margin-bottom: 18px;
-    }
-
-    .card-header {
-      padding: 17px 20px;
-      border-bottom: 1px solid var(--hairline);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .card-header h2 {
-      font-size: 16px;
-      color: var(--catalina);
-    }
-
-    .card-header p {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 4px;
-    }
-
-    /* ---------- BOOK LIST ---------- */
-    .book-list {
-      padding: 0;
-    }
-
-    .book-item {
-      padding: 16px 18px;
-      border-bottom: 1px solid var(--hairline);
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .book-item:last-child {
-      border-bottom: 0;
-    }
-
-    .book-item.selected {
-      background: var(--alice);
-      border-left: 4px solid var(--egyptian);
-      padding-left: 14px;
-    }
-
-    .cover {
-      width: 58px;
-      height: 78px;
-      border-radius: 5px;
-      background: linear-gradient(145deg, var(--egyptian), var(--catalina));
-      color: #fff;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      font-size: 9px;
-      font-weight: 900;
-      line-height: 1.15;
-      flex: none;
-    }
-
-    .book-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .book-info h3 {
-      font-size: 14px;
-      color: var(--catalina);
-      margin-bottom: 5px;
-    }
-
-    .book-info p {
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-
-    .book-price {
-      font-size: 12px;
-      font-weight: 800;
-      color: var(--egyptian);
-      margin-top: 5px;
-    }
-
-    .book-actions {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 7px;
-    }
-
-    .badge {
-      display: inline-flex;
-      padding: 5px 9px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 800;
-      white-space: nowrap;
-    }
-
-    .b-wait { background: var(--yellow-bg); color: var(--yellow); }
-    .b-reviewed { background: var(--green-bg); color: var(--green); }
-
-    .btn {
-      padding: 9px 13px;
-      border-radius: 6px;
-      background: var(--egyptian);
-      color: #fff;
-      font-size: 11px;
-      font-weight: 800;
-    }
-
-    .btn:hover { background: var(--catalina); }
-
-    .btn-light {
-      background: #fff;
-      color: var(--egyptian);
-      border: 1px solid var(--hairline);
-    }
-
-    /* ---------- REVIEW PANEL ---------- */
-    .review-panel {
-      padding: 20px;
-    }
-
-    .selected-book {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 13px;
-      background: var(--alice);
-      border: 1px solid var(--hairline);
-      border-radius: 8px;
-    }
-
-    .selected-book .cover {
-      width: 50px;
-      height: 67px;
-    }
-
-    .selected-book h3 {
-      font-size: 15px;
-      color: var(--catalina);
-    }
-
-    .selected-book p {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 4px;
-    }
-
-    .field-label {
-      display: block;
-      font-size: 12px;
-      font-weight: 800;
-      color: var(--catalina);
-      margin: 17px 0 8px;
-    }
-
-    /* RATING STARS */
-    .rating {
-      display: flex;
-      flex-direction: row-reverse;
-      justify-content: flex-end;
-      gap: 2px;
-      width: max-content;
-    }
-
-    .rating input { display: none; }
-
-    .rating label {
-      font-size: 31px;
-      color: #d6dce7;
-      cursor: pointer;
-      line-height: 1;
-    }
-
-    .rating input:checked ~ label,
-    .rating label:hover,
-    .rating label:hover ~ label {
-      color: var(--saffron);
-    }
-
-    .textarea {
-      width: 100%;
-      min-height: 110px;
-      resize: vertical;
-      border: 1px solid var(--hairline);
-      border-radius: 7px;
-      padding: 11px 12px;
-      outline: none;
-      color: var(--ink);
-    }
-
-    .review-note {
-      padding: 11px 13px;
-      background: #eaf2ff;
-      color: #174d91;
-      border-radius: 7px;
-      font-size: 11px;
-      line-height: 1.55;
-      margin-top: 15px;
-    }
-
-    .message {
-      font-size: 12px;
-      margin-top: 12px;
-    }
-
-    .success {
-      background: var(--green-bg);
-      color: var(--green);
-      padding: 10px;
-      border-radius: 7px;
-    }
-
-    .error {
-      background: var(--red-bg);
-      color: var(--red);
-      padding: 10px;
-      border-radius: 7px;
-    }
-
-    .review-footer {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 13px;
-    }
-
-    /* ---------- SIDEBAR WALLET & REWARDS ---------- */
-    .wallet {
-      background: linear-gradient(145deg, var(--catalina), var(--egyptian));
-      color: #fff;
-      border-radius: 10px;
-      padding: 21px;
-      box-shadow: var(--shadow);
-      margin-bottom: 18px;
-    }
-
-    .wallet-label {
-      font-size: 11px;
-      opacity: .8;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .5px;
-    }
-
-    .points {
-      font-size: 38px;
-      font-weight: 900;
-      margin-top: 5px;
-    }
-
-    .points small {
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .wallet-meta {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 17px;
-      padding-top: 13px;
-      border-top: 1px solid rgba(255, 255, 255, .2);
-      font-size: 11px;
-      opacity: .9;
-    }
-
-    .reward-list { padding: 14px; }
-
-    .reward {
-      border: 1px solid var(--hairline);
-      border-radius: 8px;
-      padding: 14px;
-      margin-bottom: 10px;
-    }
-
-    .reward:last-child { margin-bottom: 0; }
-
-    .reward-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .reward h3 {
-      font-size: 13px;
-      color: var(--catalina);
-    }
-
-    .reward p {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 5px;
-    }
-
-    .cost {
-      font-size: 12px;
-      font-weight: 900;
-      color: var(--egyptian);
-      margin: 10px 0;
-    }
-
-    /* ---------- HISTORY TABLE ---------- */
-    .table-wrap { overflow: auto; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 620px;
-    }
-
-    th, td {
-      text-align: left;
-      padding: 12px 15px;
-      border-bottom: 1px solid #edf1f7;
-      font-size: 12px;
-    }
-
-    th {
-      background: #f8fafe;
-      color: var(--catalina);
-      font-size: 10px;
-      text-transform: uppercase;
-    }
-
-    .plus { color: var(--green); font-weight: 900; }
-    .minus { color: var(--red); font-weight: 900; }
-
-    /* ---------- RESPONSIVE ---------- */
-    @media(max-width:950px) {
-      .main-grid { grid-template-columns: 1fr; }
-      .stats { grid-template-columns: repeat(3, 1fr); }
-    }
-
-    @media(max-width:650px) {
-      .navbar { padding: 0 18px; }
-      .nav-links { display: none; }
-      .container { padding: 24px 14px; }
-      .stats { grid-template-columns: 1fr; }
-      .book-item { align-items: flex-start; }
-      .book-actions { align-items: flex-end; }
-      .page-intro h1 { font-size: 27px; }
-    }
-  </style>
+        :root {
+            --alice: #F2F7FF;
+            --egyptian: #0B409C;
+            --catalina: #0D226B;
+            --ink: #071233;
+            --saffron: #FDBE34;
+            --muted: #5b6e99;
+            --hairline: #dce6f7;
+            --white: #ffffff;
+            --danger: #d93838;
+            --danger-bg: #fdf2f2;
+            --success: #15803d;
+            --success-bg: #ecfdf5;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--alice); color: var(--ink); min-height: 100vh; display: flex; flex-direction: column; }
+        .icon { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+        .top-bar { background: var(--ink); color: var(--alice); padding: 8px 48px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .top-bar strong { color: var(--saffron); font-weight: 600; }
+
+        .store-header { background: var(--white); border-bottom: 1.5px solid var(--hairline); position: sticky; top: 0; z-index: 100; }
+        .navbar-main { max-width: 1200px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+        .brand-logo { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 800; color: var(--catalina); text-decoration: none; display: inline-flex; align-items: baseline; }
+        .brand-logo span.book-text { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 900; color: var(--egyptian); letter-spacing: 1.2px; margin-left: 2px; }
+        .brand-logo .accent-dot { display: inline-block; width: 6px; height: 6px; background-color: var(--saffron); border-radius: 50%; margin-left: 4px; }
+
+        .search-container { flex: 1; max-width: 460px; position: relative; display: flex; align-items: center; }
+        .search-input { width: 100%; padding: 9px 40px 9px 14px; border: 1.5px solid var(--hairline); border-radius: 6px; font-size: 13.5px; outline: none; background: #fafcff; }
+        .search-btn { position: absolute; right: 5px; background: var(--egyptian); color: #fff; border: none; border-radius: 4px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+        .nav-actions { display: flex; align-items: center; gap: 12px; }
+        .nav-action-link { display: flex; align-items: center; gap: 6px; color: var(--catalina); text-decoration: none; font-size: 13px; font-weight: 600; padding: 7px 10px; border-radius: 6px; }
+        .badge-count { background: var(--egyptian); color: #fff; font-size: 10px; font-weight: 800; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 999px; display: flex; align-items: center; justify-content: center; }
+
+        /* USER PILL DROPDOWN */
+        .user-menu-wrapper {
+            position: relative;
+            padding: 4px 0;
+        }
+
+        .user-dropdown-trigger {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 3px 12px 3px 3px;
+            border-radius: 999px;
+            background: var(--alice);
+            border: 1px solid var(--hairline);
+            cursor: pointer;
+        }
+
+        .user-avatar-tiny {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1.5px solid var(--saffron);
+            background: #fff;
+        }
+
+        .user-name-text {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--catalina);
+        }
+
+        .user-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 250px;
+            background: var(--white);
+            border: 1px solid var(--hairline);
+            border-radius: 8px;
+            padding: 6px;
+            display: none;
+            z-index: 1000;
+            list-style: none;
+            box-shadow: 0 8px 24px -6px rgba(7, 18, 51, 0.12);
+        }
+
+        .user-menu-wrapper:hover .user-dropdown-menu {
+            display: block;
+        }
+
+        .dropdown-item-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ink);
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+
+            .dropdown-item-link:hover {
+                background: var(--alice);
+                color: var(--egyptian);
+            }
+
+            .dropdown-item-link.danger {
+                color: var(--danger);
+                border-top: 1px solid var(--hairline);
+                margin-top: 4px;
+                border-radius: 0 0 5px 5px;
+            }
+
+                .dropdown-item-link.danger:hover {
+                    background: var(--danger-bg);
+                }
+
+        /* KHUNG WRAPPER ĐÃ ĐƯỢC CỐ ĐỊNH CHUẨN KÍCH THƯỚC VỚI TRANG CHỦ */
+        .container-wishlist { max-width: 1200px; margin: 24px auto; padding: 0 24px; flex: 1; width: 100%; }
+        .form-panel { background: var(--white); border: 1px solid var(--hairline); border-radius: 12px; padding: 24px; box-shadow: 0 4px 16px -4px rgba(7, 18, 51, 0.04); }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 14px; border-bottom: 1.5px solid var(--hairline); margin-bottom: 20px; }
+        .panel-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 800; color: var(--catalina); }
+
+        .wishlist-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .product-card { background: var(--white); border: 1px solid var(--hairline); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 8px; position: relative; cursor: pointer; transition: transform 0.15s ease; }
+        .product-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px -4px rgba(7,12,51,0.08); }
+        .remove-wish-btn { position: absolute; top: 12px; right: 12px; background: var(--danger-bg); border: 1px solid var(--hairline); width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--danger); z-index: 2; font-size: 14px; }
+
+        .book-cover-wrapper { width: 100%; height: 180px; background: #fafcff; display: flex; align-items: center; justify-content: center; border-radius: 4px; overflow: hidden; }
+        .book-cover-img { max-height: 100%; max-width: 100%; object-fit: contain; }
+        .book-title-main { font-size: 13.5px; font-weight: 700; color: var(--catalina); line-height: 1.4; height: 38px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        .book-author-name { font-size: 12px; color: var(--muted); font-weight: 500; }
+        .stock-tag-warning { font-size: 11px; font-weight: 700; color: #b45309; background: #fffbeb; padding: 2px 6px; border-radius: 4px; align-self: flex-start; }
+        .stock-tag-ok { font-size: 11px; font-weight: 700; color: var(--success); background: var(--success-bg); padding: 2px 6px; border-radius: 4px; align-self: flex-start; }
+        .sale-price-text { font-size: 15px; font-weight: 800; color: var(--egyptian); margin-top: auto; }
+        .btn-add-to-cart-fast { width: 100%; padding: 8px; background: var(--alice); color: var(--egyptian); border: 1px solid var(--hairline); font-family: inherit; font-size: 12.5px; font-weight: 700; border-radius: 5px; cursor: pointer; z-index: 2; }
+        .btn-add-to-cart-fast:hover { background: var(--egyptian); color: #fff; border-color: var(--egyptian); }
+
+
+  :root { --danger:#d93838; --danger-bg:#fdf2f2; --success:#15803d; --success-bg:#ecfdf5; }
+  body { font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+  button,input,select,textarea { font:inherit; }
+  button,a,input,select,textarea { -webkit-tap-highlight-color:transparent; }
+  button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible { outline:3px solid var(--saffron); outline-offset:3px; }
+  button:disabled { cursor:not-allowed; opacity:.5; }
+  [hidden] { display:none!important; }
+  .muted { color:var(--muted); }
+  .shipper-brand .accent-dot { width:6px; height:6px; background:var(--saffron); border-radius:50%; display:inline-block; margin-left:4px; }
+  .sr-only { position:absolute; left:0; top:0; width:1px; height:1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  .button-link { text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+  .demo-caption { font-size:11px; color:var(--muted); margin:18px 0 0; line-height:1.7; }
+  .page-tools { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .control-label { font-size:12px; color:var(--muted); font-weight:600; }
+  .select-control { background:#fff; border:1px solid var(--hairline); border-radius:6px; padding:8px 10px; color:var(--ink); }
+  .pagination { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-top:18px; font-size:12px; color:var(--muted); }
+  .pagination-buttons { display:flex; align-items:center; gap:12px; }
+  .small-btn { border:1px solid var(--hairline); padding:8px 12px; border-radius:6px; background:#fff; color:var(--catalina); font-size:12px; font-weight:700; }
+  .notice { padding:14px 16px; border:1px solid var(--hairline); border-radius:8px; background:var(--alice); font-size:13px; line-height:1.7; color:var(--catalina); }
+  .notice.success { background:var(--success-bg); border-color:#bbf7d0; color:var(--success); }
+  .notice.danger { background:var(--danger-bg); border-color:#fecaca; color:var(--danger); }
+  .field-error { color:var(--danger); font-size:12px; line-height:1.6; margin-top:8px; }
+  .field-label { display:block; font-size:12px; font-weight:700; color:var(--catalina); margin:16px 0 8px; }
+  .text-control { width:100%; border:1px solid var(--hairline); border-radius:6px; padding:10px 12px; background:#fff; color:var(--ink); resize:vertical; }
+  .demo-toast { position:fixed; bottom:24px; left:24px; z-index:5000; max-width:min(480px,calc(100vw - 48px)); padding:13px 18px; border-radius:6px; background:var(--success); color:#fff; font-size:13px; line-height:1.6; box-shadow:0 6px 20px #07123325; }
+  .demo-toast.error { background:var(--danger); }
+  dialog { margin:auto; border:0; border-radius:12px; padding:24px; width:min(460px,calc(100% - 32px)); max-height:calc(100dvh - 32px); overflow:auto; color:var(--ink); box-shadow:0 20px 60px #07123333; }
+  dialog::backdrop { background:rgba(7,18,51,.45); }
+  dialog h2 { font-family:'Fraunces',serif; font-size:20px; color:var(--catalina); margin:0 0 10px; }
+  dialog p { font-size:13px; color:var(--muted); line-height:1.7; margin:0 0 16px; }
+  .dialog-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+  .dialog-btn { padding:10px 16px; border-radius:6px; font-size:13px; font-weight:700; border:1px solid var(--hairline); background:#fff; color:var(--catalina); }
+  .dialog-btn.primary { background:var(--egyptian); border-color:var(--egyptian); color:#fff; }
+  .dialog-btn.danger { background:var(--danger); border-color:var(--danger); color:#fff; }
+  @media(max-width:600px) { .shipper-navbar { padding:0 16px; gap:12px; } .shipper-user>span { display:none; } .page-intro h1 { font-size:23px; } .dialog-actions { flex-wrap:wrap; } }
+
+
+  :root{--hairline:#dce6f7;--border:#dce6f7;--ink:#071233;--muted:#5b6e99;--success:#15803d;--danger:#d93838;}
+  body{margin:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--alice);color:var(--ink);}
+  *{box-sizing:border-box;}button,input,textarea,select{font:inherit;}button{cursor:pointer;}button:disabled{cursor:not-allowed;opacity:.5;}
+  .member-layout{width:100%;max-width:1200px;margin:auto;padding:28px 24px 60px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:24px;align-items:start;}
+  .member-layout>section,.review-grid>*{min-width:0;}
+  .member-sidebar{background:#fff;border:1px solid var(--hairline);border-radius:10px;padding:12px;}
+  .member-identity{display:flex;gap:10px;align-items:center;padding:8px 6px 20px;border-bottom:1px solid var(--hairline);margin-bottom:10px;}
+  .member-identity .avatar{width:36px;height:36px;border-radius:50%;background:var(--egyptian);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;}
+  .member-identity strong{display:block;font-size:13px;color:var(--catalina);}.member-identity span{display:block;font-size:11px;color:var(--muted);margin-top:5px;}
+  .member-sidebar>a{display:flex;gap:9px;align-items:center;padding:12px 10px;font-size:12px;color:var(--muted);text-decoration:none;border-radius:6px;}
+  .member-sidebar>a.active,.member-sidebar>a:hover{background:var(--alice);color:var(--egyptian);}.member-sidebar>a.active{font-weight:700;}
+  .member-heading{margin-bottom:22px;}.member-heading h1{font-size:23px;color:var(--catalina);font-weight:800;margin:8px 0;}.member-heading p{font-size:12px;color:var(--muted);line-height:1.7;}
+  .breadcrumb{font-size:11px;color:var(--muted);}.card{background:#fff;border:1px solid var(--hairline);border-radius:10px;overflow:hidden;margin-bottom:18px;box-shadow:0 8px 24px #0d226b0a;}
+  .card-head{padding:17px 20px;border-bottom:1px solid var(--hairline);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}.card-head h2{font-size:15px;color:var(--catalina);margin:0;}.card-head p{font-size:12px;color:var(--muted);line-height:1.7;margin-top:5px;}.card-body{padding:20px;}
+  .demo-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:18px;}.demo-stat{background:#fff;border:1px solid var(--hairline);border-radius:10px;padding:17px;}.demo-stat span{display:block;font-size:11px;font-weight:700;color:var(--muted);}.demo-stat strong{display:block;font-size:26px;color:var(--egyptian);margin:6px 0;}.demo-stat small{color:var(--muted);font-size:11px;}
+  .form-row{display:flex;gap:12px;align-items:end;flex-wrap:wrap;}.form-row>label{flex:1;min-width:150px;}.field-label{display:block;font-size:12px;font-weight:700;color:var(--catalina);margin:0 0 8px;}.control{display:block;width:100%;padding:10px 12px;background:#fff;border:1px solid var(--hairline);border-radius:6px;color:var(--ink);}.form-field{margin-bottom:16px;}textarea.control{resize:vertical;line-height:1.7;}
+  .demo-btn{display:inline-flex;align-items:center;justify-content:center;padding:9px 14px;border-radius:6px;border:1px solid var(--hairline);background:#fff;color:var(--catalina);font-size:12px;font-weight:700;text-decoration:none;gap:7px;}.demo-btn.primary{background:var(--egyptian);border-color:var(--egyptian);color:#fff;}.demo-btn.danger{background:#fdf2f2;color:var(--danger);border-color:#fecaca;}.actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .hint{font-size:12px;color:var(--muted);line-height:1.8;margin-top:12px;}.badge{display:inline-flex;padding:5px 9px;border-radius:99px;font-size:10px;font-weight:800;white-space:nowrap;}.b-confirmed,.b-prepared{color:var(--egyptian);background:#e8f1ff;}.b-shipping,.b-completed,.b-verified{color:var(--success);background:#ecfdf5;}.b-failed,.b-issue{color:var(--danger);background:#fdf2f2;}.b-muted{color:var(--muted);background:var(--alice);}
+  .table-wrap{overflow:auto;}table{width:100%;border-collapse:collapse;min-width:620px;}th,td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--hairline);font-size:12px;}thead th{font-size:10px;color:var(--muted);background:#f8fafe;text-transform:uppercase;}td strong{color:var(--catalina);}td small{display:block;margin-top:6px;font-size:11px;color:var(--muted);}
+  .info-row{display:flex;justify-content:space-between;gap:16px;font-size:12px;padding:10px 0;border-bottom:1px dashed var(--hairline);line-height:1.7;}.info-row>span{color:var(--muted);}.info-row>strong{text-align:right;color:var(--catalina);}.two-col{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;}.empty{padding:36px 20px;text-align:center;color:var(--muted);font-size:13px;}
+  .store-avatar{display:grid;place-items:center;background:var(--egyptian);color:#fff;font-weight:700;font-size:12px;}.user-menu-wrapper:focus-within .user-dropdown-menu{opacity:1;visibility:visible;transform:translateY(0);}
+  @media(max-width:1000px){.member-layout{grid-template-columns:minmax(0,1fr);}.member-sidebar{display:flex;flex-wrap:wrap;gap:4px;}.member-identity{width:100%;padding-bottom:12px;margin-bottom:4px;}}
+  @media(max-width:650px){.member-layout{padding:20px 16px 40px;}.demo-stats{gap:8px;}.demo-stat{padding:12px;}.demo-stat strong{font-size:22px;}.two-col{grid-template-columns:1fr;}.top-bar{padding:8px 16px;font-size:10px;flex-wrap:wrap;gap:8px;}.navbar-main{padding:12px 16px;flex-wrap:wrap;gap:14px;}.nav-actions{gap:7px;flex-wrap:wrap;}.nav-action-link{font-size:11px;padding:6px;}.user-name-text{display:none;}.member-heading h1{font-size:21px;}.card-head,.card-body{padding:16px;}}
+
+
+  .review-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(260px,1fr);gap:18px;align-items:start;}.review-book{display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--hairline);}.review-book.active{background:var(--alice);border-left:3px solid var(--egyptian);padding-left:13px;}.book-mark{width:42px;height:57px;flex-shrink:0;background:var(--catalina);color:var(--saffron);display:grid;place-items:center;font-size:22px;border-radius:3px 6px 6px 3px;}.review-book-info{flex:1;min-width:0;}.review-book-info strong{display:block;font-size:12px;color:var(--catalina);line-height:1.6;}.review-book-info p{font-size:11px;color:var(--muted);line-height:1.7;margin:4px 0;}.review-book-actions{display:flex;flex-direction:column;align-items:flex-end;gap:8px;}.star-fieldset{border:0;padding:0;margin:16px 0;}.star-picker{display:flex;gap:8px;}.star-picker label{position:relative;font-size:31px;color:#d6dce7;cursor:pointer;line-height:1.2;}.star-picker input{position:absolute;inset:0;opacity:0;cursor:pointer;}.star-picker label.filled{color:var(--saffron);}.star-picker label:focus-within{outline:2px solid var(--egyptian);border-radius:4px;}.image-preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}.image-preview img{width:64px;height:64px;object-fit:cover;border:1px solid var(--hairline);border-radius:6px;}.wallet{background:linear-gradient(145deg,var(--catalina),var(--egyptian));border-radius:10px;color:#fff;padding:22px;margin-bottom:18px;}.wallet>p{font-size:11px;opacity:.85;}.wallet>strong{display:block;font-size:32px;margin:8px 0 18px;}.wallet small{font-size:12px;}.wallet>div{display:flex;justify-content:space-between;gap:12px;font-size:11px;border-top:1px solid #ffffff33;padding-top:14px;}#selectedReviewBook{margin-bottom:16px;}#selectedReviewBook h3{font-size:15px;color:var(--catalina);margin:0 0 6px;}#selectedReviewBook p{font-size:12px;color:var(--muted);line-height:1.7;}.plus{color:var(--success);font-weight:700;}@media(max-width:1200px){.review-grid{grid-template-columns:1fr;}}@media(max-width:550px){.review-book{flex-wrap:wrap;}.review-book-actions{flex-direction:row;width:100%;align-items:center;justify-content:space-between;}.book-mark{width:35px;height:48px;}}
+</style>
 </head>
-<body>
-
-  <!-- NAVBAR -->
-  <nav class="navbar">
-    <a href="#" class="brand-logo">
-      <span class="brand-name">ancient</span><span class="brand-book">BOOK</span><span class="brand-dot"></span>
-    </a>
-    <div class="nav-links">
-      <a href="#">Trang chủ</a>
-      <a href="#">Sách</a>
-      <a href="trang2.html">Đơn hàng</a>
-      <a href="#" class="active">Tài khoản</a>
-    </div>
-    <div class="avatar">HA</div>
-  </nav>
-
-  <!-- MAIN CONTAINER -->
-  <main class="container">
-    <div class="page-intro">
-      <h1>Đánh giá &amp; Ví F-Point</h1>
-      <p>Đánh giá từng cuốn sách đã nhận thành công và sử dụng F-Point để đổi phần thưởng.</p>
+<body><div class="top-bar">
+        <div>Miễn phí giao hàng toàn quốc cho đơn từ <strong>250.000 đ</strong> • Cam kết 100% sách chính hãng</div>
+        <div>Hotline hỗ trợ: <strong>1900 636 467</strong></div>
     </div>
 
-    <!-- STATS -->
-    <div class="stats">
-      <div class="stat">
-        <div class="stat-title">F-POINT HIỆN CÓ</div>
-        <div class="stat-number" id="statPoints">1.250</div>
-        <div class="stat-note">Có thể sử dụng để đổi quà</div>
-      </div>
-      <div class="stat">
-        <div class="stat-title">CHỜ ĐÁNH GIÁ</div>
-        <div class="stat-number" id="pendingCount">03</div>
-        <div class="stat-note">Sách đã mua và nhận thành công</div>
-      </div>
-      <div class="stat">
-        <div class="stat-title">ĐÃ ĐÁNH GIÁ</div>
-        <div class="stat-number" id="reviewedCount">01</div>
-        <div class="stat-note">Mỗi sách chỉ nhận điểm lần đầu</div>
-      </div>
-    </div>
+    <header class="store-header">
+        <div class="navbar-main">
+            <a href="#" class="brand-logo">ancient<span class="book-text">BOOK</span><span class="accent-dot"></span></a>
 
-    <!-- MAIN GRID -->
-    <div class="main-grid">
-      <section>
-        <!-- DANH SÁCH SÁCH -->
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <h2>Sách đã mua &amp; có thể đánh giá</h2>
-              <p>Chọn từng cuốn sách để gửi hoặc cập nhật đánh giá.</p>
+            <div class="nav-actions">
+                <a href="#" class="nav-action-link">
+                    <svg class="icon" viewBox="0 0 24 24" style="fill: currentColor;"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>
+                    <span>Yêu thích</span>
+                    <span class="badge-count">2</span>
+                </a>
+                <a href="#" class="nav-action-link">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
+                    <span>Giỏ hàng</span>
+                    <span class="badge-count">2</span>
+                </a>
+                <div class="user-menu-wrapper">
+                    <div class="user-dropdown-trigger" tabindex="0" role="button" aria-label="Menu tài khoản">
+                        <span class="user-avatar-tiny store-avatar">AN</span>
+                        <span class="user-name-text">member_an</span>
+                        <svg class="icon" viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="m6 9 6 6 6-6" /></svg>
+                    </div>
+                    <ul class="user-dropdown-menu">
+                        <li><a href="#" class="dropdown-item-link">Hồ sơ & Đổi mật khẩu</a></li>
+                        <li><a href="#" class="dropdown-item-link">Lịch sử đơn đặt sách</a></li>
+                        <li><a href="#" class="dropdown-item-link">Hạng thành viên</a></li><li><a href="#" class="dropdown-item-link danger">Đăng xuất tài khoản</a></li>
+                    </ul>
+                </div>
             </div>
-            <span class="badge b-wait" id="listBadge">03 sách chờ đánh giá</span>
-          </div>
-
-          <div class="book-list" id="bookList">
-            <div class="book-item selected" data-book="kim" onclick="selectBook('kim', this)">
-              <div class="cover">NHÀ<br>GIẢ<br>KIM</div>
-              <div class="book-info">
-                <h3>Nhà giả kim</h3>
-                <p>Đơn hàng #DH1012 · Giao thành công</p>
-                <div class="book-price">120.000đ</div>
-              </div>
-              <div class="book-actions">
-                <span class="badge b-wait">Chưa đánh giá</span>
-                <button class="btn" onclick="event.stopPropagation(); selectBook('kim', this.closest('.book-item'))">Đánh giá</button>
-              </div>
-            </div>
-
-            <div class="book-item" data-book="dacnhantam" onclick="selectBook('dacnhantam', this)">
-              <div class="cover">ĐẮC<br>NHÂN<br>TÂM</div>
-              <div class="book-info">
-                <h3>Đắc nhân tâm</h3>
-                <p>Đơn hàng #DH1012 · Giao thành công</p>
-                <div class="book-price">180.000đ</div>
-              </div>
-              <div class="book-actions">
-                <span class="badge b-wait">Chưa đánh giá</span>
-                <button class="btn" onclick="event.stopPropagation(); selectBook('dacnhantam', this.closest('.book-item'))">Đánh giá</button>
-              </div>
-            </div>
-
-            <div class="book-item" data-book="tuoitre" onclick="selectBook('tuoitre', this)">
-              <div class="cover">TUỔI<br>TRẺ<br>ĐÁNG GIÁ</div>
-              <div class="book-info">
-                <h3>Tuổi trẻ đáng giá bao nhiêu</h3>
-                <p>Đơn hàng #DH1012 · Giao thành công</p>
-                <div class="book-price">180.000đ</div>
-              </div>
-              <div class="book-actions">
-                <span class="badge b-wait">Chưa đánh giá</span>
-                <button class="btn" onclick="event.stopPropagation(); selectBook('tuoitre', this.closest('.book-item'))">Đánh giá</button>
-              </div>
-            </div>
-
-            <div class="book-item" data-book="doremon" onclick="selectBook('doremon', this)">
-              <div class="cover">DORA<br>EMON</div>
-              <div class="book-info">
-                <h3>Doraemon — Tập 1</h3>
-                <p>Đơn hàng #DH1008 · Giao thành công</p>
-                <div class="book-price">50.000đ</div>
-              </div>
-              <div class="book-actions">
-                <span class="badge b-reviewed">Đã đánh giá</span>
-                <button class="btn btn-light" onclick="event.stopPropagation(); selectBook('doremon', this.closest('.book-item'))">Xem / sửa</button>
-              </div>
-            </div>
-          </div>
         </div>
+    </header>
+<main class="member-layout"><aside class="member-sidebar" aria-label="Tài khoản của tôi"><div class="member-identity"><div class="avatar">AN</div><div><strong>Phan Thúy An</strong><span>Tài khoản thành viên</span></div></div>
+  <a href="#"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg> Thông tin tài khoản</a><a href="#"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7.5 4.27 9 5.15"/><path d="M21 8v8l-9 5-9-5V8l9-5 9 5Z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg> Đơn hàng của tôi</a><a  href="#" class="active" aria-current="page"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg> Đánh giá &amp; Ví F-Point</a><a href="#" ><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg> Hạng thành viên</a><a href="#"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg> Sách yêu thích</a></aside><section><div class="member-heading"><p class="breadcrumb">Trang chủ / Tài khoản / Đánh giá &amp; Ví F-Point</p><h1>Đánh giá &amp; Ví F-Point</h1><p>Đánh giá giao dịch mua/thuê hợp lệ và theo dõi điểm thưởng của bạn.</p></div><section class="demo-stats"><div class="demo-stat"><span>F-POINT HIỆN CÓ</span><strong id="statPoints">1.250</strong><small>Dùng giảm tiền sách khi đặt hàng</small></div><div class="demo-stat"><span>CHỜ ĐÁNH GIÁ</span><strong id="pendingReviewCount">0</strong><small>Tính theo giao dịch hợp lệ</small></div><div class="demo-stat"><span>ĐÃ ĐÁNH GIÁ</span><strong id="reviewedCount">0</strong><small>Thưởng một lần mỗi giao dịch</small></div></section>
+<div class="review-grid"><section><div class="card"><div class="card-head"><div><h2>Sách đã mua / thuê</h2><p>Chọn sách gắn với giao dịch của bạn để xem hoặc gửi đánh giá.</p></div></div><div id="reviewBookList"></div></div>
+<section class="card"><div class="card-head"><h2 id="reviewFormTitle">Viết đánh giá</h2><span class="badge b-verified" id="verificationLabel">Đã mua sách</span></div><form class="card-body" id="reviewForm" novalidate><div id="selectedReviewBook"></div><div class="form-field"><fieldset class="star-fieldset"><legend class="field-label">Chọn mức đánh giá</legend><div class="star-picker" role="radiogroup" aria-label="Số sao"><label><input type="radio" name="rating" value="1" aria-label="1 sao"><span aria-hidden="true">★</span></label><label><input type="radio" name="rating" value="2" aria-label="2 sao"><span aria-hidden="true">★</span></label><label><input type="radio" name="rating" value="3" aria-label="3 sao"><span aria-hidden="true">★</span></label><label><input type="radio" name="rating" value="4" aria-label="4 sao"><span aria-hidden="true">★</span></label><label><input type="radio" name="rating" value="5" aria-label="5 sao"><span aria-hidden="true">★</span></label></div></fieldset></div><div class="form-field"><label class="field-label" for="reviewComment">Nhận xét</label><textarea class="control" id="reviewComment" maxlength="4000" rows="4" placeholder="Chia sẻ trải nghiệm của bạn về cuốn sách..."></textarea></div><div class="form-field"><label class="field-label" for="reviewImages">Ảnh đính kèm <span class="muted">(không bắt buộc)</span></label><input class="control" id="reviewImages" type="file" accept="image/*" multiple><div class="image-preview" id="imagePreview"></div></div><div class="notice" id="reviewRule"></div><p class="field-error" id="reviewError" role="alert" hidden></p><div class="actions" style="margin-top:16px"><button class="demo-btn primary" id="submitReview" type="submit">Gửi đánh giá</button><button class="demo-btn danger" id="deleteReview" type="button" hidden>Ẩn đánh giá</button></div></form></section></section>
+<aside><section class="wallet"><p>VÍ F-POINT</p><strong id="walletPoints">1.250 <small>điểm</small></strong><div><span>Hạng Bạc</span><span>Tích điểm: 10%</span></div></section><section class="card"><div class="card-head"><h2>Xem trước giảm giá bằng điểm</h2></div><form class="card-body" id="pointsPreview" novalidate><div class="form-field"><label class="field-label" for="bookAmount">Tiền sách (đ)</label><input class="control" id="bookAmount" type="number" min="0" value="120000"></div><div class="form-field"><label class="field-label" for="pointsToUse">Số điểm muốn dùng</label><input class="control" id="pointsToUse" type="number" min="0" step="1" value="0"></div><div class="actions"><button class="demo-btn" id="useMax" type="button">Dùng tối đa</button><button class="demo-btn primary" type="submit">Xem mức giảm</button></div><p class="hint">1 điểm = 100 đ. Tối đa 1.000 điểm/đơn và 50% tiền sách, không gồm phí giao hàng.</p><div id="pointsResult" class="hint" role="status"></div></form></section></aside></div>
+<section class="card"><div class="card-head"><h2>Lịch sử điểm gần đây</h2></div><div class="table-wrap"><table><thead><tr><th>Thời gian</th><th>Nội dung</th><th>Biến động</th><th>Số dư sau giao dịch</th></tr></thead><tbody id="pointHistory"></tbody></table></div></section>
+<dialog id="deleteReviewDialog" aria-labelledby="deleteReviewTitle"><h2 id="deleteReviewTitle">Ẩn đánh giá này?</h2><p>Đánh giá sẽ không còn hiển thị công khai. Giao dịch vẫn được ghi nhận là đã đánh giá và không được nhận thưởng thêm.</p><div class="dialog-actions"><button class="dialog-btn" data-close-dialog="deleteReviewDialog" type="button">Hủy</button><button class="dialog-btn danger" id="confirmDeleteReview" type="button">Ẩn đánh giá</button></div></dialog><p class="demo-caption">Giao diện minh họa · Các thao tác chỉ dùng dữ liệu mẫu trong trang đang mở.</p><div id="demoToast" class="demo-toast" role="status" aria-live="polite" hidden></div></section></main><script>
+function money(value){return Number(value).toLocaleString('vi-VN')+' đ';}
+function safe(value){return String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));}
+function dateText(value){return new Intl.DateTimeFormat('vi-VN',{dateStyle:'short',timeStyle:'short',timeZone:'Asia/Ho_Chi_Minh'}).format(new Date(value));}
+function notify(message,error=false){const el=document.getElementById('demoToast');clearTimeout(notify.timer);el.textContent=message;el.className='demo-toast'+(error?' error':'');el.hidden=false;notify.timer=setTimeout(()=>el.hidden=true,4000);}
+document.addEventListener('click',event=>{const link=event.target.closest('a[href="#"]');if(link)event.preventDefault();const close=event.target.closest('[data-close-dialog]');if(close)document.getElementById(close.dataset.closeDialog).close();});
 
-        <!-- FORM VIẾT ĐÁNH GIÁ -->
-        <div class="card" id="reviewCard">
-          <div class="card-header">
-            <div>
-              <h2>Viết đánh giá</h2>
-              <p>Đánh giá riêng cho từng cuốn sách trong đơn hàng.</p>
-            </div>
-            <span class="badge b-completed">Đơn hàng đã hoàn thành</span>
-          </div>
-          <div class="review-panel">
-            <div class="selected-book">
-              <div class="cover" id="selectedCover">NHÀ<br>GIẢ<br>KIM</div>
-              <div>
-                <h3 id="selectedTitle">Nhà giả kim</h3>
-                <p id="selectedOrder">Đơn hàng #DH1012 · Bạn đã mua và nhận sách thành công.</p>
-              </div>
-            </div>
-
-            <label class="field-label">Chọn mức đánh giá</label>
-            <div class="rating">
-              <input id="star5" name="star" type="radio" value="5"><label for="star5">★</label>
-              <input id="star4" name="star" type="radio" value="4"><label for="star4">★</label>
-              <input id="star3" name="star" type="radio" value="3"><label for="star3">★</label>
-              <input id="star2" name="star" type="radio" value="2"><label for="star2">★</label>
-              <input id="star1" name="star" type="radio" value="1"><label for="star1">★</label>
-            </div>
-
-            <label class="field-label" for="comment">Nhận xét</label>
-            <textarea id="comment" class="textarea" placeholder="Chia sẻ nhận xét của bạn về cuốn sách..."></textarea>
-
-            <div class="review-note">
-              <b>Quy tắc đánh giá:</b> chỉ đánh giá được sách đã mua và nhận thành công. Mỗi khách hàng chỉ có một đánh giá cho mỗi cuốn sách. Nếu cập nhật đánh giá cũ thì không được cộng thêm F-Point.
-            </div>
-            <div id="reviewMsg" class="message"></div>
-            <div class="review-footer">
-              <button class="btn" onclick="sendReview()">Gửi đánh giá</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- SIDEBAR (VÍ & ĐỔI QUÀ) -->
-      <aside>
-        <div class="wallet">
-          <div class="wallet-label">Số dư F-Point</div>
-          <div class="points" id="points">1.250 <small>điểm</small></div>
-          <div class="wallet-meta">
-            <span>Điểm tích lũy từ đánh giá &amp; đơn hàng</span>
-            <span>ancientBOOK</span>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <h2>Đổi quà F-Point</h2>
-              <p>Chọn phần thưởng khi đủ điểm.</p>
-            </div>
-          </div>
-          <div class="reward-list">
-            <div class="reward">
-              <div class="reward-top">
-                <h3>Voucher 50.000đ</h3>
-                <span class="badge b-wait">500 điểm</span>
-              </div>
-              <p>Giảm trực tiếp cho đơn hàng tiếp theo.</p>
-              <div class="cost">500 F-Point</div>
-              <button class="btn" onclick="redeem(500, 'Voucher 50.000đ')">Đổi quà</button>
-            </div>
-            <div class="reward">
-              <div class="reward-top">
-                <h3>Túi vải ancientBOOK</h3>
-                <span class="badge b-prepared">1.000 điểm</span>
-              </div>
-              <p>Phần quà giới hạn theo số lượng còn lại.</p>
-              <div class="cost">1.000 F-Point</div>
-              <button class="btn" onclick="redeem(1000, 'Túi vải ancientBOOK')">Đổi quà</button>
-            </div>
-            <div id="redeemMsg"></div>
-          </div>
-        </div>
-      </aside>
-    </div>
-
-    <!-- LỊCH SỬ F-POINT -->
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <h2>Lịch sử F-Point</h2>
-          <p>Các lần cộng và sử dụng điểm của tài khoản.</p>
-        </div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Thời gian</th>
-              <th>Nội dung</th>
-              <th>Biến động</th>
-              <th>Số dư</th>
-            </tr>
-          </thead>
-          <tbody id="historyBody">
-            <tr>
-              <td>14/09/2026 15:12</td>
-              <td>Đơn hàng #DH1012 hoàn thành</td>
-              <td class="plus">+250</td>
-              <td>1.250</td>
-            </tr>
-            <tr>
-              <td>10/09/2026 10:30</td>
-              <td>Đổi Voucher 50.000đ</td>
-              <td class="minus">-500</td>
-              <td>1.000</td>
-            </tr>
-            <tr>
-              <td>08/09/2026 16:20</td>
-              <td>Đánh giá sách "Doraemon — Tập 1"</td>
-              <td class="plus">+100</td>
-              <td>1.500</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </main>
-
-  <!-- JAVASCRIPT LOGIC -->
-  <script>
-    const books = {
-      kim: {
-        title: 'Nhà giả kim',
-        cover: 'NHÀ<br>GIẢ<br>KIM',
-        order: '#DH1012',
-        price: '120.000đ',
-        reviewed: false
-      },
-      dacnhantam: {
-        title: 'Đắc nhân tâm',
-        cover: 'ĐẮC<br>NHÂN<br>TÂM',
-        order: '#DH1012',
-        price: '180.000đ',
-        reviewed: false
-      },
-      tuoitre: {
-        title: 'Tuổi trẻ đáng giá bao nhiêu',
-        cover: 'TUỔI<br>TRẺ<br>ĐÁNG GIÁ',
-        order: '#DH1012',
-        price: '180.000đ',
-        reviewed: false
-      },
-      doremon: {
-        title: 'Doraemon — Tập 1',
-        cover: 'DORA<br>EMON',
-        order: '#DH1008',
-        price: '50.000đ',
-        reviewed: true,
-        stars: 4,
-        comment: 'Sách hay, nội dung dễ đọc.'
-      }
-    };
-
-    let currentBook = 'kim';
-    let points = 1250;
-
-    function selectBook(id, el) {
-      currentBook = id;
-      document.querySelectorAll('.book-item').forEach(x => x.classList.remove('selected'));
-      el.classList.add('selected');
-
-      const b = books[id];
-      document.getElementById('selectedCover').innerHTML = b.cover;
-      document.getElementById('selectedTitle').textContent = b.title;
-      document.getElementById('selectedOrder').textContent = `Đơn hàng ${b.order} · Bạn đã mua và nhận sách thành công.`;
-      
-      document.querySelectorAll('input[name="star"]').forEach(x => x.checked = false);
-      document.getElementById('comment').value = '';
-
-      if (b.reviewed) {
-        document.querySelector(`input[name="star"][value="${b.stars}"]`).checked = true;
-        document.getElementById('comment').value = b.comment;
-        document.querySelector('.review-note').innerHTML = '<b>Đã đánh giá:</b> Bạn có thể cập nhật nội dung đánh giá. Việc cập nhật không cộng thêm F-Point.';
-      } else {
-        document.querySelector('.review-note').innerHTML = '<b>Quy tắc đánh giá:</b> chỉ đánh giá được sách đã mua và nhận thành công. Mỗi khách hàng chỉ có một đánh giá cho mỗi cuốn sách. Nếu cập nhật đánh giá cũ thì không được cộng thêm F-Point.';
-      }
-      document.getElementById('reviewMsg').innerHTML = '';
-    }
-
-    function sendReview() {
-      const star = document.querySelector('input[name="star"]:checked');
-      const comment = document.getElementById('comment').value.trim();
-      const msg = document.getElementById('reviewMsg');
-      const b = books[currentBook];
-
-      if (!star || !comment) {
-        msg.innerHTML = '<div class="error">Vui lòng chọn mức sao và nhập nhận xét trước khi gửi.</div>';
-        return;
-      }
-
-      if (!b.reviewed) {
-        b.reviewed = true;
-        b.stars = Number(star.value);
-        b.comment = comment;
-        points += 100;
-        updatePointsUI();
-        msg.innerHTML = '<div class="success">Đã gửi đánh giá thành công. Bạn được cộng +100 F-Point.</div>';
-        updateBookBadge(currentBook, true);
-      } else {
-        b.stars = Number(star.value);
-        b.comment = comment;
-        msg.innerHTML = '<div class="success">Đã cập nhật đánh giá. Không cộng thêm F-Point.</div>';
-      }
-    }
-
-    function updateBookBadge(id, reviewed) {
-      const item = document.querySelector(`[data-book="${id}"]`);
-      if (!item) return;
-
-      const badge = item.querySelector('.badge');
-      const btn = item.querySelector('.btn');
-
-      badge.className = 'badge b-reviewed';
-      badge.textContent = 'Đã đánh giá';
-      btn.className = 'btn btn-light';
-      btn.textContent = 'Xem / sửa';
-
-      const unreviewedCount = Object.values(books).filter(b => !b.reviewed).length;
-      const reviewedCount = Object.values(books).filter(b => b.reviewed).length;
-
-      document.getElementById('pendingCount').textContent = String(unreviewedCount).padStart(2, '0');
-      document.getElementById('reviewedCount').textContent = String(reviewedCount).padStart(2, '0');
-      document.getElementById('listBadge').textContent = String(unreviewedCount).padStart(2, '0') + ' sách chờ đánh giá';
-    }
-
-    function updatePointsUI() {
-      const f = points.toLocaleString('vi-VN');
-      document.getElementById('points').innerHTML = f + ' <small>điểm</small>';
-      document.getElementById('statPoints').textContent = f;
-    }
-
-    function redeem(cost, name) {
-      const box = document.getElementById('redeemMsg');
-
-      if (points < cost) {
-        box.innerHTML = '<div class="error">Bạn chưa đủ F-Point để đổi phần thưởng này.</div>';
-        return;
-      }
-
-      points -= cost;
-      updatePointsUI();
-
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>Vừa xong</td><td>Đổi ${name}</td><td class="minus">-${cost}</td><td>${points.toLocaleString('vi-VN')}</td>`;
-      document.getElementById('historyBody').prepend(tr);
-
-      box.innerHTML = `<div class="success">Đổi "${name}" thành công.</div>`;
-    }
-
-    // Khởi tạo hiển thị ban đầu
-    updatePointsUI();
-  </script>
-</body>
+const REVIEW_REWARD_POINTS=10;
+let points=1250;
+const reviewNow=new Date();
+const daysAgo=days=>new Date(reviewNow.getTime()-days*86400000).toISOString();
+const reviewBooks=[
+  {id:1,orderId:1012,title:'Nhà giả kim',type:'Physical',paid:true,completed:true,review:null},
+  {id:2,orderId:1012,title:'Đắc nhân tâm',type:'Physical',paid:true,completed:true,review:null},
+  {id:3,orderId:1014,title:'Đại Việt Sử Ký Toàn Thư',type:'Rental',paid:true,activated:true,review:{rating:4,content:'Nội dung hữu ích, bản điện tử dễ đọc.',createdAt:daysAgo(5),hidden:false,images:[]}},
+  {id:4,orderId:1008,title:'Dế Mèn phiêu lưu ký',type:'Physical',paid:true,completed:true,review:{rating:5,content:'Sách đẹp, đóng gói cẩn thận.',createdAt:daysAgo(35),hidden:false,images:[]}},
+  {id:5,orderId:1024,title:'Tuổi trẻ đáng giá bao nhiêu',type:'Physical',paid:false,completed:false,review:null}
+];
+const reviewLedger=[{at:daysAgo(5),description:'Thưởng đánh giá giao dịch #ORD-1014',change:10,balance:1250}];
+let currentReviewId=1;
+let selectedImages=[];
+function eligibleReview(book){return book.paid&&(book.type==='Physical'?book.completed:book.activated);}
+function transactionReviewed(book){return reviewBooks.some(other=>other.orderId===book.orderId&&other.review);}
+function verification(book){return book.type==='Rental'?'Đã thuê sách':'Đã mua sách';}
+function reviewEditable(book){return book.review&&!book.review.hidden&&Date.now()-new Date(book.review.createdAt).getTime()<=30*86400000;}
+function renderReviewList(){
+  const transactions=[...new Set(reviewBooks.filter(eligibleReview).map(book=>book.orderId))];
+  document.getElementById('pendingReviewCount').textContent=transactions.filter(id=>!reviewBooks.some(book=>book.orderId===id&&book.review)).length;
+  document.getElementById('reviewedCount').textContent=transactions.filter(id=>reviewBooks.some(book=>book.orderId===id&&book.review)).length;
+  document.getElementById('reviewBookList').innerHTML=reviewBooks.map(book=>{
+    const label=!eligibleReview(book)?'Chưa đủ điều kiện':book.review?.hidden?'Đã ẩn đánh giá':book.review?'Đã đánh giá':transactionReviewed(book)?'Giao dịch đã đánh giá':'Chờ đánh giá';
+    return `<div class="review-book${book.id===currentReviewId?' active':''}"><div class="book-mark" aria-hidden="true">▤</div><div class="review-book-info"><strong>${safe(book.title)}</strong><p>#ORD-${book.orderId} · ${book.type==='Rental'?'Thuê online':'Mua sách giấy'}</p><span class="badge ${eligibleReview(book)?'b-verified':'b-muted'}">${eligibleReview(book)?verification(book):'Chưa hoàn tất giao dịch'}</span></div><div class="review-book-actions"><span class="badge ${book.review?'b-muted':'b-prepared'}">${label}</span><button class="demo-btn" type="button" data-review-book="${book.id}">${book.review?'Xem đánh giá':'Chọn sách'}</button></div></div>`;
+  }).join('');
+  document.getElementById('statPoints').textContent=points.toLocaleString('vi-VN');
+  document.getElementById('walletPoints').innerHTML=points.toLocaleString('vi-VN')+' <small>điểm</small>';
+  document.getElementById('pointHistory').innerHTML=[...reviewLedger].reverse().map(item=>`<tr><td>${dateText(item.at)}</td><td>${safe(item.description)}</td><td class="plus">+${item.change}</td><td>${item.balance.toLocaleString('vi-VN')}</td></tr>`).join('');
+}
+function updateStarPaint(){const selected=Number(document.querySelector('input[name="rating"]:checked')?.value||0);document.querySelectorAll('.star-picker label').forEach((label,index)=>label.classList.toggle('filled',index<selected));}
+function selectReviewBook(id){
+  currentReviewId=id;selectedImages=[];
+  const book=reviewBooks.find(book=>book.id===id);
+  const isNew=!book.review;
+  const canCreate=isNew&&eligibleReview(book)&&!transactionReviewed(book);
+  const canEdit=reviewEditable(book);
+  document.getElementById('reviewForm').reset();
+  document.getElementById('selectedReviewBook').innerHTML=`<h3>${safe(book.title)}</h3><p>Giao dịch #ORD-${book.orderId} · ${book.type==='Rental'?'Thuê online đã kích hoạt':'Mua sách giấy'}</p>`;
+  document.getElementById('verificationLabel').textContent=eligibleReview(book)?verification(book):'Chưa được xác thực';
+  document.getElementById('reviewFormTitle').textContent=isNew?'Viết đánh giá':'Đánh giá của bạn';
+  document.getElementById('reviewComment').value=book.review?.hidden?'':book.review?.content||'';
+  if(book.review&&!book.review.hidden){document.querySelector(`input[name="rating"][value="${book.review.rating}"]`).checked=true;selectedImages=book.review.images||[];}
+  document.querySelectorAll('input[name="rating"],#reviewComment,#reviewImages').forEach(input=>input.disabled=!(canCreate||canEdit));
+  document.getElementById('submitReview').disabled=!(canCreate||canEdit);
+  document.getElementById('submitReview').textContent=isNew?'Gửi đánh giá':'Lưu thay đổi';
+  document.getElementById('deleteReview').hidden=!book.review||book.review.hidden;
+  let rule=`Thưởng mẫu ${REVIEW_REWARD_POINTS} F-Point một lần cho mỗi giao dịch, theo cấu hình hệ thống. Sửa trong 30 ngày, không thưởng thêm khi sửa.`;
+  if(!eligibleReview(book))rule='Chỉ đánh giá sách giấy đã giao thành công, thanh toán hoặc sách thuê đã thanh toán và kích hoạt.';
+  else if(book.review?.hidden)rule='Đánh giá đã được ẩn. Giao dịch này đã nhận thưởng và không được tạo đánh giá mới.';
+  else if(book.review&&!canEdit)rule='Đã quá 30 ngày kể từ khi gửi. Bạn có thể xem hoặc ẩn đánh giá, không thể sửa.';
+  else if(isNew&&transactionReviewed(book))rule='Giao dịch này đã được đánh giá qua một cuốn sách khác. Không được tạo thêm đánh giá cho cùng giao dịch.';
+  document.getElementById('reviewRule').textContent=rule;
+  document.getElementById('reviewError').hidden=true;
+  renderImagePreview();updateStarPaint();renderReviewList();
+}
+function renderImagePreview(){document.getElementById('imagePreview').innerHTML=selectedImages.map(image=>`<img src="${safe(image.url)}" alt="${safe(image.name)}">`).join('');}
+document.getElementById('reviewBookList').addEventListener('click',event=>{const button=event.target.closest('[data-review-book]');if(button)selectReviewBook(Number(button.dataset.reviewBook));});
+document.querySelectorAll('input[name="rating"]').forEach(input=>input.addEventListener('change',updateStarPaint));
+document.getElementById('reviewImages').addEventListener('change',event=>{
+  const files=Array.from(event.target.files);
+  if(files.some(file=>!file.type.startsWith('image/'))){document.getElementById('reviewError').textContent='Vui lòng chọn tệp hình ảnh.';document.getElementById('reviewError').hidden=false;return;}
+  selectedImages=files.map(file=>({name:file.name,url:URL.createObjectURL(file)}));renderImagePreview();
+});
+document.getElementById('reviewForm').addEventListener('submit',event=>{
+  event.preventDefault();const book=reviewBooks.find(book=>book.id===currentReviewId);const rating=Number(document.querySelector('input[name="rating"]:checked')?.value||0);const content=document.getElementById('reviewComment').value.trim();
+  let error='';
+  if(!eligibleReview(book)||book.review?.hidden||!book.review&&transactionReviewed(book))error='Giao dịch chưa hợp lệ hoặc đã được đánh giá.';
+  else if(book.review&&!reviewEditable(book))error='Chỉ được sửa đánh giá trong 30 ngày.';
+  else if(rating<1||rating>5||!content||content.length>4000)error='Vui lòng chọn 1–5 sao và nhập nhận xét, tối đa 4.000 ký tự.';
+  if(error){document.getElementById('reviewError').textContent=error;document.getElementById('reviewError').hidden=false;return;}
+  const isNew=!book.review;
+  const createdAt=book.review?.createdAt||new Date().toISOString();
+  book.review={rating,content,createdAt,hidden:false,images:cloneImages(selectedImages)};
+  if(isNew){points+=REVIEW_REWARD_POINTS;reviewLedger.push({at:createdAt,description:'Thưởng đánh giá giao dịch #ORD-'+book.orderId,change:REVIEW_REWARD_POINTS,balance:points});}
+  selectReviewBook(book.id);notify(isNew?`Đã gửi đánh giá. Bạn được cộng ${REVIEW_REWARD_POINTS} F-Point.`:'Đã cập nhật đánh giá, không cộng thêm điểm.');
+});
+function cloneImages(images){return images.map(image=>({...image}));}
+document.getElementById('deleteReview').addEventListener('click',()=>document.getElementById('deleteReviewDialog').showModal());
+document.getElementById('confirmDeleteReview').addEventListener('click',()=>{const book=reviewBooks.find(book=>book.id===currentReviewId);if(book.review)book.review.hidden=true;document.getElementById('deleteReviewDialog').close();selectReviewBook(book.id);notify('Đã ẩn đánh giá. Điểm thưởng không được cấp lại cho giao dịch này.');});
+function previewPoints(maximum=false){
+  const amountText=document.getElementById('bookAmount').value;const requestText=document.getElementById('pointsToUse').value;const amount=Number(amountText);const requested=Number(requestText);const result=document.getElementById('pointsResult');
+  if(!amountText||!Number.isFinite(amount)||amount<0||!Number.isInteger(requested)||requested<0){result.textContent='Tiền sách và số điểm phải hợp lệ, không âm.';return;}
+  const limit=Math.max(0,Math.min(points,1000,Math.floor(amount/200)));const used=maximum?limit:Math.min(requested,limit);
+  document.getElementById('pointsToUse').value=used;
+  result.innerHTML=`<div class="info-row"><span>Điểm áp dụng</span><strong>${used.toLocaleString('vi-VN')}</strong></div><div class="info-row"><span>Giảm tiền sách</span><strong>${money(used*100)}</strong></div><div class="info-row"><span>Tiền sách còn lại</span><strong>${money(amount-used*100)}</strong></div><p class="hint">${requested>limit&&!maximum?'Số điểm đã được đưa về hạn mức hợp lệ. ':''}Đây là mức giảm xem trước, chưa trừ số dư điểm.</p>`;
+}
+document.getElementById('pointsPreview').addEventListener('submit',event=>{event.preventDefault();previewPoints();});
+document.getElementById('useMax').addEventListener('click',()=>previewPoints(true));
+selectReviewBook(1);
+</script></body>
 </html>

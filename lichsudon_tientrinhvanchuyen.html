@@ -10,768 +10,287 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
   <style>
-    :root {
-      --alice: #F2F7FF;
-      --egyptian: #0B409C;
-      --catalina: #0D226B;
-      --ink: #071233;
-      --saffron: #FDBE34;
-      --muted: #5b6e99;
-      --hairline: #dce6f7;
-      --green: #15803d;
-      --green-bg: #ecfdf5;
-      --yellow: #956000;
-      --yellow-bg: #fff7df;
-      --red: #c93434;
-      --red-bg: #fdf2f2;
-      --shadow: 0 8px 24px rgba(13, 34, 107, .07);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--alice);
-      color: var(--ink);
-      min-height: 100vh;
-    }
-
-    button, input, select {
-      font: inherit;
-    }
-
-    button {
-      cursor: pointer;
-      border: 0;
-    }
-
-    /* ---------- NAVBAR ---------- */
-    .navbar {
-      height: 76px;
-      background: #fff;
-      border-bottom: 1px solid var(--hairline);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 7%;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-
-    .brand-logo {
-      display: inline-flex;
-      align-items: baseline;
-      text-decoration: none;
-      color: var(--ink);
-    }
-
-    .brand-name {
-      font-family: 'Fraunces', serif;
-      font-size: 25px;
-      font-weight: 800;
-      letter-spacing: -.5px;
-    }
-
-    .brand-book {
-      font-family: 'Inter', sans-serif;
-      color: var(--saffron);
-      font-size: 22px;
-      font-weight: 900;
-      letter-spacing: 1px;
-    }
-
-    .brand-dot {
-      width: 7px;
-      height: 7px;
-      background: var(--saffron);
-      border-radius: 50%;
-      display: inline-block;
-      margin-left: 4px;
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 30px;
-    }
-
-    .nav-links a {
-      color: var(--ink);
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .nav-links a:hover,
-    .nav-links a.active {
-      color: var(--egyptian);
-      font-weight: 800;
-    }
-
-    .avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: var(--egyptian);
-      color: #fff;
-      display: grid;
-      place-items: center;
-      font-weight: 800;
-      font-size: 13px;
-    }
-
-    /* ---------- CONTAINER & PAGE INTRO ---------- */
-    .container {
-      max-width: 1180px;
-      margin: auto;
-      padding: 34px 22px 70px;
-    }
-
-    .page-intro {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      margin-bottom: 22px;
-    }
-
-    .page-intro h1 {
-      font-family: 'Fraunces', serif;
-      color: var(--catalina);
-      font-size: 32px;
-      font-weight: 800;
-      letter-spacing: -.5px;
-    }
-
-    .page-intro p {
-      color: var(--muted);
-      font-size: 14px;
-      margin-top: 7px;
-    }
-
-    /* ---------- STATS ---------- */
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 22px;
-    }
-
-    .stat {
-      background: #fff;
-      border: 1px solid var(--hairline);
-      border-radius: 10px;
-      padding: 18px;
-      box-shadow: var(--shadow);
-    }
-
-    .stat-title {
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--muted);
-      letter-spacing: .4px;
-      text-transform: uppercase;
-    }
-
-    .stat-number {
-      font-size: 27px;
-      font-weight: 900;
-      color: var(--egyptian);
-      margin-top: 5px;
-    }
-
-    .stat-note {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 3px;
-    }
-
-    /* ---------- TOOLBAR & CARD ---------- */
-    .toolbar {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-      padding: 15px 0;
-    }
-
-    .search, 
-    .select {
-      height: 42px;
-      border: 1px solid var(--hairline);
-      background: #fff;
-      border-radius: 7px;
-      padding: 0 14px;
-      outline: none;
-      color: var(--ink);
-    }
-
-    .search { width: 260px; }
-    .select { min-width: 165px; }
-
-    .card {
-      background: #fff;
-      border: 1px solid var(--hairline);
-      border-radius: 10px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      margin-bottom: 20px;
-    }
-
-    .card-header {
-      padding: 17px 20px;
-      border-bottom: 1px solid var(--hairline);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .card-header h2 {
-      font-size: 16px;
-      color: var(--catalina);
-    }
-
-    .card-header p {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 4px;
-    }
-
-    /* ---------- ORDER LAYOUT & LIST ---------- */
-    .order-layout {
-      display: grid;
-      grid-template-columns: 340px 1fr;
-      gap: 18px;
-    }
-
-    .order-list {
-      padding: 0;
-    }
-
-    .order-item {
-      padding: 18px 18px;
-      border-bottom: 1px solid var(--hairline);
-      cursor: pointer;
-      transition: .15s;
-    }
-
-    .order-item:last-child {
-      border-bottom: 0;
-    }
-
-    .order-item:hover {
-      background: #f8fbff;
-    }
-
-    .order-item.active {
-      background: var(--alice);
-      border-left: 4px solid var(--egyptian);
-      padding-left: 14px;
-    }
-
-    .order-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .order-id {
-      font-size: 15px;
-      font-weight: 900;
-      color: var(--catalina);
-    }
-
-    .order-date {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 7px;
-    }
-
-    .order-money {
-      font-size: 13px;
-      font-weight: 800;
-      color: var(--egyptian);
-      margin-top: 10px;
-    }
-
-    .badge {
-      display: inline-flex;
-      padding: 5px 9px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 800;
-      white-space: nowrap;
-    }
-
-    .b-shipping { background: var(--green-bg); color: var(--green); }
-    .b-completed { background: #e7f7ee; color: #167344; }
-    .b-retry { background: #fff1dd; color: #9a5b00; }
-    .b-prepared { background: #e8f1ff; color: var(--egyptian); }
-
-    /* ---------- ORDER DETAIL ---------- */
-    .detail {
-      padding: 22px;
-    }
-
-    .detail-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 18px;
-      align-items: flex-start;
-    }
-
-    .detail-head h2 {
-      font-family: 'Fraunces', serif;
-      color: var(--catalina);
-      font-size: 25px;
-    }
-
-    .detail-head p {
-      font-size: 13px;
-      color: var(--muted);
-      margin-top: 5px;
-    }
-
-    .tracking-box {
-      margin-top: 15px;
-      background: var(--alice);
-      border: 1px solid var(--hairline);
-      border-radius: 8px;
-      padding: 12px 14px;
-      display: flex;
-      justify-content: space-between;
-      gap: 15px;
-      align-items: center;
-    }
-
-    .tracking-label {
-      font-size: 11px;
-      color: var(--muted);
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-
-    .tracking-code {
-      font-size: 14px;
-      color: var(--catalina);
-      font-weight: 900;
-      margin-top: 3px;
-    }
-
-    .copy-btn {
-      background: #fff;
-      color: var(--egyptian);
-      border: 1px solid var(--hairline);
-      padding: 7px 11px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    /* ---------- TIMELINE ---------- */
-    .timeline {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      margin: 28px 0 25px;
-      position: relative;
-    }
-
-    .timeline:before {
-      content: "";
-      position: absolute;
-      top: 13px;
-      left: 12.5%;
-      right: 12.5%;
-      height: 3px;
-      background: var(--hairline);
-    }
-
-    .step {
-      position: relative;
-      text-align: center;
-      font-size: 11px;
-      color: #9aa7bf;
-      z-index: 1;
-    }
-
-    .step.done,
-    .step.current {
-      color: var(--catalina);
-      font-weight: 800;
-    }
-
-    .dot {
-      width: 27px;
-      height: 27px;
-      border-radius: 50%;
-      background: #dce6f7;
-      color: #fff;
-      display: grid;
-      place-items: center;
-      margin: 0 auto 7px;
-      font-size: 12px;
-      font-weight: 900;
-      border: 3px solid #fff;
-    }
-
-    .step.done .dot { background: var(--egyptian); }
-    .step.current .dot { background: var(--saffron); color: var(--catalina); }
-
-    /* ---------- INFO GRID & TABLES ---------- */
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-    }
-
-    .info-panel {
-      border-top: 1px solid var(--hairline);
-      padding-top: 17px;
-    }
-
-    .info-panel h3 {
-      font-size: 15px;
-      color: var(--catalina);
-      margin-bottom: 12px;
-    }
-
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 15px;
-      padding: 9px 0;
-      border-bottom: 1px dashed var(--hairline);
-      font-size: 13px;
-    }
-
-    .info-row span { color: var(--muted); }
-
-    .product-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 15px;
-      padding: 9px 0;
-      border-bottom: 1px dashed var(--hairline);
-      font-size: 13px;
-    }
-
-    .product-name { color: var(--ink); }
-
-    .product-price {
-      font-weight: 800;
-      color: var(--catalina);
-      white-space: nowrap;
-    }
-
-    .alert {
-      padding: 12px 14px;
-      border-radius: 7px;
-      font-size: 12px;
-      margin-top: 18px;
-    }
-
-    .alert-info { background: #eaf2ff; color: #174d91; }
-    .alert-retry { background: var(--yellow-bg); color: var(--yellow); border: 1px solid #f5dfad; }
-
-    .total {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 14px;
-      padding-top: 13px;
-      border-top: 1px solid var(--hairline);
-      font-size: 14px;
-    }
-
-    .total strong {
-      color: var(--egyptian);
-      font-size: 16px;
-    }
-
-    .review-link {
-      display: inline-block;
-      margin-top: 18px;
-      padding: 10px 16px;
-      background: var(--egyptian);
-      color: #fff;
-      text-decoration: none;
-      border-radius: 7px;
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .review-link:hover { background: var(--catalina); }
-
-    /* ---------- RESPONSIVE ---------- */
-    @media(max-width:950px) {
-      .stats { grid-template-columns: repeat(2, 1fr); }
-      .order-layout { grid-template-columns: 1fr; }
-      .nav-links { gap: 15px; }
-    }
-
-    @media(max-width:650px) {
-      .navbar { padding: 0 18px; }
-      .nav-links { display: none; }
-      .container { padding: 24px 14px; }
-      .stats { grid-template-columns: 1fr; }
-      .info-grid { grid-template-columns: 1fr; }
-      .timeline { min-width: 600px; overflow: auto; }
-      .detail { overflow-x: auto; }
-      .page-intro h1 { font-size: 27px; }
-    }
-  </style>
+        :root {
+            --alice: #F2F7FF;
+            --egyptian: #0B409C;
+            --catalina: #0D226B;
+            --ink: #071233;
+            --saffron: #FDBE34;
+            --muted: #5b6e99;
+            --hairline: #dce6f7;
+            --white: #ffffff;
+            --danger: #d93838;
+            --danger-bg: #fdf2f2;
+            --success: #15803d;
+            --success-bg: #ecfdf5;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--alice); color: var(--ink); min-height: 100vh; display: flex; flex-direction: column; }
+        .icon { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+        .top-bar { background: var(--ink); color: var(--alice); padding: 8px 48px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .top-bar strong { color: var(--saffron); font-weight: 600; }
+
+        .store-header { background: var(--white); border-bottom: 1.5px solid var(--hairline); position: sticky; top: 0; z-index: 100; }
+        .navbar-main { max-width: 1200px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+        .brand-logo { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 800; color: var(--catalina); text-decoration: none; display: inline-flex; align-items: baseline; }
+        .brand-logo span.book-text { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 900; color: var(--egyptian); letter-spacing: 1.2px; margin-left: 2px; }
+        .brand-logo .accent-dot { display: inline-block; width: 6px; height: 6px; background-color: var(--saffron); border-radius: 50%; margin-left: 4px; }
+
+        .search-container { flex: 1; max-width: 460px; position: relative; display: flex; align-items: center; }
+        .search-input { width: 100%; padding: 9px 40px 9px 14px; border: 1.5px solid var(--hairline); border-radius: 6px; font-size: 13.5px; outline: none; background: #fafcff; }
+        .search-btn { position: absolute; right: 5px; background: var(--egyptian); color: #fff; border: none; border-radius: 4px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+        .nav-actions { display: flex; align-items: center; gap: 12px; }
+        .nav-action-link { display: flex; align-items: center; gap: 6px; color: var(--catalina); text-decoration: none; font-size: 13px; font-weight: 600; padding: 7px 10px; border-radius: 6px; }
+        .badge-count { background: var(--egyptian); color: #fff; font-size: 10px; font-weight: 800; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 999px; display: flex; align-items: center; justify-content: center; }
+
+        /* USER PILL DROPDOWN */
+        .user-menu-wrapper {
+            position: relative;
+            padding: 4px 0;
+        }
+
+        .user-dropdown-trigger {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 3px 12px 3px 3px;
+            border-radius: 999px;
+            background: var(--alice);
+            border: 1px solid var(--hairline);
+            cursor: pointer;
+        }
+
+        .user-avatar-tiny {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1.5px solid var(--saffron);
+            background: #fff;
+        }
+
+        .user-name-text {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--catalina);
+        }
+
+        .user-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 250px;
+            background: var(--white);
+            border: 1px solid var(--hairline);
+            border-radius: 8px;
+            padding: 6px;
+            display: none;
+            z-index: 1000;
+            list-style: none;
+            box-shadow: 0 8px 24px -6px rgba(7, 18, 51, 0.12);
+        }
+
+        .user-menu-wrapper:hover .user-dropdown-menu {
+            display: block;
+        }
+
+        .dropdown-item-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ink);
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+
+            .dropdown-item-link:hover {
+                background: var(--alice);
+                color: var(--egyptian);
+            }
+
+            .dropdown-item-link.danger {
+                color: var(--danger);
+                border-top: 1px solid var(--hairline);
+                margin-top: 4px;
+                border-radius: 0 0 5px 5px;
+            }
+
+                .dropdown-item-link.danger:hover {
+                    background: var(--danger-bg);
+                }
+
+        /* KHUNG WRAPPER ĐÃ ĐƯỢC CỐ ĐỊNH CHUẨN KÍCH THƯỚC VỚI TRANG CHỦ */
+        .container-wishlist { max-width: 1200px; margin: 24px auto; padding: 0 24px; flex: 1; width: 100%; }
+        .form-panel { background: var(--white); border: 1px solid var(--hairline); border-radius: 12px; padding: 24px; box-shadow: 0 4px 16px -4px rgba(7, 18, 51, 0.04); }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 14px; border-bottom: 1.5px solid var(--hairline); margin-bottom: 20px; }
+        .panel-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 800; color: var(--catalina); }
+
+        .wishlist-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .product-card { background: var(--white); border: 1px solid var(--hairline); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 8px; position: relative; cursor: pointer; transition: transform 0.15s ease; }
+        .product-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px -4px rgba(7,12,51,0.08); }
+        .remove-wish-btn { position: absolute; top: 12px; right: 12px; background: var(--danger-bg); border: 1px solid var(--hairline); width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--danger); z-index: 2; font-size: 14px; }
+
+        .book-cover-wrapper { width: 100%; height: 180px; background: #fafcff; display: flex; align-items: center; justify-content: center; border-radius: 4px; overflow: hidden; }
+        .book-cover-img { max-height: 100%; max-width: 100%; object-fit: contain; }
+        .book-title-main { font-size: 13.5px; font-weight: 700; color: var(--catalina); line-height: 1.4; height: 38px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        .book-author-name { font-size: 12px; color: var(--muted); font-weight: 500; }
+        .stock-tag-warning { font-size: 11px; font-weight: 700; color: #b45309; background: #fffbeb; padding: 2px 6px; border-radius: 4px; align-self: flex-start; }
+        .stock-tag-ok { font-size: 11px; font-weight: 700; color: var(--success); background: var(--success-bg); padding: 2px 6px; border-radius: 4px; align-self: flex-start; }
+        .sale-price-text { font-size: 15px; font-weight: 800; color: var(--egyptian); margin-top: auto; }
+        .btn-add-to-cart-fast { width: 100%; padding: 8px; background: var(--alice); color: var(--egyptian); border: 1px solid var(--hairline); font-family: inherit; font-size: 12.5px; font-weight: 700; border-radius: 5px; cursor: pointer; z-index: 2; }
+        .btn-add-to-cart-fast:hover { background: var(--egyptian); color: #fff; border-color: var(--egyptian); }
+
+
+  :root { --danger:#d93838; --danger-bg:#fdf2f2; --success:#15803d; --success-bg:#ecfdf5; }
+  body { font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+  button,input,select,textarea { font:inherit; }
+  button,a,input,select,textarea { -webkit-tap-highlight-color:transparent; }
+  button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible { outline:3px solid var(--saffron); outline-offset:3px; }
+  button:disabled { cursor:not-allowed; opacity:.5; }
+  [hidden] { display:none!important; }
+  .muted { color:var(--muted); }
+  .shipper-brand .accent-dot { width:6px; height:6px; background:var(--saffron); border-radius:50%; display:inline-block; margin-left:4px; }
+  .sr-only { position:absolute; left:0; top:0; width:1px; height:1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  .button-link { text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+  .demo-caption { font-size:11px; color:var(--muted); margin:18px 0 0; line-height:1.7; }
+  .page-tools { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .control-label { font-size:12px; color:var(--muted); font-weight:600; }
+  .select-control { background:#fff; border:1px solid var(--hairline); border-radius:6px; padding:8px 10px; color:var(--ink); }
+  .pagination { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-top:18px; font-size:12px; color:var(--muted); }
+  .pagination-buttons { display:flex; align-items:center; gap:12px; }
+  .small-btn { border:1px solid var(--hairline); padding:8px 12px; border-radius:6px; background:#fff; color:var(--catalina); font-size:12px; font-weight:700; }
+  .notice { padding:14px 16px; border:1px solid var(--hairline); border-radius:8px; background:var(--alice); font-size:13px; line-height:1.7; color:var(--catalina); }
+  .notice.success { background:var(--success-bg); border-color:#bbf7d0; color:var(--success); }
+  .notice.danger { background:var(--danger-bg); border-color:#fecaca; color:var(--danger); }
+  .field-error { color:var(--danger); font-size:12px; line-height:1.6; margin-top:8px; }
+  .field-label { display:block; font-size:12px; font-weight:700; color:var(--catalina); margin:16px 0 8px; }
+  .text-control { width:100%; border:1px solid var(--hairline); border-radius:6px; padding:10px 12px; background:#fff; color:var(--ink); resize:vertical; }
+  .demo-toast { position:fixed; bottom:24px; left:24px; z-index:5000; max-width:min(480px,calc(100vw - 48px)); padding:13px 18px; border-radius:6px; background:var(--success); color:#fff; font-size:13px; line-height:1.6; box-shadow:0 6px 20px #07123325; }
+  .demo-toast.error { background:var(--danger); }
+  dialog { margin:auto; border:0; border-radius:12px; padding:24px; width:min(460px,calc(100% - 32px)); max-height:calc(100dvh - 32px); overflow:auto; color:var(--ink); box-shadow:0 20px 60px #07123333; }
+  dialog::backdrop { background:rgba(7,18,51,.45); }
+  dialog h2 { font-family:'Fraunces',serif; font-size:20px; color:var(--catalina); margin:0 0 10px; }
+  dialog p { font-size:13px; color:var(--muted); line-height:1.7; margin:0 0 16px; }
+  .dialog-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+  .dialog-btn { padding:10px 16px; border-radius:6px; font-size:13px; font-weight:700; border:1px solid var(--hairline); background:#fff; color:var(--catalina); }
+  .dialog-btn.primary { background:var(--egyptian); border-color:var(--egyptian); color:#fff; }
+  .dialog-btn.danger { background:var(--danger); border-color:var(--danger); color:#fff; }
+  @media(max-width:600px) { .shipper-navbar { padding:0 16px; gap:12px; } .shipper-user>span { display:none; } .page-intro h1 { font-size:23px; } .dialog-actions { flex-wrap:wrap; } }
+
+
+  :root{--hairline:#dce6f7;--border:#dce6f7;--ink:#071233;--muted:#5b6e99;--success:#15803d;--danger:#d93838;}
+  body{margin:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--alice);color:var(--ink);}
+  *{box-sizing:border-box;}button,input,textarea,select{font:inherit;}button{cursor:pointer;}button:disabled{cursor:not-allowed;opacity:.5;}
+  .member-layout{width:100%;max-width:1200px;margin:auto;padding:28px 24px 60px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:24px;align-items:start;}
+  .member-layout>section,.review-grid>*{min-width:0;}
+  .member-sidebar{background:#fff;border:1px solid var(--hairline);border-radius:10px;padding:12px;}
+  .member-identity{display:flex;gap:10px;align-items:center;padding:8px 6px 20px;border-bottom:1px solid var(--hairline);margin-bottom:10px;}
+  .member-identity .avatar{width:36px;height:36px;border-radius:50%;background:var(--egyptian);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;}
+  .member-identity strong{display:block;font-size:13px;color:var(--catalina);}.member-identity span{display:block;font-size:11px;color:var(--muted);margin-top:5px;}
+  .member-sidebar>a{display:flex;gap:9px;align-items:center;padding:12px 10px;font-size:12px;color:var(--muted);text-decoration:none;border-radius:6px;}
+  .member-sidebar>a.active,.member-sidebar>a:hover{background:var(--alice);color:var(--egyptian);}.member-sidebar>a.active{font-weight:700;}
+  .member-heading{margin-bottom:22px;}.member-heading h1{font-size:23px;color:var(--catalina);font-weight:800;margin:8px 0;}.member-heading p{font-size:12px;color:var(--muted);line-height:1.7;}
+  .breadcrumb{font-size:11px;color:var(--muted);}.card{background:#fff;border:1px solid var(--hairline);border-radius:10px;overflow:hidden;margin-bottom:18px;box-shadow:0 8px 24px #0d226b0a;}
+  .card-head{padding:17px 20px;border-bottom:1px solid var(--hairline);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}.card-head h2{font-size:15px;color:var(--catalina);margin:0;}.card-head p{font-size:12px;color:var(--muted);line-height:1.7;margin-top:5px;}.card-body{padding:20px;}
+  .demo-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:18px;}.demo-stat{background:#fff;border:1px solid var(--hairline);border-radius:10px;padding:17px;}.demo-stat span{display:block;font-size:11px;font-weight:700;color:var(--muted);}.demo-stat strong{display:block;font-size:26px;color:var(--egyptian);margin:6px 0;}.demo-stat small{color:var(--muted);font-size:11px;}
+  .form-row{display:flex;gap:12px;align-items:end;flex-wrap:wrap;}.form-row>label{flex:1;min-width:150px;}.field-label{display:block;font-size:12px;font-weight:700;color:var(--catalina);margin:0 0 8px;}.control{display:block;width:100%;padding:10px 12px;background:#fff;border:1px solid var(--hairline);border-radius:6px;color:var(--ink);}.form-field{margin-bottom:16px;}textarea.control{resize:vertical;line-height:1.7;}
+  .demo-btn{display:inline-flex;align-items:center;justify-content:center;padding:9px 14px;border-radius:6px;border:1px solid var(--hairline);background:#fff;color:var(--catalina);font-size:12px;font-weight:700;text-decoration:none;gap:7px;}.demo-btn.primary{background:var(--egyptian);border-color:var(--egyptian);color:#fff;}.demo-btn.danger{background:#fdf2f2;color:var(--danger);border-color:#fecaca;}.actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .hint{font-size:12px;color:var(--muted);line-height:1.8;margin-top:12px;}.badge{display:inline-flex;padding:5px 9px;border-radius:99px;font-size:10px;font-weight:800;white-space:nowrap;}.b-confirmed,.b-prepared{color:var(--egyptian);background:#e8f1ff;}.b-shipping,.b-completed,.b-verified{color:var(--success);background:#ecfdf5;}.b-failed,.b-issue{color:var(--danger);background:#fdf2f2;}.b-muted{color:var(--muted);background:var(--alice);}
+  .table-wrap{overflow:auto;}table{width:100%;border-collapse:collapse;min-width:620px;}th,td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--hairline);font-size:12px;}thead th{font-size:10px;color:var(--muted);background:#f8fafe;text-transform:uppercase;}td strong{color:var(--catalina);}td small{display:block;margin-top:6px;font-size:11px;color:var(--muted);}
+  .info-row{display:flex;justify-content:space-between;gap:16px;font-size:12px;padding:10px 0;border-bottom:1px dashed var(--hairline);line-height:1.7;}.info-row>span{color:var(--muted);}.info-row>strong{text-align:right;color:var(--catalina);}.two-col{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;}.empty{padding:36px 20px;text-align:center;color:var(--muted);font-size:13px;}
+  .store-avatar{display:grid;place-items:center;background:var(--egyptian);color:#fff;font-weight:700;font-size:12px;}.user-menu-wrapper:focus-within .user-dropdown-menu{opacity:1;visibility:visible;transform:translateY(0);}
+  @media(max-width:1000px){.member-layout{grid-template-columns:minmax(0,1fr);}.member-sidebar{display:flex;flex-wrap:wrap;gap:4px;}.member-identity{width:100%;padding-bottom:12px;margin-bottom:4px;}}
+  @media(max-width:650px){.member-layout{padding:20px 16px 40px;}.demo-stats{gap:8px;}.demo-stat{padding:12px;}.demo-stat strong{font-size:22px;}.two-col{grid-template-columns:1fr;}.top-bar{padding:8px 16px;font-size:10px;flex-wrap:wrap;gap:8px;}.navbar-main{padding:12px 16px;flex-wrap:wrap;gap:14px;}.nav-actions{gap:7px;flex-wrap:wrap;}.nav-action-link{font-size:11px;padding:6px;}.user-name-text{display:none;}.member-heading h1{font-size:21px;}.card-head,.card-body{padding:16px;}}
+
+
+  .history-layout{display:grid;grid-template-columns:250px minmax(0,1fr);border-top:1px solid var(--hairline);}.history-list{border-right:1px solid var(--hairline);}.history-order{display:block;width:100%;padding:16px;text-align:left;background:#fff;border:0;border-bottom:1px solid var(--hairline);}.history-order.active{background:var(--alice);box-shadow:inset 3px 0 var(--egyptian);}.history-order>div{display:flex;justify-content:space-between;align-items:center;gap:8px;}.history-order strong{font-size:13px;color:var(--catalina);}.history-order p{font-size:11px;color:var(--muted);margin:9px 0;}.history-order>b{font-size:12px;color:var(--egyptian);}.history-detail{padding:20px;min-width:0;}.history-detail h2{font-family:'Fraunces',serif;color:var(--catalina);font-size:22px;margin:0 0 6px;}.history-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}.journey{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin:24px 0;gap:4px;position:relative;}.journey:before{content:'';position:absolute;left:10%;right:10%;top:12px;height:2px;background:var(--hairline);}.journey-step{text-align:center;font-size:10px;color:var(--muted);line-height:1.6;position:relative;}.journey-step>span{width:26px;height:26px;display:grid;place-items:center;border-radius:50%;margin:0 auto 7px;background:var(--hairline);color:#fff;border:2px solid #fff;}.journey-step.done>span{background:var(--egyptian);}.journey-step.current>span{background:var(--saffron);color:var(--catalina);}.journey-step.failed>span{background:var(--danger);}.history-detail h3{font-size:13px;color:var(--catalina);margin:20px 0 6px;}.history-product{font-size:12px;display:flex;justify-content:space-between;gap:14px;padding:10px 0;border-bottom:1px dashed var(--hairline);}.history-product small{display:block;color:var(--muted);margin-top:5px;}.history-product>strong{white-space:nowrap;}.history-summary{margin-top:14px;}@media(max-width:1200px){.history-layout{grid-template-columns:1fr;}.history-list{border-right:0;max-height:300px;overflow:auto;border-bottom:1px solid var(--hairline);}}@media(max-width:550px){.history-detail{padding:16px;}.journey-step{font-size:9px;}.info-row{flex-wrap:wrap;}.info-row>strong{text-align:left;}}
+</style>
 </head>
-<body>
-
-  <!-- NAVBAR -->
-  <nav class="navbar">
-    <a href="#" class="brand-logo">
-      <span class="brand-name">ancient</span><span class="brand-book">BOOK</span><span class="brand-dot"></span>
-    </a>
-    <div class="nav-links">
-      <a href="#">Trang chủ</a>
-      <a href="#">Sách</a>
-      <a href="#" class="active">Đơn hàng</a>
-      <a href="trang3.html">Tài khoản</a>
-    </div>
-    <div class="avatar">HA</div>
-  </nav>
-
-  <!-- MAIN CONTAINER -->
-  <main class="container">
-    <div class="page-intro">
-      <div>
-        <h1>Lịch sử đơn hàng &amp; Tiến trình</h1>
-        <p>Theo dõi trạng thái, mã vận đơn và hành trình giao hàng của từng đơn.</p>
-      </div>
+<body><div class="top-bar">
+        <div>Miễn phí giao hàng toàn quốc cho đơn từ <strong>250.000 đ</strong> • Cam kết 100% sách chính hãng</div>
+        <div>Hotline hỗ trợ: <strong>1900 636 467</strong></div>
     </div>
 
-    <!-- THỐNG KÊ (STATS) -->
-    <div class="stats">
-      <div class="stat">
-        <div class="stat-title">TẤT CẢ ĐƠN</div>
-        <div class="stat-number">12</div>
-        <div class="stat-note">Đơn hàng đã đặt</div>
-      </div>
-      <div class="stat">
-        <div class="stat-title">ĐANG GIAO</div>
-        <div class="stat-number">02</div>
-        <div class="stat-note">Đang được vận chuyển</div>
-      </div>
-      <div class="stat">
-        <div class="stat-title">HOÀN THÀNH</div>
-        <div class="stat-number">09</div>
-        <div class="stat-note">Đã nhận thành công</div>
-      </div>
-      <div class="stat">
-        <div class="stat-title">CHỜ GIAO LẠI</div>
-        <div class="stat-number">01</div>
-        <div class="stat-note">Đang trong thời gian giao lại</div>
-      </div>
-    </div>
+    <header class="store-header">
+        <div class="navbar-main">
+            <a href="#" class="brand-logo">ancient<span class="book-text">BOOK</span><span class="accent-dot"></span></a>
 
-    <!-- MAIN CARD -->
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <h2>Danh sách đơn hàng</h2>
-          <p>Chọn một đơn để xem chi tiết và tiến trình vận chuyển.</p>
-        </div>
-      </div>
-
-      <div class="toolbar">
-        <input class="search" id="orderSearch" placeholder="Tìm mã đơn..." oninput="filterOrders()">
-        <select class="select" id="statusFilter" onchange="filterOrders()">
-          <option value="">Tất cả trạng thái</option>
-          <option value="Đang giao">Đang giao</option>
-          <option value="Hoàn thành">Hoàn thành</option>
-          <option value="Chờ giao lại">Chờ giao lại</option>
-        </select>
-      </div>
-
-      <div class="order-layout">
-        <!-- DANH SÁCH ĐƠN -->
-        <div class="order-list" id="orders">
-          <div class="order-item active" data-status="Đang giao" onclick="showOrder('DH1023', this)">
-            <div class="order-top">
-              <span class="order-id">#DH1023</span>
-              <span class="badge b-shipping">Đang giao</span>
+            <div class="nav-actions">
+                <a href="#" class="nav-action-link">
+                    <svg class="icon" viewBox="0 0 24 24" style="fill: currentColor;"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>
+                    <span>Yêu thích</span>
+                    <span class="badge-count">2</span>
+                </a>
+                <a href="#" class="nav-action-link">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
+                    <span>Giỏ hàng</span>
+                    <span class="badge-count">2</span>
+                </a>
+                <div class="user-menu-wrapper">
+                    <div class="user-dropdown-trigger" tabindex="0" role="button" aria-label="Menu tài khoản">
+                        <span class="user-avatar-tiny store-avatar">AN</span>
+                        <span class="user-name-text">member_an</span>
+                        <svg class="icon" viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="m6 9 6 6 6-6" /></svg>
+                    </div>
+                    <ul class="user-dropdown-menu">
+                        <li><a href="#" class="dropdown-item-link">Hồ sơ & Đổi mật khẩu</a></li>
+                        <li><a href="#" class="dropdown-item-link">Lịch sử đơn đặt sách</a></li>
+                        <li><a href="#" class="dropdown-item-link">Hạng thành viên</a></li><li><a href="#" class="dropdown-item-link danger">Đăng xuất tài khoản</a></li>
+                    </ul>
+                </div>
             </div>
-            <div class="order-date">14/09/2026 · 2 sản phẩm</div>
-            <div class="order-money">325.000đ</div>
-          </div>
-
-          <div class="order-item" data-status="Hoàn thành" onclick="showOrder('DH1012', this)">
-            <div class="order-top">
-              <span class="order-id">#DH1012</span>
-              <span class="badge b-completed">Hoàn thành</span>
-            </div>
-            <div class="order-date">11/09/2026 · 3 sản phẩm</div>
-            <div class="order-money">480.000đ</div>
-          </div>
-
-          <div class="order-item" data-status="Chờ giao lại" onclick="showOrder('DH1005', this)">
-            <div class="order-top">
-              <span class="order-id">#DH1005</span>
-              <span class="badge b-retry">Chờ giao lại</span>
-            </div>
-            <div class="order-date">06/09/2026 · 2 sản phẩm</div>
-            <div class="order-money">210.000đ</div>
-          </div>
         </div>
+    </header>
+<main class="member-layout"><aside class="member-sidebar" aria-label="Tài khoản của tôi"><div class="member-identity"><div class="avatar">AN</div><div><strong>Phan Thúy An</strong><span>Tài khoản thành viên</span></div></div>
+  <a href="#"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg> Thông tin tài khoản</a><a  href="#" class="active" aria-current="page"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7.5 4.27 9 5.15"/><path d="M21 8v8l-9 5-9-5V8l9-5 9 5Z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg> Đơn hàng của tôi</a><a href="#"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg> Đánh giá &amp; Ví F-Point</a><a href="#" ><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg> Hạng thành viên</a><a href="#"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg> Sách yêu thích</a></aside><section><div class="member-heading"><p class="breadcrumb">Trang chủ / Tài khoản / Lịch sử đơn &amp; Tiến trình vận chuyển</p><h1>Lịch sử đơn &amp; Tiến trình vận chuyển</h1><p>Theo dõi các đơn sách giấy và thông tin giao nhận của bạn.</p></div><section class="demo-stats"><div class="demo-stat"><span>TẤT CẢ ĐƠN</span><strong id="allOrdersCount">0</strong><small>Đơn hàng của bạn</small></div><div class="demo-stat"><span>ĐANG GIAO</span><strong id="shippingOrdersCount">0</strong><small>Đang được vận chuyển</small></div><div class="demo-stat"><span>HOÀN THÀNH</span><strong id="completedOrdersCount">0</strong><small>Đã giao thành công</small></div></section>
+<section class="card"><div class="card-head"><div><h2>Danh sách đơn hàng</h2><p>Chọn một đơn để xem sách, thanh toán và tiến trình giao hàng.</p></div></div><div class="card-body"><div class="form-row"><label><span class="field-label">Mã đơn hàng</span><input class="control" id="historySearch" placeholder="VD: ORD-1023"></label><label><span class="field-label">Trạng thái</span><select class="control" id="historyStatus"><option value="All">Tất cả trạng thái</option><option value="Confirmed">Đã xác nhận</option><option value="Prepared">Đã chuẩn bị xong</option><option value="Shipping">Đang giao</option><option value="Completed">Hoàn thành</option><option value="Failed">Thất bại</option></select></label></div></div><div class="history-layout"><div id="historyList" class="history-list" aria-label="Chọn đơn hàng"></div><section class="history-detail" id="historyDetail"></section></div></section><p class="demo-caption">Giao diện minh họa · Các thao tác chỉ dùng dữ liệu mẫu trong trang đang mở.</p><div id="demoToast" class="demo-toast" role="status" aria-live="polite" hidden></div></section></main><script>
+function money(value){return Number(value).toLocaleString('vi-VN')+' đ';}
+function safe(value){return String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));}
+function dateText(value){return new Intl.DateTimeFormat('vi-VN',{dateStyle:'short',timeStyle:'short',timeZone:'Asia/Ho_Chi_Minh'}).format(new Date(value));}
+function notify(message,error=false){const el=document.getElementById('demoToast');clearTimeout(notify.timer);el.textContent=message;el.className='demo-toast'+(error?' error':'');el.hidden=false;notify.timer=setTimeout(()=>el.hidden=true,4000);}
+document.addEventListener('click',event=>{const link=event.target.closest('a[href="#"]');if(link)event.preventDefault();const close=event.target.closest('[data-close-dialog]');if(close)document.getElementById(close.dataset.closeDialog).close();});
 
-        <!-- CHI TIẾT ĐƠN -->
-        <div class="detail" id="detail"></div>
-      </div>
-    </div>
-  </main>
-
-  <!-- JAVASCRIPT LOGIC -->
-  <script>
-    const orders = {
-      DH1023: {
-        date: '14/09/2026', 
-        status: 'Đang giao', 
-        cls: 'b-shipping', 
-        step: 3, 
-        tracking: 'ANB10230045',
-        receiver: 'Nguyễn Minh Anh', 
-        address: 'Quận 1, TP.HCM', 
-        shipper: 'Nguyễn Văn Nam',
-        products: [
-          ['Nhà giả kim ×1', '120.000đ'],
-          ['Đắc nhân tâm ×1', '95.000đ'],
-          ['Phí giao hàng', '110.000đ']
-        ],
-        note: 'Đơn hàng đang được Shipper vận chuyển đến địa chỉ nhận. Bạn có thể theo dõi tiến trình tại đây.'
-      },
-      DH1012: {
-        date: '11/09/2026', 
-        status: 'Hoàn thành', 
-        cls: 'b-completed', 
-        step: 4, 
-        tracking: 'ANB10120032',
-        receiver: 'Nguyễn Minh Anh', 
-        address: 'Quận 1, TP.HCM', 
-        shipper: 'Nguyễn Văn Nam',
-        products: [
-          ['Nhà giả kim ×1', '120.000đ'],
-          ['Tuổi trẻ đáng giá bao nhiêu ×1', '180.000đ'],
-          ['Đắc nhân tâm ×1', '180.000đ']
-        ],
-        note: 'Đơn hàng đã được giao thành công. Bạn có thể đánh giá từng cuốn sách đã mua.'
-      },
-      DH1005: {
-        date: '06/09/2026', 
-        status: 'Chờ giao lại', 
-        cls: 'b-retry', 
-        step: 3, 
-        tracking: 'ANB10050018',
-        receiver: 'Nguyễn Minh Anh', 
-        address: 'Quận 1, TP.HCM', 
-        shipper: 'Nguyễn Văn Nam',
-        products: [
-          ['Nhà giả kim ×1', '120.000đ'],
-          ['Đắc nhân tâm ×1', '90.000đ']
-        ],
-        note: 'Lần giao trước chưa thành công. Đơn đang trong thời gian giao lại; Shipper có thể thực hiện giao lại trong thời hạn quy định.'
-      }
-    };
-
-    function showOrder(id, el) {
-      document.querySelectorAll('.order-item').forEach(x => x.classList.remove('active'));
-      if (el) el.classList.add('active');
-
-      const o = orders[id];
-      const done = o.step === 4;
-      const retry = o.status === 'Chờ giao lại';
-
-      const steps = [
-        ['✓', 'Đặt hàng'],
-        ['✓', 'Chuẩn bị'],
-        [done ? '✓' : '3', 'Đang giao'],
-        [done ? '✓' : '4', 'Hoàn thành']
-      ];
-
-      const timeline = steps.map((s, i) => {
-        let c = i < o.step - 1 ? 'done' : (i === o.step - 1 ? 'current' : '');
-        if (done) c = 'done';
-        return `<div class="step ${c}"><div class="dot">${s[0]}</div>${s[1]}</div>`;
-      }).join('');
-
-      const products = o.products.map(p => `
-        <div class="product-row">
-          <span class="product-name">${p[0]}</span>
-          <span class="product-price">${p[1]}</span>
-        </div>
-      `).join('');
-
-      const total = o.status === 'Đang giao' ? '325.000đ' : o.status === 'Hoàn thành' ? '480.000đ' : '210.000đ';
-
-      document.getElementById('detail').innerHTML = `
-        <div class="detail-head">
-          <div>
-            <h2>Đơn hàng #${id}</h2>
-            <p>Ngày đặt: ${o.date}</p>
-          </div>
-          <span class="badge ${o.cls}">${o.status}</span>
-        </div>
-
-        <div class="tracking-box">
-          <div>
-            <div class="tracking-label">Mã vận đơn</div>
-            <div class="tracking-code">${o.tracking}</div>
-          </div>
-          <button class="copy-btn" onclick="copyTracking('${o.tracking}')">Sao chép mã</button>
-        </div>
-
-        <div class="timeline">${timeline}</div>
-
-        <div class="info-grid">
-          <div class="info-panel">
-            <h3>Thông tin giao hàng</h3>
-            <div class="info-row"><span>Người nhận</span><b>${o.receiver}</b></div>
-            <div class="info-row"><span>Địa chỉ</span><b>${o.address}</b></div>
-            <div class="info-row"><span>Shipper</span><b>${o.shipper}</b></div>
-          </div>
-          <div class="info-panel">
-            <h3>Sản phẩm</h3>
-            ${products}
-            <div class="total"><span>Tổng thanh toán</span><strong>${total}</strong></div>
-          </div>
-        </div>
-
-        <div class="alert ${retry ? 'alert-retry' : 'alert-info'}">
-          <b>${retry ? 'Giao hàng chưa thành công:' : 'Trạng thái đơn hàng:'}</b> ${o.note}
-        </div>
-
-        ${done ? '<a class="review-link" href="trang3.html">Đánh giá sách đã mua →</a>' : ''}
-      `;
-    }
-
-    function copyTracking(code) {
-      navigator.clipboard?.writeText(code);
-      alert('Đã sao chép mã vận đơn: ' + code);
-    }
-
-    function filterOrders() {
-      const q = document.getElementById('orderSearch').value.toLowerCase();
-      const st = document.getElementById('statusFilter').value;
-
-      document.querySelectorAll('.order-item').forEach(item => {
-        const okText = item.textContent.toLowerCase().includes(q);
-        const okStatus = !st || item.dataset.status === st;
-        item.style.display = okText && okStatus ? 'block' : 'none';
-      });
-    }
-
-    // Khởi tạo hiển thị đơn hàng mặc định đầu tiên
-    showOrder('DH1023', document.querySelector('.order-item.active'));
-  </script>
-</body>
+const CUSTOMER_STATUS={Confirmed:'Đã xác nhận',Prepared:'Đã chuẩn bị xong',Shipping:'Đang giao',Completed:'Hoàn thành',Failed:'Thất bại'};
+const customerOrders=[
+  {id:1023,status:'Shipping',date:'2026-10-17T09:30:00+07:00',paid:false,shipper:'Nguyễn Văn Nam',shipperPhone:'0905000001',items:[{title:'Nhà giả kim',quantity:1,price:120000},{title:'Đắc nhân tâm',quantity:1,price:95000}],discount:0},
+  {id:1012,status:'Completed',date:'2026-10-14T09:30:00+07:00',paid:true,shipper:'Nguyễn Văn Nam',shipperPhone:'0905000001',completedAt:'2026-10-15T15:30:00+07:00',items:[{title:'Nhà giả kim',quantity:1,price:120000},{title:'Tội ác và hình phạt',quantity:1,price:180000},{title:'Số đỏ',quantity:1,price:180000}],discount:0},
+  {id:1005,status:'Failed',date:'2026-10-13T09:30:00+07:00',paid:false,shipper:'Lê Minh Khoa',shipperPhone:'0905000002',completedAt:'2026-10-14T16:15:00+07:00',failureReason:'Không liên hệ được người nhận',failureNote:'Đã gọi nhiều lần nhưng chưa liên hệ được.',items:[{title:'Nhà giả kim',quantity:1,price:120000},{title:'Dế Mèn phiêu lưu ký',quantity:1,price:90000}],discount:0},
+  {id:1024,status:'Prepared',date:'2026-10-16T09:30:00+07:00',paid:false,shipper:null,items:[{title:'Đại Việt Sử Ký Toàn Thư',quantity:1,price:120000}],discount:10000},
+  {id:1027,status:'Confirmed',date:'2026-10-17T10:30:00+07:00',paid:true,shipper:null,items:[{title:'Tuổi trẻ đáng giá bao nhiêu',quantity:1,price:180000}],discount:0}
+];
+let selectedCustomerOrder=1023;
+function orderSubtotal(order){return order.items.reduce((sum,item)=>sum+item.price*item.quantity,0);}
+function renderCustomerOrders(){
+  document.getElementById('allOrdersCount').textContent=customerOrders.length;
+  document.getElementById('shippingOrdersCount').textContent=customerOrders.filter(order=>order.status==='Shipping').length;
+  document.getElementById('completedOrdersCount').textContent=customerOrders.filter(order=>order.status==='Completed').length;
+  const query=document.getElementById('historySearch').value.trim().toLowerCase().replace(/^#?ord-/,'');
+  const status=document.getElementById('historyStatus').value;
+  const visible=customerOrders.filter(order=>(status==='All'||order.status===status)&&(!query||String(order.id).includes(query)));
+  if(!visible.some(order=>order.id===selectedCustomerOrder))selectedCustomerOrder=visible[0]?.id;
+  document.getElementById('historyList').innerHTML=visible.length?visible.map(order=>`<button class="history-order${order.id===selectedCustomerOrder?' active':''}" data-customer-order="${order.id}" type="button" aria-pressed="${order.id===selectedCustomerOrder}"><div><strong>#ORD-${order.id}</strong><span class="badge b-${order.status.toLowerCase()}">${CUSTOMER_STATUS[order.status]}</span></div><p>${dateText(order.date)} · ${order.items.reduce((sum,item)=>sum+item.quantity,0)} cuốn sách</p><b>${money(orderSubtotal(order)-order.discount)}</b></button>`).join(''):'<div class="empty">Không tìm thấy đơn phù hợp.</div>';
+  renderCustomerDetail();
+}
+function renderCustomerDetail(){
+  const order=customerOrders.find(order=>order.id===selectedCustomerOrder);
+  if(!order){document.getElementById('historyDetail').innerHTML='<div class="empty">Chọn bộ lọc khác để xem đơn hàng.</div>';return;}
+  const stage={Confirmed:1,Prepared:2,Shipping:3,Completed:4,Failed:4}[order.status];
+  const labels=['Đặt hàng','Đã xác nhận','Đã chuẩn bị','Đang giao',order.status==='Failed'?'Thất bại':'Hoàn thành'];
+  const timeline=labels.map((label,index)=>{const cls=index<stage||order.status==='Completed'?'done':index===stage?order.status==='Failed'?'failed':'current':'';return `<div class="journey-step ${cls}"${index===stage?' aria-current="step"':''}><span>${cls==='done'?'✓':cls==='failed'?'×':index+1}</span>${label}</div>`;}).join('');
+  const finalAmount=orderSubtotal(order)-order.discount;
+  const message=order.status==='Failed'?`<div class="notice danger"><strong>Giao hàng thất bại</strong><br>${safe(order.failureReason)}<br>${safe(order.failureNote)}<br>Kết thúc: ${dateText(order.completedAt)}</div>`:order.status==='Completed'?`<div class="notice success">Đã giao thành công lúc ${dateText(order.completedAt)}. Đã ghi nhận thanh toán, điểm thưởng và quyền đọc E-Book tặng kèm nếu có.</div>`:`<div class="notice">${order.status==='Confirmed'?'Đơn đã xác nhận, kho đang chuẩn bị sách.':order.status==='Prepared'?'Đơn đã đóng gói xong, đang chờ phân công giao hàng.':'Shipper đang vận chuyển sách đến địa chỉ của bạn.'}</div>`;
+  document.getElementById('historyDetail').innerHTML=`<div class="history-head"><h2>Đơn #ORD-${order.id}</h2><span class="badge b-${order.status.toLowerCase()}">${CUSTOMER_STATUS[order.status]}</span></div><p class="hint">Ngày đặt: ${dateText(order.date)}</p><div class="journey" aria-label="Tiến trình vận chuyển">${timeline}</div>${message}<h3>Thông tin giao hàng</h3><div class="info-row"><span>Người nhận</span><strong>Phan Thúy An · 0904000001</strong></div><div class="info-row"><span>Địa chỉ</span><strong>42 Nguyễn Thị Thập, phường Tân Hưng, TP. Hồ Chí Minh</strong></div><div class="info-row"><span>Shipper</span><strong>${order.shipper?safe(order.shipper):'Chờ phân công'}${order.shipperPhone?`<br><a href="tel:${order.shipperPhone}">${safe(order.shipperPhone)}</a>`:''}</strong></div><div class="info-row"><span>Thanh toán</span><strong>${order.paid?'Đã thanh toán':order.status==='Failed'?'Chưa thu tiền · Giao thất bại':'Chưa thanh toán · COD'}</strong></div><h3>Sách trong đơn</h3>${order.items.map(item=>`<div class="history-product"><div>${safe(item.title)}<small>${money(item.price)} × ${item.quantity}</small></div><strong>${money(item.price*item.quantity)}</strong></div>`).join('')}<div class="history-summary"><div class="info-row"><span>Tiền sách</span><strong>${money(orderSubtotal(order))}</strong></div><div class="info-row"><span>Giảm bằng F-Point</span><strong>${money(order.discount)}</strong></div><div class="info-row"><span>Tổng thanh toán</span><strong>${money(finalAmount)}</strong></div></div>${order.status==='Completed'?'<div class="actions" style="margin-top:18px"><a class="demo-btn primary" href="#">Đánh giá sách đã mua</a></div>':''}`;
+}
+document.getElementById('historyList').addEventListener('click',event=>{const button=event.target.closest('[data-customer-order]');if(button){selectedCustomerOrder=Number(button.dataset.customerOrder);renderCustomerOrders();}});
+document.getElementById('historySearch').addEventListener('input',renderCustomerOrders);
+document.getElementById('historyStatus').addEventListener('change',renderCustomerOrders);
+renderCustomerOrders();
+</script></body>
 </html>
