@@ -12,6 +12,13 @@ export const CheckoutPage: React.FC = () => {
     const navigate = useNavigate();
     const cartItems = location.state?.selectedItems || [];
 
+    const hasRentalItem = cartItems.some((item: any) => 
+        item.purchaseType === 2 || 
+        item.purchaseType === '2' || 
+        item.purchaseType === 'Rental' || 
+        !!item.rentalDuration
+    );
+
     const {
         addresses,
         selectedAddrId,
@@ -37,6 +44,17 @@ export const CheckoutPage: React.FC = () => {
             navigate('/cart');
         }
     }, [cartItems, navigate]);
+
+    useEffect(() => {
+        if (hasRentalItem) {
+            if (paymentMethod === 'cod') {
+                setPaymentMethod('momo');
+            }
+            if (pointsUsed > 0) {
+                handlePointsChange(0);
+            }
+        }
+    }, [hasRentalItem, paymentMethod, pointsUsed, setPaymentMethod, handlePointsChange]);
 
     const renderPurchaseFormat = (item: OrderItem) => {
         const isEbook = item.purchaseType === 2 || item.purchaseType === '2' || item.purchaseType === 'Rental' || !!item.rentalDuration;
@@ -130,10 +148,12 @@ export const CheckoutPage: React.FC = () => {
                     <section className={styles.checkoutCard}>
                         <div className={styles.checkoutCardTitle}><span>Phương thức thanh toán</span></div>
                         <div className={styles.paymentOptionsList}>
-                            <label className={styles.paymentOptionItem}>
-                                <input type="radio" value="cod" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} />
-                                <div><h4>Thanh toán khi nhận hàng (COD)</h4></div>
-                            </label>
+                            {!hasRentalItem && (
+                                <label className={styles.paymentOptionItem}>
+                                    <input type="radio" value="cod" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} />
+                                    <div><h4>Thanh toán khi nhận hàng (COD)</h4></div>
+                                </label>
+                            )}
                             <label className={styles.paymentOptionItem}>
                                 <input type="radio" value="momo" checked={paymentMethod === 'momo'} onChange={() => setPaymentMethod('momo')} />
                                 <div><h4>Ví điện tử MoMo</h4></div>

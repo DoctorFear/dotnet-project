@@ -307,5 +307,36 @@ namespace AncientBook.Infrastructure.Storage
             // Trả về Direct Link có đuôi ?raw=1 để trình duyệt stream trực tiếp
             return await GetDirectSharedLinkAsync(client, targetPath);
         }
+        
+        // Lưu file cho hoàn hàng
+        public async Task<string> SaveRefundMediaAsync(IFormFile file, string folder)
+        {
+            if (file == null || file.Length == 0)
+                throw new ArgumentException("Tệp tải lên không hợp lệ hoặc để trống.");
+
+            const long maxFileSize = 50 * 1024 * 1024;
+            if (file.Length > maxFileSize)
+                throw new InvalidOperationException("Kích thước tệp vượt quá giới hạn (tối đa 50MB).");
+
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var allowedExtensions = new[] { ".png", ".jpg", ".jpeg", ".webp", ".mp4", ".mov" };
+            if (!allowedExtensions.Contains(extension))
+                throw new InvalidOperationException("Chỉ chấp nhận ảnh (.png, .jpg, .jpeg, .webp) và video (.mp4, .mov).");
+
+            string uniqueFileName = $"{Guid.NewGuid():N}_{DateTime.UtcNow:yyyyMMddHHmmss}{extension}";
+            string subFolder = string.IsNullOrWhiteSpace(folder) ? "Refunds" : folder.Trim('/');
+            string targetPath = $"/{_baseFolder.Trim('/')}/{subFolder}/{uniqueFileName}".Replace("//", "/");
+
+            string accessToken = await GetAccessTokenAsync(); 
+            using var client = new DropboxClient(accessToken);
+
+            using var memoryStream = new MemoryStream();
+            await file.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+
+            await client.Files.UploadAsync(targetPath, WriteMode.Overwrite.Instance, body: memoryStream);
+
+            return await GetDirectSharedLinkAsync(client, targetPath);
+        }
     }
 }

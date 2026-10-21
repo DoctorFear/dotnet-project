@@ -39,6 +39,7 @@ namespace AncientBook.Infrastructure.Persistence
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
         public DbSet<Cart> Carts => Set<Cart>();
         public DbSet<CartItem> CartItems => Set<CartItem>();
+        public DbSet<Refund> Refunds => Set<Refund>();
         public DbSet<Book> Books => Set<Book>();
         public DbSet<Inventory> Inventories => Set<Inventory>();
         public DbSet<FPoints> FPoints => Set<FPoints>();
@@ -453,6 +454,13 @@ namespace AncientBook.Infrastructure.Persistence
 
                 entity.HasIndex(e => new { e.Status, e.StaffId });
             });
+
+            modelBuilder.Entity<Refund>()
+                .Property(r => r.ImageUrls)
+                .HasConversion(
+                    v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
+                    v => System.Text.Json.JsonSerializer.Deserialize<List<string>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new List<string>()
+            );
 
             // 19. Cấu hình ChatMessage
             modelBuilder.Entity<ChatMessage>(entity =>

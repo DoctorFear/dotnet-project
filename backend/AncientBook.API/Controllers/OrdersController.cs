@@ -77,7 +77,6 @@ namespace AncientBook.API.Controllers
         }
 
         [HttpPut("{id}/status")]
-        [Authorize(Roles = "Admin")]
         [Authorize(Roles = "Staff")]
         public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] UpdateOrderStatusRequest request)
         {
@@ -112,7 +111,6 @@ namespace AncientBook.API.Controllers
         }
 
         [HttpPut("{id}/approve-refund")]
-        [Authorize(Roles = "Admin")]
         [Authorize(Roles = "Staff")]
         public async Task<IActionResult> ApproveReturnOrderAsync(int id)
         {
@@ -149,8 +147,7 @@ namespace AncientBook.API.Controllers
         {
             try
             {
-                var currentUserIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? 
-                                   User.FindFirst("sub")?.Value;
+                var currentUserIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
                 var userRoleClaim = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
 
                 if (string.IsNullOrEmpty(currentUserIdClaim) || !int.TryParse(currentUserIdClaim, out int currentUserId))
