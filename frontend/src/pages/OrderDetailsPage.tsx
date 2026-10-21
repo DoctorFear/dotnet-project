@@ -107,7 +107,7 @@ export const OrderDetailPage: React.FC = () => {
         return (
             <div className={styles.centerBox}>
                 <p style={{ color: 'var(--danger, #d93838)' }}>{error || 'Không tìm thấy đơn hàng.'}</p>
-                <button className={styles.btnBack} onClick={() => navigate('/orders')}>Quay lại danh sách đơn hàng</button>
+                <button className={styles.btnBack} onClick={() => navigate('/order-history')}>Quay lại danh sách đơn hàng</button>
             </div>
         );
     }
@@ -123,7 +123,7 @@ export const OrderDetailPage: React.FC = () => {
                 <Breadcrumb 
                     items={[
                         { label: 'Trang chủ', link: '/' }, 
-                        { label: 'Lịch sử đơn hàng', link: '/orders' },
+                        { label: 'Lịch sử đơn hàng', link: '/order-history' },
                         { label: `Chi tiết đơn hàng #${order.id}` }
                     ]} 
                 />

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useBookManagement } from '../../../hooks/useBookManagement';
+import { useEbookConfiguration } from '../../../hooks/useEbookConfiguration';
 import {
     BookOpen,
     Building2,
@@ -18,6 +19,7 @@ import BookCover from '../../common/BookCover';
 import ToastNotification from '../../common/ToastNotification';
 import styles from './AdminBookManagement.module.css';
 import AdminCatalogForm from './AdminCatalogForm';
+import EBookCOnfigurationField from './EBookCOnfigurationField';
 
 const statusLabels: Record<AdminBookStatus, string> = {
     selling: 'Đang bán',
@@ -29,6 +31,7 @@ const formatCurrency = (value: number) => `${value.toLocaleString('vi-VN')} đ`;
 
 export const AdminBookManagement: React.FC = () => {
     const controller = useBookManagement();
+    const ebookController = useEbookConfiguration();
     const { categories, publishers, isLoading, error, activeTab, searchText, statusFilter, categoryFilter, publisherFilter, minPrice, maxPrice, pageSize, confirmState, toasts, categoryNameMap, publisherNameMap, stats, currentPage, pageItems, filteredItems, setSearchText, setStatusFilter, setCategoryFilter, setPublisherFilter, setMinPrice, setMaxPrice, setPage, setPageSize, setConfirmState, resetListState, openCreateModal, openEditModal, confirmDelete, removeToast } = controller;
 
     return (
@@ -192,6 +195,9 @@ export const AdminBookManagement: React.FC = () => {
                                     <td><span className={`${styles.statusBadge} ${book.status === 'selling' ? styles.statusSelling : book.status === 'upcoming' ? styles.statusUpcoming : styles.statusStopped}`}>{statusLabels[book.status]}</span></td>
                                     <td>
                                         <div className={styles.actionBtns}>
+                                            <button type="button" className={`${styles.btnTable} ${styles.ebook}`} onClick={() => ebookController.open(book)}>
+                                                <BookOpen size={14} /> EBook
+                                            </button>
                                             <button type="button" className={styles.btnTable} onClick={() => openEditModal('books', book.id)}>
                                                 <Pencil size={14} /> Sửa
                                             </button>
@@ -311,6 +317,7 @@ export const AdminBookManagement: React.FC = () => {
             </section>
 
             <AdminCatalogForm controller={controller} />
+            {ebookController.book && <EBookCOnfigurationField controller={ebookController} />}
 
             {/* MODAL XÁC NHẬN XÓA */}
             {confirmState && (

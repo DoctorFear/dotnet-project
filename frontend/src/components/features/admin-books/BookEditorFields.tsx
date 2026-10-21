@@ -1,6 +1,6 @@
 import { Lock, Ban, ChevronDown } from 'lucide-react';
 import type { AdminBookStatus } from '../../../types/book';
-import { BookImageUpload, BookEditionUpload } from './BookUploadFields';
+import { BookImageUpload } from './BookUploadFields';
 import type { useBookManagement } from '../../../hooks/useBookManagement';
 import styles from './AdminBookManagement.module.css';
 
@@ -221,7 +221,6 @@ export default function BookEditorFields({ controller }: { controller: ReturnTyp
                                     {(['language', 'dimensions'] as const).map(field => <div className={styles.formGroup} key={field}><label htmlFor={field}>{field === 'language' ? 'Ngôn ngữ' : 'Kích thước'}</label><input id={field} className={styles.formControl} value={String(draft[field] ?? '')} onChange={event => updateDraft(field, event.target.value)} /></div>)}
                                     <div className={`${styles.formGroup} ${styles.full}`}><label htmlFor="bookDescription">Mô tả nội dung</label><textarea id="bookDescription" rows={5} className={styles.formControl} value={String(draft.description ?? '')} onChange={event => updateDraft('description', event.target.value)} /></div>
                                     <div className={`${styles.formGroup} ${styles.full}`}><label htmlFor="galleryImages">Ảnh gallery (mỗi dòng một URL)</label><BookImageUpload onBusyChange={controller.onUploadBusyChange} multiple onUploaded={urls => updateDraft('galleryImages', [draft.galleryImages, ...urls].filter(Boolean).join('\n'))} /><textarea id="galleryImages" rows={3} className={styles.formControl} value={String(draft.galleryImages ?? '')} onChange={event => updateDraft('galleryImages', event.target.value)} /></div>
-                                    {editingId && <div className={`${styles.formGroup} ${styles.full}`}><BookEditionUpload onBusyChange={controller.onUploadBusyChange} key={editingId} bookId={editingId} /></div>}
                                 </div>
     );
 }

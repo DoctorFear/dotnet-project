@@ -76,7 +76,7 @@ export const useAuthAction = () => {
         } finally {
             logoutClient();
             notify('Đã đăng xuất khỏi hệ thống.', 'success');
-            navigate('/login');
+            navigate('/', { replace: true });
             setIsLoading(false);
         }
     };

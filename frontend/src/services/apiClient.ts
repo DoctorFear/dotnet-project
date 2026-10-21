@@ -84,7 +84,7 @@ const sendRequest = async (path: string, options: RequestInit = {}): Promise<Res
     let response = await fetch(`${apiBaseUrl}${path}`, { ...options, headers });
 
     // Khi nhận response 401, thử refresh token nếu không phải request login hoặc refresh-token
-    if (response.status === 401 && !path.toLowerCase().includes('/auth/login') && !path.toLowerCase().includes('/auth/refresh-token')) {
+    if (response.status === 401 && !path.toLowerCase().includes('/auth/login') && !path.toLowerCase().includes('/auth/refresh-token') && path.toLowerCase() !== '/auth/logout') {
         const newAccessToken = await tryRefreshToken();
         if (newAccessToken) {
             headers.set('Authorization', `Bearer ${newAccessToken}`);

@@ -140,6 +140,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
 
                 <div className={styles.navActions}>
+                    {isLoggedIn && user?.role === 'Member' && <>
                     <span className={styles.navActionLink} title="Sách yêu thích" onClick={handleWishlistClick} style={{ cursor: 'pointer' }}>
                         <Heart />
                         <span>Yêu thích</span>
@@ -151,6 +152,7 @@ export const Header: React.FC<HeaderProps> = ({
                         <span>Giỏ hàng</span>
                         <Badge count={cartCount} variant="count" />
                     </span>
+                    </>}
 
                     <div className={styles.userMenuWrapper}>
                         <div className={styles.userDropdownTrigger}>

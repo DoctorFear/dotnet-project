@@ -17,7 +17,6 @@ export default function AdminCatalogForm({ controller }: { controller: ReturnTyp
                                         ? `Cập nhật ${modalKind === 'books' ? 'sách' : modalKind === 'categories' ? 'danh mục' : 'NXB'}`
                                         : `Thêm ${modalKind === 'books' ? 'sách mới' : modalKind === 'categories' ? 'danh mục mới' : 'NXB mới'}`}
                                 </h3>
-                                <p>Dữ liệu thay đổi sẽ được ghi nhận vào Audit Log khi kết nối backend.</p>
                             </div>
                             <button type="button" className={styles.modalClose} disabled={controller.isSaving || controller.uploadCount > 0} onClick={closeModal}>
                                 <X size={18} />

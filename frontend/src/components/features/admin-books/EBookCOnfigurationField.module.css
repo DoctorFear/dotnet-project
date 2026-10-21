@@ -1,0 +1,83 @@
+.modal {
+    --ebook-blue: var(--egyptian);
+    width: 856px;
+    max-width: calc(100vw - 40px);
+    max-height: calc(100dvh - 48px);
+    margin: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 15px;
+    background: var(--white);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 13px;
+    box-shadow: 0 24px 60px rgba(7, 18, 51, 0.25);
+}
+.modal[open] { display: flex; flex-direction: column; }
+.modal::backdrop { background: rgba(7, 18, 51, 0.45); }
+.header { display: flex; justify-content: space-between; gap: 20px; padding: 20px 28px 18px; flex-shrink: 0; }
+.header h2 { font-size: 20px; font-weight: 700; color: var(--catalina); }
+.header p { margin-top: 4px; color: var(--muted); line-height: 1.5; }
+.close { align-self: flex-start; padding: 4px 0 4px 8px; border: 0; background: none; color: var(--muted); cursor: pointer; }
+.body { overflow-y: auto; min-height: 0; }
+.banner { padding: 12px 28px; border-block: 1px solid #f6e7b1; background: #fffbec; color: #a64c0a; font-size: 12px; line-height: 1.5; }
+.section { padding: 20px 28px; border-bottom: 1px solid var(--hairline); }
+.section h3 { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 14px; font-weight: 700; }
+.section h3 > span { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--ebook-blue); color: var(--white); flex-shrink: 0; }
+.dropZone { padding: 20px; border: 1px dashed var(--hairline); border-radius: 9px; background: #f7f9fc; text-align: center; line-height: 1.6; }
+.dropZone p:first-child { font-size: 14px; font-weight: 600; }
+.dropZone p + p { color: var(--muted); }
+.dragging { border-color: var(--ebook-blue); background: var(--alice); }
+.fileLink { padding: 0; border: 0; background: none; color: var(--ebook-blue); font: inherit; cursor: pointer; }
+.fileInput { display: none; }
+.metadata { display: grid; grid-template-columns: 2fr 0.9fr 0.9fr 0.9fr; gap: 16px; margin-top: 12px; padding: 14px; border: 1px solid var(--hairline); border-radius: 10px; }
+.metadata > div { min-width: 0; }
+.metadata dt { color: var(--muted); margin-bottom: 4px; }
+.metadata dd { font-weight: 700; overflow-wrap: anywhere; }
+.hint { margin-top: 12px; color: var(--muted); line-height: 1.6; }
+.documentTypes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.typeCard { position: relative; padding: 14px; border: 1px solid var(--hairline); border-radius: 10px; cursor: pointer; }
+.typeCard input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.typeCard p { color: var(--muted); margin-top: 8px; line-height: 1.5; }
+.selected { border-color: var(--egyptian); background: var(--alice); }
+.typeCard:focus-within { outline: 2px solid var(--ebook-blue); outline-offset: 2px; }
+.capabilities { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; margin-top: 6px; }
+.capabilities span, .readOnly { display: inline-block; padding: 2px 7px; border-radius: 5px; font-size: 11px; font-weight: 600; }
+.capabilities span { color: var(--success); background: var(--success-bg); }
+.readOnly { margin-top: 6px; color: #526176; background: #f1f5f9; }
+.features { display: flex; flex-direction: column; gap: 12px; }
+.feature { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 14px; border: 1px solid var(--hairline); border-radius: 10px; cursor: pointer; }
+.feature p { color: var(--muted); line-height: 1.5; margin-top: 2px; }
+.toggle { appearance: none; position: relative; width: 40px; height: 23px; border-radius: 20px; background: #cbd5e1; flex-shrink: 0; cursor: pointer; }
+.toggle::after { content: ''; position: absolute; width: 17px; height: 17px; top: 3px; left: 3px; border-radius: 50%; background: var(--white); transition: transform 0.15s; }
+.toggle:checked { background: var(--ebook-blue); }
+.toggle:checked::after { transform: translateX(17px); }
+.toggle:disabled { opacity: 0.5; cursor: not-allowed; }
+.ttsFields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; border: 0; min-width: 0; padding: 0; }
+.ttsFields label { display: flex; flex-direction: column; gap: 5px; color: var(--ink); font-weight: 600; min-width: 0; }
+.ttsFields input, .ttsFields select { width: 100%; min-width: 0; height: 39px; padding: 8px 12px; border: 1px solid var(--hairline); border-radius: 8px; background: var(--white); color: var(--ink); font: inherit; font-weight: 400; }
+.ttsFields:disabled { opacity: 0.5; }
+.audioActions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; }
+.audioActions p { color: var(--muted); font-size: 12px; }
+.audioActions > div, .footer > div { display: flex; gap: 10px; }
+.outlineButton, .secondaryButton, .primaryButton { font: inherit; font-weight: 600; border-radius: 8px; padding: 10px 16px; cursor: pointer; }
+.outlineButton { color: var(--ebook-blue); background: var(--white); border: 1px solid var(--hairline); padding: 8px 14px; font-size: 12px; }
+.outlineButton:disabled { opacity: 0.45; cursor: not-allowed; }
+.secondaryButton { border: 1px solid var(--hairline); background: var(--white); color: var(--ink); }
+.primaryButton { border: 1px solid var(--ebook-blue); background: var(--ebook-blue); color: var(--white); }
+.primaryButton:hover { background: var(--catalina); border-color: var(--catalina); }
+.footer { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 28px; background: #f7f9fc; }
+.footer > p { color: var(--muted); font-size: 12px; }
+.error, .notice { padding: 12px 28px; line-height: 1.5; }
+.error { color: var(--danger); background: var(--danger-bg); }
+.notice { color: var(--egyptian); background: var(--alice); }
+.modal button:focus-visible, .toggle:focus-visible { outline: 2px solid var(--ebook-blue); outline-offset: 3px; }
+@media (max-width: 600px) {
+    .header, .section { padding: 18px; }
+    .banner, .footer, .error, .notice { padding: 12px 18px; }
+    .documentTypes, .ttsFields { grid-template-columns: 1fr; }
+    .metadata { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .footer { align-items: stretch; flex-direction: column; }
+    .footer > div { justify-content: flex-end; }
+    .audioActions { align-items: flex-start; flex-direction: column; }
+}
