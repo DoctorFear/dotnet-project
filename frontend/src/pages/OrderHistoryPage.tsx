@@ -25,10 +25,8 @@ export const OrderHistoryPage: React.FC = () => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     
-    // State đóng/mở danh sách món hàng ở danh sách ngoài
     const [expandedOrderIds, setExpandedOrderIds] = useState<Record<number, boolean>>({});
     
-    // State quản lý đơn hàng chi tiết đang mở Modal
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [isDetailLoading, setIsDetailLoading] = useState<boolean>(false);
 
@@ -51,6 +49,18 @@ export const OrderHistoryPage: React.FC = () => {
     useEffect(() => {
         fetchOrders();
     }, []);
+
+    const isRefundable = (order: Order) => {
+        if (order.status !== OrderStatus.Completed) return false;
+        
+        const baseDate = (order as any).updatedAt || order.orderDate; 
+        if (!baseDate) return true;
+
+        const diffTime = new Date().getTime() - new Date(baseDate).getTime();
+        const diffDays = diffTime / (1000 * 3600 * 24);
+        
+        return diffDays <= 5;
+    };
 
     const filteredOrders = useMemo(() => {
         if (activeTab === 'ALL') return orders;
@@ -92,7 +102,6 @@ export const OrderHistoryPage: React.FC = () => {
         }
     };
 
-    // Hàm render định dạng Sách vật lý (số lượng) hoặc E-Book (thời gian thuê)
     const renderPurchaseFormat = (item: OrderItem) => {
         const isEbook = item.purchaseType === 2 || item.purchaseType === '2' || item.purchaseType === 'Rental' || !!item.rentalDuration;
 
@@ -142,7 +151,6 @@ export const OrderHistoryPage: React.FC = () => {
                 <div className={styles.pageWrap}>
                     <h1 className={styles.pageTitle}>Đơn hàng của tôi</h1>
                     
-                    {/* Render Tabs */}
                     <div className={styles.tabsContainer}>
                         <div className={styles.tabHeaders}>
                             {TABS.map(tab => (
@@ -179,7 +187,7 @@ export const OrderHistoryPage: React.FC = () => {
                                                 {getStatusBadge(order.status)}
                                             </div>
                                             
-                                            {/* Dropdown toggler xem món hàng */}
+                                            {/* Dropdown */}
                                             <button 
                                                 type="button"
                                                 className={styles.dropdownToggleBtn}
@@ -188,7 +196,6 @@ export const OrderHistoryPage: React.FC = () => {
                                                 <span>{isExpanded ? '▲ Thu gọn danh sách món hàng' : `▼ Mở xem ${itemCount} món hàng đã đặt`}</span>
                                             </button>
 
-                                            {/* Danh sách món hàng khi toggle */}
                                             {isExpanded && (
                                                 <div className={styles.orderBody}>
                                                     {order.orderItems?.map(item => (
@@ -217,7 +224,7 @@ export const OrderHistoryPage: React.FC = () => {
                                                 </div>
                                                 
                                                 <div className={styles.actionBtns}>
-                                                    {/* Nút Xem Chi Tiết gọi API lấy thông tin đầy đủ */}
+                                                    {/* Chi Tiết */}
                                                     <button 
                                                         type="button"
                                                         className={styles.btnSecondary}
@@ -227,7 +234,7 @@ export const OrderHistoryPage: React.FC = () => {
                                                         Xem chi tiết
                                                     </button>
 
-                                                    {/* Hủy đơn (1, 2, 3) */}
+                                                    {/* Hủy đơn */}
                                                     {[OrderStatus.Pending, OrderStatus.Confirmed, OrderStatus.Prepared].includes(order.status) && (
                                                         <button 
                                                             type="button"
@@ -238,14 +245,14 @@ export const OrderHistoryPage: React.FC = () => {
                                                         </button>
                                                     )}
 
-                                                    {/* Yêu cầu hoàn trả (5) */}
-                                                    {order.status === OrderStatus.Completed && (
+                                                    {/* Hoàn trả */}
+                                                    {isRefundable(order) && (
                                                         <button 
                                                             type="button"
                                                             className={styles.btnDangerOutlined}
-                                                            onClick={() => handleAction(() => requestRefundOrder(order.id), 'Đã gửi yêu cầu hoàn trả')}
+                                                            onClick={() => navigation(`/refund/${order.id}`)}
                                                         >
-                                                            Yêu cầu hoàn trả
+                                                            Yêu cầu hoàn tiền
                                                         </button>
                                                     )}
                                                 </div>

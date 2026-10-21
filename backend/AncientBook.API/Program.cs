@@ -90,7 +90,9 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddHttpClient<ICheckoutService, CheckoutService>();
 builder.Services.AddHttpClient<IOrderService, OrderService>();
 
+builder.Services.AddScoped<IRefundService, RefundService>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IRefundRepository, RefundRepository>();
 builder.Services.AddScoped<IFPointRepository, FPointsRepository>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();

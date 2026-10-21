@@ -33,4 +33,5 @@ public interface IFileStorageService
     Task DeleteFileAsync(string fileUrl);
 
     Task<string> SaveBytesFileAsync(byte[] bytes, string fileName, string folder);
+    Task<string> SaveRefundMediaAsync(IFormFile file, string folder);
 }

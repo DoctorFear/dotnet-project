@@ -41,7 +41,7 @@ export const App: React.FC = () => {
                         <Route path="/wishlist" element={<WishListPage />} />
                         <Route path="/my-library" element={<MyLibraryPage />} />
                         <Route path="/checkout" element={<CheckoutPage />} />
-                        <Route path="/refund" element={<RefundPage />} />
+                        <Route path="/refund/:orderId" element={<RefundPage />} />
                         <Route path="/profile" element={<ProfilePage />} />
                         <Route path="/order-history" element={<OrderHistoryPage />} />
                         <Route path="/order-history/:id" element={<OrderDetailPage />} />
