@@ -195,11 +195,39 @@ namespace AncientBook.Application.Services
             return true;
         }
         
+        // Kiểm tra và phân trang danh sách đơn hàng.
         public async Task<PagedResult<OrderResponseDto>> GetPagedOrdersAsync(GetOrdersQuery query)
         {
             if (query.PageNumber < 1) query.PageNumber = 1;
             if (query.PageSize < 1) query.PageSize = 10;
             if (query.PageSize > 100) query.PageSize = 100;
+
+            // Kiểm tra điều kiện lọc đơn hàng.
+            query.BookTitle = query.BookTitle?.Trim();
+            query.OrderType = query.OrderType?.Trim().ToLower();
+            query.StatusGroup = query.StatusGroup?.Trim().ToLower();
+            query.SortBy = query.SortBy?.Trim().ToLower();
+
+            if (query.BookTitle?.Length > 200)
+            {
+                throw new ArgumentException("Tên sách tìm kiếm không được vượt quá 200 ký tự.");
+            }
+            if (query.FromDate.HasValue && query.ToDate.HasValue && query.FromDate.Value.Date > query.ToDate.Value.Date)
+            {
+                throw new ArgumentException("Ngày bắt đầu không được lớn hơn ngày kết thúc.");
+            }
+            if (!string.IsNullOrEmpty(query.OrderType) && !new[] { "all", "physical", "online", "mixed" }.Contains(query.OrderType))
+            {
+                throw new ArgumentException("Loại đơn hàng không hợp lệ.");
+            }
+            if (!string.IsNullOrEmpty(query.StatusGroup) && !new[] { "all", "preparing", "shipping", "completed", "returns" }.Contains(query.StatusGroup))
+            {
+                throw new ArgumentException("Nhóm trạng thái đơn hàng không hợp lệ.");
+            }
+            if (!string.IsNullOrEmpty(query.SortBy) && !new[] { "newest", "oldest", "price_asc", "price_desc" }.Contains(query.SortBy))
+            {
+                throw new ArgumentException("Thứ tự sắp xếp đơn hàng không hợp lệ.");
+            }
 
             // var (items, totalCount) = await _orderRepository.GetPagedOrdersAsync(query.PageNumber, query.PageSize, query.Status?.ToString(), query.UserId, query.SearchKeyword);
             var (items, totalCount) = await _orderRepository.GetPagedOrdersAsync(query);
@@ -207,9 +235,9 @@ namespace AncientBook.Application.Services
             return new PagedResult<OrderResponseDto>
             (
                 items,
+                totalCount,
                 query.PageNumber,
-                query.PageSize,
-                totalCount
+                query.PageSize
             );
         }
 

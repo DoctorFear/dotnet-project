@@ -140,9 +140,12 @@ namespace AncientBook.API.Controllers
             }
         }
 
+        // Lấy danh sách đơn hàng theo điều kiện.
         [HttpGet]
         [Authorize]
-        public async Task<IActionResult> GetPagedOrders([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] int? userId = null, [FromQuery] OrderStatus? status = null, [FromQuery] string? searchKeyword = null)
+        public async Task<IActionResult> GetPagedOrders([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] int? userId = null, [FromQuery] OrderStatus? status = null, [FromQuery] string? searchKeyword = null,
+            [FromQuery] string? bookTitle = null, [FromQuery] DateTime? fromDate = null, [FromQuery] DateTime? toDate = null,
+            [FromQuery] string? orderType = null, [FromQuery] string? statusGroup = null, [FromQuery] string? sortBy = null)
         
         {
             try
@@ -169,11 +172,21 @@ namespace AncientBook.API.Controllers
                     PageSize = pageSize,
                     UserId = userId,
                     Status = status,
-                    SearchKeyword = searchKeyword
+                    SearchKeyword = searchKeyword,
+                    BookTitle = bookTitle,
+                    FromDate = fromDate,
+                    ToDate = toDate,
+                    OrderType = orderType,
+                    StatusGroup = statusGroup,
+                    SortBy = sortBy
                 };
 
                 var result = await _orderService.GetPagedOrdersAsync(query);
                 return Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {

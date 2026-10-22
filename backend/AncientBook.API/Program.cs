@@ -226,6 +226,7 @@ using (var scope = app.Services.CreateScope())
 
         // Thực thi seed
         await DatabaseSeeder.SeedAsync(context, passwordHasher);
+        if (app.Environment.IsDevelopment()) await OrderSeeder.SeedAsync(context, passwordHasher);
     }
     catch (Exception ex)
     {
