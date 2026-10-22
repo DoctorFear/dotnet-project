@@ -104,19 +104,29 @@ namespace AncientBook.Application.Services
 
                         rentalStart = TimeZoneHelper.GetVietnamTime();
 
+                        // Cộng thời hạn thuê từ hạn đọc còn lại.
+                        var currentRentalEnd = await _workflow.Set<OrderItem>()
+                            .Where(i => i.BookId == itemDto.BookId &&
+                                i.PurchaseType == PurchaseType.Rental &&
+                                i.Order != null && i.Order.UserId == request.UserId &&
+                                i.Order.Status == OrderStatus.Completed && i.Order.IsPaid &&
+                                i.RentalEndDate > rentalStart)
+                            .MaxAsync(i => i.RentalEndDate);
+                        var rentalBaseDate = currentRentalEnd ?? rentalStart.Value;
+
                         switch (itemDto.RentalDuration)
                         {
                             case RentalDurationType.Weekly:
                                 unitPrice = book.WeeklyRentalPrice;
-                                rentalEnd = rentalStart.Value.AddDays(7);
+                                rentalEnd = rentalBaseDate.AddDays(7);
                                 break;
                             case RentalDurationType.Monthly:
                                 unitPrice = book.MonthlyRentalPrice;
-                                rentalEnd = rentalStart.Value.AddMonths(1);
+                                rentalEnd = rentalBaseDate.AddMonths(1);
                                 break;
                             case RentalDurationType.Yearly:
                                 unitPrice = book.YearlyRentalPrice;
-                                rentalEnd = rentalStart.Value.AddYears(1);
+                                rentalEnd = rentalBaseDate.AddYears(1);
                                 break;
                             default:
                                 throw new ArgumentException("Gói thời gian thuê không hợp lệ.");

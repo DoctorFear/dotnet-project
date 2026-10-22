@@ -84,7 +84,8 @@ namespace AncientBook.Application.Services
                 throw new KeyNotFoundException($"Không tìm thấy đơn hàng với ID: {orderId}");
             }
 
-            if (order.Status != OrderStatus.Pending && order.Status != OrderStatus.Confirmed && order.Status != OrderStatus.Prepared)
+            // Chỉ cho hủy đơn trước khi chuẩn bị xong.
+            if (order.Status != OrderStatus.Pending && order.Status != OrderStatus.Confirmed)
             {
                 throw new InvalidOperationException($"Không thể hủy đơn hàng đã ở trạng thái hiện tại ({order.Status}).");
             }
@@ -94,7 +95,7 @@ namespace AncientBook.Application.Services
             order.UpdatedAt = TimeZoneHelper.GetVietnamTime();
 
             // Hoàn sản phẩm
-            if (previousStatus == OrderStatus.Pending || previousStatus == OrderStatus.Confirmed || previousStatus == OrderStatus.Prepared)
+            if (previousStatus == OrderStatus.Pending || previousStatus == OrderStatus.Confirmed)
             {
                 if (order.OrderItems != null)
                 {

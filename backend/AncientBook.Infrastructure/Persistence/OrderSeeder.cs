@@ -8,7 +8,7 @@ namespace AncientBook.Infrastructure.Persistence;
 public static class OrderSeeder
 {
     private const string SeedPrefix = "OrderSeeder:v1:";
-    private const int ScenarioOffset = 2000;
+    private const int ScenarioOffset = 3000;
 
     // Tạo đủ tình huống lịch sử cho member_an, không ghi đè đơn hoặc số dư đã có.
     public static async Task SeedAsync(ApplicationDbContext db, IPasswordHasher passwordHasher)
@@ -28,21 +28,21 @@ public static class OrderSeeder
         var books = await db.Books.AsNoTracking().Where(b => b.IsPhysicalAvailable && b.IsRentalAvailable)
             .OrderBy(b => b.Id).ToListAsync();
         if (books.Count < 3) { await tx.CommitAsync(); return; }
-        var scenarios = new (int Code, string Format, bool Multiple, bool Old, bool Reviewed)[]
+        var scenarios = new (int Code, string Format, int ItemCount, bool Old, bool Reviewed)[]
         {
-            (0, "physical", false, false, false), (2, "mixed", true, false, false), (3, "online", true, false, false),
-            (1, "physical", false, false, false), (21, "mixed", true, false, false),
-            (4, "physical", false, false, false), (24, "mixed", true, false, false),
-            (6, "physical", false, false, false), (26, "mixed", true, false, false),
-            (8, "physical", false, false, false), (28, "physical", true, false, true), (14, "online", false, false, false),
-            (17, "physical", true, true, true), (15, "online", false, true, false), (13, "mixed", true, true, true),
-            (9, "physical", false, false, false), (29, "online", false, false, false), (49, "mixed", true, false, false),
-            (16, "physical", false, false, false), (36, "mixed", true, false, false),
-            (18, "physical", false, false, false), (38, "physical", true, false, true),
-            (19, "physical", true, false, false), (39, "physical", false, false, true),
-            (10, "physical", false, false, false), (30, "physical", true, false, true),
-            (11, "physical", true, false, false), (31, "physical", false, false, false),
-            (12, "physical", false, false, true), (32, "physical", true, false, false)
+            (0, "physical", 1, false, false), (2, "mixed", 3, false, false), (63, "online", 3, false, false),
+            (1, "physical", 2, false, false), (21, "mixed", 2, false, false),
+            (4, "physical", 3, false, false), (24, "mixed", 2, false, false),
+            (6, "physical", 1, false, false), (26, "mixed", 3, false, false),
+            (8, "physical", 1, false, false), (28, "physical", 3, false, true), (14, "online", 1, false, false),
+            (17, "physical", 2, true, true), (15, "online", 2, true, false), (13, "mixed", 3, true, true),
+            (9, "physical", 2, false, false), (69, "online", 1, false, false), (49, "mixed", 3, false, false),
+            (16, "physical", 3, false, false), (36, "mixed", 2, false, false),
+            (18, "physical", 1, false, false), (38, "physical", 3, false, true),
+            (19, "physical", 2, false, false), (39, "physical", 1, false, true),
+            (10, "physical", 1, false, false), (30, "physical", 3, false, true),
+            (11, "physical", 2, false, false), (31, "physical", 1, false, false),
+            (12, "physical", 1, false, true), (32, "physical", 3, false, false)
         };
         var expectedKeys = scenarios.Select(s => SeedPrefix + (ScenarioOffset + s.Code)).ToArray();
         var seeded = await db.Orders.Where(o => o.UserId == user.Id && o.CreatedBy != null && o.CreatedBy.StartsWith(SeedPrefix)).ToListAsync();
@@ -67,21 +67,21 @@ public static class OrderSeeder
         var now = TimeZoneHelper.GetVietnamTime();
         var returnSetting = await db.SystemSettings.AsNoTracking().FirstOrDefaultAsync(s => s.SettingKey == "MAX_RETURN_DAYS");
         var returnDays = int.TryParse(returnSetting?.SettingValue, out var days) && days > 0 ? days : 3;
-        var random = new Random(20261022);
-        var shuffled = scenarios.OrderBy(_ => random.Next()).ToArray();
-        for (var index = 0; index < shuffled.Length; index++)
+        // Tạo đơn từ cũ đến mới để mã tự tăng đồng bộ với ngày đặt.
+        var ordered = scenarios.OrderByDescending(s => s.Old).ThenBy(s => s.Code * 17 % 31).ThenBy(s => s.Code).ToArray();
+        for (var index = 0; index < ordered.Length; index++)
         {
-            var sample = shuffled[index];
+            var sample = ordered[index];
             var key = SeedPrefix + (ScenarioOffset + sample.Code);
             if (existing.Contains(key)) continue;
             var scenario = sample.Code % 20;
             var book = books[index % books.Count];
-            var second = books[(index + 1) % books.Count];
             var mixed = sample.Format == "mixed";
             var online = sample.Format == "online";
             var state = scenario switch
             {
-                0 or 2 or 3 => OrderStatus.Pending,
+                0 or 2 => OrderStatus.Pending,
+                3 => OrderStatus.Completed,
                 1 => OrderStatus.Confirmed,
                 4 or 5 => OrderStatus.Prepared,
                 6 or 7 => OrderStatus.Shipping,
@@ -91,33 +91,44 @@ public static class OrderSeeder
                 12 => OrderStatus.Returned,
                 _ => OrderStatus.Completed
             };
-            var old = sample.Old;
-            var completed = (old ? now.AddDays(-Math.Max(returnDays + 4, 35)) : now.AddHours(-6)).AddMinutes(-index * 7);
-            var orderDate = state is OrderStatus.Pending or OrderStatus.Confirmed or OrderStatus.Prepared or OrderStatus.Shipping
-                ? now.AddHours(-2).AddMinutes(-index) : completed.AddDays(-2);
+            var orderDate = sample.Old ? now.AddDays(-Math.Max(returnDays + 7, 40)).AddHours(index)
+                : now.AddHours(-60).AddMinutes(index * 90);
+            var completed = online ? orderDate.AddMinutes(5) : orderDate.AddHours(6);
             var hasReturn = scenario is 10 or 11 or 12 or 18 or 19;
             var order = new Order
             {
                 UserId = user.Id, Status = state, IsPaid = online ? state == OrderStatus.Completed : mixed || index % 2 == 0 && state != OrderStatus.Failed || state is OrderStatus.Completed or OrderStatus.ReturnRequested or OrderStatus.ReturnApproved or OrderStatus.Returned,
                 ShippingAddress = online ? string.Empty : "28 Nguyễn Văn Cừ, Phường Chợ Quán, TP. Hồ Chí Minh",
-                OrderDate = orderDate, CreatedAt = orderDate, UpdatedAt = completed, CreatedBy = key
+                OrderDate = orderDate, CreatedAt = orderDate,
+                UpdatedAt = state == OrderStatus.Pending ? orderDate : completed, CreatedBy = key
             };
-            order.OrderItems.Add(new OrderItem
+            // Phân bố đơn một đến ba sách với các gói thuê tuần, tháng và năm.
+            for (var itemIndex = 0; itemIndex < sample.ItemCount; itemIndex++)
             {
-                BookId = book.Id, Quantity = online ? 1 : index % 2 + 1,
-                PurchaseType = online ? PurchaseType.Rental : PurchaseType.Physical,
-                UnitPrice = online ? book.MonthlyRentalPrice : book.PhysicalPrice,
-                RentalDuration = online ? RentalDurationType.Monthly : null,
-                RentalStartDate = online && state == OrderStatus.Completed ? completed : null,
-                RentalEndDate = online && state == OrderStatus.Completed ? completed.AddMonths(1) : null
-            });
-            if (mixed) order.OrderItems.Add(new OrderItem { BookId = second.Id, Quantity = 1,
-                PurchaseType = PurchaseType.Rental, RentalDuration = RentalDurationType.Weekly,
-                UnitPrice = second.WeeklyRentalPrice, RentalStartDate = state == OrderStatus.Completed ? completed : null, RentalEndDate = state == OrderStatus.Completed ? completed.AddDays(7) : null });
-            if (online && sample.Multiple) order.OrderItems.Add(new OrderItem { BookId = second.Id, Quantity = 1,
-                PurchaseType = PurchaseType.Rental, RentalDuration = RentalDurationType.Weekly, UnitPrice = second.WeeklyRentalPrice });
-            if (!online && !mixed && sample.Multiple) order.OrderItems.Add(new OrderItem
-            { BookId = second.Id, Quantity = 1, UnitPrice = second.PhysicalPrice, PurchaseType = PurchaseType.Physical });
+                var itemBook = books[(index + itemIndex) % books.Count];
+                var rental = online || mixed && itemIndex > 0;
+                var duration = (RentalDurationType)((index + itemIndex) % 3 + 1);
+                var rentalEnd = duration switch
+                {
+                    RentalDurationType.Weekly => completed.AddDays(7),
+                    RentalDurationType.Monthly => completed.AddMonths(1),
+                    _ => completed.AddYears(1)
+                };
+                order.OrderItems.Add(new OrderItem
+                {
+                    BookId = itemBook.Id, Quantity = rental ? 1 : (index + itemIndex) % 2 + 1,
+                    PurchaseType = rental ? PurchaseType.Rental : PurchaseType.Physical,
+                    UnitPrice = !rental ? itemBook.PhysicalPrice : duration switch
+                    {
+                        RentalDurationType.Weekly => itemBook.WeeklyRentalPrice,
+                        RentalDurationType.Monthly => itemBook.MonthlyRentalPrice,
+                        _ => itemBook.YearlyRentalPrice
+                    },
+                    RentalDuration = rental ? duration : null,
+                    RentalStartDate = rental && state == OrderStatus.Completed ? completed : null,
+                    RentalEndDate = rental && state == OrderStatus.Completed ? rentalEnd : null
+                });
+            }
             order.SubTotal = order.OrderItems.Sum(i => i.Quantity * i.UnitPrice);
             order.FinalAmount = order.SubTotal;
             db.Orders.Add(order);
@@ -132,7 +143,7 @@ public static class OrderSeeder
                 History(OrderStatus.Prepared, OrderStatus.Shipping, orderDate.AddHours(3));
             if (state == OrderStatus.Completed || hasReturn) History(online ? OrderStatus.Pending : OrderStatus.Shipping, OrderStatus.Completed, completed);
             if (state == OrderStatus.Failed) History(scenario == 9 ? OrderStatus.Pending : OrderStatus.Shipping, OrderStatus.Failed,
-                completed, scenario == 9 ? "Khách hủy đơn hàng" : "Không liên lạc được với khách hàng để giao sách.");
+                completed, online ? "Thanh toán MoMo không thành công." : scenario == 9 ? "Khách hủy đơn hàng" : "Không liên lạc được với khách hàng để giao sách.");
             if (hasReturn)
             {
                 db.Refunds.Add(new Refund { OrderId = order.Id, Reason = "Sách bị hư hỏng", Description = "Bìa sách bị gập, góc sách bị rách khi mở kiện hàng.",
