@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import type { BookPurchaseFormat, BookRentalDuration, PurchasableBook } from '../types/bookPurchase';
 
-export const useBookPurchaseSelection = (book?: PurchasableBook | null) => {
-    const [selectedFormat, setFormat] = useState<BookPurchaseFormat>('physical');
+export const useBookPurchaseSelection = (book?: PurchasableBook | null, initialFormat: BookPurchaseFormat = 'physical') => {
+    const [selectedFormat, setFormat] = useState<BookPurchaseFormat>(initialFormat);
     const [selectedDuration, setDuration] = useState<BookRentalDuration>('week');
     const [quantity, setQuantity] = useState(1);
     const formats: BookPurchaseFormat[] = [];

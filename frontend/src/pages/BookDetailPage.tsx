@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useCallback, useState } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import TopBar from '../components/layout/TopBar';
 import Header from '../components/layout/Header';
 import Navbar from '../components/layout/Navbar';
@@ -30,11 +30,17 @@ export const BookDetailPage: React.FC = () => {
     const wishlist = useWishlist();
     const options = useBookFilterOptions();
     const purchaseData = bookData;
-    const selection = useBookPurchaseSelection(purchaseData);
+    const [searchParams] = useSearchParams();
+    const initialFormat = searchParams.get('format') === 'rental' ? 'rental' : 'physical';
+    const selection = useBookPurchaseSelection(purchaseData, initialFormat);
     const { toasts, notify, dismissToast } = useToastNotifications();
     const { isSubmitting, submitPurchase } = useBookCartAction(notify);
     const [purchaseBook, setPurchaseBook] = useState<ProductData | null>(null);
     const [activeTab, setActiveTab] = useState<'desc' | 'specs' | 'reviews'>('desc');
+    const [reviewCounts, setReviewCounts] = useState<Record<number, number>>({});
+    const updateReviewCount = useCallback((bookId: number, count: number) => {
+        setReviewCounts(current => current[bookId] === count ? current : { ...current, [bookId]: count });
+    }, []);
 
     const galleryImages = bookData ? [...new Set([bookData.coverImg, ...bookData.galleryImages].filter(Boolean))] : [];
 
@@ -72,8 +78,7 @@ export const BookDetailPage: React.FC = () => {
                     </div>
 
                     <div className={styles.detailInfo}>
-                        <h1 className={styles.detailTitle}>{bookData.title}</h1>
-                        <WishListButton isWishlisted={wishlist.wishlistIds.includes(bookData.id)} onToggle={() => void wishlist.toggleWishlist(bookData)} />
+                        <div className={styles.titleRow}><h1 className={styles.detailTitle}>{bookData.title}</h1><WishListButton className={styles.detailWishlist} isWishlisted={wishlist.wishlistIds.includes(bookData.id)} onToggle={() => void wishlist.toggleWishlist(bookData)} /></div>
                         <div className={styles.detailMeta}>
                             <span>Tác giả: <strong>{bookData.author}</strong></span>
                             <span>NXB: <a href={`/?publisher=${bookData.publisherId}`}>{bookData.publisher}</a></span>
@@ -87,7 +92,7 @@ export const BookDetailPage: React.FC = () => {
                             ))}
                         </div>
 
-                        <StarRating rating={bookData.rating} reviewsCount={bookData.reviewsCount} />
+                        <StarRating rating={bookData.rating} reviewsCount={reviewCounts[bookData.id] ?? bookData.reviewsCount} />
                         <StockAvailabilityBadge book={bookData} />
 
                         <div className={styles.priceBoxPanel}>
@@ -138,7 +143,7 @@ export const BookDetailPage: React.FC = () => {
                             className={`${styles.tabBtn} ${activeTab === 'reviews' ? styles.tabBtnActive : ''}`}
                             onClick={() => setActiveTab('reviews')}
                         >
-                            Đánh giá khách hàng ({bookData.reviewsCount})
+                            Đánh giá khách hàng ({reviewCounts[bookData.id] ?? bookData.reviewsCount})
                         </div>
                     </div>
 
@@ -160,7 +165,7 @@ export const BookDetailPage: React.FC = () => {
                     )}
 
                     {activeTab === 'reviews' && (
-                        <BookReviews key={bookData.id} bookId={bookData.id} />
+                        <BookReviews key={bookData.id} bookId={bookData.id} onCountChange={updateReviewCount} />
                     )}
                 </div>
 

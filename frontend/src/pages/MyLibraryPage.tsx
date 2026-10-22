@@ -4,44 +4,16 @@ import Header from '../components/layout/Header';
 import Navbar from '../components/layout/Navbar';
 import Breadcrumb from '../components/common/Breadcrumb';
 import { useUser } from '../context/UserContext';
-import type { LibraryBook } from '../types/library';
+import { useMyLibrary } from '../hooks/useMyLibrary';
+import { useNavigate } from 'react-router-dom';
 
 export const MyLibraryPage: React.FC = () => {
     const { isLoggedIn } = useUser();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'active' | 'expired'>('active');
     const [searchQuery, setSearchQuery] = useState<string>('');
 
-    const [libraryBooks] = useState<LibraryBook[]>([
-        {
-            id: 'B01',
-            title: 'Số Đỏ (Tái bản khổ lớn nghệ thuật)',
-            author: 'Vũ Trọng Phụng',
-            coverImg: 'https://salt.tikicdn.com/ts/product/45/3e/2e/9f992ab2a5436d4f937d9fae16d47b53.jpg',
-            type: 'rented',
-            rentExpireDays: 5,
-            isExpired: false,
-            lastReadProgress: 42,
-        },
-        {
-            id: 'B02',
-            title: 'Tội Lỗi Và Hình Phạt (Tập 1)',
-            author: 'Fyodor Dostoevsky',
-            coverImg: 'https://salt.tikicdn.com/ts/product/19/22/e0/aa29986348ef0eeab07ff83f99e3cae6.jpg',
-            type: 'owned',
-            isExpired: false,
-            lastReadProgress: 88,
-        },
-        {
-            id: 'B03',
-            title: 'Vụ Án Mạng Trên Chuyến Tàu Tốc Hành Phương Đông',
-            author: 'Agatha Christie',
-            coverImg: 'https://nhasachphuongnam.com/images/detailed/181/81yvSg0d7AL._AC_SL1500_.jpg',
-            type: 'rented',
-            rentExpireDays: 0,
-            isExpired: true,
-            lastReadProgress: 15,
-        },
-    ]);
+    const { books: libraryBooks, loading, error } = useMyLibrary();
 
     if (!isLoggedIn) {
         return (
@@ -141,6 +113,8 @@ export const MyLibraryPage: React.FC = () => {
                         </button>
                     </div>
 
+                    {loading && <p role="status">Đang tải tủ sách...</p>}
+                    {error && <p role="alert">{error}</p>}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px' }}>
                         {filteredBooks.length > 0 ? (
                             filteredBooks.map((book) => (
@@ -188,7 +162,7 @@ export const MyLibraryPage: React.FC = () => {
                                         <button
                                             type="button"
                                             style={{ width: '100%', padding: '9px', background: '#F2F7FF', color: '#0B409C', border: '1px solid #0B409C', borderRadius: '6px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', marginTop: 'auto' }}
-                                            onClick={() => (window.location.href = `/books/${book.id}`)}
+                                            onClick={() => navigate(`/books/${book.id}?format=rental`)}
                                         >
                                             Gia Hạn Gói Thuê
                                         </button>

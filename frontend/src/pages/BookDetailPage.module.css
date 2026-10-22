@@ -79,6 +79,13 @@
     gap: 14px;
 }
 
+.titleRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.detailWishlist { flex-shrink: 0; }
+.detailWishlist:not([aria-pressed="true"]) { color: var(--egyptian); }
+.detailMeta { flex-wrap: wrap; }
+.detailMeta a { color: var(--egyptian); font-weight: 600; text-decoration: none; }
+.detailMeta a:hover { text-decoration: underline; }
+
 .detailTitle {
     font-size: 22px;
     font-weight: 800;

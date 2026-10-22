@@ -1,4 +1,8 @@
 .review { padding: 16px 0; border-bottom: 1px solid var(--hairline); }
-.review p { white-space: pre-wrap; line-height: 1.6; }
+.review p { white-space: pre-wrap; line-height: 1.7; margin-top: 8px; font-size: 14px; color: var(--ink); }
+.reviewHeader { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 14px; color: var(--catalina); }
+.verified { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 5px; background: var(--success-bg); color: var(--success); font-size: 12px; }
+.ratingRow { margin-top: 8px; }
+.review h4 { margin-top: 10px; color: var(--catalina); font-size: 14px; }
 .images { display: flex; gap: 8px; flex-wrap: wrap; }
 .images img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; }
