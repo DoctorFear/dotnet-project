@@ -1,8 +1,10 @@
 import { requestApi } from './apiClient';
-import type { Order, PagedResult } from '../types/order';
+import type { Order, OrderHistoryFilters, PagedResult } from '../types/order';
 
-export const getMyOrders = async (pageNumber = 1, pageSize = 50): Promise<PagedResult<Order>> => {
-    return requestApi<PagedResult<Order>>(`/order?pageNumber=${pageNumber}&pageSize=${pageSize}`);
+export const getMyOrders = async (pageNumber = 1, pageSize = 50, filters: OrderHistoryFilters = {}): Promise<PagedResult<Order>> => {
+    const query = new URLSearchParams({ pageNumber: String(pageNumber), pageSize: String(pageSize) });
+    Object.entries(filters).forEach(([key, value]) => { if (value && value !== 'all') query.set(key, value); });
+    return requestApi<PagedResult<Order>>(`/order?${query}`);
 };
 
 export const getOrderDetail = async (orderId: number | string): Promise<Order> => {

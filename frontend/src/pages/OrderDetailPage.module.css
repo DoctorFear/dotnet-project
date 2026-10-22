@@ -317,3 +317,23 @@
 .badgePrimary { background: #dbeafe; color: var(--egyptian, #0B409C); }
 .badgeSuccess { background: var(--success-bg, #ecfdf5); color: var(--success, #15803d); }
 .badgeDanger { background: var(--danger-bg, #fdf2f2); color: var(--danger, #d93838); }
+.page { background: var(--alice); min-height: 100vh; display: flex; flex-direction: column; }
+.productsPanel { align-self: start; background: var(--white); border: 1px solid var(--hairline); border-radius: 12px; overflow: hidden; box-shadow: 0 2px 7px rgba(13,34,107,.07); min-width: 0; }
+.productsTitle { font-size: 16px; font-weight: 800; color: var(--catalina); padding: 20px; border-bottom: 1px solid #edf1f9; }
+.sectionLabel { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--muted); }
+.badgeReturned { background: #efedff; color: #5140b8; }
+.detailGrid { align-items: start; grid-template-columns: minmax(0,1fr) 360px; }
+.sideCol { min-width: 0; }
+.cardPanel { gap: 10px; }
+.infoContent { line-height: 1.65; }
+.infoPanel { padding: 0; gap: 0; overflow: hidden; }
+.infoHeading { display: flex; align-items: center; gap: 10px; padding: 14px 18px; font-size: 14px; font-weight: 700; color: var(--catalina); background: #edf3ff; border-bottom: 1px solid var(--hairline); border-top: 3px solid var(--egyptian); }
+.infoIcon { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 7px; background: var(--egyptian); color: var(--white); flex-shrink: 0; }
+.recipient { display: flex; flex-wrap: wrap; gap: 6px 12px; padding: 16px 18px 0; color: var(--catalina); font-size: 13.5px; }
+.recipient span { color: var(--muted); }
+.infoField { padding: 14px 18px 18px; line-height: 1.7; font-size: 13.5px; }
+.infoField > span, .paymentMethod > span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+.paymentMethod { margin: 16px 18px; padding: 12px 14px; background: #f6f8fc; border: 1px solid var(--hairline); border-radius: 8px; font-size: 13.5px; color: var(--egyptian); }
+.paymentHint { padding: 0 18px 16px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.summaryRow { align-items: center; gap: 12px; }
+@media (max-width: 868px) { .detailGrid { grid-template-columns: minmax(0,1fr); } }

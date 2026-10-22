@@ -1,0 +1,100 @@
+.actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.primary, .secondary, .danger { font-family: inherit; font-size: 13.5px; font-weight: 700; border-radius: 6px; padding: 8px 16px; cursor: pointer; background: var(--white); }
+.secondary { color: var(--egyptian); border: 1.5px solid var(--egyptian); }
+.danger { color: var(--danger); border: 1.5px solid var(--danger); }
+.primary { color: var(--white); background: var(--egyptian); border: 1.5px solid var(--egyptian); }
+.secondary:hover { background: var(--alice); }
+.danger:hover { background: var(--danger-bg); }
+.primary:disabled { opacity: 0.45; cursor: not-allowed; }
+.notes { padding: 12px 20px 16px; font-size: 13px; line-height: 1.6; display: grid; gap: 12px; }
+.notes > * { margin: 0; }
+.notes:empty { display: none; }
+.failure { color: #b42318; background: #fdecec; border-radius: 8px; padding: 12px; }
+.failure p { margin: 3px 0 0; }
+.points { display: inline-block; color: #067647; background: #dcf5e6; font-weight: 600; padding: 4px 10px; border-radius: 5px; }
+.pendingPoints { color: #92400e; background: #fff4d6; }
+.evidence { padding: 12px; border: 1px solid var(--hairline); background: var(--white); border-radius: 8px; }
+.evidence p { margin: 3px 0 0; }
+.card .evidence > strong { color: var(--egyptian); }
+.review { display: flex; align-items: baseline; gap: 6px; margin-top: 14px; padding: 9px 12px; background: #f6f8fc; border-left: 2px solid var(--egyptian); border-radius: 5px; font-size: 12px; line-height: 1.6; }
+.notes summary { cursor: pointer; color: var(--egyptian); }
+.dialog { padding: 0; border: 0; border-radius: 12px; width: 560px; max-width: calc(100vw - 32px); max-height: calc(100dvh - 40px); margin: auto; color: var(--ink); background: var(--white); font-family: inherit; box-shadow: 0 20px 50px rgba(7,18,51,.25); }
+.dialog::backdrop { background: rgba(7,18,51,.45); }
+.dialog header { display: flex; align-items: flex-start; justify-content: space-between; padding: 18px 24px; border-bottom: 1px solid var(--hairline); }
+.dialog h2 { font-size: 18px; color: var(--catalina); }
+.dialog header p { color: var(--muted); margin-top: 4px; font-size: 13px; }
+.dialog header button { border: 0; background: none; color: var(--muted); cursor: pointer; }
+.dialog footer { padding: 16px 24px; border-top: 1px solid var(--hairline); display: flex; justify-content: flex-end; gap: 10px; }
+.formBody { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px; font-size: 13.5px; line-height: 1.6; }
+.formBody label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; }
+.formBody input, .formBody select, .formBody textarea { width: 100%; padding: 9px 12px; border: 1px solid var(--hairline); border-radius: 6px; font: inherit; color: var(--ink); background: var(--white); }
+.formBody textarea { resize: vertical; }
+.formBody > p { color: var(--muted); }
+.stars { display: flex; justify-content: center; gap: 12px; }
+.stars button { border: 0; background: none; color: var(--saffron); cursor: pointer; padding: 4px; }
+.attachments { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+.attachments > div { position: relative; }
+.attachments img { width: 76px; height: 86px; object-fit: cover; border: 1px solid var(--hairline); border-radius: 6px; }
+.attachments button { position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--danger); color: var(--white); cursor: pointer; }
+.video { width: 100%; max-height: 220px; margin-top: 10px; }
+.textButton { border: 0; background: none; color: var(--danger); cursor: pointer; padding: 6px; }
+.error { padding: 0 24px 14px; color: var(--danger); font-size: 13px; }
+
+.card { overflow: hidden; border: 1px solid #b6c9ed; border-radius: 14px; background: var(--white); box-shadow: 0 5px 18px rgba(13,34,107,.1); }
+.cardHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; background: var(--egyptian); }
+.cardHeader > div { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; }
+.cardHeader strong { font-size: 15px; color: var(--white); }
+.cardHeader time { font-size: 12px; color: #d9e6ff; }
+.badge { border-radius: 24px; padding: 7px 12px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.badgeSuccess { background: #ecfdf5; color: #15803d; }
+.badgeWarning { background: #fff4d6; color: #92400e; }
+.badgePrimary { background: #e7efff; color: var(--egyptian); }
+.badgeDanger { background: #fdecec; color: #b42318; }
+.badgeReturned { background: #efedff; color: #5140b8; }
+.progress { display: flex; list-style: none; gap: 8px; padding: 8px 20px 16px; }
+.progress li { flex: 1; border-top: 3px solid #d4e0f8; padding-top: 7px; font-size: 12px; color: var(--muted); }
+.progress .stepDone { border-color: var(--egyptian); color: var(--catalina); font-weight: 700; }
+.productSummary { display: flex; align-items: center; gap: 14px; padding: 18px 20px; }
+.coverStack { display: flex; flex-shrink: 0; padding-right: 14px; }
+.summaryCover { width: 40px; height: 54px; border: 2px solid white; border-radius: 5px; object-fit: cover; box-shadow: 0 0 0 1px var(--hairline); }
+.summaryCover + .summaryCover { margin-left: -14px; }
+.summaryInfo { flex: 1; min-width: 0; font-size: 13.5px; color: var(--catalina); }
+.summaryInfo p { margin-top: 5px; font-size: 12px; color: var(--muted); }
+.expand, .collapse { border: 0; background: none; color: var(--egyptian); font: inherit; font-size: 12px; cursor: pointer; }
+.expand { flex-shrink: 0; }
+.collapse { display: block; margin-left: auto; padding: 12px 20px 0; }
+.product { padding: 18px 20px; border-bottom: 1px solid #e5ecf8; }
+.productRow { display: grid; grid-template-columns: 56px minmax(0,1fr) auto; gap: 14px; align-items: start; }
+.productCover { width: 56px; height: 76px; object-fit: cover; border-radius: 5px; background: #edf2fa; }
+.productInfo { font-size: 13.5px; color: var(--catalina); min-width: 0; }
+.productInfo p { margin-top: 5px; font-size: 12px; color: var(--muted); }
+.productMeta { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; margin-top: 8px; font-size: 12px; }
+.physical, .digital { padding: 3px 7px; border-radius: 4px; font-size: 11px; }
+.physical { background: #e7efff; color: var(--egyptian); }
+.digital { background: #ecfdf5; color: #067647; }
+.productPrice { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; color: var(--egyptian); }
+.productPrice small { font-size: 12px; color: var(--muted); }
+.productPrice > strong { font-size: 16px; }
+.productPrice .actions { margin-top: 5px; }
+.reviewStars { color: #b65b08; flex-shrink: 0; }
+.paymentRow { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 12px 20px; border-top: 1px dashed var(--hairline); font-size: 12px; color: var(--muted); background: #f8faff; }
+.cardFooter { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; padding: 16px 20px; background: #eaf0fc; border-top: 2px solid #ccdaf2; }
+.total { display: flex; flex-direction: column; gap: 5px; }
+.total > span, .total small { color: var(--muted); font-size: 12px; }
+.total > strong { color: var(--egyptian); font-size: 18px; font-weight: 800; }
+.noticeWarning, .noticeInfo, .noticeReturned, .hiddenReview { border-radius: 10px; padding: 14px; }
+.noticeWarning { background: #fff4d6; color: #92400e; }
+.noticeInfo { background: #e7efff; color: var(--egyptian); }
+.noticeReturned { background: #efedff; color: #5140b8; }
+.hiddenReview { background: #f6f8fc; color: var(--muted); }
+.noticeWarning p, .noticeInfo p, .noticeReturned p, .hiddenReview p { margin-top: 4px; }
+@media (max-width: 600px) {
+    .productSummary { flex-wrap: wrap; }
+    .expand { margin-left: auto; }
+    .productRow { grid-template-columns: 48px minmax(0,1fr); }
+    .productCover { width: 48px; height: 66px; }
+    .productPrice { grid-column: 2; }
+    .productPrice .actions { justify-content: flex-start; }
+    .cardFooter > .actions { width: 100%; }
+    .cardHeader, .product, .productSummary, .cardFooter, .paymentRow { padding-left: 16px; padding-right: 16px; }
+}

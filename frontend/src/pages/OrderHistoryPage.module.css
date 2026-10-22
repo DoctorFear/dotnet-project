@@ -1,3 +1,7 @@
+.page { background: var(--alice); min-height: 100vh; display: flex; flex-direction: column; }
+.orderPayment { padding: 12px 20px; border-top: 1px solid var(--hairline); color: var(--muted); font-size: 12px; background: #f7f9fc; margin-bottom: 12px; }
+.tabHeaders button { background: none; border-top: 0; border-left: 0; border-right: 0; font-family: inherit; }
+
 .container {
     max-width: 1000px;
     margin: 24px auto;
@@ -192,7 +196,9 @@
     align-items: center;
     padding: 14px 20px;
     border-top: 1px solid var(--hairline, #dce6f7);
-    background: #fafcff;
+    background: #edf2fa;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
 .totalWrap {
@@ -439,4 +445,24 @@
     gap: 4px;
     justify-content: center;
     align-items: center;
+}
+
+.filters { margin: -4px 0 16px; padding: 16px; background: #f7f9fe; border: 1px solid var(--hairline); border-radius: 10px; }
+.searchForm { display: flex; align-items: center; gap: 10px; padding: 5px 5px 5px 12px; background: var(--white); border: 1px solid #bacceb; border-radius: 7px; color: var(--muted); }
+.searchForm input { flex: 1; min-width: 0; border: 0; outline: none; font: inherit; font-size: 13px; color: var(--ink); background: transparent; }
+.searchForm:focus-within { border-color: var(--egyptian); box-shadow: 0 0 0 2px #e7efff; }
+.searchForm button { padding: 9px 20px; background: var(--egyptian); color: var(--white); border: 0; border-radius: 5px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.filterGrid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; margin-top: 14px; }
+.filterGrid label, .dateGrid label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--muted); font-weight: 600; }
+.filterGrid select, .dateGrid input { width: 100%; min-width: 0; padding: 9px 10px; border: 1px solid #d0ddf2; background: var(--white); color: var(--catalina); border-radius: 6px; font: inherit; font-size: 13px; font-weight: 400; }
+.dateGrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; margin-top: 14px; }
+.activeFilters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 14px; margin-top: 14px; border-top: 1px solid var(--hairline); font-size: 12px; color: var(--muted); }
+.filterChip { display: inline-flex; align-items: center; gap: 8px; padding: 5px 9px; border: 1px solid #c7d8f5; border-radius: 20px; background: #eaf1ff; color: var(--egyptian); font: inherit; overflow-wrap: anywhere; cursor: pointer; }
+.clearFilters { border: 0; background: none; color: var(--egyptian); margin-left: auto; font: inherit; text-decoration: underline; cursor: pointer; }
+.resultCount { margin: 0 0 14px; font-size: 12px; color: var(--muted); }
+.resultCount strong { color: var(--catalina); }
+@media (max-width: 600px) {
+    .filterGrid { grid-template-columns: minmax(0,1fr); }
+    .searchForm button { padding: 9px 12px; }
+    .searchForm > svg { flex-shrink: 0; }
 }
