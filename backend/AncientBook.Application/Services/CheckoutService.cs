@@ -163,6 +163,7 @@ namespace AncientBook.Application.Services
                     DiscountAmount = discountAmount,
                     FinalAmount = finalAmount,
                     ShippingAddress = request.ShippingAddress,
+                    PaymentMethod = "COD",
                     Status = OrderStatus.Pending,
                     OrderItems = orderItemsToCreate
                 };
@@ -292,6 +293,7 @@ namespace AncientBook.Application.Services
                 var qrCodeUrl = root.TryGetProperty("qrCodeUrl", out var qrProp) ? qrProp.GetString() ?? "" : "";
 
                 order.PayUrl = payUrl;
+                order.PaymentMethod = "MoMo";
                 await _orderRepository.UpdateAsync(order);
 
                 return new CreateMomoResponse
@@ -414,6 +416,134 @@ namespace AncientBook.Application.Services
                 throw new KeyNotFoundException($"Không tìm thấy đơn hàng {orderId}");
             }
             return order.IsPaid;
+        }
+
+        public async Task<string> CreateVnPayUrlAsync(int orderId, string clientIpAddress)
+        {
+            var order = await _orderRepository.GetByIdAsync(orderId);
+            if (order == null)
+            {
+                throw new KeyNotFoundException($"Không tìm thấy đơn hàng {orderId}");
+            }
+
+            var tmnCode = Environment.GetEnvironmentVariable("VNPAY_TMNCODE");
+            var hashSecret = Environment.GetEnvironmentVariable("VNPAY_HASHSECRET");
+            var vnpUrl = Environment.GetEnvironmentVariable("VNPAY_URL");
+            var returnUrl = Environment.GetEnvironmentVariable("VNPAY_RETURNURL");
+
+            if (string.IsNullOrEmpty(tmnCode) || string.IsNullOrEmpty(hashSecret) || string.IsNullOrEmpty(vnpUrl))
+            {
+                throw new Exception("Chưa cấu hình biến môi trường cho VNPay.");
+            }
+
+            var vnpayData = new SortedDictionary<string, string>(new VnPayCompare())
+            {
+                { "vnp_Version", "2.1.0" },
+                { "vnp_Command", "pay" },
+                { "vnp_TmnCode", tmnCode },
+                { "vnp_Amount", ((long)(order.FinalAmount * 100)).ToString() },
+                { "vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss") },
+                { "vnp_CurrCode", "VND" },
+                { "vnp_IpAddr", string.IsNullOrEmpty(clientIpAddress) ? "127.0.0.1" : clientIpAddress },
+                { "vnp_Locale", "vn" },
+                { "vnp_OrderInfo", $"Thanh toan don hang {order.Id} tai AncientBook" },
+                { "vnp_OrderType", "other" },
+                { "vnp_ReturnUrl", returnUrl },
+                { "vnp_TxnRef", $"{order.Id}_{DateTime.Now.Ticks}" }
+            };
+
+            var queryData = new StringBuilder();
+            var hashData = new StringBuilder();
+
+            foreach (var kv in vnpayData)
+            {
+                if (!string.IsNullOrEmpty(kv.Value))
+                {
+                    hashData.Append(kv.Key).Append('=').Append(Uri.EscapeDataString(kv.Value)).Append('&');
+                    queryData.Append(kv.Key).Append('=').Append(Uri.EscapeDataString(kv.Value)).Append('&');
+                }
+            }
+
+            if (hashData.Length > 0) hashData.Remove(hashData.Length - 1, 1);
+            if (queryData.Length > 0) queryData.Remove(queryData.Length - 1, 1);
+
+            string queryUrl = queryData.ToString();
+            string vnpSecureHash = ComputeHmacSha512(hashData.ToString(), hashSecret);
+            queryUrl += "&vnp_SecureHash=" + vnpSecureHash;
+
+            string paymentUrl = $"{vnpUrl}?{queryUrl}"; 
+
+            order.PayUrl = paymentUrl;
+            order.PaymentMethod = "VNPay";
+            await _orderRepository.UpdateAsync(order);
+
+            return paymentUrl;
+        }
+
+        private string ComputeHmacSha512(string text, string key)
+        {
+            var keyBytes = Encoding.UTF8.GetBytes(key);
+            var textBytes = Encoding.UTF8.GetBytes(text);
+            using var hmac = new System.Security.Cryptography.HMACSHA512(keyBytes);
+            var hashBytes = hmac.ComputeHash(textBytes);
+            return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+        }
+
+        private class VnPayCompare : IComparer<string>
+        {
+            public int Compare(string x, string y)
+            {
+                if (x == y) return 0;
+                if (x == null) return -1;
+                if (y == null) return 1;
+                var vnpCompare = string.Compare(x, y, StringComparison.Ordinal);
+                if (vnpCompare != 0) return vnpCompare;
+                return string.Compare(x, y, StringComparison.Ordinal);
+            }
+        }
+
+        public async Task<string> CreateSePayUrlAsync(int orderId)
+        {
+            var order = await _orderRepository.GetByIdAsync(orderId);
+            if (order == null)
+            {
+                throw new KeyNotFoundException($"Không tìm thấy đơn hàng {orderId}");
+            }
+
+            var sepayBaseUrl = Environment.GetEnvironmentVariable("SEPAY_URL"); 
+            var amount = (long)order.FinalAmount;
+            var memo = $"AB{order.Id}";
+
+            var paymentUrl = $"{sepayBaseUrl}&amount={amount}&des={memo}";
+            
+            order.PayUrl = paymentUrl;
+            order.PaymentMethod = "SePay";
+            await _orderRepository.UpdateAsync(order);
+
+            return paymentUrl;
+        }
+
+        public async Task HandleSePayIpnAsync(JsonElement ipnData)
+        {
+            if (ipnData.TryGetProperty("transferType", out var typeProp) && typeProp.GetString() == "in" &&
+                ipnData.TryGetProperty("transferAmount", out var amountProp) &&
+                ipnData.TryGetProperty("content", out var contentProp))
+            {
+                long transferAmount = amountProp.GetInt64();
+                string content = contentProp.GetString()?.ToUpper() ?? "";
+
+                var match = System.Text.RegularExpressions.Regex.Match(content, @"AB(\d+)");
+                if (match.Success && int.TryParse(match.Groups[1].Value, out int orderId))
+                {
+                    var order = await _orderRepository.GetByIdAsync(orderId);
+                    if (order != null && !order.IsPaid && order.FinalAmount <= transferAmount)
+                    {
+                        order.IsPaid = true;
+                        await _orderRepository.UpdateAsync(order);
+                        await _loyalty.ProcessPaidDigitalOrderAsync(order.Id);
+                    }
+                }
+            }
         }
     }
 }

@@ -158,6 +158,11 @@ export const CheckoutPage: React.FC = () => {
                                 <input type="radio" value="momo" checked={paymentMethod === 'momo'} onChange={() => setPaymentMethod('momo')} />
                                 <div><h4>Ví điện tử MoMo</h4></div>
                             </label>
+                            {/* Add SePay Option */}
+                            <label className={styles.paymentOptionItem}>
+                                <input type="radio" value="sepay" checked={paymentMethod === 'sepay'} onChange={() => setPaymentMethod('sepay')} />
+                                <div><h4>Chuyển khoản ngân hàng (SePay)</h4></div>
+                            </label>
                         </div>
 
                         <div className={styles.checkoutCardTitle} style={{ fontSize: '14px', marginTop: '20px' }}>

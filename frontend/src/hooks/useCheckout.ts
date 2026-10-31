@@ -1,9 +1,11 @@
 // src/hooks/useCheckout.ts
 import { useState, useMemo } from 'react';
-import { createOrder, getMomoPaymentUrl } from '../services/checkoutService';
+import { createOrder, getMomoPaymentUrl, getSePayPaymentUrl } from '../services/checkoutService';
 import type { Address } from '../types/address';
+import { useNavigate } from 'react-router-dom';
 
 export const useCheckout = (cartItems: any[]) => {
+    const navigate = useNavigate();
     const [addresses, setAddresses] = useState<Address[]>([
         {
             id: 1,
@@ -19,7 +21,7 @@ export const useCheckout = (cartItems: any[]) => {
     const [paymentMethod, setPaymentMethod] = useState<string>('cod');
     const [pointsUsed, setPointsUsed] = useState<number>(0);
     const [userMaxPoints, setUserMaxPoints] = useState<number>(500); 
-    const [shippingFee, setShippingFee] = useState<number>(15000);
+    const [shippingFee, setShippingFee] = useState<number>(0);
     
     const [isProcessing, setIsProcessing] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
@@ -76,6 +78,25 @@ export const useCheckout = (cartItems: any[]) => {
                 } catch (momoErr) {
                     console.log(momoErr)
                     alert("Không thể khởi tạo thanh toán MoMo. Đơn hàng đã được lưu dưới dạng COD.");
+                }
+            }
+
+            if (paymentMethod === 'sepay') {
+                try {
+                    const sepayData = await getSePayPaymentUrl(data.orderId);
+                    if (sepayData.payUrl) {
+                        navigate('/sepay-payment', { 
+                            state: { 
+                                orderId: data.orderId,
+                                amount: finalTotal,
+                                qrUrl: sepayData.payUrl
+                            } 
+                        });
+                        return;
+                    }
+                } catch (sepayErr) {
+                    console.error("SePay Error:", sepayErr);
+                    alert("Không thể khởi tạo thanh toán SePay. Đơn hàng đã được lưu dưới dạng COD.");
                 }
             }
 

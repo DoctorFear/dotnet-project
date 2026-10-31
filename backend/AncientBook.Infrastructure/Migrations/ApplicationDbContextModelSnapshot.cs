@@ -1124,6 +1124,11 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Property<string>("PayUrl")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
                     b.Property<int?>("PointsId")
                         .HasColumnType("int");
 

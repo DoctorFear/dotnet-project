@@ -13,3 +13,9 @@ export const getMomoPaymentUrl = async(orderId: number): Promise<CreateMomoRespo
         method: 'POST'
     });
 }
+
+export const getSePayPaymentUrl = async(orderId: number): Promise<{ payUrl: string }> => {
+    return requestApi<{ payUrl: string }>(`/checkout/${orderId}/sepay-payment`, {
+        method: 'POST'
+    });
+}
