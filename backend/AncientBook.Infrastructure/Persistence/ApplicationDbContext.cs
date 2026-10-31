@@ -150,6 +150,7 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.Property(o => o.FinalAmount).HasColumnType("decimal(18,2)").IsRequired();
                 entity.Property(o => o.ShippingAddress).IsRequired().HasMaxLength(500);
                 entity.Property(o => o.Status).IsRequired().HasMaxLength(30);
+                entity.Property(o => o.PaymentMethod).IsRequired().HasMaxLength(30);
 
                 entity.HasIndex(o => new { o.ShipperId, o.Status, o.CreatedAt })
                 .HasDatabaseName("IX_Orders_ShipperId_Status_CreatedAt");

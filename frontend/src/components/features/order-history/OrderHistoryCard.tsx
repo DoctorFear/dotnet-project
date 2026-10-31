@@ -55,7 +55,7 @@ export default function OrderHistoryCard({ order, returnPath }: { order: Order; 
         {returning && <OrderProgress order={order} />}
         <OrderHistoryNotes order={order} />
         {!active && <div className={styles.paymentRow}><span>{order.paymentMethod === 'COD' ? 'Thanh toán tiền mặt COD' : order.paymentMethod ?? 'Chưa cập nhật phương thức thanh toán'}</span><OrderPoints order={order} /></div>}
-        <div className={styles.cardFooter}><div className={styles.total}><span>Tổng tiền</span><strong>{order.finalAmount.toLocaleString('vi-VN')} đ</strong>{active && order.paymentMethod && <small>{order.paymentMethod === 'COD' ? 'Tiền mặt (COD) · Thanh toán khi nhận' : 'MoMo'}</small>}</div>
+        <div className={styles.cardFooter}><div className={styles.total}><span>Tổng tiền</span><strong>{order.finalAmount.toLocaleString('vi-VN')} đ</strong>{active && order.paymentMethod && <small>{order.paymentMethod === 'COD' ? 'Tiền mặt (COD) · Thanh toán khi nhận' : order.paymentMethod === 'SePay' ? 'SePay' : 'MoMo'}</small>}</div>
             {/* Chi Tiết */}
             {/* Hủy đơn */}
             {/* Hoàn trả */}

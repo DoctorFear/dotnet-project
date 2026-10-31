@@ -21,6 +21,7 @@ namespace AncientBook.Application.DTOs
         public string? OrderType { get; set; }
         public string? StatusGroup { get; set; }
         public string? SortBy { get; set; }
+        public string? PaymentMethod { get; set; }
     }
 
     public class OrderResponseDto

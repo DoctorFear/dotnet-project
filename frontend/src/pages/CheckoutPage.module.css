@@ -347,6 +347,26 @@
     transform: scale(0.98);
 }
 
+.backToShopPay {
+    width: 100%;
+    padding: 13px;
+    background: var(--egyptian);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14.5px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+    box-shadow: 0 4px 12px rgba(11, 64, 156, 0.25);
+}
+.backToShopPay:hover {
+    background: var(--catalina);
+}
+.backToShopPay:active {
+    transform: scale(0.98);
+}
+
 /* MODAL SUCCESS OVERLAY */
 .successModalOverlay {
     position: fixed;

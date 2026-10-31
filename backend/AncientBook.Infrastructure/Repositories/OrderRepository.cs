@@ -42,6 +42,7 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
                     IsPaid = o.IsPaid,
                     PayUrl = o.PayUrl,
                     PackingIssue = o.PackingIssue,
+                    PaymentMethod = o.PaymentMethod,
                     
                     User = o.User == null ? null : new OrderUserDto
                     {
@@ -268,6 +269,7 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
                     IsPaid = o.IsPaid,
                     PayUrl = o.PayUrl,
                     PackingIssue = o.PackingIssue,
+                    PaymentMethod = o.PaymentMethod,
                     
                     User = o.User == null ? null : new OrderUserDto
                     {
@@ -309,8 +311,12 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
         {
             if (orders.Count == 0) return;
             var ids = orders.Select(o => o.Id).ToArray();
-            var sources = await _context.Orders.AsNoTracking().Where(o => ids.Contains(o.Id))
-                .Select(o => new { o.Id, o.CreatedBy }).ToListAsync();
+            var dbOrders = await _context.Orders.AsNoTracking()
+                .Where(o => ids.Contains(o.Id))
+                .Select(o => new { o.Id, o.CreatedBy, o.PaymentMethod })
+                .ToListAsync();
+            // var sources = await _context.Orders.AsNoTracking().Where(o => ids.Contains(o.Id))
+            //     .Select(o => new { o.Id, o.CreatedBy }).ToListAsync();
             var histories = await _context.OrderStatusHistories.AsNoTracking()
                 .Where(h => ids.Contains(h.OrderId)).OrderBy(h => h.ChangedAt).ThenBy(h => h.Id).ToListAsync();
             var refunds = await _context.Refunds.AsNoTracking().Where(r => ids.Contains(r.OrderId)).ToListAsync();
@@ -324,15 +330,27 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
             var pointRate = int.TryParse(settings.FirstOrDefault(s => s.SettingKey == "POINT_RATE_BRONZE")?.SettingValue, out var rate) ? rate : 5;
             foreach (var order in orders)
             {
-                var source = sources.First(o => o.Id == order.Id).CreatedBy;
+                var dbOrder = dbOrders.FirstOrDefault(o => o.Id == order.Id);
+                var source = dbOrder?.CreatedBy;
+                // var source = sources.First(o => o.Id == order.Id).CreatedBy;
                 if (source?.StartsWith("OrderSeeder:v1:", StringComparison.Ordinal) == true &&
                     int.TryParse(source["OrderSeeder:v1:".Length..], out var scenario)) order.PresentationScenario = scenario % 20;
                 var history = histories.Where(h => h.OrderId == order.Id).ToList();
                 order.CompletedAt = history.FirstOrDefault(h => h.ToStatus == OrderStatus.Completed)?.ChangedAt;
                 order.ReturnDeadline = order.CompletedAt?.AddDays(returnDays);
-                var paymentNote = history.FirstOrDefault(h => h.ToStatus == OrderStatus.Pending)?.Note;
-                order.PaymentMethod = paymentNote?.Contains("MoMo", StringComparison.OrdinalIgnoreCase) == true ? "MoMo"
-                    : paymentNote?.Contains("COD", StringComparison.OrdinalIgnoreCase) == true ? "COD" : null;
+                if (!string.IsNullOrEmpty(dbOrder?.PaymentMethod))
+                {
+                    order.PaymentMethod = dbOrder.PaymentMethod;
+                }
+                else
+                {
+                    var paymentNote = history.FirstOrDefault(h => h.ToStatus == OrderStatus.Pending)?.Note;
+                    order.PaymentMethod = paymentNote?.Contains("MoMo", StringComparison.OrdinalIgnoreCase) == true ? "MoMo"
+                        : paymentNote?.Contains("COD", StringComparison.OrdinalIgnoreCase) == true ? "COD" : "COD";
+                }
+                // var paymentNote = history.FirstOrDefault(h => h.ToStatus == OrderStatus.Pending)?.Note;
+                // order.PaymentMethod = paymentNote?.Contains("MoMo", StringComparison.OrdinalIgnoreCase) == true ? "MoMo"
+                //     : paymentNote?.Contains("COD", StringComparison.OrdinalIgnoreCase) == true ? "COD" : null;
                 order.FailureReason = history.LastOrDefault(h => h.ToStatus == OrderStatus.Failed)?.Note
                     ?? failures.FirstOrDefault(f => f.OrderId == order.Id)?.FailureReason?.ReasonText;
                 var refund = refunds.FirstOrDefault(r => r.OrderId == order.Id);

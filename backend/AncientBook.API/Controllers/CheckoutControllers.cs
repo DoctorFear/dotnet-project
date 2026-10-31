@@ -63,6 +63,55 @@ namespace AncientBook.API.Controllers
             }
         }
 
+        [HttpPost("{orderId}/vn-payment")]
+        public async Task<IActionResult> CreateVnPayPayment(int orderId)
+        {
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+            if (ipAddress == "::1" || string.IsNullOrEmpty(ipAddress))
+            {
+                ipAddress = "127.0.0.1";
+            }
+            try
+            {
+                var payUrl = await _checkoutService.CreateVnPayUrlAsync(orderId, ipAddress);
+                return Ok(new { payUrl });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("{orderId}/sepay-payment")]
+        public async Task<IActionResult> CreateSePayPayment(int orderId)
+        {
+            try
+            {
+                var payUrl = await _checkoutService.CreateSePayUrlAsync(orderId);
+                return Ok(new { payUrl });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("sepay-ipn")]
+        public async Task<IActionResult> SePayIpn([FromBody] JsonElement ipnPayload)
+        {
+            try
+            {
+                Console.WriteLine("Working");
+                await _checkoutService.HandleSePayIpnAsync(ipnPayload);
+                return Ok(new { success = true, message = "Webhook processed successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
         [HttpPost("momo-ipn")]
         public async Task<IActionResult> MoMoIpn([FromBody] JsonElement ipnPayload)
         {

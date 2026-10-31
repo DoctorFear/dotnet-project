@@ -14,6 +14,7 @@ namespace AncientBook.Domain.Entities
         public decimal DiscountAmount { get; set; } = 0;
         public decimal FinalAmount { get; set; }
         public string ShippingAddress { get; set; } = string.Empty;
+        public string PaymentMethod { get; set; } = "COD";
         public OrderStatus Status { get; set; } = OrderStatus.Pending; 
         public string? MoMoRequestId { get; set; }
         public string? PayUrl { get; set; }
