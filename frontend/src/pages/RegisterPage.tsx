@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Eye, EyeOff, Check } from 'lucide-react';
 import { useAuthAction } from '../hooks/useAuthAction';
 import { ToastNotification } from '../components/common/ToastNotification';
-import styles from './LoginPage.module.css';
+import { TopBar } from '../components/layout/TopBar';
+import { Header } from '../components/layout/Header';
+import styles from './RegisterPage.module.css';
 
 export const RegisterPage: React.FC = () => {
     const [formData, setFormData] = useState({
@@ -14,10 +17,22 @@ export const RegisterPage: React.FC = () => {
         confirmPassword: ''
     });
 
-    const { isLoading, toasts, dismissToast, notify, handleRegister } = useAuthAction();
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const { isLoading, toasts, dismissToast, handleRegister } = useAuthAction();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+        if (errors[name]) {
+            setErrors(prev => {
+                const updated = { ...prev };
+                delete updated[name];
+                return updated;
+            });
+        }
     };
 
     const onSubmit = (e: React.FormEvent) => {
@@ -30,71 +45,65 @@ export const RegisterPage: React.FC = () => {
         const password = formData.password;
         const confirmPassword = formData.confirmPassword;
 
-        // 1. Validate FullName: [Required], [MaxLength(100)]
+        const newErrors: Record<string, string> = {};
+
+        // 1. Validate FullName
         if (!fullName) {
-            notify('Họ và tên không được để trống', 'error');
-            return;
-        }
-        if (fullName.length > 100) {
-            notify('Họ và tên tối đa 100 ký tự', 'error');
-            return;
+            newErrors.fullName = 'Họ và tên không được để trống';
+        } else if (fullName.length > 100) {
+            newErrors.fullName = 'Họ và tên tối đa 100 ký tự';
         }
 
-        // 2. Validate Username: [Required], [MinLength(3)], [MaxLength(50)]
+        // 2. Validate Username
         if (!username) {
-            notify('Tên đăng nhập không được để trống', 'error');
-            return;
-        }
-        if (username.length < 3) {
-            notify('Tên đăng nhập tối thiểu 3 ký tự', 'error');
-            return;
-        }
-        if (username.length > 50) {
-            notify('Tên đăng nhập tối đa 50 ký tự', 'error');
-            return;
+            newErrors.username = 'Tên đăng nhập không được để trống';
+        } else if (username.length < 3) {
+            newErrors.username = 'Tên đăng nhập tối thiểu 3 ký tự';
+        } else if (username.length > 50) {
+            newErrors.username = 'Tên đăng nhập tối đa 50 ký tự';
         }
 
-        // 3. Validate Email: [Required], [EmailAddress]
+        // 3. Validate Email
         if (!email) {
-            notify('Email không được để trống', 'error');
-            return;
-        }
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            notify('Địa chỉ email không đúng định dạng', 'error');
-            return;
-        }
-
-        // 4. Validate PhoneNumber: [RegularExpression(@"^0\d{9}$")] (Nếu có nhập)
-        if (phoneNumber) {
-            const phoneRegex = /^0\d{9}$/;
-            if (!phoneRegex.test(phoneNumber)) {
-                notify('Số điện thoại phải có định dạng 10 chữ số (bắt đầu bằng 0)', 'error');
-                return;
+            newErrors.email = 'Email không được để trống';
+        } else {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                newErrors.email = 'Email không đúng định dạng thư điện tử';
             }
         }
 
-        // 5. Validate Password: [Required], [MinLength(6)]
+        // 4. Validate PhoneNumber (Nếu có nhập)
+        if (phoneNumber) {
+            const phoneRegex = /^0\d{9}$/;
+            if (!phoneRegex.test(phoneNumber)) {
+                newErrors.phoneNumber = 'Số điện thoại phải đúng định dạng 10 chữ số (bắt đầu bằng 0)';
+            }
+        }
+
+        // 5. Validate Password: tối thiểu 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
         if (!password) {
-            notify('Mật khẩu không được để trống', 'error');
-            return;
-        }
-        if (password.length < 6) {
-            notify('Mật khẩu phải có độ dài tối thiểu từ 6 ký tự', 'error');
-            return;
+            newErrors.password = 'Mật khẩu không được để trống';
+        } else if (!passwordRegex.test(password)) {
+            newErrors.password = 'Mật khẩu từ 8 ký tự trở lên, gồm chữ hoa, chữ thường, số và tối thiểu 1 ký tự đặc biệt';
         }
 
-        // 6. Validate ConfirmPassword: [Required], [Compare("Password")]
+        // 6. Validate ConfirmPassword
         if (!confirmPassword) {
-            notify('Xác nhận mật khẩu không được để trống', 'error');
-            return;
+            newErrors.confirmPassword = 'Xác nhận mật khẩu không được để trống';
+        } else if (password !== confirmPassword) {
+            newErrors.confirmPassword = 'Mật khẩu xác nhận không trùng khớp';
         }
-        if (password !== confirmPassword) {
-            notify('Mật khẩu xác nhận không trùng khớp', 'error');
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
             return;
         }
 
-        // Gửi payload đã qua kiểm tra hợp lệ
+        setErrors({});
+
+        // Gửi thông tin đăng ký
         handleRegister({
             fullName,
             username,
@@ -106,95 +115,177 @@ export const RegisterPage: React.FC = () => {
     };
 
     return (
-        <div className={styles.authContainer}>
+        <div className={styles.registerPageWrapper}>
             <ToastNotification toasts={toasts} onClose={dismissToast} />
-            <div className={styles.authCard}>
-                <div className={styles.brandTitle}>
-                    ancient<span>BOOK</span>
+
+            {/* Dùng chung TopBar & Header hệ thống (ẩn ô tìm kiếm) */}
+            <TopBar />
+            <Header showSearch={false} />
+
+            <main className={styles.mainWrapper}>
+                <div className={styles.bookCard}>
+                    {/* LEFT: VISUAL BRANDING & PERKS */}
+                    <div className={styles.visualColumn}>
+                        <div className={styles.visualInner}>
+                            <span className={styles.panelKicker}>Góc độc giả</span>
+                            <p className={styles.quoteText}>
+                                Một cuốn sách thực sự hay dạy tôi nhiều điều hơn là chỉ đọc nó. Tôi phải nhanh chóng đặt nó xuống, bắt đầu sống theo những gì nó gợi ý.
+                            </p>
+                            <p className={styles.quoteAuthor}>Nguyễn Trương Mai Phương</p>
+                        </div>
+                    </div>
+
+                    {/* RIGHT: REGISTRATION FORM */}
+                    <div className={styles.formColumn}>
+                        <h2 className={styles.formTitle}>Tạo tài khoản mới</h2>
+                        <p className={styles.formSubtitle}>Trở thành Thành viên để tận hưởng trọn vẹn đặc quyền</p>
+
+                        <form onSubmit={onSubmit} noValidate>
+                            <div className={styles.inputGrid}>
+                                {/* Hàng 1: Họ và tên + Tên đăng nhập */}
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel} htmlFor="fullName">
+                                        Họ và tên <span className={styles.req}>*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="fullName"
+                                        name="fullName"
+                                        className={`${styles.formInput} ${errors.fullName ? styles.isInvalid : ''}`}
+                                        placeholder="VD: Nguyễn Văn A"
+                                        value={formData.fullName}
+                                        onChange={handleChange}
+                                        maxLength={100}
+                                    />
+                                    <span className={styles.errorText}>{errors.fullName}</span>
+                                </div>
+
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel} htmlFor="regUsername">
+                                        Tên đăng nhập <span className={styles.req}>*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="regUsername"
+                                        name="username"
+                                        className={`${styles.formInput} ${errors.username ? styles.isInvalid : ''}`}
+                                        placeholder="username"
+                                        value={formData.username}
+                                        onChange={handleChange}
+                                        maxLength={50}
+                                    />
+                                    <span className={styles.errorText}>{errors.username}</span>
+                                </div>
+
+                                {/* Hàng 2: Email + Số điện thoại */}
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel} htmlFor="email">
+                                        Địa chỉ Email <span className={styles.req}>*</span>
+                                    </label>
+                                    <input
+                                        type="email"
+                                        id="email"
+                                        name="email"
+                                        className={`${styles.formInput} ${errors.email ? styles.isInvalid : ''}`}
+                                        placeholder="name@domain.com"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                    />
+                                    <span className={styles.errorText}>{errors.email}</span>
+                                </div>
+
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel} htmlFor="phoneNumber">
+                                        Số điện thoại
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        id="phoneNumber"
+                                        name="phoneNumber"
+                                        className={`${styles.formInput} ${errors.phoneNumber ? styles.isInvalid : ''}`}
+                                        placeholder="09xx xxx xxx"
+                                        value={formData.phoneNumber}
+                                        onChange={handleChange}
+                                        maxLength={10}
+                                    />
+                                    <span className={styles.errorText}>{errors.phoneNumber}</span>
+                                </div>
+
+                                {/* Hàng 3: Mật khẩu + Xác nhận mật khẩu */}
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel} htmlFor="regPassword">
+                                        Mật khẩu <span className={styles.req}>*</span>
+                                    </label>
+                                    <div className={styles.passwordInputWrapper}>
+                                        <input
+                                            type={showPassword ? 'text' : 'password'}
+                                            id="regPassword"
+                                            name="password"
+                                            className={`${styles.formInput} ${errors.password ? styles.isInvalid : ''}`}
+                                            placeholder="Nhập mật khẩu"
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                        />
+                                        <button
+                                            type="button"
+                                            className={styles.togglePasswordBtn}
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            tabIndex={-1}
+                                            aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                                        >
+                                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
+                                    <span className={styles.errorText}>{errors.password}</span>
+                                </div>
+
+                                {/* Xác nhận mật khẩu */}
+                                <div className={styles.formGroup}>
+                                    <label className={styles.formLabel} htmlFor="confirmPassword">
+                                        Xác nhận mật khẩu <span className={styles.req}>*</span>
+                                    </label>
+                                    <div className={styles.passwordInputWrapper}>
+                                        <input
+                                            type={showConfirmPassword ? 'text' : 'password'}
+                                            id="confirmPassword"
+                                            name="confirmPassword"
+                                            className={`${styles.formInput} ${errors.confirmPassword ? styles.isInvalid : ''}`}
+                                            placeholder="Nhập lại mật khẩu"
+                                            value={formData.confirmPassword}
+                                            onChange={handleChange}
+                                        />
+                                        <button
+                                            type="button"
+                                            className={styles.togglePasswordBtn}
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            tabIndex={-1}
+                                            aria-label={showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                                        >
+                                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
+                                    <span className={styles.errorText}>{errors.confirmPassword}</span>
+                                </div>
+                            </div>
+
+                            <button 
+                                type="submit" 
+                                className={styles.btnRegister} 
+                                disabled={isLoading}
+                            >
+                                {isLoading ? 'Đang khởi tạo tài khoản...' : 'Đăng ký tài khoản'}
+                            </button>
+                        </form>
+
+                        <p className={styles.formFooter}>
+                            Đã có tài khoản?
+                            <Link to="/login" className={styles.formLink}>
+                                Đăng nhập ngay
+                            </Link>
+                        </p>
+                    </div>
                 </div>
-                <h2 className={styles.formTitle}>Đăng ký tài khoản</h2>
-                <p className={styles.formSubtitle}>Khởi tạo tài khoản độc giả mới</p>
-
-                <form onSubmit={onSubmit} className={styles.form} noValidate>
-                    <div className={styles.formGroup}>
-                        <label>Họ và tên *</label>
-                        <input
-                            type="text"
-                            name="fullName"
-                            placeholder="Nhập họ và tên đầy đủ"
-                            value={formData.fullName}
-                            onChange={handleChange}
-                            maxLength={100}
-                        />
-                    </div>
-
-                    <div className={styles.formGroup}>
-                        <label>Tên đăng nhập *</label>
-                        <input
-                            type="text"
-                            name="username"
-                            placeholder="Tối thiểu 3 ký tự (vd: thai_son)"
-                            value={formData.username}
-                            onChange={handleChange}
-                            maxLength={50}
-                        />
-                    </div>
-
-                    <div className={styles.formGroup}>
-                        <label>Email liên hệ (phục vụ khôi phục MK) *</label>
-                        <input
-                            type="email"
-                            name="email"
-                            placeholder="example@domain.com"
-                            value={formData.email}
-                            onChange={handleChange}
-                        />
-                    </div>
-
-                    <div className={styles.formGroup}>
-                        <label>Số điện thoại</label>
-                        <input
-                            type="tel"
-                            name="phoneNumber"
-                            placeholder="10 chữ số bắt đầu bằng 0 (vd: 0912345678)"
-                            value={formData.phoneNumber}
-                            onChange={handleChange}
-                            maxLength={10}
-                        />
-                    </div>
-
-                    <div className={styles.formGroup}>
-                        <label>Mật khẩu *</label>
-                        <input
-                            type="password"
-                            name="password"
-                            placeholder="Tối thiểu 6 ký tự"
-                            value={formData.password}
-                            onChange={handleChange}
-                        />
-                    </div>
-
-                    <div className={styles.formGroup}>
-                        <label>Xác nhận mật khẩu *</label>
-                        <input
-                            type="password"
-                            name="confirmPassword"
-                            placeholder="Nhập lại mật khẩu"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                        />
-                    </div>
-
-                    <button type="submit" className={styles.submitBtn} disabled={isLoading}>
-                        {isLoading ? 'Đang tạo tài khoản...' : 'Đăng ký ngay'}
-                    </button>
-                </form>
-
-                <div className={styles.formFooter}>
-                    <span>Đã có tài khoản? </span>
-                    <Link to="/login">Đăng nhập</Link>
-                </div>
-            </div>
+            </main>
         </div>
     );
 };

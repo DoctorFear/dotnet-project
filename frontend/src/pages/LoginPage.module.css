@@ -1,107 +1,395 @@
-.authContainer {
+.loginPageWrapper {
     min-height: 100vh;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #f7f9fa;
-    padding: 24px 16px;
+    flex-direction: column;
+    background-color: var(--alice, #F2F7FF);
+    color: var(--ink, #071233);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-.authCard {
+/* ---------- top bar ---------- */
+.topBar {
+    background: #071233;
+    color: #F2F7FF;
+    padding: 9px 24px;
+    font-size: 12px;
+    letter-spacing: 0.2px;
     width: 100%;
-    max-width: 440px;
+}
+
+.topBarContent {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.topBar strong {
+    color: #FDBE34;
+    font-weight: 600;
+}
+
+/* ---------- header & brand ---------- */
+.header {
     background: #ffffff;
-    border-radius: 12px;
-    padding: 32px 28px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-    border: 1px solid #ebecef;
+    border-bottom: 1.5px solid var(--hairline, #dce6f7);
+    padding: 12px 24px;
+    width: 100%;
 }
 
-.brandTitle {
-    font-size: 24px;
-    font-weight: 700;
-    text-align: center;
-    color: #1e293b;
-    margin-bottom: 8px;
+.headerContent {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.brandTitle span {
-    color: #0284c7;
+.brandName {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--catalina, #0D226B);
+    letter-spacing: -0.6px;
+    display: inline-flex;
+    align-items: baseline;
+    user-select: none;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.bookText {
+    font-family: 'Inter', sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--egyptian, #0B409C);
+    letter-spacing: 1.2px;
+    margin-left: 2px;
+}
+
+.accentDot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background-color: var(--saffron, #FDBE34);
+    border-radius: 50%;
+    margin-left: 4px;
+}
+
+/* ---------- main layout ---------- */
+.mainWrapper {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 24px;
+    width: 100%;
+}
+
+.bookCard {
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #dce6f7;
+    box-shadow: 0 24px 48px -20px rgba(7, 18, 51, 0.25);
+    display: flex;
+    width: 100%;
+    max-width: 900px;
+    min-height: 520px;
+    overflow: hidden;
+    animation: settle 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes settle {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ---------- left visual column ---------- */
+.visualColumn {
+    flex: 0 0 42%;
+    position: relative;
+    background: #0D226B;
+    color: #F2F7FF;
+    padding: 44px 38px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+}
+
+.visualColumn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        repeating-linear-gradient(90deg, rgba(242,247,255,0.04) 0px, rgba(242,247,255,0.04) 2px, transparent 2px, transparent 26px),
+        repeating-linear-gradient(90deg, rgba(253,190,52,0.06) 0px, rgba(253,190,52,0.06) 1px, transparent 1px, transparent 91px);
+    pointer-events: none;
+}
+
+.visualInner {
+    position: relative;
+    z-index: 1;
+}
+
+.panelKicker {
+    font-size: 13px;
+    color: #FDBE34;
+    font-weight: 600;
+    font-family: 'Fraunces', serif, Georgia;
+    font-style: italic;
+}
+
+.quoteText {
+    font-family: 'Fraunces', serif, Georgia;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 21px;
+    line-height: 1.5;
+    color: #F2F7FF;
+    margin-top: 16px;
+    max-width: 32ch;
+}
+
+.quoteAuthor {
+    font-size: 12px;
+    color: rgba(242, 247, 255, 0.65);
+    margin-top: 14px;
+    font-weight: 500;
+}
+
+.quoteAuthor::before {
+    content: "— ";
+}
+
+.accountHints {
+    background: rgba(242, 247, 255, 0.07);
+    border: 1px solid rgba(242, 247, 255, 0.12);
+    border-radius: 6px;
+    padding: 16px;
+    font-size: 12px;
+    color: rgba(242, 247, 255, 0.9);
+    line-height: 1.6;
+}
+
+.accountHints strong {
+    color: #FDBE34;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.accountHints code {
+    background: rgba(0, 0, 0, 0.28);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: #ffffff;
+    font-family: monospace;
+}
+
+/* ---------- right form column ---------- */
+.formColumn {
+    flex: 1;
+    padding: 44px 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .formTitle {
-    font-size: 20px;
+    font-family: 'Fraunces', serif, Georgia;
+    font-size: 28px;
     font-weight: 600;
-    text-align: center;
-    color: #0f172a;
-    margin: 8px 0 4px 0;
+    color: #0D226B;
+    letter-spacing: -0.3px;
+    margin-bottom: 4px;
 }
 
 .formSubtitle {
-    font-size: 13px;
-    text-align: center;
-    color: #64748b;
+    font-size: 13.5px;
+    color: #5b6e99;
     margin-bottom: 24px;
 }
 
-.formGroup {
+/* Form groups */
+.form {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-bottom: 16px;
 }
 
-.formGroup label {
-    font-size: 13px;
-    font-weight: 500;
-    color: #334155;
+.formGroup {
+    margin-bottom: 18px;
 }
 
-.formGroup input {
-    padding: 10px 12px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s;
+.formLabel {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #071233;
+    margin-bottom: 6px;
 }
 
-.formGroup input:focus {
-    border-color: #0284c7;
-}
-
-.submitBtn {
+.formInput {
     width: 100%;
-    padding: 12px;
-    background-color: #0284c7;
+    padding: 10px 4px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #071233;
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid #dce6f7;
+    outline: none;
+    transition: border-color 0.15s ease;
+    box-sizing: border-box;
+}
+
+.formInput:focus {
+    border-bottom-color: #0B409C;
+}
+
+.formInput.isInvalid {
+    border-bottom-color: #d93025;
+}
+
+.formInput::placeholder {
+    color: #a8b6d6;
+}
+
+.errorText {
+    display: block;
+    color: #d93025;
+    font-size: 11.5px;
+    margin-top: 4px;
+    min-height: 16px;
+}
+
+.passwordInputWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.passwordInputWrapper .formInput {
+    padding-right: 32px;
+}
+
+/* Ẩn icon mắt mặc định của Edge, Chrome, Safari */
+.passwordInputWrapper input[type="password"]::-ms-reveal,
+.passwordInputWrapper input[type="password"]::-ms-clear {
+    display: none;
+}
+
+.passwordInputWrapper input[type="password"]::-webkit-contacts-auto-fill-button,
+.passwordInputWrapper input[type="password"]::-webkit-credentials-auto-fill-button {
+    visibility: hidden;
+    position: absolute;
+    right: 0;
+}
+
+.togglePasswordBtn {
+    position: absolute;
+    right: 4px;
+    bottom: 8px;
+    background: transparent;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    color: #5b6e99;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease;
+}
+
+.togglePasswordBtn:hover {
+    color: #0B409C;
+}
+
+.btnLogin {
+    width: 100%;
+    padding: 13px;
+    background: #0B409C;
     color: #ffffff;
     border: none;
-    border-radius: 6px;
-    font-size: 15px;
+    border-radius: 5px;
+    font-size: 14px;
     font-weight: 600;
+    font-family: inherit;
     cursor: pointer;
+    transition: background-color 0.2s ease;
     margin-top: 8px;
-    transition: background-color 0.2s;
 }
 
-.submitBtn:hover:not(:disabled) {
-    background-color: #0369a1;
+.btnLogin:hover:not(:disabled) {
+    background: #0D226B;
 }
 
-.submitBtn:disabled {
+.btnLogin:disabled {
     opacity: 0.65;
     cursor: not-allowed;
 }
 
-.formFooter {
-    margin-top: 20px;
-    text-align: center;
+/* Footer & links */
+.formBottomRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 24px;
     font-size: 13px;
-    color: #64748b;
 }
 
-.formFooter a {
-    color: #0284c7;
+.forgotLink {
+    color: #0B409C;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.forgotLink:hover {
+    text-decoration: underline;
+}
+
+.registerHint {
+    color: #5b6e99;
+}
+
+.formLink {
+    color: #0B409C;
     font-weight: 600;
     text-decoration: none;
+    margin-left: 4px;
+}
+
+.formLink:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .bookCard {
+        flex-direction: column;
+        width: 100%;
+        min-height: 0;
+    }
+    .visualColumn {
+        flex: none;
+        padding: 32px 24px;
+    }
+    .formColumn {
+        padding: 32px 24px;
+    }
+    .topBar, .header {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    .formBottomRow {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
 }

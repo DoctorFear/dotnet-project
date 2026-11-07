@@ -45,6 +45,13 @@ export const authService = {
         });
     },
 
+    // Kiểm tra token đặt lại mật khẩu còn hạn hay không
+    verifyResetToken: async (token: string): Promise<ApiResponse<boolean>> => {
+        return requestApi<ApiResponse<boolean>>(`/Auth/verify-reset-token?token=${encodeURIComponent(token)}`, {
+            method: 'GET',
+        });
+    },
+
     // Đặt lại mật khẩu mới thông qua Token từ email
     resetPassword: async (payload: ResetPasswordRequestDto): Promise<ApiResponse<boolean>> => {
         return requestApi<ApiResponse<boolean>>('/Auth/reset-password', {

@@ -1,83 +1,141 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { useAuthAction } from '../hooks/useAuthAction';
 import { ToastNotification } from '../components/common/ToastNotification';
-import styles from './LoginPage.module.css';
+import { TopBar } from '../components/layout/TopBar';
+import { Header } from '../components/layout/Header';
+import styles from './ForgotPasswordPage.module.css';
 
 export const ForgotPasswordPage: React.FC = () => {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
-    const { isLoading, toasts, dismissToast, notify, handleForgotPassword } = useAuthAction();
+    const [errors, setErrors] = useState<{ username?: string; email?: string }>({});
 
-    const onSubmit = (e: React.FormEvent) => {
+    const { isLoading, toasts, dismissToast, handleForgotPassword } = useAuthAction();
+
+    const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         const cleanUsername = username.trim();
         const cleanEmail = email.trim().toLowerCase();
+        const newErrors: { username?: string; email?: string } = {};
 
+        // 1. Validate Username
         if (!cleanUsername) {
-            notify('Tên đăng nhập không được để trống.', 'error');
-            return;
+            newErrors.username = 'Tên đăng nhập không được để trống';
         }
 
+        // 2. Validate Email
         if (!cleanEmail) {
-            notify('Email không được để trống.', 'error');
+            newErrors.email = 'Email không được để trống';
+        } else {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(cleanEmail)) {
+                newErrors.email = 'Địa chỉ email không đúng định dạng';
+            }
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
             return;
         }
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(cleanEmail)) {
-            notify('Địa chỉ email không đúng định dạng.', 'error');
-            return;
-        }
+        setErrors({});
 
-        handleForgotPassword({
+        const isSent = await handleForgotPassword({
             username: cleanUsername,
             email: cleanEmail
         });
+
+        if (isSent) {
+            setUsername('');
+            setEmail('');
+        }
     };
 
     return (
-        <div className={styles.authContainer}>
+        <div className={styles.forgotPasswordPageWrapper}>
             <ToastNotification toasts={toasts} onClose={dismissToast} />
-            <div className={styles.authCard}>
-                <div className={styles.brandTitle}>
-                    ancient<span>BOOK</span>
-                </div>
-                <h2 className={styles.formTitle}>Khôi phục mật khẩu</h2>
-                <p className={styles.formSubtitle}>Nhập thông tin tài khoản để nhận liên kết xác nhận qua Email</p>
 
-                <form onSubmit={onSubmit} className={styles.form} noValidate>
-                    <div className={styles.formGroup}>
-                        <label>Tên đăng nhập *</label>
-                        <input
-                            type="text"
-                            placeholder="Nhập tên đăng nhập của bạn"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                        />
+            {/* Dùng chung TopBar & Header hệ thống (ẩn ô tìm kiếm) */}
+            <TopBar />
+            <Header showSearch={false} />
+
+            <main className={styles.mainWrapper}>
+                <div className={styles.bookCard}>
+                    {/* Left Column */}
+                    <div className={styles.visualColumn}>
+                        <div className={styles.visualInner}>
+                            <span className={styles.panelKicker}>Bảo mật tài khoản</span>
+                            <p className={styles.quoteText}>
+                                Sách là tài sản của tâm hồn, và sự an toàn của độc giả luôn là ưu tiên hàng đầu tại ancientBOOK.
+                            </p>
+                            <p className={styles.quoteAuthor}>Phạm Nguyễn Thanh Sang</p>
+                        </div>
                     </div>
 
-                    <div className={styles.formGroup}>
-                        <label>Email đăng ký *</label>
-                        <input
-                            type="email"
-                            placeholder="example@domain.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
+                    {/* Right Column */}
+                    <div className={styles.formColumn}>
+                        <h2 className={styles.formTitle}>Quên mật khẩu?</h2>
+                        <p className={styles.formSubtitle}>
+                            Nhập Tên đăng nhập và Email đã đăng ký để nhận liên kết xác thực đặt lại mật khẩu.
+                        </p>
+
+                        <form onSubmit={onSubmit} noValidate>
+                            <div className={styles.formGroup}>
+                                <label className={styles.formLabel} htmlFor="forgotUsername">
+                                    Tên đăng nhập
+                                </label>
+                                <input
+                                    type="text"
+                                    id="forgotUsername"
+                                    className={`${styles.formInput} ${errors.username ? styles.isInvalid : ''}`}
+                                    placeholder="Nhập tên đăng nhập của bạn"
+                                    value={username}
+                                    onChange={(e) => {
+                                        setUsername(e.target.value);
+                                        if (errors.username) setErrors(prev => ({ ...prev, username: undefined }));
+                                    }}
+                                />
+                                <span className={styles.errorText}>{errors.username}</span>
+                            </div>
+
+                            <div className={styles.formGroup}>
+                                <label className={styles.formLabel} htmlFor="forgotEmail">
+                                    Email đăng ký
+                                </label>
+                                <input
+                                    type="email"
+                                    id="forgotEmail"
+                                    className={`${styles.formInput} ${errors.email ? styles.isInvalid : ''}`}
+                                    placeholder="name@domain.com"
+                                    value={email}
+                                    onChange={(e) => {
+                                        setEmail(e.target.value);
+                                        if (errors.email) setErrors(prev => ({ ...prev, email: undefined }));
+                                    }}
+                                />
+                                <span className={styles.errorText}>{errors.email}</span>
+                            </div>
+
+                            <button
+                                type="submit"
+                                className={styles.btnSubmit}
+                                disabled={isLoading}
+                            >
+                                {isLoading ? 'Đang gửi email xác nhận...' : 'Gửi liên kết xác nhận'}
+                            </button>
+                        </form>
+
+                        <div className={styles.formBottomRow}>
+                            <Link to="/login" className={styles.backLink}>
+                                <ArrowLeft size={16} /> Quay lại đăng nhập
+                            </Link>
+                        </div>
                     </div>
-
-                    <button type="submit" className={styles.submitBtn} disabled={isLoading}>
-                        {isLoading ? 'Đang gửi email...' : 'Gửi liên kết khôi phục'}
-                    </button>
-                </form>
-
-                <div className={styles.formFooter}>
-                    <span>Nhớ lại mật khẩu? </span>
-                    <Link to="/login">Đăng nhập</Link>
                 </div>
-            </div>
+            </main>
         </div>
     );
 };

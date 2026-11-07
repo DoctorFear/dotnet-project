@@ -75,6 +75,17 @@ namespace AncientBook.API.Controllers
             return Ok(result);
         }
 
+        [HttpGet("verify-reset-token")]
+        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> VerifyResetToken([FromQuery] string token)
+        {
+            var result = await _authService.VerifyResetTokenAsync(token);
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
         [HttpPost("reset-password")]
         [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto request)

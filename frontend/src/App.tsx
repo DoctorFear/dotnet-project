@@ -31,11 +31,11 @@ export const App: React.FC = () => {
                     {/* 1. Public Routes: Khách vãng lai và mọi người dùng đều truy cập được */}
                     <Route path="/" element={<HomePage />} />
                     <Route path="/books/:id" element={<BookDetailPage />} />
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/login" element={<LoginPage />} /> {/* Sơn */}
+                    <Route path="/register" element={<RegisterPage />} /> {/* Sơn */}
                     <Route path="/cart" element={<CartPage />} />
-                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                    <Route path="/reset-password" element={<ResetPasswordPage />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordPage />} /> {/* Sơn */}
+                    <Route path="/reset-password" element={<ResetPasswordPage />} /> {/* Sơn */}
 
                     {/* 2. Customer Routes: Dành cho độc giả (Member) hoặc tài khoản quản trị khi mua sắm */}
                     <Route element={<ProtectedRoute allowedRoles={['Member']} />}>

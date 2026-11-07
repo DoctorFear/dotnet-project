@@ -81,17 +81,20 @@ export const useAuthAction = () => {
         }
     };
 
-    const handleForgotPassword = async (payload: ForgotPasswordRequestDto) => {
+    const handleForgotPassword = async (payload: ForgotPasswordRequestDto): Promise<boolean> => {
         setIsLoading(true);
         try {
             const res = await authService.forgotPassword(payload);
             if (res.success) {
                 notify(res.message || 'Liên kết đặt lại mật khẩu đã được gửi về email của bạn. Vui lòng kiểm tra hộp thư.', 'success');
+                return true;
             } else {
                 notify(res.message || 'Không thể gửi yêu cầu đặt lại mật khẩu.', 'error');
+                return false;
             }
         } catch (err: any) {
             notify(err.message || 'Lỗi kết nối máy chủ.', 'error');
+            return false;
         } finally {
             setIsLoading(false);
         }

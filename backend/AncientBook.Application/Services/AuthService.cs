@@ -1,4 +1,4 @@
-using AncientBook.Application.Common;
+﻿using AncientBook.Application.Common;
 using AncientBook.Application.Common.Interfaces;
 using AncientBook.Application.DTOs.Auth;
 using AncientBook.Application.Interfaces;
@@ -192,6 +192,22 @@ namespace AncientBook.Application.Services
             }
 
             return ApiResponse<bool>.Ok(true, "Liên kết đặt lại mật khẩu đã được gửi về email của bạn. Vui lòng kiểm tra hộp thư.");
+        }
+
+                public async Task<ApiResponse<bool>> VerifyResetTokenAsync(string token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return ApiResponse<bool>.Fail("Mã token không được để trống.");
+            }
+
+            var user = await _userRepository.GetByResetTokenAsync(token);
+            if (user == null || user.ResetTokenExpires < DateTime.UtcNow)
+            {
+                return ApiResponse<bool>.Fail("Liên kết khôi phục đã hết hạn (quá 15 phút) hoặc không hợp lệ. Vui lòng gửi lại yêu cầu mới.");
+            }
+
+            return ApiResponse<bool>.Ok(true, "Token hợp lệ.");
         }
 
         public async Task<ApiResponse<bool>> ResetPasswordAsync(ResetPasswordRequestDto request, string? ipAddress = null)

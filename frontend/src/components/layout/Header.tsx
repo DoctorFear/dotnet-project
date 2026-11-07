@@ -10,6 +10,7 @@ import { getCart } from '../../services/bookCartService';
 export interface HeaderProps {
     wishlistCount?: number;
     cartCount?: number;
+    showSearch?: boolean;
     onSearch?: (keyword: string) => void;
     initialSearch?: string;
     onNavigateHome?: () => void;
@@ -24,6 +25,7 @@ export interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
     wishlistCount = 0,
     cartCount: passedCartCount = 0,
+    showSearch = true,
     onSearch,
     initialSearch = '',
     onNavigateHome,
@@ -125,19 +127,21 @@ export const Header: React.FC<HeaderProps> = ({
                     <span className={styles.accentDot}></span>
                 </div>
 
-                <div className={styles.searchContainer}>
-                    <input
-                        type="text"
-                        className={styles.searchInput}
-                        placeholder="Tìm sách cổ điển, tác giả, NXB hoặc mã ISBN..."
-                        value={searchKeyword}
-                        onChange={(e) => setSearchKeyword(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSearchTrigger()}
-                    />
-                    <button type="button" className={styles.searchBtn} title="Tìm kiếm" onClick={handleSearchTrigger}>
-                        <Search />
-                    </button>
-                </div>
+                {showSearch && (
+                    <div className={styles.searchContainer}>
+                        <input
+                            type="text"
+                            className={styles.searchInput}
+                            placeholder="Tìm sách cổ điển, tác giả, NXB hoặc mã ISBN..."
+                            value={searchKeyword}
+                            onChange={(e) => setSearchKeyword(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearchTrigger()}
+                        />
+                        <button type="button" className={styles.searchBtn} title="Tìm kiếm" onClick={handleSearchTrigger}>
+                            <Search />
+                        </button>
+                    </div>
+                )}
 
                 <div className={styles.navActions}>
                     {isLoggedIn && user?.role === 'Member' && <>

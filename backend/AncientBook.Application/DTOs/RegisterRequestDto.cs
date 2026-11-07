@@ -1,4 +1,3 @@
-﻿// AncientBook.Application/DTOs/Auth/RegisterRequestDto.cs
 using System.ComponentModel.DataAnnotations;
 
 namespace AncientBook.Application.DTOs.Auth
@@ -22,11 +21,12 @@ namespace AncientBook.Application.DTOs.Auth
         public string? PhoneNumber { get; set; }
 
         [Required(ErrorMessage = "Mật khẩu không được để trống")]
-        [MinLength(6, ErrorMessage = "Mật khẩu phải có độ dài tối thiểu từ 6 ký tự")] // BR02
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$", 
+            ErrorMessage = "Mật khẩu từ 8 ký tự trở lên, gồm chữ hoa, chữ thường, số và tối thiểu 1 ký tự đặc biệt")]
         public string Password { get; set; } = null!;
 
         [Required(ErrorMessage = "Xác nhận mật khẩu không được để trống")]
-        [Compare("Password", ErrorMessage = "Mật khẩu xác nhận không trùng khớp")] // BR02
+        [Compare("Password", ErrorMessage = "Mật khẩu xác nhận không trùng khớp")]
         public string ConfirmPassword { get; set; } = null!;
     }
 }

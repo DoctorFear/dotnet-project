@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace AncientBook.Application.DTOs.Auth
 {
@@ -8,7 +8,8 @@ namespace AncientBook.Application.DTOs.Auth
         public string Token { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Mật khẩu mới không được để trống")]
-        [MinLength(6, ErrorMessage = "Mật khẩu mới phải có độ dài tối thiểu từ 6 ký tự")]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$", 
+            ErrorMessage = "Mật khẩu từ 8 ký tự trở lên, gồm chữ hoa, chữ thường, số và tối thiểu 1 ký tự đặc biệt")]
         public string NewPassword { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Xác nhận mật khẩu không được để trống")]

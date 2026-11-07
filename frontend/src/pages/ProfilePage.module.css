@@ -1,158 +1,295 @@
-.profileContainer {
-    max-width: 900px;
-    margin: 40px auto;
-    padding: 0 20px;
-}
-
-.profileCard {
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
-    padding: 32px;
-    margin-bottom: 28px;
-}
-
-.headerSection {
-    border-bottom: 1px solid #e2e8f0;
-    padding-bottom: 14px;
-    margin-bottom: 24px;
-}
-
-.headerTitle {
-    font-size: 22px;
-    font-weight: 700;
-    color: #1e293b;
-    margin: 0 0 6px 0;
-}
-
-.headerSubtitle {
-    font-size: 14px;
-    color: #64748b;
-    margin: 0;
-}
-
-.formGrid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 18px;
-}
-
-.formGroup {
+.profilePageWrapper {
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
+    background-color: var(--alice, #F2F7FF);
+    color: var(--ink, #071233);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-.formGroup.fullWidth {
-    grid-column: span 2;
+.mainContainerSingle {
+    flex: 1;
+    max-width: 860px;
+    width: 100%;
+    margin: 32px auto;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
 }
 
-.formGroup label {
-    font-size: 14px;
-    font-weight: 600;
-    color: #334155;
-    margin-bottom: 6px;
+.formPanel {
+    background: #ffffff;
+    border-radius: 10px;
+    border: 1.5px solid var(--hairline, #dce6f7);
+    padding: 30px 36px;
+    box-shadow: 0 4px 20px rgba(7, 18, 51, 0.04);
 }
 
-.formGroup input {
-    padding: 10px 14px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s;
-}
-
-.formGroup input:focus {
-    border-color: #6366f1;
-}
-
-.formGroup input:read-only {
-    background-color: #f1f5f9;
-    color: #64748b;
-    cursor: not-allowed;
-}
-
-.addressSection {
-    margin-top: 24px;
-    padding-top: 20px;
-    border-top: 1px dashed #cbd5e1;
-}
-
-.addressHeader {
+.panelHeader {
+    border-bottom: 1.5px solid var(--hairline, #dce6f7);
+    padding-bottom: 14px;
+    margin-bottom: 22px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
 }
 
-.addressCardItem {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 14px;
+.panelTitle {
+    font-family: 'Fraunces', serif;
+    font-size: 21px;
+    font-weight: 700;
+    color: var(--catalina, #0D226B);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
 }
 
-.addressCardItem.defaultAddress {
-    border-color: #6366f1;
-    background: #faf5ff;
-}
-
-.addressRow {
+.formGridLayout {
     display: grid;
-    grid-template-columns: 1fr 1fr 2fr auto;
-    gap: 12px;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 20px;
+}
+
+.formField {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.formField.full {
+    grid-column: span 2;
+}
+
+.fieldLabel {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink, #071233);
+}
+
+.inputWrapper {
+    position: relative;
+    display: flex;
     align-items: center;
 }
 
-.btnGroup {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: 24px;
+.formControl {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 13.5px;
+    font-family: inherit;
+    color: var(--ink, #071233);
+    border: 1.5px solid var(--hairline, #dce6f7);
+    border-radius: 6px;
+    outline: none;
+    background-color: #ffffff;
+    transition: border-color 0.15s ease;
+    box-sizing: border-box;
 }
 
-.btnPrimary {
-    background-color: #6366f1;
+select.formControl,
+.wardSelectControl,
+select.wardSelectControl {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: var(--ink, #071233) !important;
+    cursor: pointer !important;
+}
+
+/* Chỉ áp dụng nền màu xanh var(--alice) cho ô có attribute readonly thật sự của input, không dùng :read-only chung */
+input.formControl[readonly],
+.formControl.provinceStatic {
+    background-color: var(--alice, #F2F7FF) !important;
+    background: var(--alice, #F2F7FF) !important;
+    color: #64748b !important;
+    cursor: default;
+}
+
+.formControl:focus {
+    border-color: var(--egyptian, #0B409C);
+}
+
+.formControl.errorState {
+    border-color: var(--danger, #dc2626) !important;
+    background-color: #fdf2f2 !important;
+}
+
+.fieldErrorMsg {
+    font-size: 11.5px;
+    color: #dc2626;
+    font-weight: 600;
+}
+
+/* ĐỊA CHỈ NHẬN HÀNG */
+.addressSectionDivider {
+    grid-column: span 2;
+    margin-top: 6px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--hairline, #dce6f7);
+}
+
+.addressBox {
+    background: #fafcff;
+    border: 1.5px solid var(--hairline, #dce6f7);
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin-top: 8px;
+}
+
+.addressBoxHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.addressBoxTitle {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--catalina, #0D226B);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btnAddSecondAddress {
+    grid-column: span 2;
+    background: #ffffff;
+    border: 1.5px dashed var(--egyptian, #0B409C);
+    color: var(--egyptian, #0B409C);
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.15s ease;
+    font-family: inherit;
+}
+
+.btnAddSecondAddress:hover {
+    background: var(--alice, #F2F7FF);
+}
+
+.btnRemoveAddress {
+    background: none;
+    border: none;
+    color: #dc2626;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.btnRemoveAddress:hover {
+    text-decoration: underline;
+    opacity: 0.85;
+}
+
+/* PASSWORD VISIBILITY TOGGLE */
+.togglePwdBtn {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #5b6e99;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease;
+}
+
+.togglePwdBtn:hover {
+    color: var(--catalina, #0D226B);
+}
+
+/* Ẩn mắt mặc định của trình duyệt */
+.inputWrapper input[type="password"]::-ms-reveal,
+.inputWrapper input[type="password"]::-ms-clear {
+    display: none;
+}
+
+.inputWrapper input[type="password"]::-webkit-contacts-auto-fill-button,
+.inputWrapper input[type="password"]::-webkit-credentials-auto-fill-button {
+    visibility: hidden;
+    position: absolute;
+    right: 0;
+}
+
+/* NÚT THAO TÁC */
+.formActions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 22px;
+}
+
+.btnSubmitAction {
+    padding: 10px 22px;
+    background: var(--egyptian, #0B409C);
     color: #ffffff;
     border: none;
     border-radius: 6px;
-    padding: 10px 24px;
+    font-size: 13.5px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.15s ease;
 }
 
-.btnPrimary:hover {
-    background-color: #4f46e5;
+.btnSubmitAction:hover:not(:disabled) {
+    background: var(--catalina, #0D226B);
 }
 
-.btnPrimary:disabled {
-    background-color: #a5b4fc;
+.btnSubmitAction:disabled {
+    opacity: 0.65;
     cursor: not-allowed;
 }
 
-.btnSecondary {
-    background-color: #e2e8f0;
-    color: #334155;
-    border: none;
+.btnTriggerPwd {
+    padding: 10px 18px;
+    background: #ffffff;
+    color: var(--catalina, #0D226B);
+    border: 1.5px solid var(--hairline, #dce6f7);
     border-radius: 6px;
-    padding: 8px 14px;
-    font-size: 13px;
-    cursor: pointer;
-}
-
-.btnDanger {
-    background-color: #fee2e2;
-    color: #dc2626;
-    border: none;
-    border-radius: 6px;
-    padding: 8px 12px;
-    cursor: pointer;
-}
-
-.badgeDefault {
-    font-size: 12px;
-    color: #6366f1;
+    font-size: 13.5px;
     font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btnTriggerPwd:hover {
+    border-color: var(--egyptian, #0B409C);
+    background: var(--alice, #F2F7FF);
+}
+
+@media (max-width: 860px) {
+    .formGridLayout {
+        grid-template-columns: 1fr;
+    }
+    .formField.full,
+    .addressSectionDivider,
+    .btnAddSecondAddress {
+        grid-column: span 1;
+    }
+    .formPanel {
+        padding: 22px 18px;
+    }
+    .formActions {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
