@@ -851,6 +851,9 @@ namespace AncientBook.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("AvailableAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -871,6 +874,13 @@ namespace AncientBook.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("Available");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -887,6 +897,8 @@ namespace AncientBook.Infrastructure.Migrations
                     b.HasIndex("SourceKey")
                         .IsUnique()
                         .HasFilter("[SourceKey] IS NOT NULL");
+
+                    b.HasIndex("Status", "AvailableAt");
 
                     b.HasIndex("UserId", "CreatedAt");
 
@@ -1131,6 +1143,9 @@ namespace AncientBook.Infrastructure.Migrations
 
                     b.Property<int?>("PointsId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("ReceiptConfirmedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("ShipperId")
                         .HasColumnType("int");

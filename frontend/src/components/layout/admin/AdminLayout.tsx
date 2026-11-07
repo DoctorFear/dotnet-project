@@ -10,7 +10,8 @@ import {
     Tags,
     UserCog,
     Warehouse,
-    UserCircle
+    UserCircle,
+    Award
 } from 'lucide-react';
 import styles from './AdminLayout.module.css';
 import { useUser } from '../../../context/UserContext.tsx';
@@ -19,7 +20,7 @@ import { useToastNotifications } from '../../../hooks/useToastNotifications';
 import { ToastNotification } from '../../common/ToastNotification';
 import { userService } from '../../../services/userService';
 
-type AdminPageKey = 'books' | 'settings' | 'reports' | 'orders';
+type AdminPageKey = 'books' | 'settings' | 'reports' | 'orders' | 'packing' | 'membership';
 
 interface AdminLayoutProps {
     activePage: AdminPageKey;
@@ -35,9 +36,11 @@ const adminMenuItems = [
     { label: 'Quản lý sách', icon: BookOpen, page: 'books' as AdminPageKey, path: '/admin/books' },
     { label: 'Quản lý kho sách', icon: Warehouse },
     { label: 'Quản lý đơn hàng', icon: Package, page: 'orders' as AdminPageKey, path: '/admin/orders' },
+    { label: 'Tiếp nhận & Đóng gói', icon: Package, page: 'packing' as AdminPageKey, path: '/staff/packing' },
     { label: 'Live Chat Console', icon: MessageSquare },
     { label: 'Quản lý Khuyến mãi', icon: Tags },
     { label: 'Quản lý cài đặt', icon: Settings, page: 'settings' as AdminPageKey, path: '/admin/settings' },
+    { label: 'Hạng thành viên', icon: Award, page: 'membership' as AdminPageKey, path: '/admin/membership-tiers' },
 ];
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({
@@ -209,7 +212,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 </div>
 
                 <ul className={styles.sidebarMenu}>
-                    {adminMenuItems.filter(item => user?.role === 'Admin' ? ['reports', 'settings'].includes(item.page ?? '') || item.icon === UserCog : !['reports', 'settings'].includes(item.page ?? '') && item.icon !== UserCog).map((item) => {
+                    {adminMenuItems.filter(item => user?.role === 'Admin' ? ['reports', 'settings', 'membership'].includes(item.page ?? '') || item.icon === UserCog : !['reports', 'settings'].includes(item.page ?? '') && item.icon !== UserCog).map((item) => {
                         const Icon = item.icon;
                         const isActive = item.page === activePage;
                         return (

@@ -45,13 +45,18 @@ public class TierUpgradeBackgroundService(IServiceScopeFactory scopes, ILogger<T
             {
                 using var scope = scopes.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                orderIds = await db.Orders.AsNoTracking().Where(o => o.Id > lastOrderId && o.IsPaid &&
+                orderIds = await db.Orders.AsNoTracking().Where(o => o.Id > lastOrderId && (o.IsPaid &&
                     (o.Status == OrderStatus.Completed && !db.FPoints.Any(p => p.SourceKey == "Order:" + o.Id + ":Earn") ||
                      (o.Status == OrderStatus.Pending || o.Status == OrderStatus.Confirmed) &&
-                     o.OrderItems.Any() && !o.OrderItems.Any(i => i.PurchaseType == PurchaseType.Physical)))
+                     o.OrderItems.Any() && !o.OrderItems.Any(i => i.PurchaseType == PurchaseType.Physical))
+                     || db.FPoints.Any(p => p.OrderId == o.Id && p.Status == PointStatus.Pending)
+                     || o.Status == OrderStatus.Completed && o.IsPaid
+                        && db.FPoints.Any(p => p.OrderId == o.Id && p.Status == PointStatus.Cancelled)
+                        && db.OrderStatusHistories.Any(h => h.OrderId == o.Id && h.ToStatus == OrderStatus.Completed
+                            && (h.FromStatus == OrderStatus.ReturnRequested || h.FromStatus == OrderStatus.ReturnApproved))))
                     .OrderBy(o => o.Id).Select(o => o.Id).Take(BatchSize).ToListAsync(stoppingToken);
                 userIds = await db.Users.AsNoTracking().Where(u => u.Id > lastUserId && u.IsActive && u.Role == UserRole.Member &&
-                    db.Orders.Any(o => o.UserId == u.Id && o.Status == OrderStatus.Completed && o.IsPaid))
+                    (u.TotalSpent > 0 || db.Orders.Any(o => o.UserId == u.Id && o.Status == OrderStatus.Completed && o.IsPaid)))
                     .OrderBy(u => u.Id).Select(u => u.Id).Take(BatchSize).ToListAsync(stoppingToken);
                 break;
             }
@@ -69,7 +74,12 @@ public class TierUpgradeBackgroundService(IServiceScopeFactory scopes, ILogger<T
         {
             stoppingToken.ThrowIfCancellationRequested();
             using var scope = scopes.CreateScope();
-            try { await scope.ServiceProvider.GetRequiredService<IFPointService>().ProcessPaidDigitalOrderAsync(orderId); }
+            try
+            {
+                var loyalty = scope.ServiceProvider.GetRequiredService<IFPointService>();
+                await loyalty.ProcessPaidDigitalOrderAsync(orderId);
+                await loyalty.ReconcileOrderPointsAsync(orderId);
+            }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { throw; }
             catch (Exception ex) { logger.LogWarning(ex, "Chưa thể đối soát điểm đơn #{OrderId}; sẽ thử lại.", orderId); }
         }

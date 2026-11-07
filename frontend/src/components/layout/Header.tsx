@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Header.module.css';
 import Badge from '../common/Badge';
@@ -40,6 +40,24 @@ export const Header: React.FC<HeaderProps> = ({
     const { isLoggedIn, user } = useUser();
     const { handleLogout } = useAuthAction();
     const [searchKeyword, setSearchKeyword] = useState(initialSearch);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const userMenuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!userMenuOpen) return;
+        const closeOutside = (event: PointerEvent) => {
+            if (!userMenuRef.current?.contains(event.target as Node)) setUserMenuOpen(false);
+        };
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') setUserMenuOpen(false);
+        };
+        document.addEventListener('pointerdown', closeOutside);
+        document.addEventListener('keydown', closeOnEscape);
+        return () => {
+            document.removeEventListener('pointerdown', closeOutside);
+            document.removeEventListener('keydown', closeOnEscape);
+        };
+    }, [userMenuOpen]);
 
     const [cartCount, setCartCount] = useState<number>(passedCartCount);
 
@@ -158,8 +176,14 @@ export const Header: React.FC<HeaderProps> = ({
                     </span>
                     </>}
 
-                    <div className={styles.userMenuWrapper}>
-                        <div className={styles.userDropdownTrigger}>
+                    <div className={styles.userMenuWrapper} ref={userMenuRef}>
+                        <button
+                            type="button"
+                            className={styles.userDropdownTrigger}
+                            aria-expanded={userMenuOpen}
+                            aria-controls="account-navigation"
+                            onClick={() => setUserMenuOpen(!userMenuOpen)}
+                        >
                             <img
                                 src={
                                     user?.avatarUrl ||
@@ -172,9 +196,13 @@ export const Header: React.FC<HeaderProps> = ({
                                 {isLoggedIn ? user?.fullName || user?.username : 'Tài khoản'}
                             </span>
                             <User />
-                        </div>
+                        </button>
 
-                        <ul className={styles.userDropdownMenu}>
+                        <ul
+                            id="account-navigation"
+                            className={`${styles.userDropdownMenu} ${userMenuOpen ? styles.userDropdownMenuOpen : ''}`}
+                            onClick={() => setUserMenuOpen(false)}
+                        >
                             {isLoggedIn ? (
                                 <>
                                     {user?.role === 'Admin' && <li className={styles.dropdownItemLink} onClick={() => navigate('/admin/reports')}>Thống kê & Báo cáo</li>}
@@ -188,6 +216,12 @@ export const Header: React.FC<HeaderProps> = ({
                                     </li>
                                     <li className={styles.dropdownItemLink} onClick={handleLibraryClick}>Tủ sách của tôi</li>
                                     <li className={styles.dropdownItemLink} onClick={handleNavigateOrders}>Lịch sử đơn đặt sách</li>
+                                    {user?.role === 'Member' && <>
+                                        <li className={styles.dropdownItemLink} onClick={() => navigate('/f-point')}>Ví F-Point</li>
+                                        <li className={styles.dropdownItemLink} onClick={() => navigate('/membership')}>Hạng thành viên</li>
+                                        <li className={styles.dropdownItemLink} onClick={() => navigate('/my-reviews')}>Đánh giá của tôi</li>
+                                    </>}
+                                    {user?.role === 'Shipper' && <li className={styles.dropdownItemLink} onClick={() => navigate('/shipper/orders')}>Đơn hàng được phân công</li>}
                                     <li className={styles.dropdownItemLinkDanger} onClick={handleLogout}>Đăng xuất tài khoản</li>
                                 </>
                             ) : (

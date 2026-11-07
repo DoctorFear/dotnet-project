@@ -12,6 +12,7 @@ namespace AncientBook.Application.Interfaces
 
         Task<PagedResult<ReviewResponse>> GetByBookAsync(int bookId, BookReviewQuery query);
         Task<PagedResult<ReviewResponse>> GetMyReviewsAsync(int userId, int pageNumber, int pageSize);
+        Task<PagedResult<ReviewEligibleOrderDto>> GetEligibleOrdersAsync(int userId, int pageNumber, int pageSize);
         Task<BookReviewSummaryResponse> GetBookSummaryAsync(int bookId);
     }
 }

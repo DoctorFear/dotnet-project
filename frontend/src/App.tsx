@@ -22,12 +22,25 @@ import OrderHistoryPage from './pages/OrderHistoryPage';
 import OrderDetailPage from './pages/OrderDetailsPage';
 import AdminOrderManagementPage from './pages/AdminOrderManagementPage';
 import { SePayPaymentPage } from './pages/SePaymentPage';
+import ShipperPortalPage from './pages/ShipperPortalPage';
+import FulfillmentPage from './pages/FulfillmentPage';
+import LoyaltyPage from './pages/LoyaltyPage';
+import MemberReviewsPage from './pages/MemberReviewsPage';
+import MembershipConfigPage from './pages/MembershipConfigPage';
+const WorkflowPreviewPage = import.meta.env.DEV ? React.lazy(() => import('./dev/WorkflowPreviewPage')) : null;
 
 export const App: React.FC = () => {
     return (
         <UserProvider>
             <Router>
                 <Routes>
+                    {WorkflowPreviewPage && (
+                        <Route path="/preview/huy/:screen?" element={
+                            <React.Suspense fallback={<p>Đang mở giao diện...</p>}>
+                                <WorkflowPreviewPage />
+                            </React.Suspense>
+                        } />
+                    )}
                     {/* 1. Public Routes: Khách vãng lai và mọi người dùng đều truy cập được */}
                     <Route path="/" element={<HomePage />} />
                     <Route path="/books/:id" element={<BookDetailPage />} />
@@ -47,6 +60,9 @@ export const App: React.FC = () => {
                         <Route path="/profile" element={<ProfilePage />} />
                         <Route path="/order-history" element={<OrderHistoryPage />} />
                         <Route path="/order-history/:id" element={<OrderDetailPage />} />
+                        <Route path="/f-point" element={<LoyaltyPage />} />
+                        <Route path="/membership" element={<LoyaltyPage membership />} />
+                        <Route path="/my-reviews" element={<MemberReviewsPage />} />
                         
                     </Route>
 
@@ -56,11 +72,16 @@ export const App: React.FC = () => {
                         <Route path="/staff/books" element={<AdminBookManagementPage />} />
                         <Route path="/admin/orders" element={<AdminOrderManagementPage />} />
                         <Route path="/staff/orders" element={<AdminOrderManagementPage />} />
+                        <Route path="/staff/packing" element={<FulfillmentPage />} />
                     </Route>
 
                     {/* 4. Shipper Routes: Quản lý đơn hàng và giao nhận */}
                     <Route element={<ProtectedRoute allowedRoles={['Shipper']} />}>
-                        
+                        <Route path="/shipper/orders" element={<ShipperPortalPage />} />
+                    </Route>
+
+                    <Route element={<ProtectedRoute allowedRoles={['Staff', 'Admin']} />}>
+                        <Route path="/admin/membership-tiers" element={<MembershipConfigPage />} />
                     </Route>
 
                     {/* 5. Admin Only Routes: Chỉ Super Admin / Quản trị viên tối cao cấu hình hệ thống */}

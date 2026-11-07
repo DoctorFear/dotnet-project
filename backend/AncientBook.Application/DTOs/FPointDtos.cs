@@ -7,6 +7,7 @@ namespace AncientBook.Application.DTOs
     {
         public int UserId { get; set; }
         public int CurrentPoints { get; set; }
+        public int PendingPoints { get; set; }
         public int TotalPointsEarned { get; set; }
         public string TierName { get; set; } = "Đồng";
         public int PointRate { get; set; } = 5;
@@ -22,6 +23,24 @@ namespace AncientBook.Application.DTOs
         public string TransactionType { get; set; } = string.Empty;  // "Earn", "Redeem"
         public string? Description { get; set; }
         public DateTime CreatedAt { get; set; }
+        public string Status { get; set; } = "Available";
+        public DateTime? AvailableAt { get; set; }
+    }
+
+    public class ConfirmReceiptRequest
+    {
+        public bool AcceptCloseReturnWindow { get; set; }
+    }
+
+    public class OrderPointsDto
+    {
+        public int OrderId { get; set; }
+        public int PendingPoints { get; set; }
+        public int AvailablePoints { get; set; }
+        public int CancelledPoints { get; set; }
+        public DateTime? AvailableAt { get; set; }
+        public DateTime? ReceiptConfirmedAt { get; set; }
+        public bool CanConfirmReceipt { get; set; }
     }
 
     // Dữ liệu xem trước mức giảm giá, chưa làm thay đổi số dư điểm.
@@ -34,6 +53,7 @@ namespace AncientBook.Application.DTOs
     public class UseFPointResponse
     {
         public int PointsUsed { get; set; }
+        public int MaxPointsAllowed { get; set; }
         public decimal DiscountAmount { get; set; }
         public decimal FinalAmount { get; set; }
         public string Message { get; set; } = string.Empty;

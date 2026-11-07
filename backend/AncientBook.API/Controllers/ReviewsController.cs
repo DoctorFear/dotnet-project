@@ -14,10 +14,12 @@ namespace AncientBook.API.Controllers
     public class ReviewsController : ControllerBase
     {
         private readonly IReviewService _reviewService;
+        private readonly IFileStorageService _storage;
 
-        public ReviewsController(IReviewService reviewService)
+        public ReviewsController(IReviewService reviewService, IFileStorageService storage)
         {
             _reviewService = reviewService;
+            _storage = storage;
         }
 
         private int GetCurrentUserId()
@@ -30,6 +32,28 @@ namespace AncientBook.API.Controllers
                 throw new UnauthorizedAccessException("Không xác định được người dùng.");
             }
             return userId;
+        }
+
+        [HttpGet("eligible-orders")]
+        [Authorize(Roles = "Member")]
+        public async Task<IActionResult> GetEligibleOrders(int pageNumber = 1, int pageSize = 10)
+        {
+            return Ok(await _reviewService.GetEligibleOrdersAsync(GetCurrentUserId(), pageNumber, pageSize));
+        }
+
+        [HttpPost("images")]
+        [Authorize(Roles = "Member")]
+        [RequestSizeLimit(6 * 1024 * 1024)]
+        public async Task<IActionResult> UploadReviewImage(IFormFile file)
+        {
+            if (file == null || file.Length == 0 || file.Length > 5 * 1024 * 1024)
+                return BadRequest(new { message = "Chọn ảnh JPG, PNG hoặc WebP, tối đa 5 MB." });
+            var types = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                { [".jpg"] = "image/jpeg", [".jpeg"] = "image/jpeg", [".png"] = "image/png", [".webp"] = "image/webp" };
+            if (!types.TryGetValue(Path.GetExtension(file.FileName), out var type) || file.ContentType != type)
+                return BadRequest(new { message = "Chỉ hỗ trợ ảnh JPG, PNG hoặc WebP." });
+            try { return Ok(new { fileUrl = await _storage.SaveFileAsync(file, $"review_images/user_{GetCurrentUserId()}") }); }
+            catch (Exception) { return StatusCode(502, new { message = "Chưa thể tải ảnh lên. Vui lòng thử lại." }); }
         }
 
         // UC21: Tạo đánh giá

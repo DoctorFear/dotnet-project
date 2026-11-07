@@ -13,10 +13,12 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
     public class OrderRepository : IOrderRepository
     {
         private readonly ApplicationDbContext _context;
+        private readonly IFPointService _loyalty;
 
-        public OrderRepository(ApplicationDbContext context)
+        public OrderRepository(ApplicationDbContext context, IFPointService loyalty)
         {
             _context = context;
+            _loyalty = loyalty;
         }
 
         public async Task<Order?> GetByIdAsync(int id)
@@ -101,6 +103,19 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
 
         public async Task UpdateAsync(Order order)
         {
+            if (order.Status is OrderStatus.ReturnRequested or OrderStatus.ReturnApproved or OrderStatus.Returned)
+            {
+                await using var tx = _context.Database.CurrentTransaction == null
+                    ? await _context.BeginWorkflowTransactionAsync() : null;
+                await _context.LockOrderAsync(order.Id);
+                if (order.Status == OrderStatus.ReturnRequested)
+                    await _loyalty.ValidateReturnEligibilityAsync(order.Id);
+                _context.Orders.Update(order);
+                await _context.SaveChangesAsync();
+                await _loyalty.ReconcileOrderPointsAsync(order.Id);
+                if (tx != null) await tx.CommitAsync();
+                return;
+            }
             _context.Orders.Update(order);
             await _context.SaveChangesAsync();
         }

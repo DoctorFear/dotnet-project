@@ -35,6 +35,7 @@ namespace AncientBook.Application.DTOs
     public class ReviewResponse
     {
         public int Id { get; set; }
+        public int? OrderId { get; set; }
         public int BookId { get; set; }
         public string BookTitle { get; set; } = string.Empty;
         public int UserId { get; set; }
@@ -49,6 +50,21 @@ namespace AncientBook.Application.DTOs
         public ReviewStatus Status { get; set; }
         public int HelpfulCount { get; set; }
         public DateTime CreatedAt { get; set; }
+    }
+
+    public class ReviewEligibleOrderDto
+    {
+        public int OrderId { get; set; }
+        public DateTime OrderDate { get; set; }
+        public List<ReviewEligibleBookDto> Books { get; set; } = new();
+    }
+
+    public class ReviewEligibleBookDto
+    {
+        public int BookId { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string? CoverImg { get; set; }
+        public PurchaseType PurchaseType { get; set; }
     }
 
     public class BookReviewSummaryResponse

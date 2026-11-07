@@ -8,7 +8,7 @@ export const SePayPaymentPage: React.FC = () => {
     const navigate = useNavigate();
     const state = location.state as { orderId: number; amount: number; qrUrl: string } | null;
 
-    const [isPaid, setIsPaid] = useState(false);
+    const [, setIsPaid] = useState(false);
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
     useEffect(() => {

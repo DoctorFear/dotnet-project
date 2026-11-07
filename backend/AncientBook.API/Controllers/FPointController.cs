@@ -33,6 +33,7 @@ namespace AncientBook.API.Controllers
 
         // UC22: Xem số dư điểm
         [HttpGet("balance")]
+        [Authorize(Roles = "Member")]
         public async Task<IActionResult> GetBalance()
         {
             try
@@ -49,6 +50,7 @@ namespace AncientBook.API.Controllers
 
         // UC22: Xem lịch sử biến động điểm
         [HttpGet("history")]
+        [Authorize(Roles = "Member")]
         public async Task<IActionResult> GetHistory([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             try
@@ -65,6 +67,7 @@ namespace AncientBook.API.Controllers
 
         // UC22: Xem trước mức giảm giá khi dùng điểm, chưa trừ điểm.
         [HttpPost("apply")]
+        [Authorize(Roles = "Member")]
         public async Task<IActionResult> ApplyPoints([FromBody] UseFPointRequest request)
         {
             try
@@ -83,6 +86,25 @@ namespace AncientBook.API.Controllers
             }
         }
 
+        [HttpGet("orders/{orderId}/points")]
+        [Authorize(Roles = "Member")]
+        public async Task<IActionResult> GetOrderPoints(int orderId)
+        {
+            try { return Ok(await _fpointService.GetOrderPointsAsync(GetCurrentUserId(), orderId)); }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (UnauthorizedAccessException ex) { return StatusCode(403, new { message = ex.Message }); }
+        }
+
+        [HttpPost("orders/{orderId}/confirm-receipt")]
+        [Authorize(Roles = "Member")]
+        public async Task<IActionResult> ConfirmReceipt(int orderId, [FromBody] ConfirmReceiptRequest request)
+        {
+            try { return Ok(await _fpointService.ConfirmReceiptAsync(GetCurrentUserId(), orderId, request.AcceptCloseReturnWindow)); }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (UnauthorizedAccessException ex) { return StatusCode(403, new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+        }
+
         // UC22: Lấy danh sách hạng thành viên
         [HttpGet("tiers")]
         [AllowAnonymous]
@@ -99,9 +121,8 @@ namespace AncientBook.API.Controllers
             }
         }
 
-        // UC22: Cập nhật hạng thành viên (Admin only)
         [HttpPut("tiers/{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Staff,Admin")]
         public async Task<IActionResult> UpdateTier(int id, [FromBody] MembershipTierDto dto)
         {
             try

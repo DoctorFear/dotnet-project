@@ -33,8 +33,7 @@ namespace AncientBook.Application.Services
             var now = TimeZoneHelper.GetVietnamTime();
             var verifiedItem = order.OrderItems.Where(i => i.BookId == request.BookId &&
                 (i.PurchaseType == PurchaseType.Physical && order.Status == OrderStatus.Completed && order.IsPaid ||
-                 i.PurchaseType == PurchaseType.Rental && order.IsPaid &&
-                 order.Status != OrderStatus.Failed && order.Status != OrderStatus.Returned &&
+                 i.PurchaseType == PurchaseType.Rental && order.IsPaid && order.Status == OrderStatus.Completed &&
                  i.RentalStartDate.HasValue && i.RentalStartDate <= now))
                 .OrderBy(i => i.PurchaseType).ThenBy(i => i.Id).FirstOrDefault();
             if (verifiedItem == null) throw new InvalidOperationException("Sách không thuộc giao dịch mua/thuê đã hoàn tất.");
@@ -151,6 +150,29 @@ namespace AncientBook.Application.Services
             return new PagedResult<ReviewResponse>(result, totalCount, pageNumber, pageSize);
         }
 
+        public async Task<PagedResult<ReviewEligibleOrderDto>> GetEligibleOrdersAsync(int userId, int pageNumber, int pageSize)
+        {
+            pageNumber = Math.Max(1, pageNumber);
+            pageSize = Math.Clamp(pageSize, 1, 100);
+            var now = TimeZoneHelper.GetVietnamTime();
+            var query = _db.Set<Order>().AsNoTracking().Where(o => o.UserId == userId
+                && o.Status == OrderStatus.Completed && o.IsPaid
+                && !_db.Set<BookReview>().Any(r => r.UserId == userId && r.OrderId == o.Id)
+                && o.OrderItems.Any(i => i.PurchaseType == PurchaseType.Physical
+                    || i.PurchaseType == PurchaseType.Rental && i.RentalStartDate <= now));
+            var count = await query.CountAsync();
+            var items = await query.OrderByDescending(o => o.OrderDate).ThenByDescending(o => o.Id)
+                .Skip((pageNumber - 1) * pageSize).Take(pageSize).Select(o => new ReviewEligibleOrderDto
+                {
+                    OrderId = o.Id, OrderDate = o.OrderDate,
+                    Books = o.OrderItems.Where(i => i.PurchaseType == PurchaseType.Physical
+                        || i.PurchaseType == PurchaseType.Rental && i.RentalStartDate <= now)
+                        .Select(i => new ReviewEligibleBookDto { BookId = i.BookId, Title = i.Book!.Title,
+                            CoverImg = i.Book.CoverImg, PurchaseType = i.PurchaseType }).ToList()
+                }).ToListAsync();
+            return new(items, count, pageNumber, pageSize);
+        }
+
         public async Task<BookReviewSummaryResponse> GetBookSummaryAsync(int bookId)
         {
             var (avgRating, totalCount) = await _reviewRepository.CalculateBookRatingAsync(bookId);
@@ -170,6 +192,7 @@ namespace AncientBook.Application.Services
             return new ReviewResponse
             {
                 Id = review.Id,
+                OrderId = review.OrderId,
                 BookId = review.BookId,
                 BookTitle = bookTitle ?? review.Book?.Title ?? "N/A",
                 UserId = review.UserId,

@@ -2,6 +2,7 @@ import React from 'react';
 import styles from './CartItem.module.css';
 import type { CartItemDto } from '../../types/cartItems';
 import { X } from 'lucide-react';
+import BookCover from './BookCover';
 
 export const CartItemCard: React.FC<CartItemDto> = ({
     item,
@@ -19,7 +20,7 @@ export const CartItemCard: React.FC<CartItemDto> = ({
                 checked={item.isSelected}
                 onChange={(e) => onSelect(item.cartItemId, e.target.checked)}
             />
-            <img src={item.coverImg} className={styles.cartItemImg} alt={item.title} />
+            <BookCover src={item.coverImg} className={styles.cartItemImg} title={item.title} />
 
             <div className={styles.cartItemDetails}>
                 <h4 className={styles.cartItemTitle}>{item.title}</h4>

@@ -10,7 +10,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace AncientBook.Application.Services;
 
-public class FPointService : IFPointService
+public partial class FPointService : IFPointService
 {
     private readonly IWorkflowDbContext _db;
     private readonly IMemoryCache _cache;
@@ -23,10 +23,13 @@ public class FPointService : IFPointService
             ?? throw new KeyNotFoundException("Không tìm thấy tài khoản.");
         var tiers = await GetMembershipTiersAsync();
         var tier = tiers.FirstOrDefault(t => t.Id == user.MembershipTierId) ?? tiers.FirstOrDefault();
-        var earned = await _db.Set<FPoints>().Where(p => p.UserId == userId && p.PointUsed < 0)
+        var pending = await _db.Set<FPoints>().Where(p => p.UserId == userId && p.Status == PointStatus.Pending)
+            .SumAsync(p => (int?)-p.PointUsed) ?? 0;
+        var earned = await _db.Set<FPoints>().Where(p => p.UserId == userId && p.PointUsed < 0
+            && p.Status == PointStatus.Available)
             .SumAsync(p => (int?)-p.PointUsed) ?? 0;
         return new FPointBalanceDto { UserId = user.Id, CurrentPoints = user.FPoints,
-            TotalPointsEarned = earned, TotalSpent = user.TotalSpent,
+            PendingPoints = pending, TotalPointsEarned = earned, TotalSpent = user.TotalSpent,
             TierName = tier?.TierName ?? "Đồng", PointRate = tier?.PointRate ?? 5 };
     }
 
@@ -41,7 +44,7 @@ public class FPointService : IFPointService
                 Id = p.Id, UserId = p.UserId, OrderId = p.OrderId, PointUsed = p.PointUsed,
                 TransactionType = p.PointUsed < 0 || p.SourceKey != null && p.SourceKey.EndsWith(":Earn") ? "Earn" : "Redeem",
                 Description = p.Description ?? (p.PointUsed >= 0 ? "Sử dụng điểm" : "Tích lũy điểm"),
-                CreatedAt = p.CreatedAt
+                CreatedAt = p.CreatedAt, Status = p.Status.ToString(), AvailableAt = p.AvailableAt
             }).ToListAsync();
         return new(items, count, pageNumber, pageSize);
     }
@@ -56,11 +59,12 @@ public class FPointService : IFPointService
         var limit = Math.Min(1000, await WorkflowSupport.IntSettingAsync(_db, "MAX_POINTS_PER_ORDER", 1000));
         var max = (int)Math.Min(int.MaxValue, decimal.Floor(request.TotalAmount / 200m));
         max = Math.Min(user.FPoints, Math.Min(limit, max));
-        var used = Math.Min(request.PointsToUse, max);
-        return new UseFPointResponse { PointsUsed = used, DiscountAmount = used * 100m,
+        if (request.PointsToUse > max)
+            throw new InvalidOperationException($"Chỉ được sử dụng tối đa {max} F-Point cho đơn này.");
+        var used = request.PointsToUse;
+        return new UseFPointResponse { PointsUsed = used, MaxPointsAllowed = max, DiscountAmount = used * 100m,
             FinalAmount = request.TotalAmount - used * 100m,
-            Message = request.PointsToUse > max ? $"Chỉ được sử dụng tối đa {max} F-Point cho đơn này."
-                : $"Sử dụng {used} F-Point." };
+            Message = $"Sử dụng {used} F-Point." };
     }
 
     public async Task<List<MembershipTierDto>> GetMembershipTiersAsync()
@@ -146,12 +150,19 @@ public class FPointService : IFPointService
         var tier = tiers.FirstOrDefault(t => t.Id == user.MembershipTierId) ?? tiers.FirstOrDefault();
         // Cộng điểm theo hạng hiện tại trước khi xét nâng hạng từ đơn này.
         var points = checked((int)decimal.Floor(order.FinalAmount * (tier?.PointRate ?? 5) / 100m / 100m));
+        var physical = await _db.Set<OrderItem>().AnyAsync(i => i.OrderId == orderId
+            && i.PurchaseType == PurchaseType.Physical);
+        var now = TimeZoneHelper.GetVietnamTime();
+        var availableAt = physical ? await GetReturnDeadlineAsync(order) : now;
+        var pending = physical && !order.ReceiptConfirmedAt.HasValue && availableAt > now;
         var before = user.FPoints;
-        user.FPoints = checked(user.FPoints + points);
+        if (!pending) user.FPoints = checked(user.FPoints + points);
         _db.Set<FPoints>().Add(new FPoints { UserId = user.Id, OrderId = orderId,
-            PointUsed = -points, SourceKey = key, Description = $"Tích điểm đơn #{orderId}", CreatedBy = "System" });
-        WorkflowSupport.Audit(_db, "PointsEarned", "User", user.Id, new { FPoints = before },
-            new { user.FPoints }, details: $"Đơn #{orderId}: +{points} điểm.");
+            PointUsed = -points, SourceKey = key, Description = $"Tích điểm đơn #{orderId}", CreatedBy = "System",
+            Status = pending ? PointStatus.Pending : PointStatus.Available, AvailableAt = availableAt });
+        WorkflowSupport.Audit(_db, pending ? "OrderPointsPending" : "PointsEarned", "User", user.Id,
+            new { FPoints = before }, new { user.FPoints, PendingPoints = pending ? points : 0 },
+            details: $"Đơn #{orderId}: {points} điểm {(pending ? "chờ duyệt" : "khả dụng")}.");
         await _db.SaveChangesAsync();
         await AutoUpgradeTierAsync(user.Id, orderId, 0);
         if (tx != null) await tx.CommitAsync();

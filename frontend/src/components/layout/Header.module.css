@@ -126,6 +126,8 @@
 }
 
 .userDropdownTrigger {
+    font: inherit;
+    color: inherit;
     display: flex;
     align-items: center;
     gap: 9px;
@@ -183,8 +185,13 @@
     box-shadow: 0 8px 24px -6px rgba(7, 18, 51, 0.12);
 }
 
-.userMenuWrapper:hover .userDropdownMenu {
+.userDropdownMenuOpen {
     display: block;
+}
+
+.userDropdownTrigger:focus-visible {
+    outline: 2px solid var(--egyptian, #0B409C);
+    outline-offset: 2px;
 }
 
 .dropdownItemLink {

@@ -1,0 +1,235 @@
+.summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 25px;
+    padding: 24px 28px;
+    background: white;
+    border: 1px solid var(--hairline);
+    border-radius: 9px;
+}
+.summary > div:first-child {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+.summaryIcon {
+    width: 62px;
+    height: 62px;
+    border-radius: 12px;
+    background: #eaf1ff;
+    color: var(--egyptian);
+    display: grid;
+    place-items: center;
+}
+.summary section > span {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: var(--muted);
+}
+.summary section strong {
+    display: block;
+    font-size: 30px;
+    letter-spacing: -1px;
+    color: var(--catalina);
+    margin: 4px 0;
+}
+.summary section small {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+}
+.process {
+    display: flex;
+    gap: 13px;
+    align-items: center;
+    font-size: 11px;
+    color: var(--muted);
+}
+.process > span,
+.process > strong {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+}
+.process > strong {
+    color: var(--egyptian);
+    background: var(--alice);
+    padding: 12px;
+    border-radius: 6px;
+}
+.filters {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--hairline);
+    display: flex;
+    align-items: end;
+    gap: 12px;
+}
+.search {
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 12px;
+    min-width: 170px;
+    flex: 1;
+    color: var(--muted);
+    height: 41px;
+}
+.search input {
+    width: 100%;
+    font:
+        400 12px Inter,
+        sans-serif;
+    border: 0;
+    background: none;
+    outline: none;
+    color: var(--ink);
+    min-width: 0;
+}
+.date {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--muted);
+}
+.date input {
+    font:
+        400 12px Inter,
+        sans-serif;
+    min-height: 41px;
+    padding: 8px;
+    border: 1px solid var(--hairline);
+    border-radius: 5px;
+    color: var(--ink);
+    background: white;
+}
+.orderCode {
+    color: var(--egyptian);
+    font-size: 12px;
+}
+.detailButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    border: 0;
+    background: #edf3ff;
+    color: var(--egyptian);
+    font:
+        600 11px Inter,
+        sans-serif;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.detailButton:disabled {
+    opacity: 0.4;
+}
+.scopeNote {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.7;
+}
+.recipient h3 {
+    margin: 11px 0;
+    font-size: 17px;
+    color: var(--catalina);
+}
+.recipient p {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--muted);
+    margin: 7px 0;
+}
+.recipient p > svg {
+    flex-shrink: 0;
+    margin-top: 3px;
+}
+.sectionTitle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    padding-bottom: 7px;
+    color: var(--catalina);
+}
+.sectionTitle > span {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+}
+.quantity {
+    padding: 6px 9px;
+    background: var(--alice);
+    border-radius: 4px;
+    font-size: 14px;
+    color: var(--egyptian);
+}
+.issueNotice {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px;
+    background: #fff8e7;
+    color: #8c681c;
+    border: 1px solid #f1dfb6;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.8;
+}
+.issueNotice > svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+.issueForm {
+    padding: 16px;
+    border: 1px solid #e7d7b7;
+    background: #fffcf5;
+    border-radius: 7px;
+}
+.issueForm > div {
+    margin-bottom: 15px;
+    font-size: 12px;
+}
+@media (max-width: 1150px) {
+    .process {
+        display: none;
+    }
+    .filters {
+        flex-wrap: wrap;
+    }
+    .search {
+        flex-basis: 100%;
+    }
+    .date {
+        flex: 1;
+    }
+    .date input {
+        width: 100%;
+    }
+}
+@media (max-width: 520px) {
+    .summary {
+        padding: 20px;
+    }
+    .filters {
+        padding: 17px;
+    }
+    .filters > button {
+        width: 100%;
+    }
+    .summaryIcon {
+        width: 50px;
+        height: 50px;
+    }
+}

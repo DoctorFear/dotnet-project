@@ -1,0 +1,512 @@
+.heroGrid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 18px;
+    margin-bottom: 20px;
+}
+.wallet {
+    position: relative;
+    background: var(--catalina);
+    border-radius: 12px;
+    padding: 25px;
+    color: white;
+    overflow: hidden;
+}
+.walletTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: #cfdaef;
+    margin-bottom: 27px;
+}
+.walletTop > span:first-child {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.walletTop > span:last-child {
+    font:
+        700 14px Fraunces,
+        serif;
+    letter-spacing: -0.4px;
+}
+.walletTop > span:last-child span {
+    font:
+        800 12px Inter,
+        sans-serif;
+    color: var(--saffron);
+    margin-left: 2px;
+}
+.wallet > p {
+    font-size: 11px;
+    color: #c4d2ec;
+}
+.balance {
+    position: relative;
+    display: block;
+    font-size: 43px;
+    letter-spacing: -1.7px;
+    margin: 8px 0;
+    z-index: 1;
+    font-weight: 750;
+}
+.balance > span {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0;
+    margin-left: 12px;
+    color: #d0daee;
+}
+.wallet .value {
+    font-size: 11px;
+    color: #b5c6e6;
+    margin-bottom: 27px;
+}
+.walletBottom {
+    border-top: 1px solid #ffffff24;
+    padding-top: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+    font-size: 12px;
+}
+.walletBottom > span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #dce5f4;
+}
+.walletBottom strong {
+    color: var(--saffron);
+    font-size: 18px;
+}
+.walletBottom small {
+    font-size: 10px;
+    font-weight: 400;
+    color: #dce5f4;
+}
+.watermark {
+    position: absolute;
+    right: -22px;
+    top: 55px;
+    color: #ffffff06;
+    transform: rotate(-15deg);
+}
+.tierSummary {
+    background: white;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    padding: 27px 22px;
+    display: flex;
+    flex-direction: column;
+}
+.tierIdentity {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    margin: 27px 0 20px;
+}
+.medal {
+    display: grid;
+    place-items: center;
+    width: 58px;
+    height: 64px;
+    border-radius: 12px;
+    color: #73879f;
+    background: linear-gradient(145deg, #f4f7fb, #d9e1ed);
+    border: 1px solid #d3deeb;
+    box-shadow: inset 0 0 0 4px #ffffff90;
+    flex-shrink: 0;
+}
+.tierIdentity h2 {
+    color: var(--catalina);
+    font-size: 24px;
+    letter-spacing: -0.7px;
+    margin-bottom: 6px;
+}
+.tierIdentity p {
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.6;
+}
+.tierSummary > a {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    color: var(--egyptian);
+    font-size: 11px;
+    font-weight: 650;
+    text-decoration: none;
+}
+.tierFoot {
+    margin-top: auto;
+    padding-top: 20px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    font-size: 9px;
+    color: var(--muted);
+}
+.progressPanel {
+    padding: 22px 24px;
+    margin-bottom: 25px;
+}
+.progressPanel h3 {
+    margin-top: 9px;
+    font-size: 15px;
+    color: var(--catalina);
+}
+.progressPanel h3 span {
+    color: var(--egyptian);
+}
+.progressPanel > div > svg {
+    color: var(--egyptian);
+}
+.progressLabels {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 21px 0 10px;
+    font-size: 10px;
+    color: var(--muted);
+}
+.progressLabels strong {
+    font-weight: 600;
+    color: var(--catalina);
+}
+.track {
+    height: 7px;
+    background: #eaf0f8;
+    border-radius: 9px;
+    overflow: hidden;
+}
+.track > span {
+    display: block;
+    height: 100%;
+    background: var(--egyptian);
+    border-radius: 9px;
+}
+.progressPanel > p {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 12px;
+    line-height: 1.7;
+}
+.progressPanel > p strong {
+    color: var(--egyptian);
+    font-weight: 600;
+}
+.tabs {
+    display: flex;
+    gap: 25px;
+    border-bottom: 1px solid var(--hairline);
+    margin-bottom: 20px;
+}
+.tabs a {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    text-decoration: none;
+    padding: 2px 0 13px;
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 600;
+    border-bottom: 2px solid transparent;
+}
+.tabs a[aria-current='page'] {
+    border-color: var(--egyptian);
+    color: var(--egyptian);
+}
+.history {
+    margin-bottom: 20px;
+}
+.transaction {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 155px;
+}
+.transaction strong {
+    font-size: 11px;
+    font-weight: 550;
+}
+.transactionIcon {
+    width: 33px;
+    height: 33px;
+    border-radius: 9px;
+    background: #eef5ff;
+    color: var(--egyptian);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+.debitIcon {
+    color: #9c7124;
+    background: #fff5e0;
+}
+.credit {
+    font-size: 14px;
+    color: #257a50;
+}
+.debit {
+    font-size: 14px;
+    color: #a17122;
+}
+.cancelled {
+    font-size: 14px;
+    color: #8e99ad;
+    text-decoration: line-through;
+}
+.receiptButton {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font:
+        600 10px Inter,
+        sans-serif;
+    color: var(--egyptian);
+    border: 0;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+    min-width: 100px;
+}
+.bottomGrid {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 18px;
+}
+.bottomGrid h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.bottomGrid form > button {
+    width: 100%;
+}
+.limit {
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.8;
+    margin: 13px 0;
+}
+.rules {
+    padding: 22px;
+}
+.rules > h2 {
+    font-size: 14px;
+    color: var(--catalina);
+    margin-bottom: 23px;
+}
+.rules > p {
+    display: flex;
+    gap: 12px;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.8;
+    margin-bottom: 20px;
+}
+.rules > p:last-child {
+    margin-bottom: 0;
+}
+.rules > p > svg {
+    flex-shrink: 0;
+    color: var(--egyptian);
+    margin-top: 3px;
+}
+.rules strong {
+    display: block;
+    color: var(--catalina);
+    font-size: 11px;
+    margin-bottom: 3px;
+}
+.previewResult {
+    padding: 14px;
+    border: 1px solid #d9e8dc;
+    background: #f0f8f1;
+    border-radius: 6px;
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    color: #276e46;
+    font-size: 11px;
+}
+.previewResult > strong {
+    font-size: 16px;
+}
+.previewResult > small {
+    font-size: 10px;
+    line-height: 1.7;
+}
+.tierCards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 22px;
+}
+.tierCard {
+    background: white;
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    padding: 22px 19px;
+    overflow: hidden;
+}
+.tierCardTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.tierCardTop > span {
+    font-size: 9px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    background: #f1f5fa;
+    color: var(--muted);
+}
+.tierCard h2 {
+    font-size: 22px;
+    letter-spacing: -0.6px;
+    margin-bottom: 7px;
+}
+.tierCard > p {
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.7;
+    min-height: 34px;
+}
+.tierCard > strong {
+    display: block;
+    font-size: 33px;
+    letter-spacing: -1.3px;
+    margin: 20px 0;
+}
+.tierCard > strong small {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0;
+    font-weight: 400;
+    color: var(--muted);
+    margin-top: 5px;
+}
+.tierCard ul {
+    list-style: none;
+    border-top: 1px solid var(--hairline);
+    padding-top: 15px;
+}
+.tierCard li {
+    display: flex;
+    gap: 7px;
+    font-size: 10px;
+    line-height: 1.9;
+    margin-bottom: 12px;
+    color: var(--muted);
+}
+.tierCard li > svg {
+    flex-shrink: 0;
+    margin-top: 3px;
+}
+.tier0 {
+    border-top: 3px solid #b08156;
+}
+.tier0 .tierCardTop > svg,
+.tier0 > strong {
+    color: #a7784c;
+}
+.tier1 {
+    border-top: 3px solid #91a4bd;
+    background: linear-gradient(155deg, #fff, #f4f7fc);
+}
+.tier1 .tierCardTop > svg,
+.tier1 > strong {
+    color: #697f9e;
+}
+.tier2 {
+    border-top: 3px solid var(--saffron);
+    background: linear-gradient(155deg, #fff, #fffaf0);
+}
+.tier2 .tierCardTop > svg,
+.tier2 > strong {
+    color: #b78b22;
+}
+.finalNote {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 7px;
+    font-size: 10px;
+    color: var(--muted);
+    padding: 24px 0 10px;
+}
+@media (max-width: 1150px) {
+    .heroGrid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .wallet {
+        padding: 23px;
+    }
+    .tierSummary {
+        padding: 23px 18px;
+    }
+    .bottomGrid {
+        grid-template-columns: 1fr;
+    }
+    .tierCards {
+        gap: 10px;
+    }
+    .tierCard {
+        padding: 18px 13px;
+    }
+}
+@media (max-width: 600px) {
+    .heroGrid {
+        grid-template-columns: 1fr;
+    }
+    .wallet {
+        padding: 25px;
+    }
+    .tierIdentity {
+        margin: 20px 0 16px;
+    }
+    .tierSummary {
+        padding: 22px;
+    }
+    .tierFoot {
+        padding-top: 15px;
+    }
+    .tierCards {
+        grid-template-columns: 1fr;
+    }
+    .tierCard {
+        padding: 23px;
+    }
+    .tierCard > p {
+        min-height: 0;
+    }
+    .tierCardTop {
+        margin-bottom: 10px;
+    }
+    .progressPanel {
+        padding: 20px;
+    }
+    .progressLabels {
+        font-size: 9px;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .tabs {
+        gap: 20px;
+    }
+    .tabs a {
+        font-size: 11px;
+    }
+    .balance {
+        font-size: 44px;
+    }
+}

@@ -3,10 +3,11 @@ import { useState, useMemo } from 'react';
 import { createOrder, getMomoPaymentUrl, getSePayPaymentUrl } from '../services/checkoutService';
 import type { Address } from '../types/address';
 import { useNavigate } from 'react-router-dom';
+import { useCheckoutPoints } from './useCheckoutPoints';
 
 export const useCheckout = (cartItems: any[]) => {
     const navigate = useNavigate();
-    const [addresses, setAddresses] = useState<Address[]>([
+    const [addresses] = useState<Address[]>([
         {
             id: 1,
             name: 'Thanh Sang',
@@ -19,9 +20,9 @@ export const useCheckout = (cartItems: any[]) => {
     
     const [selectedAddrId, setSelectedAddrId] = useState<number>(1);
     const [paymentMethod, setPaymentMethod] = useState<string>('cod');
-    const [pointsUsed, setPointsUsed] = useState<number>(0);
-    const [userMaxPoints, setUserMaxPoints] = useState<number>(500); 
-    const [shippingFee, setShippingFee] = useState<number>(0);
+    const [pointsInput, setPointsInput] = useState('');
+    const pointsUsed = Number(pointsInput) || 0;
+    const [shippingFee] = useState<number>(0);
     
     const [isProcessing, setIsProcessing] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
@@ -31,18 +32,21 @@ export const useCheckout = (cartItems: any[]) => {
     const subTotal = useMemo(() => {
         return cartItems.reduce((sum: number, item: any) => sum + (item.unitPrice * item.quantity), 0);
     }, [cartItems]);
+    const { maxPoints: userMaxPoints, error: pointError } = useCheckoutPoints(subTotal);
 
     const discountVal = pointsUsed * 100; 
     const finalTotal = Math.max(0, subTotal + shippingFee - discountVal);
 
-    const handlePointsChange = (val: number) => {
-        if (isNaN(val) || val < 0) val = 0;
+    const handlePointsChange = (input: string) => {
+        if (!/^\d*$/.test(input)) return;
+        let val = Number(input);
+        if (!Number.isSafeInteger(val)) return;
         if (val > userMaxPoints) val = userMaxPoints;
         
         const maxAllowedBySubtotal = Math.floor((subTotal * 0.5) / 100); 
         if (val > maxAllowedBySubtotal) val = maxAllowedBySubtotal;
         
-        setPointsUsed(val);
+        setPointsInput(input === '' ? '' : String(val));
     };
 
     const submitCheckout = async (userId: number) => {
@@ -72,7 +76,7 @@ export const useCheckout = (cartItems: any[]) => {
                 try {
                     const momoData = await getMomoPaymentUrl(data.orderId);
                     if (momoData.payUrl) {
-                        window.open(momoData.payUrl.payUrl, '_blank');
+                        window.open(momoData.payUrl, '_blank');
                         return;
                     }
                 } catch (momoErr) {
@@ -119,7 +123,9 @@ export const useCheckout = (cartItems: any[]) => {
         paymentMethod,
         setPaymentMethod,
         pointsUsed,
+        pointsInput,
         userMaxPoints,
+        pointError,
         handlePointsChange,
         shippingFee,
         subTotal,

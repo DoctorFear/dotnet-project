@@ -6,6 +6,7 @@ import Header from '../components/layout/Header';
 import { useCheckout } from '../hooks/useCheckout';
 import type { OrderItem } from '../types/order';
 import { Clock } from 'lucide-react';
+import BookCover from '../components/common/BookCover';
 
 export const CheckoutPage: React.FC = () => {
     const location = useLocation();
@@ -26,7 +27,9 @@ export const CheckoutPage: React.FC = () => {
         paymentMethod,
         setPaymentMethod,
         pointsUsed,
+        pointsInput,
         userMaxPoints,
+        pointError,
         handlePointsChange,
         shippingFee,
         subTotal,
@@ -51,7 +54,7 @@ export const CheckoutPage: React.FC = () => {
                 setPaymentMethod('momo');
             }
             if (pointsUsed > 0) {
-                handlePointsChange(0);
+                handlePointsChange('0');
             }
         }
     }, [hasRentalItem, paymentMethod, pointsUsed, setPaymentMethod, handlePointsChange]);
@@ -130,7 +133,7 @@ export const CheckoutPage: React.FC = () => {
                         <div className={styles.cartItemsFullList}>
                             {cartItems.map((item: any) => (
                                 <div key={item.cartItemId} className={styles.cartItemCard}>
-                                    <img src={item.coverImg} className={styles.cartItemImg} alt={item.title} />
+                                    <BookCover src={item.coverImg} className={styles.cartItemImg} title={item.title} />
                                     <div className={styles.cartItemInfo}>
                                         <h4 className={styles.cartItemTitle}>{item.title}</h4>
                                         <div className={styles.cartItemQtyPrice}>
@@ -170,18 +173,19 @@ export const CheckoutPage: React.FC = () => {
                         </div>
                         <div className={styles.voucherBox} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                             <input
-                                type="number"
-                                min="0"
-                                max={userMaxPoints}
-                                step={10}
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                aria-label="Số F-Point dùng thanh toán"
                                 className={styles.voucherInput}
-                                value={pointsUsed || ''}
-                                onChange={(e) => handlePointsChange(parseInt(e.target.value) || 0)}
+                                value={pointsInput}
+                                onChange={(e) => handlePointsChange(e.target.value)}
                                 placeholder="Nhập số điểm..."
                                 disabled={isProcessing}
                             />
                             <span style={{ fontSize: '13px', color: '#5b6e99', flexShrink: 0 }}>/ {userMaxPoints} điểm</span>
                         </div>
+                        <p style={{ fontSize: '11px', color: '#5b6e99', marginBottom: 12 }}>{pointError || 'Chỉ dùng điểm khả dụng; không dùng điểm chờ. Hạn mức được tính theo số dư, cấu hình và 50% tiền sách.'}</p>
                         {pointsUsed > 0 && (
                             <div style={{ fontSize: '11.5px', marginBottom: '14px', color: '#15803d' }}>
                                 ✔ Đã quy đổi {pointsUsed} điểm thành -{(discountVal).toLocaleString()} đ

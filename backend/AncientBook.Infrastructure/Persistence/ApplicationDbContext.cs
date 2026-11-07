@@ -90,6 +90,9 @@ namespace AncientBook.Infrastructure.Persistence
             modelBuilder.Entity<FPoints>().HasIndex(p => p.SourceKey).IsUnique()
                 .HasFilter("[SourceKey] IS NOT NULL");
             modelBuilder.Entity<FPoints>().HasIndex(p => new { p.UserId, p.CreatedAt });
+            modelBuilder.Entity<FPoints>().Property(p => p.Status).HasConversion<string>()
+                .HasMaxLength(20).HasDefaultValue(AncientBook.Domain.Enums.PointStatus.Available);
+            modelBuilder.Entity<FPoints>().HasIndex(p => new { p.Status, p.AvailableAt });
             modelBuilder.Entity<FulfillmentNotification>(entity =>
             {
                 entity.Property(n => n.Audience).HasMaxLength(20);

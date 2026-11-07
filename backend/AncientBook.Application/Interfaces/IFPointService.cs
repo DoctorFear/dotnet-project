@@ -22,5 +22,9 @@ namespace AncientBook.Application.Interfaces
         Task<bool> UpdateMembershipTierAsync(int id, MembershipTierDto dto, int? actorUserId = null);
         Task<int> AwardCompletedOrderAsync(int orderId);
         Task ProcessPaidDigitalOrderAsync(int orderId);
+        Task ReconcileOrderPointsAsync(int orderId);
+        Task ValidateReturnEligibilityAsync(int orderId);
+        Task<OrderPointsDto> GetOrderPointsAsync(int userId, int orderId);
+        Task<OrderPointsDto> ConfirmReceiptAsync(int userId, int orderId, bool acceptCloseReturnWindow);
     }
 }

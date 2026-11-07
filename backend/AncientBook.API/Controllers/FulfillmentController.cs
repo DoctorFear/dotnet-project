@@ -16,7 +16,7 @@ namespace AncientBook.API.Controllers
         private readonly IFulfillmentService _fulfillmentService;
 
         [HttpPost("orders/{orderId}/packing-issue")]
-        [Authorize(Roles = "Staff,Admin")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> ReportPackingIssue(int orderId, [FromBody] PackingIssueRequest request)
         {
             try
@@ -35,7 +35,7 @@ namespace AncientBook.API.Controllers
 
         // UC18: Lấy danh sách đơn chờ đóng gói (Confirmed)
         [HttpGet("pending-orders")]
-        [Authorize(Roles = "Staff,Admin")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> GetPendingOrders([FromQuery] FulfillmentPendingQuery query)
         {
             try
@@ -55,7 +55,7 @@ namespace AncientBook.API.Controllers
 
         // UC18: Chi tiết đơn để đóng gói
         [HttpGet("orders/{orderId}")]
-        [Authorize(Roles = "Staff,Admin")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> GetOrderDetail(int orderId)
         {
             try
@@ -79,7 +79,7 @@ namespace AncientBook.API.Controllers
 
         // UC18: Xác nhận đóng gói xong
         [HttpPost("orders/{orderId}/confirm-packing")]
-        [Authorize(Roles = "Staff,Admin")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> ConfirmPacking(int orderId)
         {
             try

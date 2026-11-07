@@ -50,7 +50,7 @@ public class DeliveryService : IDeliveryService
             {
                 OrderId = o.Id, OrderCode = "ORD-" + o.Id, CustomerName = o.User != null ? o.User.FullName : "N/A",
                 ReceiverPhone = o.User != null ? o.User.PhoneNumber : null, ShippingAddress = o.ShippingAddress,
-                FinalAmount = o.FinalAmount, CodAmount = o.IsPaid ? 0 : o.FinalAmount, IsPaid = o.IsPaid,
+                FinalAmount = o.FinalAmount, CodAmount = !o.IsPaid && o.PaymentMethod == "COD" ? o.FinalAmount : 0, IsPaid = o.IsPaid,
                 Status = o.Status.ToString(), OrderDate = o.OrderDate
             }).ToListAsync();
         return new(items, count, query.PageNumber, query.PageSize);
@@ -66,7 +66,7 @@ public class DeliveryService : IDeliveryService
         var failure = await _db.Set<OrderFailureReason>().AsNoTracking().Where(f => f.OrderId == orderId)
             .OrderByDescending(f => f.RecordedAt)
             .Select(f => new { Reason = f.FailureReason!.ReasonText, f.FailureNote }).FirstOrDefaultAsync();
-        var isReadOnly = order.Status is OrderStatus.Completed or OrderStatus.Failed;
+        var isReadOnly = order.Status is not (OrderStatus.Prepared or OrderStatus.Shipping);
         var completedAt = isReadOnly
             ? await _db.Set<OrderStatusHistory>().AsNoTracking()
                 .Where(h => h.OrderId == orderId && h.ToStatus == order.Status)
@@ -77,7 +77,7 @@ public class DeliveryService : IDeliveryService
             OrderId = order.Id, OrderCode = "ORD-" + order.Id, CustomerName = order.User?.FullName ?? "N/A",
             ReceiverPhone = order.User?.PhoneNumber, ShippingAddress = order.ShippingAddress,
             OrderDate = order.OrderDate, Status = order.Status.ToString(), IsPaid = order.IsPaid,
-            FinalAmount = order.FinalAmount, CodAmount = order.IsPaid ? 0 : order.FinalAmount,
+            FinalAmount = order.FinalAmount, CodAmount = !order.IsPaid && order.PaymentMethod.Equals("COD", StringComparison.OrdinalIgnoreCase) ? order.FinalAmount : 0,
             Note = failure?.Reason,
             IsReadOnly = isReadOnly, CompletedAt = completedAt,
             FailureReason = failure?.Reason, FailureNote = failure?.FailureNote,
@@ -102,6 +102,9 @@ public class DeliveryService : IDeliveryService
             throw new InvalidOperationException($"Không thể chuyển từ {previous} sang {next}.");
         if (!order.OrderItems.Any(i => i.PurchaseType == PurchaseType.Physical))
             throw new InvalidOperationException("Shipper chỉ xử lý đơn sách vật lý.");
+        if (next == OrderStatus.Completed && !order.IsPaid
+            && !order.PaymentMethod.Equals("COD", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Đơn thanh toán online chưa được xác nhận thanh toán; không thể xác nhận thu tiền COD.");
         var actor = "Shipper-" + shipperUserId;
         string? note = null;
         if (next == OrderStatus.Failed)
@@ -145,7 +148,7 @@ public class DeliveryService : IDeliveryService
         {
             await _points.AwardCompletedOrderAsync(orderId);
             // API E-Book tặng xác thực quyền đọc theo đơn sách vật lý đã hoàn thành và thanh toán.
-            WorkflowSupport.Notify(_db, $"Đơn #{orderId} đã giao thành công. Điểm và quyền đọc E-Book tặng kèm (nếu có) đã kích hoạt.", orderId, order.UserId);
+            WorkflowSupport.Notify(_db, $"Đơn #{orderId} đã giao thành công. Điểm thưởng được ghi nhận theo thời hạn đổi trả; E-Book tặng kèm (nếu có) đã được mở.", orderId, order.UserId);
             await _db.SaveChangesAsync();
         }
         await tx.CommitAsync();

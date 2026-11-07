@@ -1,0 +1,104 @@
+.intro {
+    padding: 25px 28px;
+    background: white;
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+.intro > span {
+    display: grid;
+    place-items: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: #fff5db;
+    color: #b18528;
+    flex-shrink: 0;
+}
+.intro h2 {
+    color: var(--catalina);
+    font-size: 18px;
+    letter-spacing: -0.4px;
+    margin-bottom: 8px;
+}
+.intro p {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.8;
+}
+.intro > svg {
+    margin-left: auto;
+    color: #aabbd6;
+    flex-shrink: 0;
+}
+.tierName {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--catalina);
+    font-size: 13px;
+}
+.tier0 > svg {
+    color: #a7784c;
+}
+.tier1 > svg {
+    color: #8c9eb5;
+}
+.tier2 > svg {
+    color: #b7942b;
+}
+.rate {
+    font-size: 20px;
+    letter-spacing: -0.6px;
+    font-weight: 700;
+    color: var(--egyptian);
+}
+.benefits {
+    max-width: 240px;
+    color: var(--muted);
+}
+.rules {
+    padding: 25px 28px;
+}
+.rules h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    color: var(--catalina);
+    margin-bottom: 22px;
+}
+.rules > div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+.rules p {
+    display: flex;
+    gap: 9px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.9;
+}
+.rules p > svg {
+    flex-shrink: 0;
+    color: #347c57;
+    margin-top: 3px;
+}
+@media (max-width: 650px) {
+    .intro,
+    .rules {
+        padding: 20px;
+    }
+    .intro > svg {
+        display: none;
+    }
+    .intro h2 {
+        font-size: 16px;
+    }
+    .rules > div {
+        grid-template-columns: 1fr;
+    }
+}
