@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { OrderStatus, type Order, type OrderItem, type OrderHistoryReview } from '../types/order';
 import { bookIdOf, canCancelOrder, canReturnOrder, canReviewOrder, withinReturnWindow } from '../utils/orderHistory';
 import { updateOrderPresentation } from '../services/orderHistoryService';
+import { submitRefundRequest } from '../services/refundService';
+import type { RefundRequest } from '../types/refund';
 
 export type OrderActionMode = 'cancel' | 'return' | 'review';
 export const returnReasons = ['Sách bị hư hỏng', 'Giao sai sách', 'Sách thiếu trang hoặc lỗi in', 'Thiếu sản phẩm', 'Lý do khác'];
@@ -13,8 +15,10 @@ export const useOrderActionForm = (order: Order, initialItem?: OrderItem) => {
     const [rating, setRating] = useState(5);
     const [reason, setReason] = useState('');
     const [description, setDescription] = useState('');
-    const [images, setImages] = useState<string[]>([]);
-    const [video, setVideo] = useState<string | null>(null);
+    const [shippingMethod, setShippingMethod] = useState('');
+    const [bankAccount, setBankAccount] = useState('');
+    const [images, setImages] = useState<{ url: string; file: File }[]>([]);
+    const [video, setVideo] = useState<{ url: string; file: File } | null>(null);
     const [error, setError] = useState('');
     const [reading, setReading] = useState(false);
     const item = order.orderItems.find(entry => entry.id === itemId) ?? order.orderItems[0];
@@ -24,7 +28,7 @@ export const useOrderActionForm = (order: Order, initialItem?: OrderItem) => {
         setRating(existing?.rating ?? 5); setDescription(existing?.content ?? ''); setReason(existing?.reason ?? '');
     };
     const open = (value: OrderActionMode) => {
-        setMode(value); setError(''); setReason(''); setDescription(''); setImages([]); setVideo(null);
+        setMode(value); setError(''); setReason(''); setDescription(''); setImages([]); setVideo(null); setShippingMethod(''); setBankAccount('');
         const selected = initialItem ?? (value === 'review' ? order.orderItems.find(entry => !order.reviews?.some(existing => existing.itemId ? existing.itemId === entry.id : existing.bookId === bookIdOf(entry))) : order.orderItems[0]);
         if (!selected) { setMode(null); return; }
         setItemId(selected.id);
@@ -42,19 +46,19 @@ export const useOrderActionForm = (order: Order, initialItem?: OrderItem) => {
         }
         setReading(true); setError('');
         try {
-            const values = await Promise.all(incoming.map(file => new Promise<{ image: boolean; url: string }>((resolve, reject) => {
+            const values = await Promise.all(incoming.map(file => new Promise<{ image: boolean; url: string; file: File }>((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onload = () => resolve({ image: file.type.startsWith('image/'), url: String(reader.result) });
+                reader.onload = () => resolve({ image: file.type.startsWith('image/'), url: String(reader.result), file });
                 reader.onerror = () => reject(new Error('Không thể đọc file đã chọn.'));
                 reader.readAsDataURL(file);
             })));
-            setImages(current => [...current, ...values.filter(value => value.image).map(value => value.url)]);
+            setImages(current => [...current, ...values.filter(value => value.image).map(v => ({ url: v.url, file: v.file }))]);
             const selectedVideo = values.find(value => !value.image);
-            if (selectedVideo) setVideo(selectedVideo.url);
+            if (selectedVideo) setVideo({ url: selectedVideo.url, file: selectedVideo.file });
         } catch (cause) { setError(cause instanceof Error ? cause.message : 'Không thể đọc file.'); }
         finally { setReading(false); }
     };
-    const submit = () => {
+    const submit = async () => {
         if (reading) return;
         if (mode === 'cancel') {
             if (!canCancelOrder(order)) { setError('Đơn hàng không còn ở trạng thái có thể hủy.'); return; }
@@ -64,8 +68,42 @@ export const useOrderActionForm = (order: Order, initialItem?: OrderItem) => {
             if (!returnReasons.includes(reason) || description.trim().length < 10 || images.length === 0 && !video) {
                 setError('Vui lòng chọn lý do, mô tả ít nhất 10 ký tự và đính kèm ảnh hoặc video tình trạng sách.'); return;
             }
-            updateOrderPresentation(order, { status: OrderStatus.ReturnRequested,
-                returnInfo: { reason, description: description.trim(), imageUrls: images, videoUrl: video } });
+            if (!shippingMethod.trim() || !bankAccount.trim()) {
+                setError('Vui lòng nhập phương thức gửi hàng và tài khoản nhận tiền.'); return;
+            }
+            setReading(true);
+            try {
+                const rawImages = images.map(img => img.file);
+                const rawVideo = video ? video.file : null;
+
+                const refundRequest : RefundRequest = {
+                    orderId: order.id,
+                    reason: reason,
+                    description: description.trim(),
+                    shippingMethod: shippingMethod.trim(),
+                    bankAccount: bankAccount.trim(),
+                    images: rawImages,
+                    video: rawVideo
+                }
+                
+                await submitRefundRequest(refundRequest);
+                
+                updateOrderPresentation(order, { 
+                    status: OrderStatus.ReturnRequested,
+                    returnInfo: { 
+                        reason, 
+                        description: description.trim(), 
+                        imageUrls: images.map(img => img.url),
+                        videoUrl: video?.url 
+                    } 
+                });
+                setMode(null);
+            } catch (err: any) {
+                setError(err.message || 'Lỗi khi gửi yêu cầu hoàn tiền.');
+            } finally {
+                setReading(false);
+            }
+            
         } else if (mode === 'review') {
             if (!canReviewOrder(order) || review) return;
             if (!description.trim() || rating <= 2 && !lowRatingReasons.includes(reason)) {
@@ -76,8 +114,8 @@ export const useOrderActionForm = (order: Order, initialItem?: OrderItem) => {
         }
         setMode(null);
     };
-    return { mode, item, itemId, review, rating, reason, description, images, video, error, reading, open,
-        close: () => setMode(null), selectItem, setRating, setReason, setDescription, selectFiles,
+    return { mode, item, itemId, review, rating, reason, description, images, video, error, reading, open, shippingMethod, bankAccount,
+        close: () => setMode(null), selectItem, setRating, setReason, setDescription, selectFiles, setShippingMethod, setBankAccount,
         removeImage: (index: number) => setImages(current => current.filter((_, position) => position !== index)),
         removeVideo: () => setVideo(null), submit };
 };

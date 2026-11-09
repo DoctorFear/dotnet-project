@@ -48,6 +48,11 @@ namespace AncientBook.Application.Services
             {
                 order.UpdatedBy = updatedBy;
             }
+            if (order.Status == OrderStatus.Completed)
+            {
+                order.IsPaid = true;
+                order.ReturnedDeadline = TimeZoneHelper.GetVietnamTime().AddDays(5);
+            }
 
             // Hoàn sản phẩm
             if ((newStatus == OrderStatus.Failed && previousStatus != OrderStatus.Failed) || (newStatus == OrderStatus.Returned && previousStatus != OrderStatus.Returned))

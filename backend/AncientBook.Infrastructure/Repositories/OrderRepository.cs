@@ -285,6 +285,7 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
                     PayUrl = o.PayUrl,
                     PackingIssue = o.PackingIssue,
                     PaymentMethod = o.PaymentMethod,
+                    ReturnDeadline = o.ReturnedDeadline,
                     
                     User = o.User == null ? null : new OrderUserDto
                     {
@@ -352,7 +353,7 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
                     int.TryParse(source["OrderSeeder:v1:".Length..], out var scenario)) order.PresentationScenario = scenario % 20;
                 var history = histories.Where(h => h.OrderId == order.Id).ToList();
                 order.CompletedAt = history.FirstOrDefault(h => h.ToStatus == OrderStatus.Completed)?.ChangedAt;
-                order.ReturnDeadline = order.CompletedAt?.AddDays(returnDays);
+                order.ReturnDeadline ??= order.CompletedAt?.AddDays(returnDays);
                 if (!string.IsNullOrEmpty(dbOrder?.PaymentMethod))
                 {
                     order.PaymentMethod = dbOrder.PaymentMethod;

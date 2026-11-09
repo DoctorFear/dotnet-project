@@ -1,5 +1,5 @@
 import { requestApi } from './apiClient';
-import type { RefundRequest, RefundResponse } from '../types/refund';
+import type { RefundRequest, RefundResponse, PagedResult, RefundResponseDto } from '../types/refund';
 
 export const submitRefundRequest = async (data: RefundRequest): Promise<RefundResponse> => {
     const formData = new FormData();
@@ -18,4 +18,29 @@ export const submitRefundRequest = async (data: RefundRequest): Promise<RefundRe
     }
     
     return requestApi<{ message: string, success: boolean }>(`/refund/request`, { method: 'POST', body: formData });
+};
+
+export const refundService = {
+    getPagedRefunds: async (pageNumber: number, pageSize: number, searchKeyword?: string) => {
+        const queryParams = new URLSearchParams({
+            pageNumber: pageNumber.toString(),
+            pageSize: pageSize.toString(),
+        });
+        
+        if (searchKeyword) {
+            queryParams.append('searchKeyword', searchKeyword);
+        }
+
+        return requestApi<PagedResult<RefundResponseDto>>(`/Refund?${queryParams.toString()}`);
+    },
+
+    getRefundByOrderId: async (orderId: number) => {
+        return requestApi<RefundResponseDto>(`/Refund/order/${orderId}`);
+    },
+
+    approveRefund: async (orderId: number) => {
+        return requestApi<{ message: string }>(`/Order/${orderId}/approve-refund`, {
+            method: 'PUT'
+        });
+    }
 };

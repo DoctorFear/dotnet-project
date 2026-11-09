@@ -16,6 +16,7 @@ namespace AncientBook.Domain.Entities
         public string ShippingAddress { get; set; } = string.Empty;
         public string PaymentMethod { get; set; } = "COD";
         public OrderStatus Status { get; set; } = OrderStatus.Pending; 
+        public DateTime? ReturnedDeadline { get; set; }
         public string? MoMoRequestId { get; set; }
         public string? PayUrl { get; set; }
         public bool IsPaid { get; set; } = false;

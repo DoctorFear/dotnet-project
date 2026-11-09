@@ -20,7 +20,7 @@ import { useToastNotifications } from '../../../hooks/useToastNotifications';
 import { ToastNotification } from '../../common/ToastNotification';
 import { userService } from '../../../services/userService';
 
-type AdminPageKey = 'books' | 'settings' | 'reports' | 'orders' | 'packing' | 'membership';
+type AdminPageKey = 'books' | 'settings' | 'reports' | 'orders' | 'packing' | 'membership' | 'refunds';
 
 interface AdminLayoutProps {
     activePage: AdminPageKey;
@@ -36,6 +36,7 @@ const adminMenuItems = [
     { label: 'Quản lý sách', icon: BookOpen, page: 'books' as AdminPageKey, path: '/admin/books' },
     { label: 'Quản lý kho sách', icon: Warehouse },
     { label: 'Quản lý đơn hàng', icon: Package, page: 'orders' as AdminPageKey, path: '/admin/orders' },
+    { label: 'Quản lý trả hàng', icon: Package, page: 'refunds' as AdminPageKey, path: '/admin/refunds' },
     { label: 'Tiếp nhận & Đóng gói', icon: Package, page: 'packing' as AdminPageKey, path: '/staff/packing' },
     { label: 'Live Chat Console', icon: MessageSquare },
     { label: 'Quản lý Khuyến mãi', icon: Tags },

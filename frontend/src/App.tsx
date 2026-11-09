@@ -27,6 +27,7 @@ import FulfillmentPage from './pages/FulfillmentPage';
 import LoyaltyPage from './pages/LoyaltyPage';
 import MemberReviewsPage from './pages/MemberReviewsPage';
 import MembershipConfigPage from './pages/MembershipConfigPage';
+import AdminRefundManagementPage from './pages/AdminRefundManagmentPage';
 const WorkflowPreviewPage = import.meta.env.DEV ? React.lazy(() => import('./dev/WorkflowPreviewPage')) : null;
 
 export const App: React.FC = () => {
@@ -72,6 +73,8 @@ export const App: React.FC = () => {
                         <Route path="/staff/books" element={<AdminBookManagementPage />} />
                         <Route path="/admin/orders" element={<AdminOrderManagementPage />} />
                         <Route path="/staff/orders" element={<AdminOrderManagementPage />} />
+                        <Route path="/admin/refunds" element={<AdminRefundManagementPage />} />
+                        <Route path="/staff/refunds" element={<AdminRefundManagementPage />} />
                         <Route path="/staff/packing" element={<FulfillmentPage />} />
                     </Route>
 

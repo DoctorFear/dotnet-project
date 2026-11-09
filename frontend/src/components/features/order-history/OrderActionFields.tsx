@@ -8,9 +8,10 @@ export default function OrderActionFields({ order, form }: { order: Order; form:
     const dialog = useRef<HTMLDialogElement>(null);
     useEffect(() => {
         const node = dialog.current;
+        if (!node) return;
         const previous = document.body.style.overflow;
-        node?.showModal(); document.body.style.overflow = 'hidden';
-        return () => { node?.close(); document.body.style.overflow = previous; };
+        if (!node.open) { node?.showModal(); document.body.style.overflow = 'hidden'; }
+        return () => { document.body.style.overflow = previous; };
     }, []);
     const readonly = form.mode === 'review' && !!form.review;
     const isReturn = form.mode === 'return';
@@ -24,7 +25,8 @@ export default function OrderActionFields({ order, form }: { order: Order; form:
                 </>}
                 {(isReturn || form.rating <= 2) && <label>Lý do *<select value={form.reason} disabled={readonly} required onChange={event => form.setReason(event.target.value)}><option value="">Chọn lý do</option>{(isReturn ? returnReasons : lowRatingReasons).map(reason => <option key={reason}>{reason}</option>)}</select></label>}
                 <label>{isReturn ? 'Mô tả cụ thể *' : 'Nhận xét *'}<textarea rows={4} maxLength={isReturn ? 2000 : 4000} minLength={isReturn ? 10 : 1} required readOnly={readonly} value={form.description} onChange={event => form.setDescription(event.target.value)} placeholder={isReturn ? 'Mô tả tình trạng sách khi nhận hàng...' : 'Chia sẻ cảm nhận của bạn về sản phẩm...'} /></label>
-                {isReturn && <><label>Ảnh hoặc video tình trạng sách *<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple disabled={form.reading} onChange={event => { void form.selectFiles(event.target.files); event.target.value = ''; }} /></label><p>Tối đa 6 ảnh và 1 video, mỗi file không quá 10 MB.</p><div className={styles.attachments}>{form.images.map((image, index) => <div key={index}><img src={image} alt={`Ảnh tình trạng sách ${index + 1}`} /><button type="button" aria-label={`Xóa ảnh ${index + 1}`} onClick={() => form.removeImage(index)}>×</button></div>)}</div>{form.video && <div><video controls src={form.video} className={styles.video} /><button type="button" className={styles.textButton} onClick={form.removeVideo}>Xóa video</button></div>}</>}
+                {isReturn && (<><label>Phương thức gửi hàng lại *<input type="text" required disabled={readonly || form.reading} value={form.shippingMethod} onChange={e => form.setShippingMethod(e.target.value)} placeholder="VD: Gửi qua GHTK, Viettel Post..." /></label><label>Tài khoản nhận tiền *<input type="text" required disabled={readonly || form.reading} value={form.bankAccount} onChange={e => form.setBankAccount(e.target.value)} placeholder="VD: 123456789 - Vietcombank - Nguyen Van A" /></label></>)}
+                {isReturn && <><label>Ảnh hoặc video tình trạng sách *<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple disabled={form.reading} onChange={event => { void form.selectFiles(event.target.files); event.target.value = ''; }} /></label><p>Tối đa 6 ảnh và 1 video, mỗi file không quá 10 MB.</p><div className={styles.attachments}>{form.images.map((image, index) => <div key={index}><img src={image.url} alt={`Ảnh tình trạng sách ${index + 1}`} /><button type="button" aria-label={`Xóa ảnh ${index + 1}`} onClick={() => form.removeImage(index)}>×</button></div>)}</div>{form.video && <div><video controls src={form.video.url} className={styles.video} /><button type="button" className={styles.textButton} onClick={form.removeVideo}>Xóa video</button></div>}</>}
                 {form.reading && <p role="status">Đang đọc file...</p>}
             </div>}
             {form.error && <p className={styles.error} role="alert">{form.error}</p>}

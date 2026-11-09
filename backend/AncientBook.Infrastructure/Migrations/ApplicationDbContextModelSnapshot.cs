@@ -1147,6 +1147,9 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Property<DateTime?>("ReceiptConfirmedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("ReturnedDeadline")
+                        .HasColumnType("datetime2");
+
                     b.Property<int?>("ShipperId")
                         .HasColumnType("int");
 

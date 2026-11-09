@@ -53,8 +53,10 @@ export const useOrderHistory = () => {
     useEffect(() => {
         const update = () => refresh(current => current + 1);
         window.addEventListener('order-history-changed', update);
-        const timer = window.setInterval(update, 60000);
-        return () => { window.removeEventListener('order-history-changed', update); window.clearInterval(timer); };
+        // const timer = window.setInterval(update, 60000);
+        return () => { window.removeEventListener('order-history-changed', update); 
+            // window.clearInterval(timer); 
+        };
     }, []);
     const activeFilters = [
         ...(bookTitle ? [{ key: 'q', label: `Tên sách: ${bookTitle}` }] : []),
