@@ -13,7 +13,7 @@ export const LoginPage: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
     
-    const { isLoading, toasts, dismissToast, notify, handleLogin } = useAuthAction();
+    const { isLoading, toasts, dismissToast, handleLogin } = useAuthAction();
 
     const onSubmit = (e: React.FormEvent) => {
         e.preventDefault();

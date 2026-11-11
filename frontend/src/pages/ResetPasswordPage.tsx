@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { Eye, EyeOff, ArrowLeft, AlertCircle, RefreshCw } from 'lucide-react';
 import { useAuthAction } from '../hooks/useAuthAction';
 import { authService } from '../services/authService';
@@ -11,7 +11,6 @@ import styles from './ResetPasswordPage.module.css';
 export const ResetPasswordPage: React.FC = () => {
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token') || '';
-    const navigate = useNavigate();
 
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -200,12 +199,12 @@ export const ResetPasswordPage: React.FC = () => {
                                             <input
                                                 id="confirmNewPassword"
                                                 type={showConfirmPassword ? 'text' : 'password'}
-                                                className={`${styles.formInput} ${errors.confirmNewPassword ? styles.isInvalid : ''}`}
+                                                className={`${styles.formInput} ${errors.confirmPassword ? styles.isInvalid : ''}`}
                                                 placeholder="Nhập lại mật khẩu mới"
                                                 value={confirmPassword}
                                                 onChange={(e) => {
                                                     setConfirmPassword(e.target.value);
-                                                    if (errors.confirmNewPassword) setErrors(prev => ({ ...prev, confirmNewPassword: undefined }));
+                                                    if (errors.confirmPassword) setErrors(prev => ({ ...prev, confirmPassword: undefined }));
                                                 }}
                                             />
                                             <button
@@ -218,7 +217,7 @@ export const ResetPasswordPage: React.FC = () => {
                                                 {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                             </button>
                                         </div>
-                                        <span className={styles.errorText}>{errors.confirmNewPassword}</span>
+                                        <span className={styles.errorText}>{errors.confirmPassword}</span>
                                     </div>
 
                                     <button

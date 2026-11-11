@@ -94,6 +94,7 @@ namespace AncientBook.Application.Services
                 "price_desc" => query.OrderByDescending(b => b.PhysicalPrice).ThenBy(b => b.Id),
                 "rating" => query.OrderByDescending(b => b.Rating).ThenBy(b => b.Id),
                 "bestseller" => query.OrderByDescending(b => b.OrderItems.Where(i => i.Order != null && i.Order.Status == OrderStatus.Completed && i.Order.IsPaid).Sum(i => (int?)i.Quantity) ?? 0).ThenByDescending(b => b.Id),
+                "oldest" => query.OrderBy(b => b.Id),
                 _ => query.OrderByDescending(b => b.Id)
             };
 

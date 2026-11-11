@@ -34,9 +34,10 @@ export const useAuthAction = () => {
                     } else if (authData.role === 'Shipper') {
                         navigate('/shipper/orders');
                     } else {
+                        // Điều hướng quay lại nếu xuất phát từ trang chủ hoặc chi tiết sách
                         const from = location.state?.from;
                         const pathname = typeof from?.pathname === 'string' ? from.pathname : '/';
-                        const allowed = pathname === '/' || pathname === '/wishlist' || /^\/books\/\d+$/.test(pathname);
+                        const allowed = pathname === '/' || /^\/books\/\d+$/.test(pathname);
                         navigate(allowed ? pathname + (typeof from?.search === 'string' ? from.search : '') : '/');
                     }
                 }, 400);

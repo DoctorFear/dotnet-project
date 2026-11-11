@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Eye, EyeOff, Check } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuthAction } from '../hooks/useAuthAction';
 import { ToastNotification } from '../components/common/ToastNotification';
 import { TopBar } from '../components/layout/TopBar';

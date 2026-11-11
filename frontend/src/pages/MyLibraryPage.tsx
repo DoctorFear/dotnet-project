@@ -5,11 +5,12 @@ import Navbar from '../components/layout/Navbar';
 import Breadcrumb from '../components/common/Breadcrumb';
 import { useUser } from '../context/UserContext';
 import { useMyLibrary } from '../hooks/useMyLibrary';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export const MyLibraryPage: React.FC = () => {
     const { isLoggedIn } = useUser();
     const navigate = useNavigate();
+    const location = useLocation();
     const [activeTab, setActiveTab] = useState<'active' | 'expired'>('active');
     const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -35,7 +36,7 @@ export const MyLibraryPage: React.FC = () => {
                             cursor: 'pointer',
                             fontWeight: 700,
                         }}
-                        onClick={() => alert('Chuyển hướng đến trang đăng nhập')}
+                        onClick={() => navigate('/login', { state: { from: location } })}
                     >
                         Đăng nhập ngay
                     </button>

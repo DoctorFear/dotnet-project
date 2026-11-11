@@ -42,6 +42,7 @@ export const BookGrid: React.FC<BookGridProps> = ({
                         onChange={(e) => onSortChange?.(e.target.value)}
                     >
                         <option value="newest">Mới nhất (Mặc định)</option>
+                        <option value="oldest">Cũ nhất</option>
                         <option value="bestseller">Bán chạy nhất</option>
                         <option value="rating">Đánh giá cao nhất</option>
                         <option value="price_asc">Giá từ thấp đến cao</option>
