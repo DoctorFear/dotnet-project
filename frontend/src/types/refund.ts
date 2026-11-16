@@ -16,6 +16,7 @@ export interface RefundResponse {
 export interface RefundResponseDto {
     id: number;
     orderId: number;
+    orderStatus: string;
     reason: string;
     shippingMethod: string;
     description: string;
@@ -32,3 +33,29 @@ export interface PagedResult<T> {
     pageSize: number;
     totalPages: number;
 }
+
+export const getRefundOrderStatusMeta = (status?: string) => {
+    const normalized = (status || '').trim().toLowerCase();
+
+    if (normalized === 'returnrequested') {
+        return {
+            label: 'Chờ duyệt hoàn trả',
+            canApprove: true,
+            tone: 'pending' as const,
+        };
+    }
+
+    if (normalized === 'returned' || normalized === 'refunded' || normalized === 'returnapproved') {
+        return {
+            label: 'Đã hoàn trả',
+            canApprove: false,
+            tone: 'returned' as const,
+        };
+    }
+
+    return {
+        label: status || 'Không xác định',
+        canApprove: false,
+        tone: 'default' as const,
+    };
+};

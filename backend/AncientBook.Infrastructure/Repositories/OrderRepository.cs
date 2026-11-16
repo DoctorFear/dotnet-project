@@ -103,7 +103,7 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
 
         public async Task UpdateAsync(Order order)
         {
-            if (order.Status is OrderStatus.ReturnRequested or OrderStatus.ReturnApproved or OrderStatus.Returned)
+            if (order.Status is OrderStatus.Completed or OrderStatus.ReturnRequested or OrderStatus.ReturnApproved or OrderStatus.Returned)
             {
                 await using var tx = _context.Database.CurrentTransaction == null
                     ? await _context.BeginWorkflowTransactionAsync() : null;
@@ -329,7 +329,7 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
             var ids = orders.Select(o => o.Id).ToArray();
             var dbOrders = await _context.Orders.AsNoTracking()
                 .Where(o => ids.Contains(o.Id))
-                .Select(o => new { o.Id, o.CreatedBy, o.PaymentMethod })
+                .Select(o => new { o.Id, o.CreatedBy, o.PaymentMethod, o.DiscountAmount, o.PointsId })
                 .ToListAsync();
             // var sources = await _context.Orders.AsNoTracking().Where(o => ids.Contains(o.Id))
             //     .Select(o => new { o.Id, o.CreatedBy }).ToListAsync();
@@ -348,6 +348,10 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
             {
                 var dbOrder = dbOrders.FirstOrDefault(o => o.Id == order.Id);
                 var source = dbOrder?.CreatedBy;
+                bool usedFPoints = (dbOrder?.DiscountAmount ?? order.DiscountAmount) > 0 || dbOrder?.PointsId != null;
+                order.RewardPoints = usedFPoints
+                    ? 0
+                    : checked((int)decimal.Floor(order.FinalAmount * pointRate / 100m / 100m));
                 // var source = sources.First(o => o.Id == order.Id).CreatedBy;
                 if (source?.StartsWith("OrderSeeder:v1:", StringComparison.Ordinal) == true &&
                     int.TryParse(source["OrderSeeder:v1:".Length..], out var scenario)) order.PresentationScenario = scenario % 20;
@@ -384,7 +388,6 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
                 }
                 order.Reviews = reviews.Where(r => r.OrderId == order.Id).Select(r => new OrderHistoryReviewDto
                 { BookId = r.BookId, Rating = r.Rating, Content = r.Content, IsHidden = r.Status == ReviewStatus.Hidden }).ToList();
-                order.RewardPoints = checked((int)decimal.Floor(order.FinalAmount * pointRate / 100m / 100m));
             }
         }
     }

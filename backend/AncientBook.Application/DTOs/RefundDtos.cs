@@ -19,6 +19,7 @@ namespace AncientBook.Application.DTOs
     {
         public int Id { get; set; }
         public int OrderId { get; set; }
+        public string OrderStatus { get; set; } = string.Empty;
         public string Reason { get; set; } = string.Empty;
         public string ShippingMethod { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;

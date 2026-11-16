@@ -36,9 +36,16 @@ namespace AncientBook.Application.Services
                 throw new KeyNotFoundException($"Không tìm thấy đơn hàng với ID: {orderId}");
             }
 
-            if (order.Status == OrderStatus.Failed || order.Status == OrderStatus.Completed)
+            if (order.Status == newStatus)
             {
-                throw new InvalidOperationException($"Không thể thay đổi trạng thái của đơn hàng đã ở trạng thái kết thúc ({order.Status}).");
+                throw new InvalidOperationException($"Đơn hàng #{orderId} đã ở trạng thái {newStatus}.");
+            }
+
+            if (!IsValidStatusTransition(order.Status, newStatus))
+            {
+                throw new InvalidOperationException(
+                    $"Không thể chuyển trạng thái đơn hàng từ {(int)order.Status} ({order.Status}) sang {(int)newStatus} ({newStatus}). " +
+                    "Quy tắc: 1→2→3→4→5 theo thứ tự, 6 hoặc 7 có thể cập nhật bất kỳ lúc nào, và 7→8→9 theo thứ tự.");
             }
 
             var previousStatus = order.Status;
@@ -54,8 +61,8 @@ namespace AncientBook.Application.Services
                 order.ReturnedDeadline = TimeZoneHelper.GetVietnamTime().AddDays(5);
             }
 
-            // Hoàn sản phẩm
-            if ((newStatus == OrderStatus.Failed && previousStatus != OrderStatus.Failed) || (newStatus == OrderStatus.Returned && previousStatus != OrderStatus.Returned))
+            bool wasAlreadyRestocked = previousStatus == OrderStatus.Failed || previousStatus == OrderStatus.Returned;
+            if (!wasAlreadyRestocked && (newStatus == OrderStatus.Failed || newStatus == OrderStatus.Returned))
             {
                 if (order.OrderItems != null)
                 {
@@ -64,11 +71,11 @@ namespace AncientBook.Application.Services
                         try
                         {
                             await _inventoryRepository.IncreaseStockAsync(item.BookId, item.Quantity);
-                            _logger.LogInformation("Đã hoàn lại {Quantity} sản phẩm cho sách ID {BookId} do hủy đơn hàng #{OrderId}", item.Quantity, item.BookId, order.Id);
+                            _logger.LogInformation("Đã hoàn lại {Quantity} sản phẩm cho sách ID {BookId} do cập nhật đơn hàng #{OrderId} sang {NewStatus}", item.Quantity, item.BookId, order.Id, newStatus);
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError(ex, "LỖI: Không thể hoàn kho cho sách ID {BookId} khi hủy đơn hàng #{OrderId}", item.BookId, order.Id);
+                            _logger.LogError(ex, "LỖI: Không thể hoàn kho cho sách ID {BookId} khi cập nhật đơn hàng #{OrderId}", item.BookId, order.Id);
                             throw;
                         }
                     }
@@ -79,6 +86,34 @@ namespace AncientBook.Application.Services
             _logger.LogInformation("Cập nhật trạng thái đơn hàng #{OrderId} thành công từ {OldStatus} sang {NewStatus}", orderId, previousStatus, newStatus);
 
             return true;
+        }
+
+        private static bool IsValidStatusTransition(OrderStatus currentStatus, OrderStatus newStatus)
+        {
+            if (currentStatus == newStatus)
+            {
+                return false;
+            }
+
+            if (newStatus == OrderStatus.Failed || newStatus == OrderStatus.ReturnRequested)
+            {
+                return true;
+            }
+
+            if (newStatus >= OrderStatus.Pending && newStatus <= OrderStatus.Completed)
+            {
+                return currentStatus >= OrderStatus.Pending
+                    && currentStatus < OrderStatus.Completed
+                    && (int)newStatus == (int)currentStatus + 1;
+            }
+
+            if (newStatus == OrderStatus.ReturnApproved || newStatus == OrderStatus.Returned)
+            {
+                return (currentStatus == OrderStatus.ReturnRequested && newStatus == OrderStatus.ReturnApproved)
+                    || (currentStatus == OrderStatus.ReturnApproved && newStatus == OrderStatus.Returned);
+            }
+
+            return false;
         }
 
         public async Task<bool> CancelOrder(int orderId)

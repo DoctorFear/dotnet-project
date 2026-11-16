@@ -79,6 +79,47 @@ public partial class FPointService
             throw new InvalidOperationException("Đơn hàng đã hết thời hạn hoàn trả.");
     }
 
+    // public async Task ReconcileOrderPointsAsync(int orderId)
+    // {
+    //     await using var tx = _db.Database.CurrentTransaction == null
+    //         ? await _db.BeginWorkflowTransactionAsync() : null;
+    //     await WorkflowSupport.LockOrderAsync(_db, orderId);
+    //     var order = await _db.Set<Order>().FirstOrDefaultAsync(o => o.Id == orderId)
+    //         ?? throw new KeyNotFoundException("Không tìm thấy đơn hàng.");
+    //     var earn = await _db.Set<FPoints>().FirstOrDefaultAsync(p => p.SourceKey == $"Order:{orderId}:Earn");
+    //     if (earn?.Status == PointStatus.Cancelled && order.Status == OrderStatus.Completed && order.IsPaid
+    //         && await _db.Set<OrderStatusHistory>().AnyAsync(h => h.OrderId == orderId
+    //             && (h.FromStatus == OrderStatus.ReturnRequested || h.FromStatus == OrderStatus.ReturnApproved)
+    //             && h.ToStatus == OrderStatus.Completed))
+    //     {
+    //         earn.Status = PointStatus.Pending;
+    //         WorkflowSupport.Audit(_db, "OrderPointsRestored", "FPoints", earn.Id,
+    //             new { Status = PointStatus.Cancelled.ToString() }, new { Status = PointStatus.Pending.ToString() },
+    //             details: $"Đơn #{orderId} không hoàn trả; giữ hạn đổi trả ban đầu.");
+    //         await _db.SaveChangesAsync();
+    //     }
+    //     if (earn?.Status == PointStatus.Pending)
+    //     {
+    //         var cancel = order.Status is OrderStatus.ReturnRequested or OrderStatus.ReturnApproved or OrderStatus.Returned or OrderStatus.Failed;
+    //         var release = order.Status == OrderStatus.Completed && order.IsPaid
+    //             && (order.ReceiptConfirmedAt.HasValue || earn.AvailableAt <= TimeZoneHelper.GetVietnamTime());
+    //         if (cancel || release)
+    //         {
+    //             await WorkflowSupport.LockUserAsync(_db, order.UserId);
+    //             var user = await _db.Set<User>().FirstAsync(u => u.Id == order.UserId);
+    //             var before = user.FPoints;
+    //             earn.Status = cancel ? PointStatus.Cancelled : PointStatus.Available;
+    //             earn.UpdatedBy = "System";
+    //             if (release) user.FPoints = checked(user.FPoints - earn.PointUsed);
+    //             WorkflowSupport.Audit(_db, cancel ? "OrderPointsCancelled" : "OrderPointsReleased", "FPoints", earn.Id,
+    //                 new { Status = PointStatus.Pending.ToString(), FPoints = before },
+    //                 new { Status = earn.Status.ToString(), user.FPoints }, details: $"Đơn #{orderId}: {-earn.PointUsed} điểm.");
+    //             if (release) WorkflowSupport.Notify(_db, $"{-earn.PointUsed} F-Point từ đơn #{orderId} đã khả dụng.", orderId, order.UserId);
+    //             await _db.SaveChangesAsync();
+    //         }
+    //     }
+    //     if (tx != null) await tx.CommitAsync();
+    // }
     public async Task ReconcileOrderPointsAsync(int orderId)
     {
         await using var tx = _db.Database.CurrentTransaction == null
@@ -86,8 +127,14 @@ public partial class FPointService
         await WorkflowSupport.LockOrderAsync(_db, orderId);
         var order = await _db.Set<Order>().FirstOrDefaultAsync(o => o.Id == orderId)
             ?? throw new KeyNotFoundException("Không tìm thấy đơn hàng.");
+
+        bool usedFPoints = order.DiscountAmount > 0 || order.PointsId != null;
+
         var earn = await _db.Set<FPoints>().FirstOrDefaultAsync(p => p.SourceKey == $"Order:{orderId}:Earn");
-        if (earn?.Status == PointStatus.Cancelled && order.Status == OrderStatus.Completed && order.IsPaid
+        if (!usedFPoints
+            && earn?.Status == PointStatus.Cancelled
+            && order.Status == OrderStatus.Completed
+            && order.IsPaid
             && await _db.Set<OrderStatusHistory>().AnyAsync(h => h.OrderId == orderId
                 && (h.FromStatus == OrderStatus.ReturnRequested || h.FromStatus == OrderStatus.ReturnApproved)
                 && h.ToStatus == OrderStatus.Completed))
@@ -100,8 +147,11 @@ public partial class FPointService
         }
         if (earn?.Status == PointStatus.Pending)
         {
-            var cancel = order.Status is OrderStatus.ReturnRequested or OrderStatus.ReturnApproved or OrderStatus.Returned or OrderStatus.Failed;
-            var release = order.Status == OrderStatus.Completed && order.IsPaid
+            var cancel = usedFPoints
+                || order.Status is OrderStatus.ReturnRequested or OrderStatus.ReturnApproved or OrderStatus.Returned or OrderStatus.Failed;
+            var release = !usedFPoints
+                && order.Status == OrderStatus.Completed
+                && order.IsPaid
                 && (order.ReceiptConfirmedAt.HasValue || earn.AvailableAt <= TimeZoneHelper.GetVietnamTime());
             if (cancel || release)
             {
@@ -113,7 +163,10 @@ public partial class FPointService
                 if (release) user.FPoints = checked(user.FPoints - earn.PointUsed);
                 WorkflowSupport.Audit(_db, cancel ? "OrderPointsCancelled" : "OrderPointsReleased", "FPoints", earn.Id,
                     new { Status = PointStatus.Pending.ToString(), FPoints = before },
-                    new { Status = earn.Status.ToString(), user.FPoints }, details: $"Đơn #{orderId}: {-earn.PointUsed} điểm.");
+                    new { Status = earn.Status.ToString(), user.FPoints },
+                    details: usedFPoints
+                        ? $"Đơn #{orderId}: hủy tích điểm do đơn hàng có sử dụng F-Point."
+                        : $"Đơn #{orderId}: {-earn.PointUsed} điểm.");
                 if (release) WorkflowSupport.Notify(_db, $"{-earn.PointUsed} F-Point từ đơn #{orderId} đã khả dụng.", orderId, order.UserId);
                 await _db.SaveChangesAsync();
             }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
     BarChart3,
     BookOpen,
@@ -11,7 +11,8 @@ import {
     UserCog,
     Warehouse,
     UserCircle,
-    Award
+    Award,
+    House
 } from 'lucide-react';
 import styles from './AdminLayout.module.css';
 import { useUser } from '../../../context/UserContext.tsx';
@@ -256,6 +257,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                         >
                             <UserCircle size={18} />
                         </button>
+
+                        <Link
+                            to="/"
+                            className={styles.btnEditProfile}
+                        >
+                            <House size={18} />
+                        </Link>
 
                         <button
                             type="button"

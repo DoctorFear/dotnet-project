@@ -1,7 +1,8 @@
 import React from 'react';
 import { ArrowLeft, CheckCircle, Image as ImageIcon, Video, CreditCard, Truck, FileText } from 'lucide-react';
-import type { RefundResponseDto } from '../../../types/refund';
+import { getRefundOrderStatusMeta, type RefundResponseDto } from '../../../types/refund';
 import styles from './AdminRefund.module.css';
+
 
 interface Props {
     detail: RefundResponseDto;
@@ -10,28 +11,48 @@ interface Props {
 }
 
 export const AdminRefundDetail: React.FC<Props> = ({ detail, onBack, onApprove }) => {
+    const statusMeta = getRefundOrderStatusMeta(detail.orderStatus);
+
     return (
         <div className={styles.wrapperDetail}>
             {/* Header */}
             <div className={styles.detailHeader}>
-                <button onClick={onBack} className={styles.btnBack}>
+                <button type="button" onClick={onBack} className={styles.btnBack}>
                     <ArrowLeft size={18} className={styles.iconMr} />
                     Quay lại danh sách
                 </button>
-                <button 
-                    onClick={() => onApprove(detail.orderId)}
-                    className={styles.btnApproveLg}
-                >
-                    <CheckCircle size={18} className={styles.iconMr} />
-                    Duyệt hoàn trả
-                </button>
+
+                <div className={styles.detailHeaderActions}>
+                    <span
+                        className={`${styles.statusBadge} ${
+                            statusMeta.tone === 'pending'
+                                ? styles.statusPending
+                                : statusMeta.tone === 'returned'
+                                ? styles.statusReturned
+                                : styles.statusDefault
+                        }`}
+                    >
+                        {statusMeta.label}
+                    </span>
+
+                    {statusMeta.canApprove && (
+                        <button
+                            type="button"
+                            onClick={() => onApprove(detail.orderId)}
+                            className={styles.btnApproveLg}
+                        >
+                            <CheckCircle size={18} className={styles.iconMr} />
+                            Duyệt hoàn trả
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Info Grid */}
             <div className={styles.grid2Col}>
                 <div className={styles.sectionCol}>
                     <h3 className={styles.sectionTitle}>Thông tin yêu cầu</h3>
-                    
+
                     <div className={styles.infoCard}>
                         <FileText size={20} className={styles.infoIconBlue} />
                         <div>
@@ -50,7 +71,7 @@ export const AdminRefundDetail: React.FC<Props> = ({ detail, onBack, onApprove }
                 </div>
 
                 <div className={styles.sectionCol}>
-                    <h3 className={styles.sectionTitle}>Giao dịch & Vận chuyển</h3>
+                    <h3 className={styles.sectionTitle}>Giao dịch &amp; Vận chuyển</h3>
 
                     <div className={styles.infoCardBlue}>
                         <CreditCard size={20} className={styles.infoIconBlue} />
@@ -73,7 +94,6 @@ export const AdminRefundDetail: React.FC<Props> = ({ detail, onBack, onApprove }
             {/* Media Evidence */}
             <h3 className={styles.evidenceTitle}>Bằng chứng đính kèm</h3>
             <div className={styles.evidenceSection}>
-                {/* Images */}
                 <div>
                     <h4 className={styles.evidenceSubtitle}>
                         <ImageIcon size={16} className={styles.iconMr} /> Hình ảnh ({detail.imageUrls?.length || 0})
@@ -82,7 +102,7 @@ export const AdminRefundDetail: React.FC<Props> = ({ detail, onBack, onApprove }
                         <div className={styles.imageGrid}>
                             {detail.imageUrls.map((url, idx) => (
                                 <a key={idx} href={url} target="_blank" rel="noreferrer" className={styles.imageLink}>
-                                    <img src={url} alt={`Evidence ${idx+1}`} className={styles.imageElement} />
+                                    <img src={url} alt={`Evidence ${idx + 1}`} className={styles.imageElement} />
                                 </a>
                             ))}
                         </div>
@@ -91,7 +111,6 @@ export const AdminRefundDetail: React.FC<Props> = ({ detail, onBack, onApprove }
                     )}
                 </div>
 
-                {/* Video */}
                 <div>
                     <h4 className={styles.evidenceSubtitle}>
                         <Video size={16} className={styles.iconMr} /> Video bằng chứng

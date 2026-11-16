@@ -15,27 +15,34 @@ export const useRefundManagement = () => {
     const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
     const [selectedRefundDetail, setSelectedRefundDetail] = useState<RefundResponseDto | null>(null);
 
+    const [confirmOrderId, setConfirmOrderId] = useState<number | null>(null);
+    const [isApproving, setIsApproving] = useState(false);
+    
     const [toasts, setToasts] = useState<{ id: string; message: string; type: 'success' | 'error' }[]>([]);
-
-    const notify = (message: string, type: 'success' | 'error') => {
-        const id = Math.random().toString(36).substr(2, 9);
-        setToasts(prev => [...prev, { id, message, type }]);
-        setTimeout(() => removeToast(id), 3000);
-    };
 
     const removeToast = (id: string) => {
         setToasts(prev => prev.filter(t => t.id !== id));
     };
+
+    const notify = useCallback((message: string, type: 'success' | 'error') => {
+        const id = Math.random().toString(36).substring(2, 9);
+        setToasts(prev => [...prev, { id, message, type }]);
+        setTimeout(() => removeToast(id), 3000);
+    }, [removeToast]);
 
     const fetchRefunds = useCallback(async () => {
         setIsLoading(true);
         setError(null);
         try {
             const data = await refundService.getPagedRefunds(page, pageSize, searchKeyword);
-            setRefunds(data.items);
-            setTotalCount(data.totalCount);
+            setRefunds(data.items ?? []);
+            setTotalCount(data.totalCount ?? 0);
+
+            const maxPage = Math.max(1, Math.ceil((data.totalCount ?? 0) / pageSize));
+            if (page > maxPage) {
+                setPage(maxPage);
+            }
         } catch (err: any) {
-            // apiClient.ts throws an Error with the message directly mapped from the backend
             setError(err.message || 'Không thể tải danh sách hoàn trả.');
         } finally {
             setIsLoading(false);
@@ -66,27 +73,58 @@ export const useRefundManagement = () => {
         fetchRefunds(); 
     };
 
-    const approveRefund = async (orderId: number) => {
-        if (!window.confirm(`Bạn có chắc chắn muốn duyệt hoàn trả cho đơn hàng #${orderId}?`)) return;
-        
+    const openApproveModal = (orderId: number) => {
+        setConfirmOrderId(orderId);
+    };
+
+    const closeApproveModal = () => {
+        if (isApproving) return;
+        setConfirmOrderId(null);
+    };
+
+    const confirmApproveRefund = async () => {
+        if (confirmOrderId === null || isApproving) return;
+
+        const targetOrderId = confirmOrderId;
+        setIsApproving(true);
         try {
-            const res = await refundService.approveRefund(orderId);
-            notify(res.message || `Đã duyệt hoàn trả thành công đơn #${orderId}.`, 'success');
-            
+            const res = await refundService.approveRefund(targetOrderId);
+            notify(res.message || `Đã duyệt hoàn trả thành công đơn #${targetOrderId}.`, 'success');
+            setConfirmOrderId(null);
+
             if (selectedOrderId) {
                 backToList();
             } else {
-                fetchRefunds();
+                await fetchRefunds();
             }
         } catch (err: any) {
             notify(err.message || 'Lỗi khi duyệt hoàn trả.', 'error');
+        } finally {
+            setIsApproving(false);
         }
     };
 
     return {
-        refunds, totalCount, isLoading, error, page, pageSize, searchKeyword,
-        selectedOrderId, selectedRefundDetail, toasts,
-        setPage, setPageSize, setSearchKeyword,
-        viewRefundDetail, backToList, approveRefund, removeToast
+        refunds,
+        totalCount,
+        isLoading,
+        error,
+        page,
+        pageSize,
+        searchKeyword,
+        selectedOrderId,
+        selectedRefundDetail,
+        confirmOrderId,
+        isApproving,
+        toasts,
+        setPage,
+        setPageSize,
+        setSearchKeyword,
+        viewRefundDetail,
+        backToList,
+        openApproveModal,
+        closeApproveModal,
+        confirmApproveRefund,
+        removeToast,
     };
 };

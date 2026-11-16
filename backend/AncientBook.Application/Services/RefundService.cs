@@ -107,6 +107,7 @@ namespace AncientBook.Application.Services
             {
                 Id = refund.Id,
                 OrderId = refund.OrderId,
+                OrderStatus = order.Status.ToString(),
                 Reason = refund.Reason,
                 ShippingMethod = refund.ShippingMethod,
                 Description = refund.Description,
@@ -128,9 +129,9 @@ namespace AncientBook.Application.Services
             return new PagedResult<RefundResponseDto>
             (
                 items,
+                totalCount,
                 query.PageNumber,
-                query.PageSize,
-                totalCount
+                query.PageSize
             );
         }
     }

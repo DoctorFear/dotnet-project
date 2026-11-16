@@ -63,6 +63,7 @@ namespace AncientBook.Infrastructure.Repositories
                 {
                     Id = r.Id,
                     OrderId = r.OrderId,
+                    OrderStatus = r.Order != null ? r.Order.Status.ToString() : string.Empty,
                     Reason = r.Reason,
                     ShippingMethod = r.ShippingMethod,
                     Description = r.Description,

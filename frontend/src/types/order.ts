@@ -10,6 +10,36 @@ export enum OrderStatus {
     Returned = 9
 }
 
+export const isValidStatusTransition = (currentStatus: OrderStatus, newStatus: OrderStatus): boolean => {
+    if (currentStatus === newStatus) return false;
+
+    if (newStatus === OrderStatus.Failed || newStatus === OrderStatus.ReturnRequested) {
+        return true;
+    }
+
+    if (newStatus >= OrderStatus.Pending && newStatus <= OrderStatus.Completed) {
+        return (
+            currentStatus >= OrderStatus.Pending &&
+            currentStatus < OrderStatus.Completed &&
+            newStatus === currentStatus + 1
+        );
+    }
+
+    if (newStatus === OrderStatus.ReturnApproved || newStatus === OrderStatus.Returned) {
+        return (
+            (currentStatus === OrderStatus.ReturnRequested && newStatus === OrderStatus.ReturnApproved) ||
+            (currentStatus === OrderStatus.ReturnApproved && newStatus === OrderStatus.Returned)
+        );
+    }
+
+    return false;
+};
+
+export const getAllowedNextStatuses = (currentStatus: OrderStatus): OrderStatus[] => {
+    const allStatuses: OrderStatus[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    return allStatuses.filter((status) => isValidStatusTransition(currentStatus, status));
+};
+
 export interface OrderItem {
     id: number;
     bookId: number;

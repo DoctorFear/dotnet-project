@@ -7,6 +7,7 @@ import OrderHistoryActions, { OrderHistoryNotes } from './OrderHistoryActions';
 import styles from './OrderHistoryInteractions.module.css';
 
 export function OrderPoints({ order }: { order: Order }) {
+    if (order.rewardPoints === 0) return;
     const label = rewardLabel(order);
     return label ? <span className={`${styles.points} ${label.includes('chờ duyệt') ? styles.pendingPoints : ''}`}>{label}</span> : null;
 }
