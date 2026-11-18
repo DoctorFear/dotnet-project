@@ -228,6 +228,21 @@ export const AdminOrderManagement: React.FC = () => {
                     onRevokePoints={handleRevokePoints}
                 />
             )}
+
+            {/* Order Detail Modal */}
+            {isDetailModalOpen && selectedOrder && (
+                <OrderDetailModal
+                    order={selectedOrder}
+                    statusLabels={statusLabels}
+                    formatCurrency={formatCurrency}
+                    isUpdatingStatus={isUpdatingStatus}
+                    isManagingPoints={isManagingPoints}
+                    onClose={closeDetailModal}
+                    onChangeOrderStatus={changeOrderStatus}
+                    onApprovePoints={handleApprovePoints}
+                    onRevokePoints={handleRevokePoints}
+                />
+            )}
         </>
     );
 };
