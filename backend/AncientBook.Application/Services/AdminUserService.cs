@@ -149,6 +149,16 @@ public class AdminUserService : IAdminUserService
             return ApiResponse<bool>.Fail("Tài khoản Super Admin là bất khả xâm phạm.");
         }
 
+        // E3: Chỉ Super Admin mới có quyền đổi vai trò của Quản trị viên khác
+        if (targetUser.Role == UserRole.Admin)
+        {
+            var currentAdmin = await _userRepository.GetByIdAsync(adminId);
+            if (currentAdmin != null && !currentAdmin.IsSuperAdmin)
+            {
+                return ApiResponse<bool>.Fail("Chỉ Super Admin mới có quyền đổi vai trò của Quản trị viên khác.");
+            }
+        }
+
         // E3: Chốt chặn duy trì tối thiểu 01 Quản trị viên hoạt động
         if (targetUser.Role == UserRole.Admin && request.NewRole != UserRole.Admin)
         {

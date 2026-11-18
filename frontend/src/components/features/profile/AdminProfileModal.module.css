@@ -1,0 +1,129 @@
+/* =========================================================
+   MODAL CHỈNH SỬA THÔNG TIN CÁ NHÂN ADMIN (THEO DASHBOARD PHÂN QUYỀN)
+   ========================================================= */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 18, 51, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal {
+    background: var(--white, #ffffff);
+    border-radius: 10px;
+    width: 500px;
+    max-width: 100%;
+    box-shadow: 0 30px 60px -20px rgba(7, 18, 51, 0.35);
+    animation: pop 0.18s ease;
+}
+
+@keyframes pop {
+    from {
+        opacity: 0;
+        transform: translateY(6px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.modalHeader {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--hairline, #dce6f7);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.modalHeader h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--catalina, #0D226B);
+    margin: 0;
+}
+
+.modalHeader p {
+    font-size: 12.5px;
+    color: var(--muted, #5b6e99);
+    margin-top: 3px;
+    margin-bottom: 0;
+}
+
+.modalClose {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted, #5b6e99);
+    padding: 4px;
+    border-radius: 4px;
+    line-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease;
+}
+
+.modalClose:hover {
+    color: var(--ink, #071233);
+}
+
+.modalBody {
+    padding: 20px 22px;
+    max-height: 78vh;
+    overflow-y: auto;
+}
+
+.modalFooter {
+    padding: 16px 22px;
+    border-top: 1px solid var(--hairline, #dce6f7);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.btnSecondary {
+    padding: 9px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    background: var(--white, #ffffff);
+    color: var(--ink, #071233);
+    border: 1.5px solid var(--hairline, #dce6f7);
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.15s ease;
+}
+
+.btnSecondary:hover {
+    border-color: var(--muted, #5b6e99);
+}
+
+.btnPrimary {
+    padding: 9px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    background: var(--egyptian, #0B409C);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s ease;
+}
+
+.btnPrimary:hover {
+    background: var(--catalina, #0D226B);
+}
+
+.btnPrimary:disabled {
+    background: #93c5fd;
+    cursor: not-allowed;
+}
+
+

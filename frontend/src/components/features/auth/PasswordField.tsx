@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import styles from './PasswordField.module.css';
 
-interface PasswordFieldProps {
+export interface PasswordFieldProps {
     id: string;
     label: string;
     value: string;
@@ -11,6 +11,8 @@ interface PasswordFieldProps {
     error?: string;
     required?: boolean;
     name?: string;
+    variant?: 'underline' | 'boxed';
+    containerClassName?: string;
 }
 
 export const PasswordField: React.FC<PasswordFieldProps> = ({
@@ -21,12 +23,15 @@ export const PasswordField: React.FC<PasswordFieldProps> = ({
     placeholder = 'Nhập mật khẩu',
     error,
     required = false,
-    name
+    name,
+    variant = 'underline',
+    containerClassName
 }) => {
     const [showPassword, setShowPassword] = useState(false);
+    const isBoxed = variant === 'boxed';
 
     return (
-        <div className={styles.formGroup}>
+        <div className={`${styles.formGroup} ${containerClassName || ''}`}>
             <label className={styles.formLabel} htmlFor={id}>
                 {label} {required && <span className={styles.req}>*</span>}
             </label>
@@ -35,22 +40,26 @@ export const PasswordField: React.FC<PasswordFieldProps> = ({
                     id={id}
                     name={name}
                     type={showPassword ? 'text' : 'password'}
-                    className={`${styles.formInput} ${error ? styles.isInvalid : ''}`}
+                    className={
+                        isBoxed
+                            ? `${styles.formInputBoxed} ${error ? styles.isInvalid : ''}`
+                            : `${styles.formInput} ${error ? styles.isInvalid : ''}`
+                    }
                     placeholder={placeholder}
                     value={value}
                     onChange={onChange}
                 />
                 <button
                     type="button"
-                    className={styles.togglePasswordBtn}
+                    className={isBoxed ? styles.togglePasswordBtnBoxed : styles.togglePasswordBtn}
                     onClick={() => setShowPassword(!showPassword)}
                     tabIndex={-1}
                     aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
             </div>
-            <span className={styles.errorText}>{error}</span>
+            {error && <span className={styles.errorText}>{error}</span>}
         </div>
     );
 };
