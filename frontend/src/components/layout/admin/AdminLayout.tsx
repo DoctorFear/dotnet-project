@@ -12,14 +12,15 @@ import {
     Warehouse,
     UserCircle,
     Award,
-    FileText
+    FileText,
+    Truck
 } from 'lucide-react';
 import styles from './AdminLayout.module.css';
 import { useUser } from '../../../context/UserContext.tsx';
 import { useAuthAction } from '../../../hooks/useAuthAction';
 import { AdminProfileModal } from '../../features/profile/AdminProfileModal';
 
-type AdminPageKey = 'books' | 'settings' | 'reports' | 'orders' | 'packing' | 'membership' | 'refunds' | 'users' | 'audit-logs';
+type AdminPageKey = 'books' | 'settings' | 'reports' | 'orders' | 'packing' | 'membership' | 'refunds' | 'users' | 'audit-logs' | 'warehouse' | 'shippers';
 
 interface AdminLayoutProps {
     activePage: AdminPageKey;
@@ -35,7 +36,8 @@ const adminMenuItems = [
     { label: 'Quản lý & Phân quyền', icon: UserCog, page: 'users' as AdminPageKey, path: '/admin/users' },
     { label: 'Nhật ký hoạt động', icon: FileText, page: 'audit-logs' as AdminPageKey, path: '/admin/audit-logs' },
     { label: 'Quản lý sách', icon: BookOpen, page: 'books' as AdminPageKey, path: '/admin/books' },
-    { label: 'Quản lý kho sách', icon: Warehouse },
+    { label: 'Quản lý kho sách', icon: Warehouse, page: 'warehouse' as AdminPageKey, path: '/staff/warehouse' },
+    { label: 'Đội ngũ Shipper', icon: Truck, page: 'shippers' as AdminPageKey, path: '/staff/shippers' },
     { label: 'Quản lý đơn hàng', icon: Package, page: 'orders' as AdminPageKey, path: '/admin/orders' },
     { label: 'Quản lý trả hàng', icon: Package, page: 'refunds' as AdminPageKey, path: '/admin/refunds' },
     { label: 'Tiếp nhận & Đóng gói', icon: Package, page: 'packing' as AdminPageKey, path: '/staff/packing' },

@@ -46,5 +46,15 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
         {
             await _context.StockAlerts.AddRangeAsync(alerts);
         }
+
+        public void Update(StockAlert alert)
+        {
+            _context.StockAlerts.Update(alert);
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
     }
 }

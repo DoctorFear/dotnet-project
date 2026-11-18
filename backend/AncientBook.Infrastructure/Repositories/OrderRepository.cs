@@ -24,6 +24,7 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
         public async Task<Order?> GetByIdAsync(int id)
         {
             return await _context.Orders
+                .Include(o => o.Shipper)
                 .Include(o => o.OrderItems)
                 .FirstOrDefaultAsync(o => o.Id == id);
         }
