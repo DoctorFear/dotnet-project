@@ -1,15 +1,12 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import {
     Truck,
-    Plus,
     Search,
     RefreshCw,
     CheckCircle2,
     XCircle,
     Edit3,
     Eye,
-    ExternalLink,
     Users,
     Activity,
     MapPin,
@@ -34,7 +31,6 @@ export const StaffShipperManagement: React.FC = () => {
         selectedShipperOrders,
         setSelectedShipperOrders,
         loadShippers,
-        openCreateShipperModal,
         openEditShipperModal,
         handleSaveShipper,
         handleChangeShipperStatus,
@@ -139,18 +135,6 @@ export const StaffShipperManagement: React.FC = () => {
                                     onClick={() => void loadShippers()}
                                 >
                                     <RefreshCw size={14} /> Lọc danh sách
-                                </button>
-                            </div>
-                            <div className={styles.toolbarRight}>
-                                <Link to="/staff/orders" className={styles.externalLinkBtn}>
-                                    <ExternalLink size={14} /> Sang Quản lý Đơn hàng để Điều phối
-                                </Link>
-                                <button
-                                    type="button"
-                                    className={styles.btnPrimary}
-                                    onClick={openCreateShipperModal}
-                                >
-                                    <Plus size={16} /> Thêm Shipper mới
                                 </button>
                             </div>
                         </div>

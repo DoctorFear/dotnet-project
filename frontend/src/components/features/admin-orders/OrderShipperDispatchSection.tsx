@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Search, RefreshCw, UserCheck, Truck, XCircle, Eye, X, ExternalLink } from 'lucide-react';
+import BookPagination from '../../common/BookPagination';
 import type {
     PhysicalOrderSummaryDto,
     OrderTrackingDetailDto,
@@ -10,6 +11,20 @@ import styles from '../admin-books/AdminBookManagement.module.css';
 
 const formatCurrency = (value: number) => `${value.toLocaleString('vi-VN')} đ`;
 
+const dispatchStatusLabels: Record<string, string> = {
+    Pending: 'Chờ xác nhận',
+    Confirmed: 'Đã xác nhận',
+    Prepared: 'Đã đóng gói xong',
+    Shipping: 'Đang giao hàng',
+    ReturnApproved: 'Chờ thu hồi hoàn trả',
+};
+
+const getDispatchBadgeStyle = (status: string) => {
+    if (status === 'Shipping' || status === 'Prepared') return styles.statusSelling;
+    if (status === 'ReturnApproved') return styles.statusStopped;
+    return styles.statusUpcoming;
+};
+
 interface OrderShipperDispatchProps {
     dispatchOrders: PhysicalOrderSummaryDto[];
     shippers: ShipperDto[];
@@ -17,6 +32,10 @@ interface OrderShipperDispatchProps {
     setDispatchKeyword: (v: string) => void;
     dispatchStatusFilter: string;
     setDispatchStatusFilter: (v: string) => void;
+    dispatchPage: number;
+    setDispatchPage: (v: number) => void;
+    dispatchPageSize: number;
+    setDispatchPageSize: (v: number) => void;
     isAssignModalOpen: boolean;
     setIsAssignModalOpen: (v: boolean) => void;
     assignOrderId: number;
@@ -57,7 +76,7 @@ export const OrderShipperDispatchToolbar: React.FC<
                 className={styles.searchInput}
                 value={dispatchKeyword}
                 onChange={(e) => setDispatchKeyword(e.target.value)}
-                placeholder="Tìm mã vận đơn ORD-..., tên KH, địa chỉ..."
+                placeholder="Tìm mã vận đơn ORD-..., tên khách hàng, địa chỉ giao..."
             />
         </div>
         <div className={styles.filterGroup}>
@@ -66,16 +85,12 @@ export const OrderShipperDispatchToolbar: React.FC<
                 value={dispatchStatusFilter}
                 onChange={(e) => setDispatchStatusFilter(e.target.value)}
             >
-                <option value="">Tất cả trạng thái vận đơn</option>
-                <option value="Pending">Chờ xác nhận (Pending)</option>
-                <option value="Confirmed">Đã xác nhận (Confirmed)</option>
-                <option value="Prepared">Đã chuẩn bị xong (Prepared)</option>
-                <option value="Shipping">Đang giao hàng (Shipping)</option>
-                <option value="Completed">Hoàn thành (Completed)</option>
-                <option value="Failed">Thất bại / Đã hủy (Failed)</option>
-                <option value="ReturnRequested">Chờ duyệt hoàn trả</option>
+                <option value="">Tất cả trạng thái có thể điều phối</option>
+                <option value="Pending">Chờ xác nhận</option>
+                <option value="Confirmed">Đã xác nhận</option>
+                <option value="Prepared">Đã đóng gói xong</option>
+                <option value="Shipping">Đang giao hàng</option>
                 <option value="ReturnApproved">Đã duyệt hoàn trả - Chờ thu hồi</option>
-                <option value="Returned">Đã hoàn trả</option>
             </select>
             <button type="button" className={styles.btnSecondary} onClick={() => void loadDispatchData()}>
                 <RefreshCw size={14} /> Lọc vận đơn
@@ -85,7 +100,7 @@ export const OrderShipperDispatchToolbar: React.FC<
                 className={styles.btnPrimary}
                 onClick={() => setIsAssignModalOpen(true)}
             >
-                <UserCheck size={15} /> Phân công Vận đơn cho Shipper
+                <UserCheck size={16} /> Phân công Vận đơn cho Shipper
             </button>
         </div>
     </div>
@@ -94,6 +109,10 @@ export const OrderShipperDispatchToolbar: React.FC<
 export const OrderShipperDispatchSection: React.FC<OrderShipperDispatchProps> = ({
     dispatchOrders,
     shippers,
+    dispatchPage,
+    setDispatchPage,
+    dispatchPageSize,
+    setDispatchPageSize,
     isAssignModalOpen,
     setIsAssignModalOpen,
     assignOrderId,
@@ -106,6 +125,9 @@ export const OrderShipperDispatchSection: React.FC<OrderShipperDispatchProps> = 
     handleUnassignShipper,
     handleOpenTrackingTimeline,
 }) => {
+    const startIdx = (dispatchPage - 1) * dispatchPageSize;
+    const pagedOrders = dispatchOrders.slice(startIdx, startIdx + dispatchPageSize);
+
     return (
         <>
             <div className={styles.tableScroll}>
@@ -115,21 +137,21 @@ export const OrderShipperDispatchSection: React.FC<OrderShipperDispatchProps> = 
                             <th>Mã Vận Đơn</th>
                             <th>Khách Hàng & Ngày Đặt</th>
                             <th>Địa Chỉ Giao / Thu Hồi</th>
-                            <th>Tổng Tiền</th>
+                            <th>Tổng Tiền & Thanh Toán</th>
                             <th>Shipper Phụ Trách</th>
                             <th>Trạng Thái</th>
-                            <th>Điều Phối & Tiến Trình</th>
+                            <th>Hành Động</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {dispatchOrders.length === 0 ? (
+                        {pagedOrders.length === 0 ? (
                             <tr>
                                 <td colSpan={7} className={styles.emptyState}>
-                                    Không tìm thấy vận đơn vật lý nào khớp bộ lọc.
+                                    Hiện không có vận đơn nào ở trạng thái cần điều phối Shipper.
                                 </td>
                             </tr>
                         ) : (
-                            dispatchOrders.map((o) => (
+                            pagedOrders.map((o) => (
                                 <tr key={o.orderId}>
                                     <td>
                                         <strong>{o.orderCode}</strong>
@@ -140,8 +162,8 @@ export const OrderShipperDispatchSection: React.FC<OrderShipperDispatchProps> = 
                                             <span>{new Date(o.orderDate).toLocaleString('vi-VN')}</span>
                                         </div>
                                     </td>
-                                    <td>{o.shippingAddress || 'Đơn E-Book / Chưa có địa chỉ'}</td>
-                                    <td>
+                                    <td>{o.shippingAddress || 'Chưa cập nhật địa chỉ'}</td>
+                                    <td className={styles.priceCell}>
                                         <div className={styles.cellTitle}>
                                             <strong>{formatCurrency(o.finalAmount)}</strong>
                                             <span>{o.isPaid ? 'Đã thanh toán' : 'Thu hộ COD'}</span>
@@ -149,18 +171,24 @@ export const OrderShipperDispatchSection: React.FC<OrderShipperDispatchProps> = 
                                     </td>
                                     <td>
                                         {o.shipperName ? (
-                                            <span className={styles.chip}>
-                                                <Truck size={12} style={{ verticalAlign: 'middle' }} />{' '}
-                                                {o.shipperName}
-                                            </span>
+                                            <div className={styles.chipRow}>
+                                                <span className={styles.chip}>
+                                                    <Truck size={12} style={{ verticalAlign: 'middle' }} />{' '}
+                                                    {o.shipperName}
+                                                </span>
+                                            </div>
                                         ) : (
-                                            <span style={{ color: '#64748b', fontSize: 12 }}>
-                                                Chưa phân công
-                                            </span>
+                                            <span className={styles.badgeCount}>Chưa phân công</span>
                                         )}
                                     </td>
                                     <td>
-                                        <span className={styles.statusBadge}>{o.status}</span>
+                                        <span
+                                            className={`${styles.statusBadge} ${getDispatchBadgeStyle(
+                                                o.status
+                                            )}`}
+                                        >
+                                            {dispatchStatusLabels[o.status] ?? o.status}
+                                        </span>
                                     </td>
                                     <td>
                                         <div className={styles.actionBtns}>
@@ -172,7 +200,7 @@ export const OrderShipperDispatchSection: React.FC<OrderShipperDispatchProps> = 
                                                     setIsAssignModalOpen(true);
                                                 }}
                                             >
-                                                <UserCheck size={13} />{' '}
+                                                <UserCheck size={14} />{' '}
                                                 {o.shipperName ? 'Đổi Shipper' : 'Gán Shipper'}
                                             </button>
                                             {o.shipperId && (
@@ -181,15 +209,15 @@ export const OrderShipperDispatchSection: React.FC<OrderShipperDispatchProps> = 
                                                     className={`${styles.btnTable} ${styles.danger}`}
                                                     onClick={() => void handleUnassignShipper(o.orderId)}
                                                 >
-                                                    <XCircle size={13} /> Hủy gán
+                                                    <XCircle size={14} /> Hủy gán
                                                 </button>
                                             )}
                                             <button
                                                 type="button"
-                                                className={styles.btnTable}
+                                                className={`${styles.btnTable} ${styles.ebook}`}
                                                 onClick={() => void handleOpenTrackingTimeline(o.orderId)}
                                             >
-                                                <Eye size={13} /> Tiến trình
+                                                <Eye size={14} /> Tiến trình
                                             </button>
                                         </div>
                                     </td>
@@ -199,6 +227,19 @@ export const OrderShipperDispatchSection: React.FC<OrderShipperDispatchProps> = 
                     </tbody>
                 </table>
             </div>
+
+            <BookPagination
+                variant="admin"
+                page={dispatchPage}
+                pageSize={dispatchPageSize}
+                totalCount={dispatchOrders.length}
+                itemLabel="vận đơn cần điều phối"
+                onPageChange={setDispatchPage}
+                onPageSizeChange={(size) => {
+                    setDispatchPageSize(size);
+                    setDispatchPage(1);
+                }}
+            />
 
             {/* Modal Phân công Shipper */}
             {isAssignModalOpen && (
@@ -231,7 +272,9 @@ export const OrderShipperDispatchSection: React.FC<OrderShipperDispatchProps> = 
                                 >
                                     {dispatchOrders.map((o) => (
                                         <option key={o.orderId} value={o.orderId}>
-                                            {o.orderCode} - {o.customerName} ({o.status}) • {o.shippingAddress}
+                                            {o.orderCode} - {o.customerName} (
+                                            {dispatchStatusLabels[o.status] ?? o.status}) •{' '}
+                                            {o.shippingAddress}
                                         </option>
                                     ))}
                                 </select>
@@ -277,7 +320,8 @@ export const OrderShipperDispatchSection: React.FC<OrderShipperDispatchProps> = 
                             <div>
                                 <h3>
                                     Tiến trình Vận đơn {trackingModalData.orderCode} — Trạng thái:{' '}
-                                    {trackingModalData.status}
+                                    {dispatchStatusLabels[trackingModalData.status] ??
+                                        trackingModalData.status}
                                 </h3>
                                 <p>
                                     Địa chỉ giao: {trackingModalData.shippingAddress} | Shipper:{' '}

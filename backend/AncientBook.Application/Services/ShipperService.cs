@@ -121,6 +121,7 @@ namespace AncientBook.Application.Services
             var userDict = users.ToDictionary(u => u.Id, u => u.FullName);
 
             return orders
+                .Where(IsOrderActiveWithShipper)
                 .OrderByDescending(o => o.OrderDate)
                 .Select(o => new PhysicalOrderSummaryDto
                 {

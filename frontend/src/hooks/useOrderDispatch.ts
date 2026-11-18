@@ -6,11 +6,26 @@ import type {
     ShipperDto,
 } from '../types/shipper';
 
+// Các trạng thái đơn hàng KHÔNG THỂ gán Shipper (đã kết thúc hoặc chưa duyệt hoàn trả)
+const NON_ASSIGNABLE_STATUSES = new Set([
+    'completed',
+    'failed',
+    'returned',
+    'returnrequested',
+]);
+
+export const isAssignableOrderStatus = (status: string): boolean => {
+    const normalized = (status || '').trim().toLowerCase();
+    return !NON_ASSIGNABLE_STATUSES.has(normalized);
+};
+
 export const useOrderDispatch = (isActive: boolean) => {
     const [dispatchOrders, setDispatchOrders] = useState<PhysicalOrderSummaryDto[]>([]);
     const [shippers, setShippers] = useState<ShipperDto[]>([]);
     const [dispatchKeyword, setDispatchKeyword] = useState('');
     const [dispatchStatusFilter, setDispatchStatusFilter] = useState('');
+    const [dispatchPage, setDispatchPage] = useState(1);
+    const [dispatchPageSize, setDispatchPageSize] = useState(10);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [assignOrderId, setAssignOrderId] = useState<number>(0);
     const [assignShipperId, setAssignShipperId] = useState<number>(0);
@@ -30,14 +45,18 @@ export const useOrderDispatch = (isActive: boolean) => {
                 shipperService.getPhysicalOrders(dispatchStatusFilter, dispatchKeyword),
                 shipperService.getShippers(),
             ]);
-            setDispatchOrders(orderList);
+            // Chỉ giữ lại các vận đơn ở trạng thái có thể điều phối / gán Shipper
+            const assignableOrders = orderList.filter((o) => isAssignableOrderStatus(o.status));
+            setDispatchOrders(assignableOrders);
             setShippers(shipperList);
+            setDispatchPage(1);
+
             if (shipperList.length > 0 && assignShipperId === 0) {
                 const activeShipper = shipperList.find((s) => s.status === 'Active') ?? shipperList[0];
                 setAssignShipperId(activeShipper.id);
             }
-            if (orderList.length > 0 && assignOrderId === 0) {
-                setAssignOrderId(orderList[0].orderId);
+            if (assignableOrders.length > 0 && assignOrderId === 0) {
+                setAssignOrderId(assignableOrders[0].orderId);
             }
         } catch (err) {
             showDispatchNotice(
@@ -94,6 +113,10 @@ export const useOrderDispatch = (isActive: boolean) => {
         setDispatchKeyword,
         dispatchStatusFilter,
         setDispatchStatusFilter,
+        dispatchPage,
+        setDispatchPage,
+        dispatchPageSize,
+        setDispatchPageSize,
         isAssignModalOpen,
         setIsAssignModalOpen,
         assignOrderId,
