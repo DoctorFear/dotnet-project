@@ -1,24 +1,16 @@
-// src/hooks/useCheckout.ts
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { createOrder, getMomoPaymentUrl, getSePayPaymentUrl } from '../services/checkoutService';
+import { userService } from '../services/userService';
 import type { Address } from '../types/address';
 import { useNavigate } from 'react-router-dom';
 import { useCheckoutPoints } from './useCheckoutPoints';
 
 export const useCheckout = (cartItems: any[]) => {
     const navigate = useNavigate();
-    const [addresses] = useState<Address[]>([
-        {
-            id: 1,
-            name: 'Thanh Sang',
-            phone: '0912345678',
-            email: 'thansang@dev.com',
-            address: '128 Nguyễn Thị Minh Khai, Quận 1, TP. Hồ Chí Minh',
-            isDefault: true,
-        }
-    ]);
-    
-    const [selectedAddrId, setSelectedAddrId] = useState<number>(1);
+    const [addresses, setAddresses] = useState<Address[]>([]);
+    const [selectedAddrId, setSelectedAddrId] = useState<number>(0);
+    const [userId, setUserId] = useState<number>(0);
+    const [isLoadingAddresses, setIsLoadingAddresses] = useState<boolean>(true);
     const [paymentMethod, setPaymentMethod] = useState<string>('cod');
     const [pointsInput, setPointsInput] = useState('');
     const pointsUsed = Number(pointsInput) || 0;
@@ -28,6 +20,50 @@ export const useCheckout = (cartItems: any[]) => {
     const [error, setError] = useState<string | null>(null);
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState<boolean>(false);
     const [orderCode, setOrderCode] = useState<string>('');
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const fetchUserAddresses = async () => {
+            setIsLoadingAddresses(true);
+            try {
+                const res = await userService.getProfile();
+                if (!isMounted) return;
+
+                if (res.success && res.data) {
+                    const profile = res.data;
+                    setUserId(profile.id);
+
+                    const mappedAddresses: Address[] = (profile.addresses || []).map((addr, index) => ({
+                        id: addr.id ?? index + 1,
+                        name: profile.fullName || profile.username,
+                        phone: profile.phoneNumber,
+                        email: profile.email,
+                        address: [addr.streetAddress, addr.ward, addr.province]
+                            .filter(Boolean)
+                            .join(', '),
+                        isDefault: addr.isDefault,
+                    }));
+
+                    setAddresses(mappedAddresses);
+
+                    if (mappedAddresses.length > 0) {
+                        const defaultAddr = mappedAddresses.find((a) => a.isDefault) || mappedAddresses[0];
+                        setSelectedAddrId(defaultAddr.id);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load user addresses:', err);
+            } finally {
+                if (isMounted) setIsLoadingAddresses(false);
+            }
+        };
+
+        fetchUserAddresses();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     const subTotal = useMemo(() => {
         return cartItems.reduce((sum: number, item: any) => sum + (item.unitPrice * item.quantity), 0);
@@ -51,11 +87,15 @@ export const useCheckout = (cartItems: any[]) => {
 
     const submitCheckout = async (userId: number) => {
         if (!cartItems || cartItems.length === 0) return;
+
+        const selectedAddress = addresses.find((a) => a.id === selectedAddrId);
+        if (!selectedAddress) {
+            alert('Vui lòng chọn hoặc cập nhật địa chỉ nhận hàng trước khi đặt đơn!');
+            return;
+        }
         
         setIsProcessing(true);
         setError(null);
-        
-        const selectedAddress = addresses.find(a => a.id === selectedAddrId);
         
         const checkoutRequest = {
             userId,
@@ -120,6 +160,7 @@ export const useCheckout = (cartItems: any[]) => {
         addresses,
         selectedAddrId,
         setSelectedAddrId,
+        isLoadingAddresses,
         paymentMethod,
         setPaymentMethod,
         pointsUsed,
@@ -136,6 +177,6 @@ export const useCheckout = (cartItems: any[]) => {
         isSuccessModalOpen,
         setIsSuccessModalOpen,
         orderCode,
-        submitCheckout
+        submitCheckout,
     };
 };

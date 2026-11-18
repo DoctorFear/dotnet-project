@@ -21,7 +21,7 @@ import { useToastNotifications } from '../../../hooks/useToastNotifications';
 import { ToastNotification } from '../../common/ToastNotification';
 import { userService } from '../../../services/userService';
 
-type AdminPageKey = 'books' | 'settings' | 'reports' | 'orders' | 'packing' | 'membership' | 'refunds';
+type AdminPageKey = 'books' | 'settings' | 'reports' | 'orders' | 'packing' | 'membership' | 'refunds' | 'users';
 
 interface AdminLayoutProps {
     activePage: AdminPageKey;
@@ -33,7 +33,7 @@ interface AdminLayoutProps {
 
 const adminMenuItems = [
     { label: 'Thống kê & Báo cáo', icon: BarChart3, page: 'reports' as AdminPageKey, path: '/admin/reports' },
-    { label: 'Quản lý & Phân quyền', icon: UserCog },
+    { label: 'Quản lý & Phân quyền', icon: UserCog, page: 'users' as AdminPageKey, path: '/admin/users' },
     { label: 'Quản lý sách', icon: BookOpen, page: 'books' as AdminPageKey, path: '/admin/books' },
     { label: 'Quản lý kho sách', icon: Warehouse },
     { label: 'Quản lý đơn hàng', icon: Package, page: 'orders' as AdminPageKey, path: '/admin/orders' },
@@ -214,7 +214,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 </div>
 
                 <ul className={styles.sidebarMenu}>
-                    {adminMenuItems.filter(item => user?.role === 'Admin' ? ['reports', 'settings', 'membership'].includes(item.page ?? '') || item.icon === UserCog : !['reports', 'settings'].includes(item.page ?? '') && item.icon !== UserCog).map((item) => {
+                    {adminMenuItems.filter(item => user?.role === 'Admin' ? ['reports', 'settings', 'membership', 'users'].includes(item.page ?? '') || item.icon === UserCog : !['reports', 'settings'].includes(item.page ?? '') && item.icon !== UserCog).map((item) => {
                         const Icon = item.icon;
                         const isActive = item.page === activePage;
                         return (

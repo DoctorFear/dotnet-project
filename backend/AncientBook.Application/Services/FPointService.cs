@@ -220,4 +220,193 @@ public partial class FPointService : IFPointService
         _cache.Set("MembershipTierVersion", Guid.NewGuid().ToString());
         return true;
     }
+
+    public async Task<int> AdminApproveOrderPointsAsync(int orderId, int adminUserId)
+    {
+        await using var tx = await _db.BeginWorkflowTransactionAsync();
+        await WorkflowSupport.LockOrderAsync(_db, orderId);
+
+        var order = await _db.Set<Order>().FirstOrDefaultAsync(o => o.Id == orderId)
+            ?? throw new KeyNotFoundException("Không tìm thấy đơn hàng.");
+
+        if (order.Status != OrderStatus.Completed || !order.IsPaid)
+            throw new InvalidOperationException("Chỉ có thể duyệt cộng điểm cho đơn hàng đã hoàn thành và thanh toán.");
+
+        await WorkflowSupport.LockUserAsync(_db, order.UserId);
+        var user = await _db.Set<User>().FirstAsync(u => u.Id == order.UserId);
+        var key = $"Order:{orderId}:Earn";
+        var earnRecord = await _db.Set<FPoints>().FirstOrDefaultAsync(p => p.SourceKey == key);
+
+        if (earnRecord == null)
+        {
+            var tiers = await GetMembershipTiersAsync();
+            var tier = tiers.FirstOrDefault(t => t.Id == user.MembershipTierId) ?? tiers.FirstOrDefault();
+            var points = checked((int)decimal.Floor(order.FinalAmount * (tier?.PointRate ?? 5) / 100m / 100m));
+            if (points <= 0)
+                throw new InvalidOperationException("Đơn hàng này không phát sinh điểm thưởng.");
+
+            var before = user.FPoints;
+            user.FPoints = checked(user.FPoints + points);
+            var now = TimeZoneHelper.GetVietnamTime();
+
+            _db.Set<FPoints>().Add(new FPoints
+            {
+                UserId = user.Id,
+                OrderId = orderId,
+                PointUsed = -points,
+                SourceKey = key,
+                Description = $"Admin duyệt cộng điểm đơn #{orderId}",
+                CreatedBy = $"Admin:{adminUserId}",
+                Status = PointStatus.Available,
+                AvailableAt = now
+            });
+
+            WorkflowSupport.Audit(_db, "AdminApprovedPoints", "User", user.Id,
+                new { FPoints = before }, new { user.FPoints }, adminUserId,
+                details: $"Admin duyệt cộng {points} điểm cho đơn #{orderId}.");
+
+            await _db.SaveChangesAsync();
+            await AutoUpgradeTierAsync(user.Id, orderId, 0);
+            await tx.CommitAsync();
+            return points;
+        }
+
+        if (earnRecord.Status == PointStatus.Available)
+            throw new InvalidOperationException("Điểm của đơn hàng này đã được cộng khả dụng trước đó.");
+
+        if (earnRecord.Status != PointStatus.Pending)
+            throw new InvalidOperationException($"Không thể duyệt điểm ở trạng thái {earnRecord.Status}.");
+
+        var pendingPoints = checked(-earnRecord.PointUsed);
+        var prevPoints = user.FPoints;
+
+        earnRecord.Status = PointStatus.Available;
+        earnRecord.AvailableAt = TimeZoneHelper.GetVietnamTime();
+        earnRecord.Description = $"Admin duyệt cộng điểm đơn #{orderId}";
+        user.FPoints = checked(user.FPoints + pendingPoints);
+
+        WorkflowSupport.Audit(_db, "AdminApprovedPoints", "User", user.Id,
+            new { FPoints = prevPoints }, new { user.FPoints }, adminUserId,
+            details: $"Admin duyệt sớm {pendingPoints} điểm chờ cho đơn #{orderId}.");
+
+        await _db.SaveChangesAsync();
+        await AutoUpgradeTierAsync(user.Id, orderId, 0);
+        await tx.CommitAsync();
+        return pendingPoints;
+    }
+
+    public async Task<int> AdminRevokeOrderPointsAsync(int orderId, int adminUserId, string? reason = null)
+    {
+        await using var tx = await _db.BeginWorkflowTransactionAsync();
+        await WorkflowSupport.LockOrderAsync(_db, orderId);
+
+        var order = await _db.Set<Order>().FirstOrDefaultAsync(o => o.Id == orderId)
+            ?? throw new KeyNotFoundException("Không tìm thấy đơn hàng.");
+
+        await WorkflowSupport.LockUserAsync(_db, order.UserId);
+        var user = await _db.Set<User>().FirstAsync(u => u.Id == order.UserId);
+
+        var key = $"Order:{orderId}:Earn";
+        var earnRecord = await _db.Set<FPoints>().FirstOrDefaultAsync(p => p.SourceKey == key)
+            ?? throw new InvalidOperationException("Đơn hàng này chưa có lịch sử tích điểm để thu hồi.");
+
+        var revokeKey = $"Order:{orderId}:Revoke";
+        if (await _db.Set<FPoints>().AnyAsync(p => p.SourceKey == revokeKey))
+            throw new InvalidOperationException("Điểm thưởng của đơn hàng này đã bị thu hồi trước đó.");
+
+        int pointsToRevoke = checked(-earnRecord.PointUsed);
+        if (pointsToRevoke <= 0)
+            throw new InvalidOperationException("Số điểm tích lũy không hợp lệ.");
+
+        var prevPoints = user.FPoints;
+        var note = string.IsNullOrWhiteSpace(reason) ? "Admin thu hồi điểm cộng sai" : reason.Trim();
+
+        if (earnRecord.Status == PointStatus.Pending)
+        {
+            earnRecord.Status = PointStatus.Cancelled;
+            earnRecord.Description = $"Đã hủy điểm chờ đơn #{orderId} ({note})";
+        }
+        else if (earnRecord.Status == PointStatus.Available)
+        {
+            var actualDeducted = Math.Min(user.FPoints, pointsToRevoke);
+            user.FPoints -= actualDeducted;
+            earnRecord.Status = PointStatus.Cancelled;
+
+            _db.Set<FPoints>().Add(new FPoints
+            {
+                UserId = user.Id,
+                OrderId = orderId,
+                PointUsed = actualDeducted, // Positive = deduction
+                SourceKey = revokeKey,
+                Description = $"Thu hồi {actualDeducted} điểm đơn #{orderId}: {note}",
+                CreatedBy = $"Admin:{adminUserId}",
+                Status = PointStatus.Available,
+                AvailableAt = TimeZoneHelper.GetVietnamTime()
+            });
+        }
+        else
+        {
+            throw new InvalidOperationException($"Không thể thu hồi điểm đang ở trạng thái {earnRecord.Status}.");
+        }
+
+        WorkflowSupport.Audit(_db, "AdminRevokedPoints", "User", user.Id,
+            new { FPoints = prevPoints }, new { user.FPoints }, adminUserId,
+            details: $"Admin thu hồi {pointsToRevoke} điểm từ đơn #{orderId}. Lý do: {note}");
+
+        await _db.SaveChangesAsync();
+        await tx.CommitAsync();
+        return pointsToRevoke;
+    }
+
+    public async Task<int> ReleaseDuePendingPointsAsync()
+    {
+        var now = TimeZoneHelper.GetVietnamTime();
+        var dueOrderIds = await _db.Set<FPoints>()
+            .AsNoTracking()
+            .Where(p => p.Status == PointStatus.Pending && p.AvailableAt <= now && p.OrderId != null)
+            .Select(p => p.OrderId!.Value)
+            .Distinct()
+            .Take(100)
+            .ToListAsync();
+
+        int releasedCount = 0;
+        foreach (var orderId in dueOrderIds)
+        {
+            await using var tx = await _db.BeginWorkflowTransactionAsync();
+            await WorkflowSupport.LockOrderAsync(_db, orderId);
+
+            var order = await _db.Set<Order>().FirstOrDefaultAsync(o => o.Id == orderId);
+            if (order == null || order.Status != OrderStatus.Completed || !order.IsPaid)
+            {
+                await tx.CommitAsync();
+                continue;
+            }
+
+            await WorkflowSupport.LockUserAsync(_db, order.UserId);
+            var record = await _db.Set<FPoints>()
+                .FirstOrDefaultAsync(p => p.OrderId == orderId && p.SourceKey == $"Order:{orderId}:Earn" && p.Status == PointStatus.Pending);
+
+            if (record != null && record.AvailableAt <= now)
+            {
+                var user = await _db.Set<User>().FirstAsync(u => u.Id == order.UserId);
+                var pts = checked(-record.PointUsed);
+                var before = user.FPoints;
+
+                record.Status = PointStatus.Available;
+                user.FPoints = checked(user.FPoints + pts);
+
+                WorkflowSupport.Audit(_db, "AutoPointsReleased", "User", user.Id,
+                    new { FPoints = before }, new { user.FPoints },
+                    details: $"Tự động cộng {pts} điểm sau 3 ngày hoàn thành đơn #{orderId}.");
+
+                await _db.SaveChangesAsync();
+                await AutoUpgradeTierAsync(user.Id, orderId, 0);
+                releasedCount++;
+            }
+
+            await tx.CommitAsync();
+        }
+
+        return releasedCount;
+    }
 }

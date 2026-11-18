@@ -21,3 +21,16 @@ export const approveReturnOrder = async (id: number): Promise<{ message: string 
         method: 'PUT'
     });
 };
+
+export const approveOrderPoints = async (orderId: number): Promise<{ message: string; points: number }> => {
+    return requestApi<{ message: string; points: number }>(`/FPoint/admin/orders/${orderId}/approve-points`, {
+        method: 'POST',
+    });
+};
+
+export const revokeOrderPoints = async (orderId: number, reason?: string): Promise<{ message: string; points: number }> => {
+    return requestApi<{ message: string; points: number }>(`/FPoint/admin/orders/${orderId}/revoke-points`, {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+    });
+};
