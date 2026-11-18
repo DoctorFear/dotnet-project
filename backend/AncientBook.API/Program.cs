@@ -1,3 +1,4 @@
+using AncientBook.API.BackgroundServices;
 using AncientBook.API.Hubs;
 using AncientBook.API.Middlewares;
 using AncientBook.Application.Common.Interfaces;
@@ -137,6 +138,7 @@ builder.Services.AddScoped<IBookImageService, BookImageService>();
 builder.Services.AddScoped<ISystemSettingService, SystemSettingService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IFileStorageServices, LocalFileStorageService>();
+builder.Services.AddHostedService<OrderPointsReleaseWorker>();
 
 builder.Services.AddHttpClient();
 builder.Services.AddControllers();

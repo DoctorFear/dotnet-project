@@ -55,6 +55,26 @@
 }
 .adminBar .progress::-webkit-progress-value { background: var(--egyptian, #0B409C); }
 .adminBar .progress::-moz-progress-bar { background: var(--egyptian, #0B409C); }
+
+.options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    padding: 6px;
+    min-width: 100%;
+    z-index: 50;
+    background: var(--white, #fff);
+    border: 1px solid var(--hairline, #dce6f7);
+    border-radius: 6px;
+    box-shadow: 0 6px 16px rgba(13, 34, 107, 0.12);
+}
+
+.adminBar .options {
+    top: auto;
+    bottom: 100%;
+    box-shadow: 0 -6px 16px rgba(13, 34, 107, 0.12);
+}
+
 @media (max-width: 640px) {
     .bar { border-radius: 8px; justify-content: center; padding: 12px; }
     .summary { flex: 1; }

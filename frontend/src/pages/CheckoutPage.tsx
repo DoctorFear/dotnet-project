@@ -24,6 +24,7 @@ export const CheckoutPage: React.FC = () => {
         addresses,
         selectedAddrId,
         setSelectedAddrId,
+        isLoadingAddresses,
         paymentMethod,
         setPaymentMethod,
         pointsUsed,
@@ -112,18 +113,65 @@ export const CheckoutPage: React.FC = () => {
                         </div>
 
                         <div className={styles.addressOptionsList}>
-                            {addresses.map((addr) => (
-                                <label key={addr.id} className={`${styles.addressCardItem} ${selectedAddrId === addr.id ? styles.active : ''}`}>
-                                    <input type="radio" checked={selectedAddrId === addr.id} onChange={() => setSelectedAddrId(addr.id)} />
-                                    <div className={styles.addressCardContent}>
-                                        <div className={styles.addressCardHeader}>
-                                            <strong>{addr.name}</strong>
+                            {isLoadingAddresses ? (
+                                <p style={{ fontSize: '14px', color: '#5b6e99' }}>Đang tải địa chỉ nhận hàng...</p>
+                            ) : addresses.length === 0 ? (
+                                <div style={{ padding: '12px', border: '1px dashed #cbd5e1', borderRadius: '8px' }}>
+                                    <p style={{ fontSize: '14px', color: '#475569', marginBottom: '8px' }}>
+                                        Bạn chưa có địa chỉ nhận hàng nào trong hồ sơ.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate('/profile')}
+                                        style={{
+                                            padding: '6px 12px',
+                                            backgroundColor: '#0B409C',
+                                            color: '#fff',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            fontSize: '13px',
+                                        }}
+                                    >
+                                        Cập nhật địa chỉ ngay
+                                    </button>
+                                </div>
+                            ) : (
+                                addresses.map((addr) => (
+                                    <label
+                                        key={addr.id}
+                                        className={`${styles.addressCardItem} ${selectedAddrId === addr.id ? styles.active : ''}`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="shippingAddress"
+                                            checked={selectedAddrId === addr.id}
+                                            onChange={() => setSelectedAddrId(addr.id)}
+                                        />
+                                        <div className={styles.addressCardContent}>
+                                            <div className={styles.addressCardHeader} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <strong>{addr.name}</strong>
+                                                {addr.isDefault && (
+                                                    <span
+                                                        style={{
+                                                            fontSize: '11px',
+                                                            padding: '2px 6px',
+                                                            backgroundColor: '#e0f2fe',
+                                                            color: '#0369a1',
+                                                            borderRadius: '4px',
+                                                            fontWeight: 600,
+                                                        }}
+                                                    >
+                                                        Mặc định
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className={styles.addressPhone}>{addr.phone} • {addr.email}</p>
+                                            <p className={styles.addressText}>{addr.address}</p>
                                         </div>
-                                        <p className={styles.addressPhone}>{addr.phone}</p>
-                                        <p className={styles.addressText}>{addr.address}</p>
-                                    </div>
-                                </label>
-                            ))}
+                                    </label>
+                                ))
+                            )}
                         </div>
 
                         <div className={styles.checkoutCardTitle} style={{ marginTop: '24px' }}>
@@ -215,7 +263,7 @@ export const CheckoutPage: React.FC = () => {
                             type="button" 
                             className={styles.btnCompleteOrder} 
                             onClick={() => submitCheckout(1)}
-                            disabled={isProcessing}
+                            disabled={isProcessing || isLoadingAddresses || addresses.length === 0}
                         >
                             {isProcessing ? 'Đang xử lý...' : 'Đặt mua đơn hàng ngay'}
                         </button>

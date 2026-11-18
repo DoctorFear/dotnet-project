@@ -28,6 +28,7 @@ import LoyaltyPage from './pages/LoyaltyPage';
 import MemberReviewsPage from './pages/MemberReviewsPage';
 import MembershipConfigPage from './pages/MembershipConfigPage';
 import AdminRefundManagementPage from './pages/AdminRefundManagmentPage';
+import EbookReaderPage from './pages/EBookReadingPage';
 import AdminUserManagementPage from './pages/AdminUserManagementPage';
 const WorkflowPreviewPage = import.meta.env.DEV ? React.lazy(() => import('./dev/WorkflowPreviewPage')) : null;
 
@@ -65,6 +66,7 @@ export const App: React.FC = () => {
                         <Route path="/f-point" element={<LoyaltyPage />} />
                         <Route path="/membership" element={<LoyaltyPage membership />} />
                         <Route path="/my-reviews" element={<MemberReviewsPage />} />
+                        <Route path="/reader/:bookId" element={<EbookReaderPage />} />
                         
                     </Route>
 

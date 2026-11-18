@@ -130,7 +130,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                             <UserCircle size={18} />
                         </button>
 
-
                         <button
                             type="button"
                             className={styles.btnLogout}

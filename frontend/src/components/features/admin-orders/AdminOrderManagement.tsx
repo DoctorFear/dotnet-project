@@ -42,10 +42,15 @@ export const AdminOrderManagement: React.FC = () => {
         closeDetailModal,
         changeOrderStatus,
         removeToast,
+        isManagingPoints,
+        handleApprovePoints,
+        handleRevokePoints
     } = useOrderManagement();
 
     const [draftStatus, setDraftStatus] = useState<OrderStatus | null>(null);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [revokeReason, setRevokeReason] = useState('');
+    const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false);
 
     useEffect(() => {
         if (selectedOrder) {
@@ -273,6 +278,141 @@ export const AdminOrderManagement: React.FC = () => {
                                         </button>
                                     </div>
                                 </div>
+
+                                {selectedOrder.status === OrderStatus.Completed && (
+                                <div
+                                    className={styles.formGroup}
+                                    style={{
+                                        gridColumn: '1 / -1',
+                                        padding: '12px',
+                                        backgroundColor: '#f8fafc',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '8px',
+                                    }}
+                                >
+                                    <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span>Quản lý điểm thưởng F-Point</span>
+                                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#0b409c' }}>
+                                            {selectedOrder.rewardPoints ?? 0} điểm{' '}
+                                            {selectedOrder.pointStatus === 'Pending' && '(Chờ duyệt - Tự động cộng sau 5 ngày)'}
+                                            {selectedOrder.pointStatus === 'Available' && '(Đã cộng vào ví khách)'}
+                                            {selectedOrder.pointStatus === 'Cancelled' && '(Đã thu hồi / Hủy)'}
+                                        </span>
+                                    </label>
+
+                                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+                                        {/* Approve button: shown when points are Pending or not yet granted */}
+                                        {(selectedOrder.pointStatus === 'Pending' || !selectedOrder.pointStatus) &&
+                                            (selectedOrder.rewardPoints ?? 0) > 0 && (
+                                                <button
+                                                    type="button"
+                                                    disabled={isManagingPoints}
+                                                    onClick={() => handleApprovePoints(selectedOrder.id)}
+                                                    style={{
+                                                        padding: '6px 14px',
+                                                        backgroundColor: '#16a34a',
+                                                        color: '#fff',
+                                                        border: 'none',
+                                                        borderRadius: '6px',
+                                                        fontWeight: 600,
+                                                        fontSize: '13px',
+                                                        cursor: isManagingPoints ? 'not-allowed' : 'pointer',
+                                                    }}
+                                                >
+                                                    {isManagingPoints ? 'Đang xử lý...' : 'Duyệt cộng điểm ngay'}
+                                                </button>
+                                            )}
+
+                                        {/* Remove/Revoke button: shown when points are Pending or already Auto-Awarded (Available) */}
+                                        {(selectedOrder.pointStatus === 'Pending' || selectedOrder.pointStatus === 'Available') && (
+                                            <button
+                                                type="button"
+                                                disabled={isManagingPoints}
+                                                onClick={() => {
+                                                    setRevokeReason('');
+                                                    setIsRevokeModalOpen(true);
+                                                }}
+                                                style={{
+                                                    padding: '6px 14px',
+                                                    backgroundColor: '#dc2626',
+                                                    color: '#fff',
+                                                    border: 'none',
+                                                    borderRadius: '6px',
+                                                    fontWeight: 600,
+                                                    fontSize: '13px',
+                                                    cursor: isManagingPoints ? 'not-allowed' : 'pointer',
+                                                }}
+                                            >
+                                                Thu hồi / Xóa điểm
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Revoke Points Confirmation Modal */}
+                            {isRevokeModalOpen && selectedOrder && (
+                                <div className={styles.overlay} style={{ zIndex: 1150 }}>
+                                    <div className={styles.modal} style={{ maxWidth: '420px' }}>
+                                        <div className={styles.modalHeader}>
+                                            <h3 style={{ margin: 0 }}>Thu hồi điểm thưởng đơn #{selectedOrder.id}</h3>
+                                            <button
+                                                type="button"
+                                                className={styles.modalClose}
+                                                disabled={isManagingPoints}
+                                                onClick={() => setIsRevokeModalOpen(false)}
+                                            >
+                                                <X size={18} />
+                                            </button>
+                                        </div>
+                                        <div className={styles.modalBody}>
+                                            <p style={{ marginTop: 0, fontSize: '13.5px', lineHeight: 1.5 }}>
+                                                Hành động này sẽ hủy điểm chờ hoặc trừ trực tiếp{' '}
+                                                <strong>{selectedOrder.rewardPoints ?? 0} F-Point</strong> đã tự động cộng khỏi tài khoản khách hàng.
+                                            </p>
+                                            <div className={styles.formGroup}>
+                                                <label>Lý do thu hồi (tùy chọn)</label>
+                                                <input
+                                                    type="text"
+                                                    className={styles.formControl}
+                                                    placeholder="VD: Hệ thống cộng sai điểm, đơn hàng có khiếu nại..."
+                                                    value={revokeReason}
+                                                    onChange={(e) => setRevokeReason(e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className={styles.modalFooter}>
+                                            <button
+                                                type="button"
+                                                className={styles.btnSecondary}
+                                                disabled={isManagingPoints}
+                                                onClick={() => setIsRevokeModalOpen(false)}
+                                            >
+                                                Hủy
+                                            </button>
+                                            <button
+                                                type="button"
+                                                disabled={isManagingPoints}
+                                                onClick={async () => {
+                                                    const ok = await handleRevokePoints(selectedOrder.id, revokeReason);
+                                                    if (ok) setIsRevokeModalOpen(false);
+                                                }}
+                                                style={{
+                                                    padding: '8px 16px',
+                                                    backgroundColor: '#dc2626',
+                                                    color: '#fff',
+                                                    border: 'none',
+                                                    borderRadius: '6px',
+                                                    fontWeight: 600,
+                                                    cursor: isManagingPoints ? 'not-allowed' : 'pointer',
+                                                }}
+                                            >
+                                                {isManagingPoints ? 'Đang thu hồi...' : 'Xác nhận thu hồi'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                             </div>
 
                             <h4 style={{ marginTop: '20px', marginBottom: '10px', fontSize: '14px' }}>

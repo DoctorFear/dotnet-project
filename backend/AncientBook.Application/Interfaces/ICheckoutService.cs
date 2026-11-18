@@ -15,5 +15,6 @@ namespace AncientBook.Application.Interfaces
         Task<string> CreateVnPayUrlAsync(int orderId, string clientIpAddress);
         Task<string> CreateSePayUrlAsync(int orderId);
         Task HandleSePayIpnAsync(JsonElement ipnData);
+        Task<int> ReconcileUnpaidOnlineOrdersAsync(CancellationToken cancellationToken = default);
     }
 }
