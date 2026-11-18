@@ -155,7 +155,7 @@ export const MyLibraryPage: React.FC = () => {
                                         <button
                                             type="button"
                                             style={{ width: '100%', padding: '9px', background: '#0B409C', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', marginTop: 'auto' }}
-                                            onClick={() => alert(`Đang mở giao diện E-Book Reader đọc sách: ${book.title}`)}
+                                            onClick={() => navigate(`/reader/${book.id}`, { state: { book } })}
                                         >
                                             Đọc Sách Online
                                         </button>

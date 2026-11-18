@@ -79,6 +79,8 @@ export interface Order {
     reviews?: OrderHistoryReview[];
     rewardPoints?: number;
     presentationScenario?: number | null;
+    pointStatus?: 'Pending' | 'Available' | 'Cancelled' | null;
+    pointAvailableAt?: string | null;
 }
 
 export interface OrderReturnInfo {

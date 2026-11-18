@@ -545,5 +545,122 @@ namespace AncientBook.Application.Services
                 }
             }
         }
+
+        // Add to CheckoutService.cs:
+        public async Task<int> ReconcileUnpaidOnlineOrdersAsync(CancellationToken cancellationToken = default)
+        {
+            // Check pending unpaid online orders created within the last 24 hours
+            var cutoff = DateTime.UtcNow.AddHours(-24);
+            var unpaidOrders = await _workflow.Set<Order>()
+                .AsNoTracking()
+                .Where(o => !o.IsPaid
+                    && o.Status == OrderStatus.Pending
+                    && o.OrderDate >= cutoff
+                    && (o.PaymentMethod == "MoMo" || o.PaymentMethod == "SePay"))
+                .OrderBy(o => o.OrderDate)
+                .Take(50)
+                .ToListAsync(cancellationToken);
+
+            int reconciledCount = 0;
+
+            foreach (var order in unpaidOrders)
+            {
+                if (cancellationToken.IsCancellationRequested) break;
+
+                try
+                {
+                    if (order.PaymentMethod == "MoMo" && !string.IsNullOrEmpty(order.MoMoRequestId))
+                    {
+                        var status = await QueryMoMoPaymentStatusAsync(order.Id);
+                        if (status.IsPaid) reconciledCount++;
+                    }
+                    else if (order.PaymentMethod == "SePay")
+                    {
+                        var paid = await VerifySePayTransactionAsync(order, cancellationToken);
+                        if (paid) reconciledCount++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Không thể đối soát thanh toán tự động cho đơn hàng #{OrderId} ({Method}).", order.Id, order.PaymentMethod);
+                }
+            }
+
+            return reconciledCount;
+        }
+
+        private async Task<bool> VerifySePayTransactionAsync(Order order, CancellationToken cancellationToken)
+        {
+            var apiToken = Environment.GetEnvironmentVariable("SEPAY_API_KEY");
+            var accountNumber = Environment.GetEnvironmentVariable("SEPAY_ACCOUNT_NUMBER");
+            if (string.IsNullOrEmpty(apiToken)) return false;
+
+            var url = string.IsNullOrEmpty(accountNumber)
+                ? "https://userapi-sandbox.sepay.vn/v2/transactions?limit=50"
+                : $"https://userapi-sandbox.sepay.vn/v2/transactions?account_number={accountNumber}&limit=50";
+
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiToken);
+
+            var response = await _httpClient.SendAsync(req, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("SePay API trả về mã lỗi {StatusCode} khi kiểm tra đơn #{OrderId}.", response.StatusCode, order.Id);
+                return false;
+            }
+
+            var json = await response.Content.ReadAsStringAsync(cancellationToken);
+            using var doc = JsonDocument.Parse(json);
+
+            // v2 API uses "data", fallback to "transactions" for v1 compatibility
+            if (!doc.RootElement.TryGetProperty("data", out var txArray) &&
+                !doc.RootElement.TryGetProperty("transactions", out txArray))
+            {
+                return false;
+            }
+
+            if (txArray.ValueKind != JsonValueKind.Array) return false;
+
+            var expectedCode = $"AB{order.Id}";
+            var codeRegex = new System.Text.RegularExpressions.Regex($@"\bAB{order.Id}\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+            foreach (var tx in txArray.EnumerateArray())
+            {
+                var transferType = tx.TryGetProperty("transfer_type", out var tProp) ? tProp.GetString() : "";
+                if (!string.Equals(transferType, "in", StringComparison.OrdinalIgnoreCase)) continue;
+
+                var code = tx.TryGetProperty("code", out var codeProp) ? codeProp.GetString()?.Trim() ?? "" : "";
+                var content = tx.TryGetProperty("transaction_content", out var cProp) ? cProp.GetString() ?? "" : "";
+
+                bool isOrderMatch = string.Equals(code, expectedCode, StringComparison.OrdinalIgnoreCase)
+                    || codeRegex.IsMatch(content);
+
+                if (!isOrderMatch) continue;
+
+                decimal amountIn = 0;
+                if (tx.TryGetProperty("amount_in", out var aProp))
+                {
+                    if (aProp.ValueKind == JsonValueKind.Number)
+                        amountIn = aProp.GetDecimal();
+                    else if (aProp.ValueKind == JsonValueKind.String)
+                        decimal.TryParse(aProp.GetString(), out amountIn);
+                }
+
+                if (amountIn >= order.FinalAmount)
+                {
+                    var trackedOrder = await _orderRepository.GetByIdAsync(order.Id);
+                    if (trackedOrder != null && !trackedOrder.IsPaid)
+                    {
+                        trackedOrder.IsPaid = true;
+                        await _orderRepository.UpdateAsync(trackedOrder);
+                        await _loyalty.ProcessPaidDigitalOrderAsync(trackedOrder.Id);
+                        _logger.LogInformation("Đã đối soát thành công giao dịch SePay cho đơn hàng #{OrderId}.", trackedOrder.Id);
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
     }
 }

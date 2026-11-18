@@ -142,5 +142,35 @@ namespace AncientBook.API.Controllers
                 return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống.", details = ex.Message });
             }
         }
+
+        public record RevokeOrderPointsRequest(string? Reason);
+
+        [HttpPost("admin/orders/{orderId}/approve-points")]
+        [Authorize(Roles = "Staff,Admin")]
+        public async Task<IActionResult> AdminApproveOrderPoints(int orderId)
+        {
+            try
+            {
+                var points = await _fpointService.AdminApproveOrderPointsAsync(orderId, GetCurrentUserId());
+                return Ok(new { message = $"Đã duyệt cộng {points} F-Point cho đơn hàng #{orderId}.", points });
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống.", details = ex.Message }); }
+        }
+
+        [HttpPost("admin/orders/{orderId}/revoke-points")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AdminRevokeOrderPoints(int orderId, [FromBody] RevokeOrderPointsRequest? request)
+        {
+            try
+            {
+                var points = await _fpointService.AdminRevokeOrderPointsAsync(orderId, GetCurrentUserId(), request?.Reason);
+                return Ok(new { message = $"Đã thu hồi {points} F-Point của đơn hàng #{orderId}.", points });
+            }
+            catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+            catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+            catch (Exception ex) { return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống.", details = ex.Message }); }
+        }
     }
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getPagedOrdersAdmin, updateOrderStatus } from '../services/orderServiceAdmin';
+import { getPagedOrdersAdmin, updateOrderStatus, approveOrderPoints, revokeOrderPoints } from '../services/orderServiceAdmin';
 import { getOrderDetail } from '../services/orderService';
 import type { Order } from '../types/order';
 import { OrderStatus } from '../types/order';
@@ -11,6 +11,8 @@ export const useOrderManagement = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const [error, setError] = useState('');
+
+    const [isManagingPoints, setIsManagingPoints] = useState(false);
 
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
@@ -84,6 +86,44 @@ export const useOrderManagement = () => {
         }
     };
 
+    const handleApprovePoints = async (orderId: number): Promise<boolean> => {
+        setIsManagingPoints(true);
+        try {
+            const res = await approveOrderPoints(orderId);
+            addToast(res.message, 'success');
+            await loadOrders();
+            if (selectedOrder && selectedOrder.id === orderId) {
+                const refreshed = await getOrderDetail(orderId);
+                setSelectedOrder(refreshed);
+            }
+            return true;
+        } catch (err) {
+            addToast(err instanceof Error ? err.message : 'Lỗi duyệt cộng điểm.', 'error');
+            return false;
+        } finally {
+            setIsManagingPoints(false);
+        }
+    };
+
+    const handleRevokePoints = async (orderId: number, reason?: string): Promise<boolean> => {
+        setIsManagingPoints(true);
+        try {
+            const res = await revokeOrderPoints(orderId, reason);
+            addToast(res.message, 'success');
+            await loadOrders();
+            if (selectedOrder && selectedOrder.id === orderId) {
+                const refreshed = await getOrderDetail(orderId);
+                setSelectedOrder(refreshed);
+            }
+            return true;
+        } catch (err) {
+            addToast(err instanceof Error ? err.message : 'Lỗi thu hồi điểm.', 'error');
+            return false;
+        } finally {
+            setIsManagingPoints(false);
+        }
+    };
+
     return {
         orders,
         totalCount,
@@ -106,5 +146,8 @@ export const useOrderManagement = () => {
         changeOrderStatus,
         removeToast,
         loadOrders,
+        isManagingPoints,
+        handleApprovePoints,
+        handleRevokePoints
     };
 };

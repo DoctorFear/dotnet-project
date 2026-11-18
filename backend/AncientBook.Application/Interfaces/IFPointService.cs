@@ -26,5 +26,8 @@ namespace AncientBook.Application.Interfaces
         Task ValidateReturnEligibilityAsync(int orderId);
         Task<OrderPointsDto> GetOrderPointsAsync(int userId, int orderId);
         Task<OrderPointsDto> ConfirmReceiptAsync(int userId, int orderId, bool acceptCloseReturnWindow);
+        Task<int> AdminApproveOrderPointsAsync(int orderId, int adminUserId);
+        Task<int> AdminRevokeOrderPointsAsync(int orderId, int adminUserId, string? reason = null);
+        Task<int> ReleaseDuePendingPointsAsync();
     }
 }

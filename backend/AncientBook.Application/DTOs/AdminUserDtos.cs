@@ -1,5 +1,6 @@
 ﻿using AncientBook.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace AncientBook.Application.DTOs.User;
 
@@ -46,13 +47,14 @@ public class CreateInternalUserRequestDto
     public string PhoneNumber { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Vui lòng chọn vai trò nội bộ.")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public UserRole Role { get; set; } // BR02: Chỉ Admin, Staff, Shipper
 }
 
-// Request chuyển đổi vai trò
 public class ChangeUserRoleRequestDto
 {
     [Required(ErrorMessage = "Vui lòng chọn vai trò mới.")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public UserRole NewRole { get; set; }
 }
 
