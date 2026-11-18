@@ -30,6 +30,7 @@ import MembershipConfigPage from './pages/MembershipConfigPage';
 import AdminRefundManagementPage from './pages/AdminRefundManagmentPage';
 import EbookReaderPage from './pages/EBookReadingPage';
 import AdminUserManagementPage from './pages/AdminUserManagementPage';
+import AuditLogPage from './pages/AuditLogPage';
 const WorkflowPreviewPage = import.meta.env.DEV ? React.lazy(() => import('./dev/WorkflowPreviewPage')) : null;
 
 export const App: React.FC = () => {
@@ -95,6 +96,7 @@ export const App: React.FC = () => {
                         <Route path="/admin/settings" element={<AdminSettingsPage />} />
                         <Route path="/admin/reports" element={<AdminReportsPage />} />
                         <Route path="/admin/users" element={<AdminUserManagementPage />} />
+                        <Route path="/admin/audit-logs" element={<AuditLogPage />} />
                     </Route>
                 </Routes>
             </Router>

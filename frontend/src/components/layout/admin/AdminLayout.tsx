@@ -11,14 +11,15 @@ import {
     UserCog,
     Warehouse,
     UserCircle,
-    Award
+    Award,
+    FileText
 } from 'lucide-react';
 import styles from './AdminLayout.module.css';
 import { useUser } from '../../../context/UserContext.tsx';
 import { useAuthAction } from '../../../hooks/useAuthAction';
 import { AdminProfileModal } from '../../features/profile/AdminProfileModal';
 
-type AdminPageKey = 'books' | 'settings' | 'reports' | 'orders' | 'packing' | 'membership' | 'refunds' | 'users';
+type AdminPageKey = 'books' | 'settings' | 'reports' | 'orders' | 'packing' | 'membership' | 'refunds' | 'users' | 'audit-logs';
 
 interface AdminLayoutProps {
     activePage: AdminPageKey;
@@ -32,6 +33,7 @@ interface AdminLayoutProps {
 const adminMenuItems = [
     { label: 'Thống kê & Báo cáo', icon: BarChart3, page: 'reports' as AdminPageKey, path: '/admin/reports' },
     { label: 'Quản lý & Phân quyền', icon: UserCog, page: 'users' as AdminPageKey, path: '/admin/users' },
+    { label: 'Nhật ký hoạt động', icon: FileText, page: 'audit-logs' as AdminPageKey, path: '/admin/audit-logs' },
     { label: 'Quản lý sách', icon: BookOpen, page: 'books' as AdminPageKey, path: '/admin/books' },
     { label: 'Quản lý kho sách', icon: Warehouse },
     { label: 'Quản lý đơn hàng', icon: Package, page: 'orders' as AdminPageKey, path: '/admin/orders' },
@@ -80,8 +82,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                     {adminMenuItems
                         .filter((item) =>
                             user?.role === 'Admin'
-                                ? ['reports', 'settings', 'membership', 'users'].includes(item.page ?? '')
-                                : !['reports', 'settings', 'users'].includes(item.page ?? '') && item.icon !== UserCog
+                                ? ['reports', 'settings', 'membership', 'users', 'audit-logs'].includes(item.page ?? '')
+                                : !['reports', 'settings', 'users', 'audit-logs'].includes(item.page ?? '') && item.icon !== UserCog
                         )
                         .map((item) => {
                             const Icon = item.icon;
