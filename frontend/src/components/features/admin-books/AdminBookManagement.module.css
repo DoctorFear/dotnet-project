@@ -649,3 +649,229 @@ textarea.formControl {
 .priceFilter { width: 100px; min-width: 0; border: 1px solid var(--hairline); padding: 8px; border-radius: 4px; }
 .tableScroll { max-width: 100%; overflow-x: auto; }
 .priceCell { min-width: 240px; }
+
+.readonlyField {
+    background: #f9f9f9;
+}
+
+.readonlyFieldBold {
+    background: #f9f9f9;
+    font-weight: 700;
+}
+
+.fullSpan {
+    grid-column: 1 / -1;
+}
+
+.statusSelectRow {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.statusSelect {
+    flex: 1;
+}
+
+.saveStatusBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background-color: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+}
+
+.saveStatusBtn:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+}
+
+.pointsCard {
+    grid-column: 1 / -1;
+    padding: 12px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.pointsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pointsBadge {
+    font-size: 12px;
+    font-weight: 600;
+    color: #0b409c;
+}
+
+.pointsActions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.btnApprovePoints {
+    padding: 6px 14px;
+    background-color: #16a34a;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.btnApprovePoints:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.btnRevokePoints {
+    padding: 6px 14px;
+    background-color: #dc2626;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.btnRevokePoints:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.sectionSubtitle {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.bookTitleRow {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.bookLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.bookLink:hover {
+    text-decoration: underline;
+}
+
+.confirmOverlay {
+    z-index: 1100;
+}
+
+.revokeOverlay {
+    z-index: 1150;
+}
+
+.modalCompactConfirm {
+    max-width: 440px;
+}
+
+.modalCompactRevoke {
+    max-width: 420px;
+}
+
+.modalTitleRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modalTitleNoMargin {
+    margin: 0;
+}
+
+.modalLeadText {
+    margin-top: 0;
+    line-height: 1.5;
+}
+
+.revokeLeadText {
+    margin-top: 0;
+    font-size: 13.5px;
+    line-height: 1.5;
+}
+
+.statusSummaryBox {
+    padding: 12px;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    font-size: 13px;
+}
+
+.statusSummaryNext {
+    margin-top: 6px;
+}
+
+.statusNextHighlight {
+    color: #2563eb;
+}
+
+.stockRestoreNote {
+    margin-top: 10px;
+    margin-bottom: 0;
+    font-size: 13px;
+    color: #b45309;
+}
+
+.btnConfirmPrimary {
+    padding: 8px 16px;
+    background-color: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+}
+
+.btnConfirmPrimary:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.btnConfirmDanger {
+    padding: 8px 16px;
+    background-color: #dc2626;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+}
+
+.btnConfirmDanger:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
