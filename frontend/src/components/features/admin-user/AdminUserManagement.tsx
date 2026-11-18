@@ -133,7 +133,7 @@ export const AdminUserManagement: React.FC = () => {
                                     const roleLabel =
                                         u.role === 'Admin' && isSuper
                                             ? 'Super Admin'
-                                            : ROLE_META[u.role]?.label ?? u.role;
+                                            : ROLE_META[u.role as UserRoleType]?.label ?? u.role;
 
                                     return (
                                         <tr key={u.id}>
@@ -159,7 +159,7 @@ export const AdminUserManagement: React.FC = () => {
                                             <td>{u.email}</td>
                                             <td>{u.phoneNumber || '—'}</td>
                                             <td>
-                                                <span className={`${styles.badgeRole} ${roleBadgeClass(u.role)}`}>
+                                                <span className={`${styles.badgeRole} ${roleBadgeClass(u.role as UserRoleType)}`}>
                                                     {roleLabel}
                                                 </span>
                                             </td>

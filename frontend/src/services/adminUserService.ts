@@ -1,57 +1,73 @@
 import { requestApi } from './apiClient';
+import type { ApiResponse } from '../types/user';
 import type {
-    ApiResponse,
-    ChangeUserRoleRequest,
-    CreateInternalUserRequest,
-    PagedResult,
-    ToggleUserStatusRequest,
+    UserFilterDto,
     UserFilterParams,
-    UserManagementItem,
+    UserManagementItemDto,
+    CreateInternalUserRequestDto,
+    CreateInternalUserRequest,
+    ChangeUserRoleRequestDto,
+    ChangeUserRoleRequest,
+    ToggleUserStatusRequestDto,
+    ToggleUserStatusRequest,
+    PagedResult,
 } from '../types/adminUser';
 
 const BASE_PATH = '/admin/users';
 
 export const adminUserService = {
-    getUsers(params: UserFilterParams): Promise<ApiResponse<PagedResult<UserManagementItem>>> {
-        const query = new URLSearchParams();
-        if (params.keyword?.trim()) query.set('Keyword', params.keyword.trim());
-        if (params.role) query.set('Role', params.role);
-        if (typeof params.isActive === 'boolean') query.set('IsActive', String(params.isActive));
-        query.set('PageNumber', String(params.pageNumber ?? 1));
-        query.set('PageSize', String(params.pageSize ?? 8));
+    // 1. GET /api/admin/users (Lọc, tìm kiếm & phân trang)
+    getUsers: async (
+        filter: UserFilterDto | UserFilterParams
+    ): Promise<ApiResponse<PagedResult<UserManagementItemDto>>> => {
+        const params = new URLSearchParams();
+        if (filter.keyword && filter.keyword.trim()) {
+            params.append('Keyword', filter.keyword.trim());
+        }
+        if (filter.role) {
+            params.append('Role', filter.role.toString());
+        }
+        if (filter.isActive !== undefined) {
+            params.append('IsActive', filter.isActive.toString());
+        }
+        params.append('PageNumber', (filter.pageNumber ?? 1).toString());
+        params.append('PageSize', (filter.pageSize ?? 10).toString());
 
-        return requestApi<ApiResponse<PagedResult<UserManagementItem>>>(
-            `${BASE_PATH}?${query.toString()}`,
+        return requestApi<ApiResponse<PagedResult<UserManagementItemDto>>>(
+            `${BASE_PATH}?${params.toString()}`,
             { method: 'GET' }
         );
     },
 
-    createInternalUser(
-        request: CreateInternalUserRequest
-    ): Promise<ApiResponse<UserManagementItem>> {
-        return requestApi<ApiResponse<UserManagementItem>>(BASE_PATH, {
+    // 2. POST /api/admin/users (Tạo nhân sự mới)
+    createInternalUser: async (
+        payload: CreateInternalUserRequestDto | CreateInternalUserRequest
+    ): Promise<ApiResponse<UserManagementItemDto>> => {
+        return requestApi<ApiResponse<UserManagementItemDto>>(BASE_PATH, {
             method: 'POST',
-            body: JSON.stringify(request),
+            body: JSON.stringify(payload),
         });
     },
 
-    updateRole(
-        userId: number,
-        request: ChangeUserRoleRequest
-    ): Promise<ApiResponse<boolean>> {
-        return requestApi<ApiResponse<boolean>>(`${BASE_PATH}/${userId}/role`, {
+    // 3. PATCH /api/admin/users/{id}/role (Cập nhật vai trò)
+    updateRole: async (
+        id: number,
+        payload: ChangeUserRoleRequestDto | ChangeUserRoleRequest
+    ): Promise<ApiResponse<boolean>> => {
+        return requestApi<ApiResponse<boolean>>(`${BASE_PATH}/${id}/role`, {
             method: 'PATCH',
-            body: JSON.stringify(request),
+            body: JSON.stringify(payload),
         });
     },
 
-    toggleStatus(
-        userId: number,
-        request: ToggleUserStatusRequest
-    ): Promise<ApiResponse<boolean>> {
-        return requestApi<ApiResponse<boolean>>(`${BASE_PATH}/${userId}/status`, {
+    // 4. PATCH /api/admin/users/{id}/status (Khóa hoặc mở khóa tài khoản)
+    toggleStatus: async (
+        id: number,
+        payload: ToggleUserStatusRequestDto | ToggleUserStatusRequest
+    ): Promise<ApiResponse<boolean>> => {
+        return requestApi<ApiResponse<boolean>>(`${BASE_PATH}/${id}/status`, {
             method: 'PATCH',
-            body: JSON.stringify(request),
+            body: JSON.stringify(payload),
         });
     },
 };

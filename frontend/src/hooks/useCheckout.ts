@@ -9,7 +9,7 @@ export const useCheckout = (cartItems: any[]) => {
     const navigate = useNavigate();
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [selectedAddrId, setSelectedAddrId] = useState<number>(0);
-    const [userId, setUserId] = useState<number>(0);
+    const [, setUserId] = useState<number>(0);
     const [isLoadingAddresses, setIsLoadingAddresses] = useState<boolean>(true);
     const [paymentMethod, setPaymentMethod] = useState<string>('cod');
     const [pointsInput, setPointsInput] = useState('');

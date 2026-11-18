@@ -98,11 +98,28 @@ frontend/src/
 │       │   ├── ForgotPasswordForm.tsx        # Form quên mật khẩu (Username, Email, tự động reset form sau khi gửi)
 │       │   └── ResetPasswordForm.tsx         # Form đặt lại mật khẩu mới + Màn hình cảnh báo khi token quá 15 phút
 │       │
-│       └── profile/                          # Các component tính năng Quản lý tài khoản (Profile)
-│           ├── ProfileInfoForm.tsx           # Form cập nhật thông tin cá nhân (Họ tên, SĐT, Email/Username readonly)
-│           ├── AddressSection.tsx            # Khối quản lý danh sách địa chỉ nhận hàng (tối đa 2 địa chỉ)
-│           ├── AddressItemCard.tsx           # Từng thẻ địa chỉ (cố định TP.HCM, Phường dropdown Roooming, số nhà, nút Xóa)
-│           └── ChangePasswordSection.tsx     # Panel toggle đổi mật khẩu (Mật khẩu cũ, Mật khẩu mới >= 8 ký tự, Nhập lại MK)
+│       ├── profile/                          # Các component tính năng Quản lý tài khoản (Profile)
+│       │   ├── ProfileInfoForm.tsx           # Form cập nhật thông tin cá nhân (Họ tên, SĐT, Email/Username readonly)
+│       │   ├── AddressSection.tsx            # Khối quản lý danh sách địa chỉ nhận hàng (tối đa 2 địa chỉ)
+│       │   ├── AddressItemCard.tsx           # Từng thẻ địa chỉ (cố định TP.HCM, Phường dropdown Roooming, số nhà, nút Xóa)
+│       │   ├── ChangePasswordSection.tsx     # Panel toggle đổi mật khẩu (Mật khẩu cũ, Mật khẩu mới >= 8 ký tự, Nhập lại MK)
+│       │   ├── AdminProfileModal.tsx         # Modal chỉnh sửa hồ sơ & mật khẩu nhanh cho Admin/Staff (tái sử dụng PasswordField, UserContext)
+│       │   ├── AdminProfileModal.module.css
+│       │   ├── AdminPasswordAccordion.tsx    # Sub-component: Accordion gập/mở đổi mật khẩu tài khoản Admin/Staff
+│       │   ├── AdminPasswordAccordion.module.css
+│       │   ├── ProfileInput.tsx              # Component ô nhập liệu chuẩn Modal & Dashboard (readonly, error, required)
+│       │   └── ProfileInput.module.css
+│       │
+│       └── admin-users/                      # [PHÂN HỆ QUẢN LÝ TÀI KHOẢN & PHÂN QUYỀN - ADMIN USER & ROLE MANAGEMENT]
+│           ├── AdminUser.module.css          # Toàn bộ CSS module chuẩn hóa theo dashboard phan quyen.html
+│           ├── UserFilterBar.tsx             # Thanh tìm kiếm debounce 300ms, filter vai trò, filter trạng thái, nút Tạo tài khoản
+│           ├── UserTable.tsx                 # Bảng danh sách người dùng, thead chuẩn, empty state, loading state
+│           ├── UserTableRow.tsx              # Từng hàng người dùng, avatar initials, role badge, status badge, action buttons (Đổi vai trò, Khóa/Mở)
+│           ├── UserPagination.tsx            # Thanh phân trang chuyên nghiệp (Prev, các trang 1..N, Next, bộ đếm bản ghi)
+│           ├── CreateUserModal.tsx           # Modal tạo tài khoản nhân sự nội bộ (3 role: Admin, Staff, Shipper) + cảnh báo mật khẩu khởi tạo
+│           ├── ChangeRoleModal.tsx           # Modal đổi vai trò nội bộ + radio options + cảnh báo an ninh nâng quyền Admin
+│           ├── ToggleStatusModal.tsx         # Modal xác nhận Khóa / Mở khóa tài khoản + cảnh báo thu hồi phiên đăng nhập
+│           └── AdminUserManagement.tsx       # Component container tích hợp toàn bộ sub-components, kết nối API và Toast Notification
 │
 ├── pages/                                    # [PAGE CONTAINERS - SIÊU GỌN CHỈ 30-50 DÒNG]
 │   ├── LoginPage.tsx                         # Ráp: TopBar + Header + AuthVisualSide + LoginForm
@@ -114,7 +131,8 @@ frontend/src/
 │   ├── ResetPasswordPage.tsx                 # Ráp: TopBar + Header + AuthVisualSide + ResetPasswordForm
 │   ├── ResetPasswordPage.module.css
 │   ├── ProfilePage.tsx                       # Ráp: TopBar + Header + Navbar + ProfileInfoForm + AddressSection + ChangePasswordSection
-│   └── ProfilePage.module.css
+│   ├── ProfilePage.module.css
+│   └── AdminUserManagementPage.tsx           # Ráp: AdminLayout (activePage='users', badge UC04) + AdminUserManagement
 │
 └── App.tsx
     ├── Định tuyến công khai (Public Routes):
@@ -122,6 +140,10 @@ frontend/src/
     │   ├── /register                        -> <RegisterPage />
     │   ├── /forgot-password                 -> <ForgotPasswordPage />
     │   └── /reset-password                  -> <ResetPasswordPage />
-    └── Định tuyến bảo vệ (Protected Routes):
-        └── /profile                         -> <ProtectedRoute><ProfilePage /></ProtectedRoute>
+    ├── Định tuyến bảo vệ khách hàng (Customer Routes):
+    │   └── /profile                         -> <ProtectedRoute allowedRoles={['Member']}><ProfilePage /></ProtectedRoute>
+    └── Định tuyến bảo vệ quản trị tối cao (Admin Only Routes):
+        ├── /admin/settings                  -> <AdminSettingsPage />
+        ├── /admin/reports                   -> <AdminReportsPage />
+        └── /admin/users                     -> <AdminUserManagementPage />
 ================================================================================

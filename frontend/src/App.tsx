@@ -30,6 +30,10 @@ import MembershipConfigPage from './pages/MembershipConfigPage';
 import AdminRefundManagementPage from './pages/AdminRefundManagmentPage';
 import EbookReaderPage from './pages/EBookReadingPage';
 import AdminUserManagementPage from './pages/AdminUserManagementPage';
+import AuditLogPage from './pages/AuditLogPage';
+import WarehouseLogisticsPage from './pages/WarehouseLogisticsPage';
+import StaffShipperManagementPage from './pages/StaffShipperManagementPage';
+import OrderTrackingPage from './pages/OrderTrackingPage';
 const WorkflowPreviewPage = import.meta.env.DEV ? React.lazy(() => import('./dev/WorkflowPreviewPage')) : null;
 
 export const App: React.FC = () => {
@@ -52,6 +56,8 @@ export const App: React.FC = () => {
                     <Route path="/cart" element={<CartPage />} />
                     <Route path="/forgot-password" element={<ForgotPasswordPage />} /> {/* Sơn */}
                     <Route path="/reset-password" element={<ResetPasswordPage />} /> {/* Sơn */}
+                    <Route path="/order-tracking" element={<OrderTrackingPage />} />
+                    <Route path="/order-tracking/:orderId" element={<OrderTrackingPage />} />
 
                     {/* 2. Customer Routes: Dành cho độc giả (Member) hoặc tài khoản quản trị khi mua sắm */}
                     <Route element={<ProtectedRoute allowedRoles={['Member']} />}>
@@ -70,10 +76,14 @@ export const App: React.FC = () => {
                         
                     </Route>
 
-                    {/* 3. Staff Routes: Quản lý sách, catalog và tài liệu */}
+                    {/* 3. Staff Routes: Quản lý sách, catalog, kho bãi và đơn hàng */}
                     <Route element={<ProtectedRoute allowedRoles={['Staff']} />}>
                         <Route path="/admin/books" element={<AdminBookManagementPage />} />
                         <Route path="/staff/books" element={<AdminBookManagementPage />} />
+                        <Route path="/admin/warehouse" element={<WarehouseLogisticsPage />} />
+                        <Route path="/staff/warehouse" element={<WarehouseLogisticsPage />} />
+                        <Route path="/admin/shippers" element={<StaffShipperManagementPage />} />
+                        <Route path="/staff/shippers" element={<StaffShipperManagementPage />} />
                         <Route path="/admin/orders" element={<AdminOrderManagementPage />} />
                         <Route path="/staff/orders" element={<AdminOrderManagementPage />} />
                         <Route path="/admin/refunds" element={<AdminRefundManagementPage />} />
@@ -95,6 +105,7 @@ export const App: React.FC = () => {
                         <Route path="/admin/settings" element={<AdminSettingsPage />} />
                         <Route path="/admin/reports" element={<AdminReportsPage />} />
                         <Route path="/admin/users" element={<AdminUserManagementPage />} />
+                        <Route path="/admin/audit-logs" element={<AuditLogPage />} />
                     </Route>
                 </Routes>
             </Router>

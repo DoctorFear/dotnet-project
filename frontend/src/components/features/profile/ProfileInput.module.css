@@ -1,0 +1,58 @@
+/* =========================================================
+   PROFILE INPUT FORM FIELD (MODAL & DASHBOARD)
+   ========================================================= */
+.formGroupModal {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 14px;
+    position: relative;
+}
+
+.formGroupModal label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink, #071233);
+}
+
+.req {
+    color: var(--danger, #d93838);
+    margin-left: 2px;
+}
+
+.formControlModal {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1.5px solid var(--hairline, #dce6f7);
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+    font-family: inherit;
+    color: var(--ink, #071233);
+    background: #fff;
+    transition: border-color 0.15s ease;
+    box-sizing: border-box;
+}
+
+.formControlModal:focus {
+    border-color: var(--egyptian, #0B409C);
+}
+
+.formControlModal.isInvalid {
+    border-color: var(--danger, #d93838);
+    background: var(--danger-bg, #fdf2f2);
+}
+
+.formControlModal[readonly] {
+    background-color: var(--alice, #F2F7FF);
+    color: #64748b;
+    cursor: not-allowed;
+}
+
+.modalFieldError {
+    font-size: 11px;
+    color: var(--danger, #d93838);
+    font-weight: 600;
+    margin-top: 3px;
+    line-height: 1.3;
+}

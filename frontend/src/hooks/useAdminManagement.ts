@@ -10,7 +10,6 @@ import type {
     UserRoleType,
 } from '../types/adminUser';
 
-const PAGE_SIZE = 8;
 const VN_PHONE_REGEX = /^0(3[2-9]|5[689]|7[06-9]|8[1-6|8|9]|9[0-46-9])[0-9]{7}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

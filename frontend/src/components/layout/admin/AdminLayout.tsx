@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
     BarChart3,
     BookOpen,
@@ -12,30 +12,32 @@ import {
     Warehouse,
     UserCircle,
     Award,
-    House
+    FileText,
+    Truck
 } from 'lucide-react';
 import styles from './AdminLayout.module.css';
 import { useUser } from '../../../context/UserContext.tsx';
 import { useAuthAction } from '../../../hooks/useAuthAction';
-import { useToastNotifications } from '../../../hooks/useToastNotifications';
-import { ToastNotification } from '../../common/ToastNotification';
-import { userService } from '../../../services/userService';
+import { AdminProfileModal } from '../../features/profile/AdminProfileModal';
 
-type AdminPageKey = 'books' | 'settings' | 'reports' | 'orders' | 'packing' | 'membership' | 'refunds' | 'users';
+type AdminPageKey = 'books' | 'settings' | 'reports' | 'orders' | 'packing' | 'membership' | 'refunds' | 'users' | 'audit-logs' | 'warehouse' | 'shippers';
 
 interface AdminLayoutProps {
     activePage: AdminPageKey;
     title: string;
     subtitle: string;
     badge: string;
+    actions?: React.ReactNode;
     children: React.ReactNode;
 }
 
 const adminMenuItems = [
     { label: 'Thống kê & Báo cáo', icon: BarChart3, page: 'reports' as AdminPageKey, path: '/admin/reports' },
     { label: 'Quản lý & Phân quyền', icon: UserCog, page: 'users' as AdminPageKey, path: '/admin/users' },
+    { label: 'Nhật ký hoạt động', icon: FileText, page: 'audit-logs' as AdminPageKey, path: '/admin/audit-logs' },
     { label: 'Quản lý sách', icon: BookOpen, page: 'books' as AdminPageKey, path: '/admin/books' },
-    { label: 'Quản lý kho sách', icon: Warehouse },
+    { label: 'Quản lý kho sách', icon: Warehouse, page: 'warehouse' as AdminPageKey, path: '/staff/warehouse' },
+    { label: 'Đội ngũ Shipper', icon: Truck, page: 'shippers' as AdminPageKey, path: '/staff/shippers' },
     { label: 'Quản lý đơn hàng', icon: Package, page: 'orders' as AdminPageKey, path: '/admin/orders' },
     { label: 'Quản lý trả hàng', icon: Package, page: 'refunds' as AdminPageKey, path: '/admin/refunds' },
     { label: 'Tiếp nhận & Đóng gói', icon: Package, page: 'packing' as AdminPageKey, path: '/staff/packing' },
@@ -50,192 +52,66 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     title,
     subtitle,
     badge,
+    actions,
     children,
 }) => {
     const navigate = useNavigate();
-    const { user, updateUser } = useUser();
+    const { user } = useUser();
     const { handleLogout } = useAuthAction();
-    const { toasts, notify, dismissToast } = useToastNotifications();
 
-    // State Modal
+    // Quản lý trạng thái đóng/mở modal tài khoản Admin / Staff
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    // Form data
-    const [formData, setFormData] = useState({
-        username: '',
-        email: '',
-        fullName: '',
-        phoneNumber: '',
-        currentPassword: '',
-        newPassword: '',
-        confirmNewPassword: ''
-    });
-
-    const handleOpenModal = async () => {
-        setIsModalOpen(true);
-        try {
-            const res = await userService.getProfile();
-            if (res.success && res.data) {
-                setFormData({
-                    username: res.data.username || user?.username || '',
-                    email: res.data.email || user?.email || '',
-                    fullName: res.data.fullName || user?.fullName || '',
-                    phoneNumber: res.data.phoneNumber || '',
-                    currentPassword: '',
-                    newPassword: '',
-                    confirmNewPassword: ''
-                });
-            }
-        } catch {
-            if (user) {
-                setFormData({
-                    username: user.username,
-                    email: user.email,
-                    fullName: user.fullName,
-                    phoneNumber: '',
-                    currentPassword: '',
-                    newPassword: '',
-                    confirmNewPassword: ''
-                });
-            }
-        }
-    };
-
-    const handleCloseModal = () => {
-        if (!isSubmitting) {
-            setIsModalOpen(false);
-        }
-    };
-
-    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-    };
-
-    const handleSubmitProfile = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        const cleanFullName = formData.fullName.trim();
-        const cleanEmail = formData.email.trim();
-        const cleanPhone = formData.phoneNumber.trim();
-
-        if (!cleanFullName) {
-            notify('Họ và tên không được để trống.', 'error');
-            return;
-        }
-
-        if (!cleanPhone) {
-            notify('Số điện thoại không được để trống.', 'error');
-            return;
-        }
-
-        const phoneRegex = /^0\d{9}$/;
-        if (!phoneRegex.test(cleanPhone)) {
-            notify('Số điện thoại phải gồm 10 chữ số (bắt đầu bằng 0).', 'error');
-            return;
-        }
-
-        if (cleanEmail) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(cleanEmail)) {
-                notify('Địa chỉ email không đúng định dạng.', 'error');
-                return;
-            }
-        }
-
-        const isChangingPassword = formData.currentPassword || formData.newPassword || formData.confirmNewPassword;
-        if (isChangingPassword) {
-            if (!formData.currentPassword) {
-                notify('Vui lòng nhập mật khẩu hiện tại.', 'error');
-                return;
-            }
-            if (formData.newPassword.length < 6) {
-                notify('Mật khẩu mới phải có tối thiểu 6 ký tự.', 'error');
-                return;
-            }
-            if (formData.newPassword !== formData.confirmNewPassword) {
-                notify('Mật khẩu xác nhận không trùng khớp.', 'error');
-                return;
-            }
-        }
-
-        setIsSubmitting(true);
-        try {
-            // 1. Cập nhật hồ sơ
-            const profileRes = await userService.updateProfile({
-                fullName: cleanFullName,
-                email: cleanEmail,
-                phoneNumber: cleanPhone
-            });
-
-            if (!profileRes.success) {
-                notify(profileRes.message || 'Cập nhật thông tin thất bại.', 'error');
-                setIsSubmitting(false);
-                return;
-            }
-
-            updateUser({ fullName: cleanFullName, email: cleanEmail });
-
-            // 2. Cập nhật mật khẩu nếu có nhập
-            if (isChangingPassword) {
-                const passRes = await userService.changePassword({
-                    currentPassword: formData.currentPassword,
-                    newPassword: formData.newPassword,
-                    confirmNewPassword: formData.confirmNewPassword
-                });
-
-                if (!passRes.success) {
-                    notify(`Hồ sơ đã cập nhật nhưng đổi mật khẩu lỗi: ${passRes.message}`, 'error');
-                    setIsSubmitting(false);
-                    return;
-                }
-            }
-
-            notify('Cập nhật thông tin tài khoản thành công!', 'success');
-            setIsModalOpen(false);
-        } catch (err: any) {
-            notify(err.message || 'Lỗi kết nối máy chủ.', 'error');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
 
     return (
         <div className={styles.adminShell}>
-            <ToastNotification toasts={toasts} onClose={dismissToast} />
-
             <aside className={styles.adminSidebar}>
                 <div className={styles.sidebarHeader}>
-                    <button type="button" className={styles.brandName} onClick={() => navigate(user?.role === 'Admin' ? '/admin/reports' : '/staff/books')}>
+                    <button
+                        type="button"
+                        className={styles.brandName}
+                        onClick={() => navigate(user?.role === 'Admin' ? '/admin/reports' : '/staff/books')}
+                    >
                         ancient<span className={styles.bookText}>BOOK</span><span className={styles.accentDot}></span>
                     </button>
-                    <div><span className={styles.adminBadge}>{user?.role === 'Admin' ? 'Admin Portal' : 'Staff Portal'}</span></div>
+                    <div>
+                        <span className={styles.adminBadge}>
+                            {user?.role === 'Admin' ? 'Admin Portal' : 'Staff Portal'}
+                        </span>
+                    </div>
                 </div>
 
                 <ul className={styles.sidebarMenu}>
-                    {adminMenuItems.filter(item => user?.role === 'Admin' ? ['reports', 'settings', 'membership', 'users'].includes(item.page ?? '') || item.icon === UserCog : !['reports', 'settings'].includes(item.page ?? '') && item.icon !== UserCog).map((item) => {
-                        const Icon = item.icon;
-                        const isActive = item.page === activePage;
-                        return (
-                            <li className={styles.menuItem} key={item.label}>
-                                <button
-                                    type="button"
-                                    className={`${styles.menuLink} ${isActive ? styles.active : ''}`}
-                                    onClick={() => item.path && navigate(item.path)}
-                                >
-                                    <Icon />
-                                    {item.label}
-                                </button>
-                            </li>
-                        );
-                    })}
+                    {adminMenuItems
+                        .filter((item) =>
+                            user?.role === 'Admin'
+                                ? ['reports', 'settings', 'membership', 'users', 'audit-logs'].includes(item.page ?? '')
+                                : !['reports', 'settings', 'users', 'audit-logs'].includes(item.page ?? '') && item.icon !== UserCog
+                        )
+                        .map((item) => {
+                            const Icon = item.icon;
+                            const isActive = item.page === activePage;
+                            return (
+                                <li className={styles.menuItem} key={item.label}>
+                                    <button
+                                        type="button"
+                                        className={`${styles.menuLink} ${isActive ? styles.active : ''}`}
+                                        onClick={() => item.path && navigate(item.path)}
+                                    >
+                                        <Icon />
+                                        {item.label}
+                                    </button>
+                                </li>
+                            );
+                        })}
                 </ul>
 
                 <div className={styles.sidebarFooter}>
                     <div className={styles.userBadgeLeft}>
                         <img
-                            src={user?.avatarUrl || "https://media.istockphoto.com/id/2149922267/vector/user-icon.jpg?s=612x612&w=0&k=20&c=i6jYPfB1pWjK8pll6YRxAK9fgBmf65-w5wbKH9R1dyQ="}
+                            src={
+                                user?.avatarUrl ||
+                                'https://media.istockphoto.com/id/2149922267/vector/user-icon.jpg?s=612x612&w=0&k=20&c=i6jYPfB1pWjK8pll6YRxAK9fgBmf65-w5wbKH9R1dyQ='
+                            }
                             className={styles.userAvatarTiny}
                             alt="User Avatar"
                         />
@@ -253,17 +129,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                             type="button"
                             className={styles.btnEditProfile}
                             title="Chỉnh sửa thông tin tài khoản"
-                            onClick={handleOpenModal}
+                            onClick={() => setIsModalOpen(true)}
                         >
                             <UserCircle size={18} />
                         </button>
-
-                        <Link
-                            to="/"
-                            className={styles.btnEditProfile}
-                        >
-                            <House size={18} />
-                        </Link>
 
                         <button
                             type="button"
@@ -285,132 +154,17 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                     </div>
                     <div className={styles.topbarActions}>
                         <span className={styles.badgeUc}>{badge}</span>
+                        {actions}
                     </div>
                 </header>
                 <div className={styles.contentBody}>{children}</div>
             </main>
 
-            {/* MODAL CHỈNH SỬA TÀI KHOẢN ADMIN */}
-            {isModalOpen && (
-                <div className={styles.modalOverlay} onClick={handleCloseModal}>
-                    <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-                        <div className={styles.modalHeader}>
-                            <div>
-                                <h3 className={styles.modalTitle}>Chỉnh sửa thông tin tài khoản</h3>
-                                <p className={styles.modalSubtitle}>Cập nhật hồ sơ và mật khẩu bảo mật</p>
-                            </div>
-                            <button type="button" className={styles.btnCloseModal} onClick={handleCloseModal}>
-                                &times;
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSubmitProfile} noValidate>
-                            <div className={styles.modalBody}>
-                                <div className={styles.formGrid}>
-                                    <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-                                        <label>Tên đăng nhập (Đóng băng)</label>
-                                        <input
-                                            type="text"
-                                            value={formData.username}
-                                            readOnly
-                                        />
-                                    </div>
-
-                                    <div className={styles.formGroup}>
-                                        <label>Địa chỉ Email</label>
-                                        <input
-                                            type="email"
-                                            name="email"
-                                            value={formData.email}
-                                            onChange={handleFormChange}
-                                            placeholder="admin@example.com"
-                                        />
-                                    </div>
-
-                                    <div className={styles.formGroup}>
-                                        <label>Họ và tên *</label>
-                                        <input
-                                            type="text"
-                                            name="fullName"
-                                            value={formData.fullName}
-                                            onChange={handleFormChange}
-                                            placeholder="Nhập họ và tên"
-                                        />
-                                    </div>
-
-                                    <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-                                        <label>Số điện thoại *</label>
-                                        <input
-                                            type="tel"
-                                            name="phoneNumber"
-                                            value={formData.phoneNumber}
-                                            onChange={handleFormChange}
-                                            placeholder="10 số bắt đầu bằng 0 (ví dụ: 0912345678)"
-                                            maxLength={10}
-                                        />
-                                    </div>
-
-                                    <div className={styles.passwordDivider}>
-                                        <div className={styles.passwordDividerTitle}>Đổi mật khẩu</div>
-                                        <div className={styles.passwordDividerHint}>Để trống nếu không muốn thay đổi mật khẩu</div>
-                                    </div>
-
-                                    <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-                                        <label>Mật khẩu hiện tại</label>
-                                        <input
-                                            type="password"
-                                            name="currentPassword"
-                                            value={formData.currentPassword}
-                                            onChange={handleFormChange}
-                                            placeholder="Nhập mật khẩu hiện tại"
-                                        />
-                                    </div>
-
-                                    <div className={styles.formGroup}>
-                                        <label>Mật khẩu mới</label>
-                                        <input
-                                            type="password"
-                                            name="newPassword"
-                                            value={formData.newPassword}
-                                            onChange={handleFormChange}
-                                            placeholder="Tối thiểu 6 ký tự"
-                                        />
-                                    </div>
-
-                                    <div className={styles.formGroup}>
-                                        <label>Xác nhận mật khẩu mới</label>
-                                        <input
-                                            type="password"
-                                            name="confirmNewPassword"
-                                            value={formData.confirmNewPassword}
-                                            onChange={handleFormChange}
-                                            placeholder="Nhập lại mật khẩu mới"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className={styles.modalFooter}>
-                                <button
-                                    type="button"
-                                    className={styles.btnCancel}
-                                    onClick={handleCloseModal}
-                                    disabled={isSubmitting}
-                                >
-                                    Hủy
-                                </button>
-                                <button
-                                    type="submit"
-                                    className={styles.btnSave}
-                                    disabled={isSubmitting}
-                                >
-                                    {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+            {/* Modal chỉnh sửa tài khoản Admin/Staff được bóc tách dạng Modular Component */}
+            <AdminProfileModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+            />
         </div>
     );
 };

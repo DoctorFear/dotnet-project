@@ -1,0 +1,47 @@
+backend/
+│
+├── AncientBook.Domain/
+│   └── Entities/
+│       └── AuditLog.cs                      # Thực thể lưu vết (UserId, Action, Module, Timestamp, RecordId...)[cite: 20]
+│
+├── AncientBook.Application/
+│   ├── DTOs/
+│   │   └── AuditLogDtos.cs                  # AuditLogFilterDto (bộ lọc) & AuditLogItemDto (kết quả hiển thị)[cite: 19]
+│   │
+│   ├── Interfaces/
+│   │   ├── IAuditLogRepository.cs           # Hợp đồng truy vấn cơ sở dữ liệu cho AuditLog
+│   │   └── IAuditLogService.cs              # Hợp đồng ghi log (LogAsync) & đọc log (GetAuditLogsAsync)[cite: 18]
+│   │
+│   └── Services/
+│       └── AuditLogService.cs               # Triển khai ghi log, che mật khẩu (***), trả kết quả phân trang[cite: 18]
+│
+├── AncientBook.Infrastructure/
+│   ├── Persistence/
+│   │   └── ApplicationDbContext.cs          # Khai báo DbSet<AuditLog> & index IX_AuditLogs_Timestamp[cite: 21]
+│   │
+│   └── Repositories/
+│       └── AuditLogRepository.cs            # Truy vấn lọc theo Module, Keyword, Date range & phân trang[cite: 22]
+│
+└── AncientBook.API/
+    ├── Controllers/
+    │   └── AuditLogController.cs            # API GET /api/admin/audit-logs [Authorize(Roles = "Admin")][cite: 17]
+    │
+    └── Program.cs                           # Đăng ký DI (AddScoped IAuditLogRepository, IAuditLogService)
+
+
+================================================================================
+FRONTEND IMPLEMENTATION (ĐÃ HOÀN THÀNH 100% THEO ĐÚNG CHUẨN MODULAR COMPONENT)
+================================================================================
+frontend/src/
+├── types/auditLog.ts                          # DTOs & Types: AuditLogFilterDto, AuditLogItemDto, AuditLogCategory
+├── services/auditLogService.ts               # API Client gọi GET /api/admin/audit-logs kèm Bearer Token
+├── components/features/audit-log/
+│   ├── AuditLog.module.css                   # CSS Module thiết kế 1:1 theo auditlog.html
+│   ├── AuditLogFilterBar.tsx                 # Thanh tìm kiếm debounce 300ms + Dropdown Module + Dropdown Role + Date range (Từ - Đến)
+│   ├── AuditLogTable.tsx                     # Bảng dữ liệu hiển thị trực tiếp Trước/Sau + Loading & Empty states
+│   ├── AuditLogRow.tsx                       # Từng hàng dữ liệu: Thời gian (Mono), Người thực hiện (Email/Role), Badge hành động, Tác động (Vn table/id), Giá trị Trước (.valOld), Giá trị Sau (.valNew), IP badge
+│   ├── AuditLogPagination.tsx                # Thanh phân trang (Trang X / Y, bộ đếm sự kiện, nút Previous, số trang, Next)
+│   └── AuditLogManagement.tsx                # Container Component: Quản lý State, Data fetching, Reset bộ lọc
+├── pages/AuditLogPage.tsx                    # Page Container kết nối AdminLayout (activePage="audit-logs", badge UC07) + nút Làm mới bộ lọc
+├── components/layout/admin/AdminLayout.tsx   # Thêm menu 'Nhật ký hoạt động' (icon FileText) vào Sidebar Admin
+└── App.tsx                                   # Đăng ký Route /admin/audit-logs bọc trong ProtectedRoute role Admin

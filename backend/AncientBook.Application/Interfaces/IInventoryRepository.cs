@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AncientBook.Domain.Entities;
 
@@ -8,7 +9,8 @@ namespace AncientBook.Application.Interfaces
         Task<Inventory?> GetByBookIdAsync(int bookId);
         Task<bool> DecreaseStockAsync(int bookId, int quantity);
         Task<bool> IncreaseStockAsync(int bookId, int quantity);
-        Task<List<Inventory>> GetAllAsync(); 
+        Task<List<Inventory>> GetAllAsync();
+        Task AddAsync(Inventory inventory);
         Task UpdateAsync(Inventory inventory);
     }
 }

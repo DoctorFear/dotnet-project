@@ -12,5 +12,7 @@ namespace AncientBook.Application.Interfaces
         Task<StockAlert?> GetByIdAsync(int id);
         Task AddAsync(StockAlert alert);
         Task AddRangeAsync(IEnumerable<StockAlert> alerts);
+        void Update(StockAlert alert);
+        Task SaveChangesAsync();
     }
 }

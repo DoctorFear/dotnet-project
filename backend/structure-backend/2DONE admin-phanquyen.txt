@@ -39,3 +39,24 @@ backend/
     ├── Middlewares/
     │   └── TokenValidationMiddleware.cs        # Chặn token cũ ngay lập tức bằng TokenVersion khi bị đổi quyền hoặc bị khóa[cite: 33]
     └── Program.cs                              # Đăng ký DI IAdminUserService, Middleware & JWT ClaimTypes.Role[cite: 33]
+
+
+================================================================================
+FRONTEND IMPLEMENTATION (ĐÃ HOÀN THÀNH 100% THEO ĐÚNG CHUẨN MODULAR COMPONENT)
+================================================================================
+frontend/src/
+├── types/adminUser.ts                         # Enums (UserRoleEnum) & DTOs (UserFilterDto, UserManagementItemDto,...)
+├── services/adminUserService.ts              # API client gọi /api/admin/users với Bearer Token
+├── components/features/admin-users/
+│   ├── AdminUser.module.css                  # CSS Module chuẩn hóa 1:1 theo dashboard phan quyen.html
+│   ├── UserFilterBar.tsx                     # Thanh Search (debounce 300ms) + Dropdown Role/Status + Button Tạo tài khoản
+│   ├── UserTable.tsx                         # Bảng dữ liệu người dùng + Loading state + Empty state
+│   ├── UserTableRow.tsx                      # Từng hàng người dùng (Avatar initials, Badge role/status, Business Rule checks)
+│   ├── UserPagination.tsx                    # Phân trang người dùng (Bộ đếm dòng, nút Previous, số trang, Next)
+│   ├── CreateUserModal.tsx                   # Modal tạo nhân sự nội bộ (Admin, Staff, Shipper) + cảnh báo mật khẩu khởi tạo
+│   ├── ChangeRoleModal.tsx                   # Modal đổi vai trò nội bộ + cảnh báo an ninh bảo mật
+│   ├── ToggleStatusModal.tsx                 # Modal xác nhận Khóa / Mở khóa tài khoản + cảnh báo thu hồi phiên đăng nhập
+│   └── AdminUserManagement.tsx               # Component container quản lý State, Data fetching, Modals & Toast notifications
+├── pages/AdminUserManagementPage.tsx         # Page container tích hợp vào AdminLayout (activePage="users", badge UC04)
+├── components/layout/admin/AdminLayout.tsx   # Cập nhật menu 'Quản lý & Phân quyền' dẫn tới /admin/users cho role Admin
+└── App.tsx                                   # Đăng ký Route /admin/users bọc trong ProtectedRoute role Admin

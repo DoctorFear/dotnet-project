@@ -82,8 +82,13 @@ builder.Services.AddScoped<IBookTtsSegmentRepository, BookTtsSegmentRepository>(
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<IPhysicalOrderService, PhysicalOrderService>();
 builder.Services.AddScoped<IShipperService, ShipperService>();
+builder.Services.AddScoped<ISupplierService, SupplierService>();
+builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
 builder.Services.AddScoped<IShipperRepository, ShipperRepository>();
 builder.Services.AddScoped<IStockAlertRepository, StockAlertRepository>();
+builder.Services.AddScoped<IStockMovementRepository, StockMovementRepository>();
+builder.Services.AddScoped<ISupplierRepository, SupplierRepository>();
+builder.Services.AddScoped<IPurchaseOrderRepository, PurchaseOrderRepository>();
 builder.Services.AddScoped<ISystemSettingRepository, SystemSettingRepository>();
 
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
@@ -225,6 +230,8 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
         var passwordHasher = services.GetRequiredService<IPasswordHasher>();
+
+        await context.Database.MigrateAsync();
 
         // Thực thi seed
         await DatabaseSeeder.SeedAsync(context, passwordHasher);
