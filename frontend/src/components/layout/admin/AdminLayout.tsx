@@ -20,7 +20,7 @@ import { useUser } from '../../../context/UserContext.tsx';
 import { useAuthAction } from '../../../hooks/useAuthAction';
 import { AdminProfileModal } from '../../features/profile/AdminProfileModal';
 
-type AdminPageKey = 'books' | 'settings' | 'reports' | 'orders' | 'packing' | 'membership' | 'refunds' | 'users' | 'audit-logs' | 'warehouse' | 'shippers';
+type AdminPageKey = 'books' | 'settings' | 'reports' | 'orders' | 'packing' | 'membership' | 'refunds' | 'users' | 'audit-logs' | 'warehouse' | 'shippers' | 'chat';
 
 interface AdminLayoutProps {
     activePage: AdminPageKey;
@@ -41,7 +41,7 @@ const adminMenuItems = [
     { label: 'Quản lý đơn hàng', icon: Package, page: 'orders' as AdminPageKey, path: '/admin/orders' },
     { label: 'Quản lý trả hàng', icon: Package, page: 'refunds' as AdminPageKey, path: '/admin/refunds' },
     { label: 'Tiếp nhận & Đóng gói', icon: Package, page: 'packing' as AdminPageKey, path: '/staff/packing' },
-    { label: 'Live Chat Console', icon: MessageSquare },
+    { label: 'Chăm sóc khách hàng', icon: MessageSquare, page: 'chat' as AdminPageKey, path: '/staff/chat' },
     { label: 'Quản lý Khuyến mãi', icon: Tags },
     { label: 'Quản lý cài đặt', icon: Settings, page: 'settings' as AdminPageKey, path: '/admin/settings' },
     { label: 'Hạng thành viên', icon: Award, page: 'membership' as AdminPageKey, path: '/admin/membership-tiers' },
@@ -61,9 +61,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
     // Quản lý trạng thái đóng/mở modal tài khoản Admin / Staff
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const isChat = activePage === 'chat';
 
     return (
-        <div className={styles.adminShell}>
+        <div className={isChat ? styles.adminShellChat : styles.adminShell}>
             <aside className={styles.adminSidebar}>
                 <div className={styles.sidebarHeader}>
                     <button
@@ -146,7 +147,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 </div>
             </aside>
 
-            <main className={styles.adminMain}>
+            <main className={isChat ? styles.adminMainChat : styles.adminMain}>
                 <header className={styles.adminTopbar}>
                     <div className={styles.topbarTitle}>
                         <h1>{title}</h1>
@@ -157,7 +158,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                         {actions}
                     </div>
                 </header>
-                <div className={styles.contentBody}>{children}</div>
+                <div className={isChat ? styles.contentBodyChat : styles.contentBody}>{children}</div>
             </main>
 
             {/* Modal chỉnh sửa tài khoản Admin/Staff được bóc tách dạng Modular Component */}

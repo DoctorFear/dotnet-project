@@ -39,3 +39,35 @@ backend/
     ├── Hubs/
     │   └── LiveChatHub.cs                      # SignalR Hub: kết nối socket, quản lý phòng chat, quản lý Staff online[cite: 25]
     └── Program.cs                              # Đăng ký SignalR, ánh xạ /hubs/chat và xử lý JWT access_token qua query string[cite: 38]
+
+
+frontend/
+│
+├── src/
+│   ├── types/
+│   │   └── chat.ts                             # Types & DTOs cho Live Chat (CustomerChatSessionDto, StaffChatSessionDto, ChatMessageDto, ChatTimelineItemDto, v.v.)
+│   ├── services/
+│   │   ├── chatService.ts                      # Gọi API Backend (/api/chat & /api/staff/chat)
+│   │   └── chatHubService.ts                   # Quản lý kết nối SignalR Hub (/hubs/chat), Room sessions & Event broadcasting
+│   ├── components/features/
+│   │   ├── live-chat/                          # [UC23] Phân hệ Khách hàng Live Chat Widget
+│   │   │   ├── CustomerChatWidget.module.css   # Styling launcher button, popup window, bubbles, header & footer
+│   │   │   ├── ChatImageLightbox.tsx           # Phóng to ảnh toàn màn hình khi click ảnh trong chat
+│   │   │   ├── CustomerChatMessageItem.tsx     # Bong bóng tin nhắn text + ảnh, format thời gian, danh xưng "Tư vấn viên"
+│   │   │   ├── CustomerChatPendingImage.tsx    # Xem trước và hủy ảnh đính kèm trước khi gửi
+│   │   │   ├── CustomerChatLoginNotice.tsx     # Nhắc nhở đăng nhập tài khoản khi khách vãng lai nhấn chat (BR01 UC23)
+│   │   │   └── CustomerChatWidget.tsx          # Component widget điều phối đóng/mở, socket room, unread dot, gửi tin
+│   │   └── admin-chat/                         # [UC24] Phân hệ Nhân viên & Admin Live Chat Console
+│   │       ├── StaffChatConsole.module.css     # Styling bố cục 3 cột (Queue, Stream, Customer profile)
+│   │       ├── ChatQueueSidebar.tsx            # Cột 1: Hàng đợi 3 tab (Pending, Active, Closed), tìm kiếm, badge tin chưa đọc
+│   │       ├── ChatConversationPane.tsx        # Cột 2: Khung chat, banner trạng thái, timeline trao đổi, nhập text & ảnh
+│   │       ├── ChatCustomerInfoSidebar.tsx     # Cột 3: Hồ sơ khách, thời gian bắt đầu, ô nhập ghi chú nội bộ, quick actions
+│   │       ├── TransferSessionModal.tsx        # Modal chuyển giao phiên cho đồng nghiệp trong ca trực (Luồng A2)
+│   │       ├── ConfirmActionModal.tsx          # Modal xác nhận rời phiên (A3) hoặc kết thúc phiên (A4)
+│   │       └── StaffChatConsole.tsx            # Component điều phối trung tâm UC24, đồng bộ real-time hàng đợi & phòng chat
+│   ├── pages/
+│   │   └── StaffLiveChatPage.tsx               # Trang Live Chat Console bọc AdminLayout (badge UC24)
+│   ├── components/layout/admin/
+│   │   └── AdminLayout.tsx                     # Bổ sung menu "Chăm sóc khách hàng" (/staff/chat)
+│   ├── App.tsx                                 # Route /staff/chat & /admin/chat, nhúng CustomerChatWidget toàn hệ thống
+│   └── vite.config.ts                          # Proxy /hubs WebSocket & HTTP tới backend port 5036

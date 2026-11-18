@@ -34,6 +34,8 @@ import AuditLogPage from './pages/AuditLogPage';
 import WarehouseLogisticsPage from './pages/WarehouseLogisticsPage';
 import StaffShipperManagementPage from './pages/StaffShipperManagementPage';
 import OrderTrackingPage from './pages/OrderTrackingPage';
+import StaffLiveChatPage from './pages/StaffLiveChatPage';
+import { CustomerChatWidget } from './components/features/live-chat/CustomerChatWidget';
 const WorkflowPreviewPage = import.meta.env.DEV ? React.lazy(() => import('./dev/WorkflowPreviewPage')) : null;
 
 export const App: React.FC = () => {
@@ -89,6 +91,7 @@ export const App: React.FC = () => {
                         <Route path="/admin/refunds" element={<AdminRefundManagementPage />} />
                         <Route path="/staff/refunds" element={<AdminRefundManagementPage />} />
                         <Route path="/staff/packing" element={<FulfillmentPage />} />
+                        <Route path="/staff/chat" element={<StaffLiveChatPage />} />
                     </Route>
 
                     {/* 4. Shipper Routes: Quản lý đơn hàng và giao nhận */}
@@ -108,6 +111,8 @@ export const App: React.FC = () => {
                         <Route path="/admin/audit-logs" element={<AuditLogPage />} />
                     </Route>
                 </Routes>
+                {/* Widget Live Chat nổi dành cho độc giả / khách hàng trên Storefront (UC23) */}
+                <CustomerChatWidget />
             </Router>
         </UserProvider>
     );

@@ -1,0 +1,544 @@
+.chatContainer {
+    position: fixed;
+    bottom: 28px;
+    right: 32px;
+    z-index: 1000;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* NÚT BONG BÓNG NỔI LAUNCHER */
+.chatLauncherBtn {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: #0D226B;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 2px solid #FDBE34;
+    box-shadow: 0 8px 24px rgba(13, 34, 107, 0.28);
+    transition: all 0.25s ease;
+    position: relative;
+}
+
+.chatLauncherBtn:hover {
+    background: #0B409C;
+    transform: scale(1.05);
+}
+
+.unreadDot {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #ef4444;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    display: block;
+    animation: pulse 1.8s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* CỬA SỔ KHUNG CHAT */
+.chatWidgetWindow {
+    position: fixed;
+    bottom: 28px;
+    right: 32px;
+    width: 390px;
+    max-width: calc(100vw - 32px);
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1.5px solid #dce6f7;
+    box-shadow: 0 12px 36px rgba(7, 18, 51, 0.16);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 1001;
+    animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* HEADER */
+.chatHeader {
+    background: #0D226B;
+    color: #F2F7FF;
+    padding: 13px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #FDBE34;
+}
+
+.headerAgent {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.brandName {
+    font-size: 17px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.2;
+    display: inline-flex;
+    align-items: baseline;
+    user-select: none;
+}
+
+.bookText {
+    font-size: 15px;
+    font-weight: 900;
+    color: #FDBE34;
+    letter-spacing: 0.8px;
+    margin-left: 2px;
+}
+
+.accentDot {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    background-color: #FDBE34;
+    border-radius: 50%;
+    margin-left: 3px;
+}
+
+.agentStatus {
+    font-size: 11px;
+    color: #9eccff;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 2px;
+}
+
+.statusIndicator {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+}
+
+.btnCloseHeader {
+    background: rgba(255, 255, 255, 0.12);
+    border: none;
+    color: #ffffff;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.15s;
+}
+
+.btnCloseHeader:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* BODY */
+.chatBody {
+    height: 360px;
+    padding: 16px;
+    overflow-y: auto;
+    background: #fafcff;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 13px;
+    scroll-behavior: smooth;
+}
+
+/* LỜI CHÀO / TIN NHẮN ĐẾN */
+.msgIncoming {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    max-width: 86%;
+}
+
+.msgAvatarSmall {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #0D226B;
+    color: #FDBE34;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.msgContent {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.msgSenderName {
+    font-size: 11px;
+    font-weight: 700;
+    color: #0B409C;
+}
+
+.msgBubbleAgent {
+    background: #edf3fd;
+    border: 1px solid #dce6f7;
+    color: #071233;
+    padding: 9px 13px;
+    border-radius: 10px;
+    border-top-left-radius: 2px;
+    line-height: 1.45;
+    word-break: break-word;
+}
+
+.msgBubbleAgentCombo {
+    background: #edf3fd;
+    border: 1px solid #dce6f7;
+    color: #071233;
+    border-radius: 10px;
+    border-top-left-radius: 2px;
+    overflow: hidden;
+    width: 230px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* TIN NHẮN ĐI */
+.msgOutgoing {
+    align-self: flex-end;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    max-width: 86%;
+    gap: 3px;
+}
+
+.msgBubbleUser {
+    background: #0B409C;
+    color: #ffffff;
+    padding: 9px 13px;
+    border-radius: 10px;
+    border-top-right-radius: 2px;
+    line-height: 1.45;
+    word-break: break-word;
+}
+
+.msgBubbleUserCombo {
+    background: #0B409C;
+    color: #ffffff;
+    border-radius: 10px;
+    border-top-right-radius: 2px;
+    overflow: hidden;
+    width: 230px;
+    display: flex;
+    flex-direction: column;
+}
+
+.chatClickableImg {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+    cursor: zoom-in;
+    background: #e2ecfa;
+    transition: opacity 0.2s ease;
+}
+
+.chatClickableImg:hover {
+    opacity: 0.94;
+}
+
+.msgBubbleText {
+    padding: 8px 10px;
+    font-size: 12.5px;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.msgTime {
+    font-size: 10px;
+    color: #5b6e99;
+}
+
+/* SYSTEM EVENT BUBBLE */
+.systemEventBubble {
+    align-self: center;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-weight: 500;
+    max-width: 90%;
+    text-align: center;
+    line-height: 1.35;
+    margin: 4px 0;
+}
+
+/* KHUNG FOOTER */
+.chatFooterWrapper {
+    border-top: 1px solid #dce6f7;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+}
+
+.pendingImgBar {
+    padding: 7px 12px;
+    background: #F2F7FF;
+    border-bottom: 1px dashed #dce6f7;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.pendingThumbBox {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+}
+
+.pendingThumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1.5px solid #0B409C;
+}
+
+.btnRemovePending {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    font-size: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.pendingText {
+    font-size: 11px;
+    color: #5b6e99;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chatFooter {
+    padding: 9px 12px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.btnAttachImg {
+    background: transparent;
+    border: 1px solid #dce6f7;
+    border-radius: 6px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #5b6e99;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.btnAttachImg:hover {
+    color: #0B409C;
+    border-color: #0B409C;
+    background: #F2F7FF;
+}
+
+.hiddenFileInput {
+    display: none;
+}
+
+.chatInput {
+    flex: 1;
+    padding: 8px 11px;
+    font-size: 13px;
+    border: 1.5px solid #dce6f7;
+    border-radius: 6px;
+    outline: none;
+    font-family: inherit;
+    color: #071233;
+}
+
+.chatInput:focus {
+    border-color: #0B409C;
+}
+
+.btnSend {
+    background: #0B409C;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+
+.btnSend:hover:not(:disabled) {
+    background: #0D226B;
+}
+
+.btnSend:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* NOTICE GUEST */
+.loginNoticeBox {
+    position: fixed;
+    bottom: 96px;
+    right: 32px;
+    width: 310px;
+    background: #ffffff;
+    border-radius: 10px;
+    border: 1.5px solid #dce6f7;
+    box-shadow: 0 10px 28px rgba(7, 18, 51, 0.14);
+    z-index: 1002;
+    overflow: hidden;
+    animation: slideUp 0.2s ease;
+}
+
+.loginNoticeHeader {
+    background: #0D226B;
+    color: #fff;
+    padding: 9px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.loginNoticeTitle {
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btnCloseNotice {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.loginNoticeBody {
+    padding: 12px;
+    font-size: 12px;
+    color: #071233;
+    line-height: 1.45;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btnLoginAction {
+    background: #0B409C;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btnLoginAction:hover {
+    background: #0D226B;
+}
+
+/* LIGHTBOX MODAL */
+.lightboxModal {
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 18, 51, 0.88);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 24px;
+    animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.lightboxContent {
+    max-width: 85vw;
+    max-height: 80vh;
+    border-radius: 8px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    object-fit: contain;
+    background: #000;
+}
+
+.lightboxClose {
+    position: absolute;
+    top: 24px;
+    right: 32px;
+    background: rgba(255, 255, 255, 0.18);
+    border: none;
+    color: #fff;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+}
+
+.lightboxClose:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.lightboxCaption {
+    color: #F2F7FF;
+    font-size: 12px;
+    margin-top: 10px;
+}
