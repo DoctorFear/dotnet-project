@@ -1,0 +1,138 @@
+.formColumn {
+    flex: 1;
+    padding: 44px 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.formTitle {
+    font-family: 'Fraunces', serif, Georgia;
+    font-size: 28px;
+    font-weight: 600;
+    color: #0D226B;
+    letter-spacing: -0.3px;
+    margin-bottom: 4px;
+}
+
+.formSubtitle {
+    font-size: 13.5px;
+    color: #5b6e99;
+    margin-bottom: 24px;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+}
+
+.inputGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 20px;
+}
+
+.formGroup {
+    margin-bottom: 6px;
+}
+
+.formLabel {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #071233;
+    margin-bottom: 6px;
+}
+
+.req {
+    color: #d93025;
+    margin-left: 2px;
+}
+
+.formInput {
+    width: 100%;
+    padding: 10px 4px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #071233;
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid #dce6f7;
+    outline: none;
+    transition: border-color 0.15s ease;
+    box-sizing: border-box;
+}
+
+.formInput:focus {
+    border-bottom-color: #0B409C;
+}
+
+.formInput.isInvalid {
+    border-bottom-color: #d93025;
+}
+
+.formInput::placeholder {
+    color: #a8b6d6;
+}
+
+.errorText {
+    display: block;
+    color: #d93025;
+    font-size: 11px;
+    margin-top: 4px;
+    min-height: 16px;
+}
+
+.btnRegister {
+    margin-top: 18px;
+    width: 100%;
+    padding: 12px 16px;
+    background: #0B409C;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.btnRegister:hover:not(:disabled) {
+    background: #0D226B;
+}
+
+.btnRegister:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.formBottomRow {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 18px;
+    font-size: 12.5px;
+    color: #5b6e99;
+}
+
+.formLink {
+    color: #0B409C;
+    font-weight: 600;
+    text-decoration: none;
+    margin-left: 4px;
+}
+
+.formLink:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+    .inputGrid {
+        grid-template-columns: 1fr;
+        gap: 12px 0;
+    }
+    .formColumn {
+        padding: 32px 24px;
+    }
+}

@@ -1,0 +1,32 @@
+.addressSectionWrapper {
+    grid-column: span 2;
+    margin-top: 6px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--hairline, #dce6f7);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.btnAddSecondAddress {
+    margin-top: 6px;
+    padding: 10px 14px;
+    background: #fafcff;
+    color: var(--catalina, #0D226B);
+    border: 1.5px dashed var(--hairline, #dce6f7);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.btnAddSecondAddress:hover {
+    border-color: var(--egyptian, #0B409C);
+    background: var(--alice, #F2F7FF);
+}

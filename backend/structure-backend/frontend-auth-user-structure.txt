@@ -1,0 +1,127 @@
+================================================================================
+CẤU TRÚC THƯ MỤC FRONTEND - PHÂN HỆ XÁC THỰC (AUTH) & QUẢN LÝ NGƯỜI DÙNG (USER PROFILE)
+Dự án: ancientBOOK (React + TypeScript + Vite)
+Đã bao gồm: Cấu trúc hiện tại & Cấu trúc Component hóa (Modular Component Architecture) chuẩn bị Refactor
+================================================================================
+
+frontend/src/
+│
+├── types/
+│   └── user.ts
+│       ├── Auth DTOs:
+│       │   ├── LoginRequestDto               (Username, Password)
+│       │   ├── LoginResponseDto              (UserId, Username, Email, FullName, Role, FPoints, AccessToken, RefreshToken)
+│       │   ├── RegisterRequestDto            (FullName, Username, Email, PhoneNumber, Password, ConfirmPassword)
+│       │   ├── RegisterResponseDto           (UserId, Username, Email, FullName, Role, FPoints, CreatedAt)
+│       │   ├── ForgotPasswordRequestDto      (Username, Email)
+│       │   └── ResetPasswordRequestDto       (Token, NewPassword, ConfirmPassword)
+│       ├── Profile DTOs:
+│       │   ├── AddressDto                    (Province, Ward, StreetAddress, IsDefault)
+│       │   ├── UserProfileResponseDto        (Id, Username, Email, FullName, PhoneNumber, Role, HasPassword, Addresses[])
+│       │   ├── UpdateProfileRequestDto       (FullName, Email, PhoneNumber, Addresses[])
+│       │   └── ChangePasswordRequestDto      (CurrentPassword, NewPassword, ConfirmNewPassword)
+│       └── Chung:
+│           ├── UserInfo, UserRole ('Member' | 'Staff' | 'Shipper' | 'Admin')
+│           └── ApiResponse<T> (success, message, data)
+│
+├── services/
+│   ├── apiClient.ts
+│   │   ├── Tự động gắn Bearer Token vào header Authorization cho mọi request
+│   │   ├── Silent Refresh Token: Bắt mã lỗi 401 tự gọi /Auth/refresh-token đổi AccessToken mới
+│   │   ├── Chống Race Condition: Dùng Promise locking (refreshPromise) khi nhiều request 401 cùng lúc
+│   │   └── Tự động Logout & chuyển hướng về /login khi Refresh Token hết hạn hoặc không hợp lệ
+│   │
+│   ├── authService.ts
+│   │   ├── login(payload)                    -> POST /api/Auth/login
+│   │   ├── register(payload)                 -> POST /api/Auth/register
+│   │   ├── logout()                          -> POST /api/Auth/logout
+│   │   ├── refreshToken(token)               -> POST /api/Auth/refresh-token
+│   │   ├── forgotPassword(payload)           -> POST /api/Auth/forgot-password
+│   │   ├── verifyResetToken(token)           -> GET  /api/Auth/verify-reset-token?token=...
+│   │   └── resetPassword(payload)            -> POST /api/Auth/reset-password
+│   │
+│   └── userService.ts
+│       ├── getProfile()                      -> GET  /api/User/profile
+│       ├── updateProfile(payload)            -> PUT  /api/User/profile
+│       └── changePassword(payload)           -> POST /api/User/change-password
+│
+├── context/
+│   └── UserContext.tsx
+│       ├── Quản lý Global State: currentUser, accessToken, refreshToken, isLoggedIn
+│       ├── Đồng bộ tức thì với localStorage ('currentUser', 'accessToken', 'refreshToken')
+│       └── Cung cấp các action:
+│           ├── loginSuccess(authData)        -> Lưu state & localStorage khi đăng nhập thành công
+│           ├── logoutClient()                -> Xóa sạch token & state khi đăng xuất
+│           └── updateUser(partialInfo)       -> Cập nhật FullName, Email trên toàn hệ thống mà không cần reload
+│
+├── hooks/
+│   ├── useToastNotifications.ts
+│   │   └── Quản lý hàng đợi và hiển thị thông báo popup (Toast message, auto dismiss 3-4s)
+│   │
+│   └── useAuthAction.ts
+│       ├── Xử lý các luồng nghiệp vụ Async: handleLogin, handleRegister, handleLogout,
+│       │   handleForgotPassword, handleResetPassword
+│       └── Tự động quản lý cờ isLoading, bắn Toast thông báo và điều hướng (navigate) theo Role:
+│           ├── Admin   -> /admin/settings
+│           ├── Staff   -> /staff/books
+│           ├── Shipper -> /shipper/orders
+│           └── Member  -> Trang trước đó hoặc Trang chủ (/)
+│
+├── utils/
+│   └── vietnamAddress.ts
+│       ├── Tích hợp API Roooming (https://vietnam-address.roooming.io.vn)
+│       ├── Cố định tỉnh thành: "Thành phố Hồ Chí Minh" (Mã ID: 29)
+│       ├── getHcmWardsFromApi() -> Lấy động danh sách 168 Phường/Xã thực tế tại TP.HCM
+│       └── Cơ chế Fallback Offline đầy đủ đảm bảo giao diện không bao giờ bị trắng khi mất mạng
+│
+├── components/
+│   │
+│   ├── common/
+│   │   ├── ProtectedRoute.tsx                # Route Guard: Chặn truy cập nếu chưa đăng nhập hoặc sai Role
+│   │   ├── ToastNotification.tsx             # Component hiển thị UI popup toast (xanh lá #16a34a / đỏ #dc2626)
+│   │   └── ToastNotification.module.css
+│   │
+│   ├── layout/
+│   │   ├── TopBar.tsx                        # Thanh tiện ích trên cùng: Hotline 1900 636 467, Freeship
+│   │   ├── Header.tsx & Header.module.css    # Logo, tìm kiếm (ẩn khi showSearch={false}), User Pill dropdown
+│   │   └── Navbar.tsx & Navbar.module.css    # Khóa chiều cao chuẩn 44px, Thể loại, NXB, F-Points & Hạng thành viên
+│   │
+│   └── features/                             # [KHU VỰC COMPONENT HÓA - MODULAR FEATURE ARCHITECTURE]
+│       │
+│       ├── auth/                             # Các component tính năng Xác thực (Auth)
+│       │   ├── AuthVisualSide.tsx            # Cột banner/quote bên trái dùng chung (quote, tác giả, panel kicker)
+│       │   ├── AuthVisualSide.module.css
+│       │   ├── PasswordField.tsx             # Ô input mật khẩu tái sử dụng (icon mắt bật/tắt, ẩn mắt native, validate)
+│       │   ├── PasswordField.module.css
+│       │   ├── LoginForm.tsx                 # Form đăng nhập (Tên đăng nhập, Mật khẩu, nút Đăng nhập)
+│       │   ├── RegisterForm.tsx              # Form đăng ký (Grid 2 cột: Họ tên, Username, Email, SĐT, MK, Xác nhận MK)
+│       │   ├── ForgotPasswordForm.tsx        # Form quên mật khẩu (Username, Email, tự động reset form sau khi gửi)
+│       │   └── ResetPasswordForm.tsx         # Form đặt lại mật khẩu mới + Màn hình cảnh báo khi token quá 15 phút
+│       │
+│       └── profile/                          # Các component tính năng Quản lý tài khoản (Profile)
+│           ├── ProfileInfoForm.tsx           # Form cập nhật thông tin cá nhân (Họ tên, SĐT, Email/Username readonly)
+│           ├── AddressSection.tsx            # Khối quản lý danh sách địa chỉ nhận hàng (tối đa 2 địa chỉ)
+│           ├── AddressItemCard.tsx           # Từng thẻ địa chỉ (cố định TP.HCM, Phường dropdown Roooming, số nhà, nút Xóa)
+│           └── ChangePasswordSection.tsx     # Panel toggle đổi mật khẩu (Mật khẩu cũ, Mật khẩu mới >= 8 ký tự, Nhập lại MK)
+│
+├── pages/                                    # [PAGE CONTAINERS - SIÊU GỌN CHỈ 30-50 DÒNG]
+│   ├── LoginPage.tsx                         # Ráp: TopBar + Header + AuthVisualSide + LoginForm
+│   ├── LoginPage.module.css       
+│   ├── RegisterPage.tsx                      # Ráp: TopBar + Header + AuthVisualSide + RegisterForm
+│   ├── RegisterPage.module.css    
+│   ├── ForgotPasswordPage.tsx                # Ráp: TopBar + Header + AuthVisualSide + ForgotPasswordForm
+│   ├── ForgotPasswordPage.module.css
+│   ├── ResetPasswordPage.tsx                 # Ráp: TopBar + Header + AuthVisualSide + ResetPasswordForm
+│   ├── ResetPasswordPage.module.css
+│   ├── ProfilePage.tsx                       # Ráp: TopBar + Header + Navbar + ProfileInfoForm + AddressSection + ChangePasswordSection
+│   └── ProfilePage.module.css
+│
+└── App.tsx
+    ├── Định tuyến công khai (Public Routes):
+    │   ├── /login                           -> <LoginPage />
+    │   ├── /register                        -> <RegisterPage />
+    │   ├── /forgot-password                 -> <ForgotPasswordPage />
+    │   └── /reset-password                  -> <ResetPasswordPage />
+    └── Định tuyến bảo vệ (Protected Routes):
+        └── /profile                         -> <ProtectedRoute><ProfilePage /></ProtectedRoute>
+================================================================================

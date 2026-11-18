@@ -1,0 +1,116 @@
+.addressBox {
+    background: #fafcff;
+    border: 1.5px solid var(--hairline, #dce6f7);
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin-top: 8px;
+}
+
+.addressBoxHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.addressBoxTitle {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--catalina, #0D226B);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btnRemoveAddress {
+    background: none;
+    border: none;
+    color: #d93838;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: background 0.15s ease;
+}
+
+.btnRemoveAddress:hover {
+    background: #fdf2f2;
+}
+
+.formGridLayout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 20px;
+}
+
+.formField {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.formField.full {
+    grid-column: span 2;
+}
+
+.fieldLabel {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink, #071233);
+}
+
+.formControl {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 13.5px;
+    font-family: inherit;
+    color: var(--ink, #071233);
+    border: 1.5px solid var(--hairline, #dce6f7);
+    border-radius: 6px;
+    outline: none;
+    background: #fff;
+    transition: border-color 0.15s ease;
+    box-sizing: border-box;
+}
+
+.formControl:focus {
+    border-color: var(--egyptian, #0B409C);
+}
+
+.formControl.errorState {
+    border-color: #d93838;
+    background: #fdf2f2;
+}
+
+.provinceStatic {
+    background-color: var(--alice, #F2F7FF) !important;
+    color: #475569 !important;
+    cursor: default;
+}
+
+.wardSelectControl {
+    background-color: #ffffff !important;
+    color: #071233 !important;
+}
+
+select.formControl {
+    cursor: pointer;
+}
+
+.fieldErrorMsg {
+    font-size: 11px;
+    color: #d93838;
+    font-weight: 600;
+    display: block;
+}
+
+@media (max-width: 600px) {
+    .formGridLayout {
+        grid-template-columns: 1fr;
+    }
+    .formField.full {
+        grid-column: span 1;
+    }
+}
