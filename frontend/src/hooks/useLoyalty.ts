@@ -1,11 +1,13 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useWorkflow } from '../context/WorkflowContext';
+import { useUser } from '../context/UserContext';
 import { useWorkflowResource } from './useWorkflowResource';
 import { useToastNotifications } from './useToastNotifications';
 import type { OrderPoints, PointPreview } from '../types/workflow';
 
 export function useLoyalty() {
     const { api } = useWorkflow();
+    const { user, updateUser } = useUser();
     const [page, setPage] = useState(1);
     const load = useCallback(async () => {
         const [balance, tiers, history] = await Promise.all([
@@ -16,6 +18,14 @@ export function useLoyalty() {
         return { balance, tiers: [...tiers].sort((a, b) => a.minSpending - b.minSpending), history };
     }, [api, page]);
     const resource = useWorkflowResource(load);
+    const currentPoints = resource.data?.balance.currentPoints;
+
+    useEffect(() => {
+        if (currentPoints !== undefined && user?.fPoints !== currentPoints) {
+            updateUser({ fPoints: currentPoints });
+        }
+    }, [currentPoints, updateUser, user?.fPoints]);
+
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [receipt, setReceipt] = useState<OrderPoints | null>(null);

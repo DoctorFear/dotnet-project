@@ -130,6 +130,26 @@ public partial class FPointService
 
         bool usedFPoints = order.DiscountAmount > 0 || order.PointsId != null;
 
+        var redeem = await _db.Set<FPoints>().FirstOrDefaultAsync(p =>
+            p.SourceKey == $"Order:{orderId}:Redeem" && p.PointUsed > 0);
+        var refundRedeem = order.Status is OrderStatus.Failed or OrderStatus.Returned;
+        if (refundRedeem && redeem != null && redeem.Status != PointStatus.Cancelled)
+        {
+            await WorkflowSupport.LockUserAsync(_db, order.UserId);
+            var user = await _db.Set<User>().FirstAsync(u => u.Id == order.UserId);
+            var before = user.FPoints;
+            user.FPoints = checked(user.FPoints + redeem.PointUsed);
+            redeem.Status = PointStatus.Cancelled;
+            redeem.UpdatedBy = "System";
+            WorkflowSupport.Audit(_db, "RedeemedPointsRefunded", "FPoints", redeem.Id,
+                new { Status = PointStatus.Available.ToString(), FPoints = before },
+                new { Status = redeem.Status.ToString(), user.FPoints },
+                details: $"Đơn #{orderId}: hoàn {redeem.PointUsed} F-Point do đơn {order.Status}.");
+            WorkflowSupport.Notify(_db, $"Đã hoàn {redeem.PointUsed} F-Point của đơn #{orderId} vào ví.",
+                orderId, order.UserId);
+            await _db.SaveChangesAsync();
+        }
+
         var earn = await _db.Set<FPoints>().FirstOrDefaultAsync(p => p.SourceKey == $"Order:{orderId}:Earn");
         if (!usedFPoints
             && earn?.Status == PointStatus.Cancelled

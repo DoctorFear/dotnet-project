@@ -11,7 +11,6 @@ import {
     UserCog,
     Warehouse,
     UserCircle,
-    Award,
     FileText,
     Truck
 } from 'lucide-react';
@@ -20,7 +19,7 @@ import { useUser } from '../../../context/UserContext.tsx';
 import { useAuthAction } from '../../../hooks/useAuthAction';
 import { AdminProfileModal } from '../../features/profile/AdminProfileModal';
 
-type AdminPageKey = 'books' | 'settings' | 'reports' | 'orders' | 'packing' | 'membership' | 'refunds' | 'users' | 'audit-logs' | 'warehouse' | 'shippers' | 'chat';
+type AdminPageKey = 'books' | 'settings' | 'reports' | 'orders' | 'packing' | 'refunds' | 'users' | 'audit-logs' | 'warehouse' | 'shippers' | 'chat';
 
 interface AdminLayoutProps {
     activePage: AdminPageKey;
@@ -44,7 +43,6 @@ const adminMenuItems = [
     { label: 'Chăm sóc khách hàng', icon: MessageSquare, page: 'chat' as AdminPageKey, path: '/staff/chat' },
     { label: 'Quản lý Khuyến mãi', icon: Tags },
     { label: 'Quản lý cài đặt', icon: Settings, page: 'settings' as AdminPageKey, path: '/admin/settings' },
-    { label: 'Hạng thành viên', icon: Award, page: 'membership' as AdminPageKey, path: '/admin/membership-tiers' },
 ];
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({
@@ -85,7 +83,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                     {adminMenuItems
                         .filter((item) =>
                             user?.role === 'Admin'
-                                ? ['reports', 'settings', 'membership', 'users', 'audit-logs'].includes(item.page ?? '')
+                                ? ['reports', 'settings', 'users', 'audit-logs'].includes(item.page ?? '')
                                 : !['reports', 'settings', 'users', 'audit-logs'].includes(item.page ?? '') && item.icon !== UserCog
                         )
                         .map((item) => {

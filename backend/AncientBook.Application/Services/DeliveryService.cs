@@ -144,10 +144,11 @@ public class DeliveryService : IDeliveryService
         WorkflowSupport.Audit(_db, "DeliveryStatusUpdated", "Order", orderId,
             new { Status = previous }, new { order.Status, order.IsPaid }, shipperUserId, note);
         await _db.SaveChangesAsync();
+        if (next == OrderStatus.Failed)
+            await _points.ReconcileOrderPointsAsync(orderId);
         if (next == OrderStatus.Completed)
         {
             await _points.AwardCompletedOrderAsync(orderId);
-            // API E-Book tặng xác thực quyền đọc theo đơn sách vật lý đã hoàn thành và thanh toán.
             WorkflowSupport.Notify(_db, $"Đơn #{orderId} đã giao thành công. Điểm thưởng được ghi nhận theo thời hạn đổi trả; E-Book tặng kèm (nếu có) đã được mở.", orderId, order.UserId);
             await _db.SaveChangesAsync();
         }

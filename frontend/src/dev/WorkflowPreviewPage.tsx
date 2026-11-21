@@ -6,7 +6,6 @@ import ShipperPortalPage from '../pages/ShipperPortalPage';
 import FulfillmentPage from '../pages/FulfillmentPage';
 import LoyaltyPage from '../pages/LoyaltyPage';
 import MemberReviewsPage from '../pages/MemberReviewsPage';
-import MembershipConfigPage from '../pages/MembershipConfigPage';
 import styles from '../components/features/workflow/Workflow.module.css';
 
 export default function WorkflowPreviewPage() {
@@ -18,7 +17,6 @@ export default function WorkflowPreviewPage() {
         { key: 'points', label: 'Ví F-Point' },
         { key: 'membership', label: 'Hạng thành viên' },
         { key: 'reviews', label: 'Đánh giá' },
-        { key: 'tiers', label: 'Cấu hình hạng' },
     ];
     return (
         <WorkflowContext.Provider value={{ api, preview: true }}>
@@ -48,8 +46,6 @@ export default function WorkflowPreviewPage() {
                 <LoyaltyPage membership={screen === 'membership'} />
             ) : screen === 'reviews' ? (
                 <MemberReviewsPage />
-            ) : screen === 'tiers' ? (
-                <MembershipConfigPage />
             ) : (
                 <ShipperPortalPage />
             )}

@@ -389,15 +389,6 @@ export function createWorkflowDemo(): WorkflowApi {
         balance: async () => wait(balance),
         pointHistory: async (p, size) => wait(page(history, p, size)),
         tiers: async () => wait(tiers),
-        updateTier: async (tier) => {
-            if (tier.minSpending < 0 || tier.pointRate < 0 || tier.pointRate > 100)
-                throw new Error('Cấu hình không hợp lệ.');
-            Object.assign(
-                tiers.find((t) => t.id === tier.id)!,
-                tier,
-            );
-            return wait({});
-        },
         previewPoints: async (pointsToUse, totalAmount) => {
             const max = Math.min(1000, balance.currentPoints, Math.floor(totalAmount / 200));
             if (!Number.isInteger(pointsToUse) || pointsToUse < 0 || pointsToUse > max)

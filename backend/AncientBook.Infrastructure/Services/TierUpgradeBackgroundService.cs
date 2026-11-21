@@ -9,7 +9,6 @@ using Microsoft.Data.SqlClient;
 
 namespace AncientBook.Infrastructure.Services;
 
-// Đối soát định kỳ điểm và hạng, bổ sung cho xử lý ngay khi đơn hoàn thành hoặc thanh toán online.
 public class TierUpgradeBackgroundService(IServiceScopeFactory scopes, ILogger<TierUpgradeBackgroundService> logger) : BackgroundService
 {
     private const int BatchSize = 100;
@@ -34,7 +33,6 @@ public class TierUpgradeBackgroundService(IServiceScopeFactory scopes, ILogger<T
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { }
     }
 
-    // Đọc từng nhóm có giới hạn và quay vòng ID để đơn lỗi không chặn các đơn phía sau.
     public async Task ReconcileBatchAsync(CancellationToken stoppingToken)
     {
         List<int> orderIds;
@@ -50,6 +48,9 @@ public class TierUpgradeBackgroundService(IServiceScopeFactory scopes, ILogger<T
                      (o.Status == OrderStatus.Pending || o.Status == OrderStatus.Confirmed) &&
                      o.OrderItems.Any() && !o.OrderItems.Any(i => i.PurchaseType == PurchaseType.Physical))
                      || db.FPoints.Any(p => p.OrderId == o.Id && p.Status == PointStatus.Pending)
+                     || o.Status == OrderStatus.Failed
+                        && db.FPoints.Any(p => p.SourceKey == "Order:" + o.Id + ":Redeem"
+                            && p.Status != PointStatus.Cancelled)
                      || o.Status == OrderStatus.Completed && o.IsPaid
                         && db.FPoints.Any(p => p.OrderId == o.Id && p.Status == PointStatus.Cancelled)
                         && db.OrderStatusHistories.Any(h => h.OrderId == o.Id && h.ToStatus == OrderStatus.Completed
@@ -63,7 +64,6 @@ public class TierUpgradeBackgroundService(IServiceScopeFactory scopes, ILogger<T
             catch (Exception ex) when (attempt < 2 && !stoppingToken.IsCancellationRequested &&
                 IsReadTimeout(ex))
             {
-                // Chỉ thử lại truy vấn danh sách; không chạy lại transaction hoặc thay đổi tồn kho ở đây.
                 logger.LogWarning("SQL timeout khi đọc danh sách đối soát; thử lại {Attempt}/2.", attempt + 1);
                 await Task.Delay(TimeSpan.FromSeconds(attempt + 1), stoppingToken);
             }

@@ -52,7 +52,6 @@ export const workflowService = {
             `/FPoint/history?${queryString({ pageNumber, pageSize })}`,
         ),
     tiers: () => requestApi<MembershipTier[]>('/FPoint/tiers'),
-    updateTier: (tier: MembershipTier) => requestApi<unknown>(`/FPoint/tiers/${tier.id}`, json('PUT', tier)),
     previewPoints: (pointsToUse: number, totalAmount: number) =>
         requestApi<PointPreview>('/FPoint/apply', json('POST', { pointsToUse, totalAmount })),
     orderPoints: (id: number) => requestApi<OrderPoints>(`/FPoint/orders/${id}/points`),

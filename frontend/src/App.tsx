@@ -26,7 +26,6 @@ import ShipperPortalPage from './pages/ShipperPortalPage';
 import FulfillmentPage from './pages/FulfillmentPage';
 import LoyaltyPage from './pages/LoyaltyPage';
 import MemberReviewsPage from './pages/MemberReviewsPage';
-import MembershipConfigPage from './pages/MembershipConfigPage';
 import AdminRefundManagementPage from './pages/AdminRefundManagmentPage';
 import EbookReaderPage from './pages/EBookReadingPage';
 import AdminUserManagementPage from './pages/AdminUserManagementPage';
@@ -97,10 +96,6 @@ export const App: React.FC = () => {
                     {/* 4. Shipper Routes: Quản lý đơn hàng và giao nhận */}
                     <Route element={<ProtectedRoute allowedRoles={['Shipper']} />}>
                         <Route path="/shipper/orders" element={<ShipperPortalPage />} />
-                    </Route>
-
-                    <Route element={<ProtectedRoute allowedRoles={['Staff', 'Admin']} />}>
-                        <Route path="/admin/membership-tiers" element={<MembershipConfigPage />} />
                     </Route>
 
                     {/* 5. Admin Only Routes: Chỉ Super Admin / Quản trị viên tối cao cấu hình hệ thống */}

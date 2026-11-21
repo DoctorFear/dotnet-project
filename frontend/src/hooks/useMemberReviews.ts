@@ -1,11 +1,13 @@
 import { useCallback, useState } from 'react';
 import { useWorkflow } from '../context/WorkflowContext';
+import { useUser } from '../context/UserContext';
 import { useWorkflowResource } from './useWorkflowResource';
 import { useToastNotifications } from './useToastNotifications';
 import type { MemberReview, ReviewDraft, ReviewOrder } from '../types/workflow';
 
 export function useMemberReviews() {
     const { api } = useWorkflow();
+    const { updateUser } = useUser();
     const [page, setPage] = useState(1);
     const [tab, setTab] = useState<'pending' | 'reviewed'>('pending');
     const load = useCallback(async () => {
@@ -23,8 +25,13 @@ export function useMemberReviews() {
         setBusy(true);
         setError('');
         try {
-            if (editor?.review) await api.updateReview(editor.review.id, draft);
-            else await api.createReview(draft);
+            if (editor?.review) {
+                await api.updateReview(editor.review.id, draft);
+            } else {
+                await api.createReview(draft);
+                const balance = await api.balance();
+                updateUser({ fPoints: balance.currentPoints });
+            }
             notifications.notify(
                 editor?.review
                     ? 'Đã cập nhật đánh giá. Không thưởng thêm điểm.'

@@ -4,9 +4,12 @@ import { userService } from '../services/userService';
 import type { Address } from '../types/address';
 import { useNavigate } from 'react-router-dom';
 import { useCheckoutPoints } from './useCheckoutPoints';
+import { useUser } from '../context/UserContext';
+import { workflowService } from '../services/workflowService';
 
 export const useCheckout = (cartItems: any[]) => {
     const navigate = useNavigate();
+    const { user, updateUser } = useUser();
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [selectedAddrId, setSelectedAddrId] = useState<number>(0);
     const [, setUserId] = useState<number>(0);
@@ -111,6 +114,13 @@ export const useCheckout = (cartItems: any[]) => {
 
         try {
             const data = await createOrder(checkoutRequest);
+
+            if (pointsUsed > 0) {
+                void workflowService.balance().then(
+                    (balance) => updateUser({ fPoints: balance.currentPoints }),
+                    () => user && updateUser({ fPoints: Math.max(0, user.fPoints - pointsUsed) }),
+                );
+            }
 
             if (paymentMethod === 'momo') {
                 try {
