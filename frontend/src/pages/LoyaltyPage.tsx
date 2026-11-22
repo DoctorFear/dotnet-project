@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Award,
@@ -29,10 +29,6 @@ export default function LoyaltyPage({
     const { preview } = useWorkflow();
     const [amount, setAmount] = useState('200000');
     const [points, setPoints] = useState('0');
-    const [accepted, setAccepted] = useState(false);
-    useEffect(() => {
-        setAccepted(false);
-    }, [loyalty.receipt?.orderId]);
     const data = loyalty.resource.data;
     const balance = data?.balance;
     const tiers = data?.tiers ?? [];
@@ -130,11 +126,9 @@ export default function LoyaltyPage({
                     </p>
                 </>
             )}
-            <ReceiptConfirmModal
-                loyalty={loyalty}
-                accepted={accepted}
-                setAccepted={setAccepted}
-            />
+            {loyalty.receipt && (
+                <ReceiptConfirmModal key={loyalty.receipt.orderId} loyalty={loyalty} />
+            )}
         </MemberShell>
     );
 }

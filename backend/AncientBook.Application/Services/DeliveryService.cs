@@ -39,7 +39,9 @@ public class DeliveryService : IDeliveryService
         {
             var keyword = query.Keyword.Trim();
             if (keyword.StartsWith("ORD-", StringComparison.OrdinalIgnoreCase)) keyword = keyword[4..];
-            orders = orders.Where(o => o.Id.ToString().Contains(keyword) || o.User != null &&
+            var hasOrderId = int.TryParse(keyword, out var orderId);
+            orders = orders.Where(o => hasOrderId && o.Id == orderId
+                || !hasOrderId && o.User != null &&
                 (o.User.FullName.Contains(keyword) || o.User.PhoneNumber != null && o.User.PhoneNumber.Contains(keyword)));
         }
         var count = await orders.CountAsync();

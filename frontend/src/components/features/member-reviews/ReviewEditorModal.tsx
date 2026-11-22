@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
     BookOpen,
     ImagePlus,
@@ -12,24 +12,26 @@ import styles from './MemberReviews.module.css';
 import { parseImages } from './reviewUtils';
 
 type Reviews = ReturnType<typeof useMemberReviews>;
+type ReviewEditor = NonNullable<Reviews['editor']>;
 
-export default function ReviewEditorModal({ reviews }: { reviews: Reviews }) {
-    const [rating, setRating] = useState(0);
-    const [bookId, setBookId] = useState(0);
-    const [title, setTitle] = useState('');
-    const [content, setContent] = useState('');
-    const [images, setImages] = useState<string[]>([]);
+interface ReviewEditorModalProps {
+    reviews: Reviews;
+    editor: ReviewEditor;
+}
+
+export default function ReviewEditorModal({ reviews, editor }: ReviewEditorModalProps) {
+    const order = editor.order;
+    const review = editor.review;
+    const [rating, setRating] = useState(review?.rating ?? 0);
+    const [bookId, setBookId] = useState(
+        review?.bookId ?? order?.books[0].bookId ?? 0,
+    );
+    const [title, setTitle] = useState(review?.title ?? '');
+    const [content, setContent] = useState(review?.content ?? '');
+    const [images, setImages] = useState<string[]>(() =>
+        parseImages(review?.imageUrls ?? null),
+    );
     const [uploading, setUploading] = useState(false);
-
-    useEffect(() => {
-        const order = reviews.editor?.order;
-        const review = reviews.editor?.review;
-        setBookId(review?.bookId ?? order?.books[0].bookId ?? 0);
-        setRating(review?.rating ?? 0);
-        setTitle(review?.title ?? '');
-        setContent(review?.content ?? '');
-        setImages(parseImages(review?.imageUrls ?? null));
-    }, [reviews.editor]);
 
     const upload = async (files: FileList | null) => {
         if (!files?.length) return;
@@ -69,11 +71,9 @@ export default function ReviewEditorModal({ reviews }: { reviews: Reviews }) {
         }
     };
 
-    if (!reviews.editor) return null;
-
     return (
         <WorkflowModal
-            title={reviews.editor.review ? 'Chỉnh sửa đánh giá' : 'Đánh giá cuốn sách'}
+            title={review ? 'Chỉnh sửa đánh giá' : 'Đánh giá cuốn sách'}
             busy={reviews.busy || uploading}
             onClose={() => reviews.setEditor(null)}
         >
@@ -81,10 +81,7 @@ export default function ReviewEditorModal({ reviews }: { reviews: Reviews }) {
                 onSubmit={(event) => {
                     event.preventDefault();
                     void reviews.save({
-                        orderId:
-                            reviews.editor?.order?.orderId ??
-                            reviews.editor?.review?.orderId ??
-                            undefined,
+                        orderId: order?.orderId ?? review?.orderId ?? undefined,
                         bookId,
                         rating,
                         title: title.trim(),
@@ -94,14 +91,14 @@ export default function ReviewEditorModal({ reviews }: { reviews: Reviews }) {
                 }}
             >
                 <div className={common.dialogBody}>
-                    {reviews.editor.order && reviews.editor.order.books.length > 1 ? (
+                    {order && order.books.length > 1 ? (
                         <label className={common.field}>
                             Chọn sách trong đơn
                             <select
                                 value={bookId}
                                 onChange={(event) => setBookId(Number(event.target.value))}
                             >
-                                {reviews.editor.order.books.map((book, index) => (
+                                {order.books.map((book, index) => (
                                     <option
                                         value={book.bookId}
                                         key={`${book.bookId}-${index}`}
@@ -114,8 +111,7 @@ export default function ReviewEditorModal({ reviews }: { reviews: Reviews }) {
                     ) : (
                         <p className={styles.editBook}>
                             <BookOpen size={20} />
-                            {reviews.editor.review?.bookTitle ??
-                                reviews.editor.order?.books[0].title}
+                            {review?.bookTitle ?? order?.books[0].title}
                         </p>
                     )}
                     <div className={styles.ratingPicker}>
@@ -224,7 +220,7 @@ export default function ReviewEditorModal({ reviews }: { reviews: Reviews }) {
                     >
                         {reviews.busy
                             ? 'Đang gửi...'
-                            : reviews.editor.review
+                            : review
                                 ? 'Lưu thay đổi'
                                 : 'Gửi đánh giá'}
                     </button>

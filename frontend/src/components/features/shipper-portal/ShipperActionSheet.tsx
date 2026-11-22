@@ -1,13 +1,13 @@
 import {
     CheckCircle2,
-
     Truck,
     Wallet,
     XCircle,
 } from 'lucide-react';
 import type { DeliveryStatus } from '../../../types/workflow';
 import { useShipperPortal } from '../../../hooks/useShipperPortal';
-import { money, WorkflowError, WorkflowModal } from '../workflow/WorkflowShared';
+import { WorkflowError, WorkflowModal } from '../workflow/WorkflowShared';
+import { workflowMoney } from '../../../utils/workflowPresentation';
 import common from '../workflow/Workflow.module.css';
 import styles from './ShipperPortal.module.css';
 
@@ -90,7 +90,7 @@ export default function ShipperActionSheet({
                                 <div>
                                     <strong>
                                         {selected.codAmount
-                                            ? `Thu đủ COD: ${money(selected.codAmount)}`
+                                            ? `Thu đủ COD: ${workflowMoney(selected.codAmount)}`
                                             : 'Đơn đã thanh toán trước'}
                                     </strong>
                                     <p>
@@ -107,7 +107,7 @@ export default function ShipperActionSheet({
                                     checked={codConfirmed}
                                     onChange={(event) => setCodConfirmed(event.target.checked)}
                                 />
-                                Tôi đã thu đủ {money(selected.codAmount)} từ khách.
+                                Tôi đã thu đủ {workflowMoney(selected.codAmount)} từ khách.
                             </label>
                         )}
                         {result === 'Failed' && (

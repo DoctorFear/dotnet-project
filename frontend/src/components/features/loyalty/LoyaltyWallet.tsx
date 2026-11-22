@@ -8,7 +8,7 @@ import {
     Wallet,
 } from 'lucide-react';
 import type { PointBalance } from '../../../types/workflow';
-import { money, number } from '../workflow/WorkflowShared';
+import { workflowMoney, workflowNumber } from '../../../utils/workflowPresentation';
 import common from '../workflow/Workflow.module.css';
 import styles from './Loyalty.module.css';
 
@@ -32,18 +32,18 @@ export default function LoyaltyWallet({ balance, membership, path }: LoyaltyWall
                 </div>
                 <p>Điểm khả dụng</p>
                 <strong className={styles.balance}>
-                    {number(balance.currentPoints)}
+                    {workflowNumber(balance.currentPoints)}
                     <span>F-Point</span>
                 </strong>
                 <p className={styles.value}>
-                    Tương đương {money(balance.currentPoints * 100)} giảm giá
+                    Tương đương {workflowMoney(balance.currentPoints * 100)} giảm giá
                 </p>
                 <div className={styles.walletBottom}>
                     <span>
                         <Clock3 size={15} /> Điểm chờ duyệt
                     </span>
                     <strong>
-                        {number(balance.pendingPoints)} <small>điểm</small>
+                        {workflowNumber(balance.pendingPoints)} <small>điểm</small>
                     </strong>
                 </div>
                 <Coins className={styles.watermark} size={135} />

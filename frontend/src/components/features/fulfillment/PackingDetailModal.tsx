@@ -6,7 +6,8 @@ import {
     X,
 } from 'lucide-react';
 import BookCover from '../../common/BookCover';
-import { money, WorkflowError, WorkflowModal } from '../workflow/WorkflowShared';
+import { WorkflowError, WorkflowModal } from '../workflow/WorkflowShared';
+import { workflowMoney } from '../../../utils/workflowPresentation';
 import { useFulfillment } from '../../../hooks/useFulfillment';
 import common from '../workflow/Workflow.module.css';
 import styles from './Fulfillment.module.css';
@@ -79,7 +80,7 @@ export default function PackingDetailModal({
                             />
                             <div>
                                 <h3>{item.bookTitle}</h3>
-                                <p>{money(item.unitPrice)} / cuốn</p>
+                                <p>{workflowMoney(item.unitPrice)} / cuốn</p>
                             </div>
                             <strong className={styles.quantity}>× {item.quantity}</strong>
                         </div>

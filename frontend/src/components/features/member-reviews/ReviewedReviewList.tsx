@@ -6,7 +6,7 @@ import {
     Trash2,
 } from 'lucide-react';
 import type { MemberReview } from '../../../types/workflow';
-import { date } from '../workflow/WorkflowShared';
+import { workflowDate } from '../../../utils/workflowPresentation';
 import common from '../workflow/Workflow.module.css';
 import styles from './MemberReviews.module.css';
 import { editable, parseImages } from './reviewUtils';
@@ -34,7 +34,7 @@ export default function ReviewedReviewList({
                             <h2>{review.bookTitle}</h2>
                             <span className={common.muted}>
                                 {review.orderId ? `Đơn ORD-${review.orderId} · ` : ''}
-                                {date(review.createdAt)}
+                                {workflowDate(review.createdAt)}
                             </span>
                         </div>
                         <span className={`${common.badge} ${common.badgeGreen}`}>

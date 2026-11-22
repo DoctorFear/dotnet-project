@@ -4,7 +4,7 @@ import {
     Info,
 } from 'lucide-react';
 import type { MembershipTier } from '../../../types/workflow';
-import { money } from '../workflow/WorkflowShared';
+import { workflowMoney } from '../../../utils/workflowPresentation';
 import common from '../workflow/Workflow.module.css';
 import styles from './Loyalty.module.css';
 
@@ -38,7 +38,7 @@ export default function MembershipTierSection({
                             </span>
                         </div>
                         <h2>{tier.tierName}</h2>
-                        <p>Chi tiêu từ {money(tier.minSpending)}</p>
+                        <p>Chi tiêu từ {workflowMoney(tier.minSpending)}</p>
                         <strong>
                             {tier.pointRate}%<small>tích điểm F-Point</small>
                         </strong>

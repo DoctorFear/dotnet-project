@@ -1,6 +1,6 @@
 import { TrendingUp } from 'lucide-react';
 import type { MembershipTier, PointBalance } from '../../../types/workflow';
-import { money } from '../workflow/WorkflowShared';
+import { workflowMoney } from '../../../utils/workflowPresentation';
 import common from '../workflow/Workflow.module.css';
 import styles from './Loyalty.module.css';
 
@@ -30,11 +30,11 @@ export default function LoyaltyProgress({ balance, next, progress }: LoyaltyProg
             </div>
             <div className={styles.progressLabels}>
                 <span>
-                    Chi tiêu hợp lệ: <strong>{money(balance.totalSpent)}</strong>
+                    Chi tiêu hợp lệ: <strong>{workflowMoney(balance.totalSpent)}</strong>
                 </span>
                 {next && (
                     <span>
-                        Mốc {next.tierName}: {money(next.minSpending)}
+                        Mốc {next.tierName}: {workflowMoney(next.minSpending)}
                     </span>
                 )}
             </div>
@@ -53,7 +53,7 @@ export default function LoyaltyProgress({ balance, next, progress }: LoyaltyProg
                     <>
                         Còn{' '}
                         <strong>
-                            {money(Math.max(0, next.minSpending - balance.totalSpent))}
+                            {workflowMoney(Math.max(0, next.minSpending - balance.totalSpent))}
                         </strong>{' '}
                         để đạt hạng {next.tierName} và tích {next.pointRate}% điểm cho
                         những đơn tiếp theo.

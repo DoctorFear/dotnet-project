@@ -6,12 +6,8 @@ import {
     Search,
 } from 'lucide-react';
 import BookPagination from '../../common/BookPagination';
-import {
-    dateTime,
-    EmptyState,
-    money,
-    WorkflowError,
-} from '../workflow/WorkflowShared';
+import { EmptyState, WorkflowError } from '../workflow/WorkflowShared';
+import { workflowDateTime, workflowMoney } from '../../../utils/workflowPresentation';
 import { useFulfillment } from '../../../hooks/useFulfillment';
 import common from '../workflow/Workflow.module.css';
 import styles from './Fulfillment.module.css';
@@ -109,13 +105,13 @@ export default function PackingOrdersPanel({
                                     <tr key={order.orderId}>
                                         <td>
                                             <strong className={styles.orderCode}>ORD-{order.orderId}</strong>
-                                            <small>{dateTime(order.orderDate)}</small>
+                                            <small>{workflowDateTime(order.orderDate)}</small>
                                         </td>
                                         <td>
                                             <strong>{order.customerName}</strong>
                                         </td>
                                         <td>{order.totalItems} cuốn</td>
-                                        <td>{money(order.finalAmount)}</td>
+                                        <td>{workflowMoney(order.finalAmount)}</td>
                                         <td>
                                             {order.packingIssue ? (
                                                 <span className={`${common.badge} ${common.badgeGold}`}>

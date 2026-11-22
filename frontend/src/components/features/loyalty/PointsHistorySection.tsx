@@ -10,13 +10,13 @@ import {
 } from 'lucide-react';
 import { useLoyalty } from '../../../hooks/useLoyalty';
 import BookPagination from '../../common/BookPagination';
+import { EmptyState } from '../workflow/WorkflowShared';
 import {
-    date,
-    dateTime,
-    EmptyState,
-    money,
-    number,
-} from '../workflow/WorkflowShared';
+    workflowDate,
+    workflowDateTime,
+    workflowMoney,
+    workflowNumber,
+} from '../../../utils/workflowPresentation';
 import common from '../workflow/Workflow.module.css';
 import styles from './Loyalty.module.css';
 
@@ -89,7 +89,7 @@ export default function PointsHistorySection({
                                                                 ? 'Sử dụng F-Point'
                                                                 : 'Tích lũy F-Point')}
                                                     </strong>
-                                                    <small>{dateTime(item.createdAt)}</small>
+                                                    <small>{workflowDateTime(item.createdAt)}</small>
                                                 </div>
                                             </div>
                                         </td>
@@ -104,7 +104,7 @@ export default function PointsHistorySection({
                                                 }
                                             >
                                                 {item.pointUsed <= 0 ? '+' : '−'}
-                                                {number(Math.abs(item.pointUsed))}
+                                                {workflowNumber(Math.abs(item.pointUsed))}
                                             </strong>
                                         </td>
                                         <td>
@@ -121,7 +121,7 @@ export default function PointsHistorySection({
                                             </span>
                                             {item.status === 'Pending' && item.availableAt && (
                                                 <small>
-                                                    Dự kiến: {date(item.availableAt)}
+                                                    Dự kiến: {workflowDate(item.availableAt)}
                                                 </small>
                                             )}
                                         </td>
@@ -204,7 +204,7 @@ export default function PointsHistorySection({
                             </label>
                         </div>
                         <p className={styles.limit}>
-                            Tối đa theo số dư và tiền sách: {number(maxPreview)} điểm.
+                            Tối đa theo số dư và tiền sách: {workflowNumber(maxPreview)} điểm.
                             Hạn mức cấu hình được kiểm tra khi xem trước.
                         </p>
                         <button
@@ -217,10 +217,10 @@ export default function PointsHistorySection({
                         {loyalty.previewResult && (
                             <div className={styles.previewResult}>
                                 <span>
-                                    Giảm {money(loyalty.previewResult.discountAmount)}
+                                    Giảm {workflowMoney(loyalty.previewResult.discountAmount)}
                                 </span>
                                 <strong>
-                                    Còn {money(loyalty.previewResult.finalAmount)}
+                                    Còn {workflowMoney(loyalty.previewResult.finalAmount)}
                                 </strong>
                                 <small>
                                     Chưa trừ điểm. Điểm chỉ bị trừ khi đặt hàng thành

@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import type { ReviewOrder } from '../../../types/workflow';
 import BookCover from '../../common/BookCover';
-import { date } from '../workflow/WorkflowShared';
+import { workflowDate } from '../../../utils/workflowPresentation';
 import common from '../workflow/Workflow.module.css';
 import styles from './MemberReviews.module.css';
 
@@ -25,7 +25,7 @@ export default function PendingReviewList({ orders, onOpen }: PendingReviewListP
                             <BookOpen size={15} />
                             Đơn ORD-{order.orderId}
                         </strong>
-                        <span>Ngày đặt: {date(order.orderDate)}</span>
+                        <span>Ngày đặt: {workflowDate(order.orderDate)}</span>
                     </div>
                     <div className={styles.orderBooks}>
                         {order.books.map((book, index) => (

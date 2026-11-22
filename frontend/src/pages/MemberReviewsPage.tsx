@@ -132,7 +132,9 @@ export default function MemberReviewsPage() {
                     điểm; xóa rồi gửi lại cũng không được thưởng lần nữa.
                 </p>
             </div>
-            <ReviewEditorModal reviews={reviews} />
+            {reviews.editor && (
+                <ReviewEditorModal reviews={reviews} editor={reviews.editor} />
+            )}
             <DeleteReviewModal reviews={reviews} />
         </MemberShell>
     );

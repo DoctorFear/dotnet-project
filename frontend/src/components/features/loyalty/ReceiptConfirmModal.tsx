@@ -1,22 +1,22 @@
+import { useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { useLoyalty } from '../../../hooks/useLoyalty';
-import { number, WorkflowError, WorkflowModal } from '../workflow/WorkflowShared';
+import { workflowNumber } from '../../../utils/workflowPresentation';
+import { WorkflowError, WorkflowModal } from '../workflow/WorkflowShared';
 import common from '../workflow/Workflow.module.css';
 
 type Loyalty = ReturnType<typeof useLoyalty>;
 
 interface ReceiptConfirmModalProps {
     loyalty: Loyalty;
-    accepted: boolean;
-    setAccepted: (value: boolean) => void;
 }
 
-export default function ReceiptConfirmModal({
-    loyalty,
-    accepted,
-    setAccepted,
-}: ReceiptConfirmModalProps) {
-    if (!loyalty.receipt) return null;
+export default function ReceiptConfirmModal({ loyalty }: ReceiptConfirmModalProps) {
+    const [accepted, setAccepted] = useState(false);
+    const receipt = loyalty.receipt;
+
+    if (!receipt) return null;
+
     return (
         <WorkflowModal
             title="Xác nhận đã nhận hàng"
@@ -27,9 +27,9 @@ export default function ReceiptConfirmModal({
                 <div className={common.info}>
                     <CheckCircle2 size={25} />
                     <div>
-                        <strong>Đơn ORD-{loyalty.receipt.orderId}</strong>
+                        <strong>Đơn ORD-{receipt.orderId}</strong>
                         <p>
-                            {number(loyalty.receipt.pendingPoints)} F-Point sẽ chuyển
+                            {workflowNumber(receipt.pendingPoints)} F-Point sẽ chuyển
                             thành khả dụng khi bạn xác nhận.
                         </p>
                     </div>
@@ -48,7 +48,7 @@ export default function ReceiptConfirmModal({
                     Tôi đã nhận hàng và đồng ý kết thúc quyền đổi trả/hoàn tiền của
                     đơn này theo quy định.
                 </label>
-                {!loyalty.receipt.canConfirmReceipt && (
+                {!receipt.canConfirmReceipt && (
                     <WorkflowError message="Đơn không còn đủ điều kiện xác nhận nhận hàng. Vui lòng tải lại dữ liệu." />
                 )}
             </div>
@@ -64,9 +64,7 @@ export default function ReceiptConfirmModal({
                 <button
                     type="button"
                     className={common.primary}
-                    disabled={
-                        !accepted || !loyalty.receipt.canConfirmReceipt || loyalty.busy
-                    }
+                    disabled={!accepted || !receipt.canConfirmReceipt || loyalty.busy}
                     onClick={() => void loyalty.confirm()}
                 >
                     {loyalty.busy ? 'Đang xác nhận...' : 'Xác nhận nhận hàng'}

@@ -25,7 +25,10 @@ public class FulfillmentService : IFulfillmentService
         if (!string.IsNullOrWhiteSpace(query.Keyword))
         {
             var keyword = query.Keyword.Trim();
-            orders = orders.Where(o => o.Id.ToString().Contains(keyword) || o.User != null && o.User.FullName.Contains(keyword));
+            if (keyword.StartsWith("ORD-", StringComparison.OrdinalIgnoreCase)) keyword = keyword[4..];
+            var hasOrderId = int.TryParse(keyword, out var orderId);
+            orders = orders.Where(o => hasOrderId && o.Id == orderId
+                || !hasOrderId && o.User != null && o.User.FullName.Contains(keyword));
         }
         var count = await orders.CountAsync();
         var items = await orders.OrderByDescending(o => o.CreatedAt).ThenByDescending(o => o.Id)

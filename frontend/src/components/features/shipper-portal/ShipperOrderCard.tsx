@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import type { DeliveryOrder, DeliveryStatus } from '../../../types/workflow';
 import { useShipperPortal } from '../../../hooks/useShipperPortal';
-import { dateTime, money } from '../workflow/WorkflowShared';
+import { workflowDateTime, workflowMoney } from '../../../utils/workflowPresentation';
 import styles from './ShipperPortal.module.css';
 import { statusText } from './shipperMeta';
 
@@ -43,7 +43,7 @@ export default function ShipperOrderCard({
                 </span>
                 <div>
                     <h2>{order.orderCode}</h2>
-                    <small>{dateTime(order.orderDate)}</small>
+                    <small>{workflowDateTime(order.orderDate)}</small>
                 </div>
                 <span className={`${styles.status} ${styles[order.status] ?? ''}`}>
                     {statusText[order.status]}
@@ -61,7 +61,7 @@ export default function ShipperOrderCard({
                         {active ? 'Tiền COD cần thu' : 'Giá trị đơn hàng'}
                     </span>
                     <strong>
-                        {money(active ? order.codAmount : order.finalAmount)}
+                        {workflowMoney(active ? order.codAmount : order.finalAmount)}
                     </strong>
                 </div>
                 {active && order.isPaid && (
@@ -111,7 +111,7 @@ export default function ShipperOrderCard({
                                                 {item.bookTitle}
                                                 <small>
                                                     SL: {item.quantity} ·{' '}
-                                                    {money(item.unitPrice)}
+                                                    {workflowMoney(item.unitPrice)}
                                                 </small>
                                             </span>
                                         </div>
@@ -159,7 +159,7 @@ export default function ShipperOrderCard({
                                 )}
                                 {detail.completedAt && (
                                     <p className={styles.finalNote}>
-                                        Kết thúc: {dateTime(detail.completedAt)}
+                                        Kết thúc: {workflowDateTime(detail.completedAt)}
                                     </p>
                                 )}
                                 {detail.failureReason && (
