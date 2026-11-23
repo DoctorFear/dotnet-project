@@ -16,4 +16,5 @@ export interface ReaderEditionDto {
     totalPages: number;
     ttsEnabled: boolean;
     chatEnabled: boolean;
+    presetType?: number;
 }

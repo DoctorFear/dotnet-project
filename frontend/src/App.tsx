@@ -73,8 +73,11 @@ export const App: React.FC = () => {
                         <Route path="/f-point" element={<LoyaltyPage />} />
                         <Route path="/membership" element={<LoyaltyPage membership />} />
                         <Route path="/my-reviews" element={<MemberReviewsPage />} />
+                    </Route>
+
+                    {/* E-Book Reader: Độc giả (Member), Nhân viên (Staff) & Quản trị viên (Admin) xem và đọc trực tuyến */}
+                    <Route element={<ProtectedRoute allowedRoles={['Member', 'Staff', 'Admin']} />}>
                         <Route path="/reader/:bookId" element={<EbookReaderPage />} />
-                        
                     </Route>
 
                     {/* 3. Staff Routes: Quản lý sách, catalog, kho bãi và đơn hàng */}

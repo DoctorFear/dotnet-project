@@ -69,8 +69,8 @@ namespace AncientBook.Infrastructure.Services
             List<string> citations,
             CancellationToken ct = default)
         {
-            // Danh sách các model tương thích để tự động fallback nếu model chính gặp lỗi 503
-            var modelsToTry = new[] { "gemini-flash-latest", "gemini-3.5-flash", "gemini-3.8-flash" };
+            // Danh sách các model tương thích theo thứ tự ưu tiên phản hồi nhanh và ổn định
+            var modelsToTry = new[] { "gemini-flash-lite-latest", "gemini-flash-latest", "gemini-3-flash-preview", "gemini-3.8-flash" };
 
             var promptBuilder = new StringBuilder();
             promptBuilder.AppendLine("Bạn là trợ lý đọc sách AI (Copilot) thông thái của nền tảng AncientBook.");
@@ -134,51 +134,66 @@ namespace AncientBook.Infrastructure.Services
 
             string lastError = string.Empty;
 
-            // Thử lần lượt các model cho đến khi thành công
+            // Thử lần lượt các model cho đến khi thành công (giới hạn 20s mỗi model để tránh treo 100s)
             foreach (var model in modelsToTry)
             {
                 var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={_apiKey}";
 
-                var jsonContent = new StringContent(
+                using var jsonContent = new StringContent(
                     JsonSerializer.Serialize(payload),
                     Encoding.UTF8,
                     "application/json"
                 );
 
-                var response = await _httpClient.PostAsync(url, jsonContent, ct);
-                var responseString = await response.Content.ReadAsStringAsync(ct);
-
-                if (response.IsSuccessStatusCode)
+                try
                 {
-                    using var doc = JsonDocument.Parse(responseString);
-                    var root = doc.RootElement;
-                    if (root.TryGetProperty("candidates", out var candidates) && candidates.GetArrayLength() > 0)
-                    {
-                        var text = candidates[0]
-                            .GetProperty("content")
-                            .GetProperty("parts")[0]
-                            .GetProperty("text")
-                            .GetString();
+                    using var modelCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                    modelCts.CancelAfter(TimeSpan.FromSeconds(20));
 
-                        return text ?? "Không nhận được câu trả lời từ AI.";
+                    var response = await _httpClient.PostAsync(url, jsonContent, modelCts.Token);
+                    var responseString = await response.Content.ReadAsStringAsync(modelCts.Token);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        using var doc = JsonDocument.Parse(responseString);
+                        var root = doc.RootElement;
+                        if (root.TryGetProperty("candidates", out var candidates) && candidates.GetArrayLength() > 0)
+                        {
+                            var text = candidates[0]
+                                .GetProperty("content")
+                                .GetProperty("parts")[0]
+                                .GetProperty("text")
+                                .GetString();
+
+                            return text ?? "Không nhận được câu trả lời từ AI.";
+                        }
+
+                        return "AI không thể xử lý câu trả lời lúc này.";
                     }
 
-                    return "AI không thể xử lý câu trả lời lúc này.";
+                    lastError = $"[{model} - {(int)response.StatusCode}] {responseString}";
+
+                    // Chỉ ném lỗi ngay với lỗi xác thực/payload (400/401/403), còn 404/429/500/503 thì fallback sang model tiếp theo
+                    var statusCode = (int)response.StatusCode;
+                    if (statusCode != 404 && statusCode != 429 && statusCode < 500)
+                    {
+                        throw new HttpRequestException($"Google API Generation error ({response.StatusCode}): {responseString}");
+                    }
                 }
-
-                lastError = responseString;
-
-                // Nếu mã lỗi không phải 503 (quá tải), ném exception bình thường
-                if ((int)response.StatusCode != 503)
+                catch (OperationCanceledException) when (!ct.IsCancellationRequested)
                 {
-                    throw new HttpRequestException($"Google API Generation error ({response.StatusCode}): {responseString}");
+                    lastError = $"[{model}] Quá thời gian chờ (timeout 20s)";
+                }
+                catch (HttpRequestException ex)
+                {
+                    lastError = $"[{model}] {ex.Message}";
                 }
 
-                // Chờ 1 giây trước khi thử model tiếp theo
-                await Task.Delay(1000, ct);
+                // Chờ ngắn trước khi thử model tiếp theo
+                await Task.Delay(500, ct);
             }
 
-            throw new HttpRequestException($"Tất cả mô hình AI hiện đang quá tải (503): {lastError}");
+            throw new HttpRequestException($"Tất cả mô hình AI hiện đang quá tải hoặc không phản hồi: {lastError}");
         }
     }
 }

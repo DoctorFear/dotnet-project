@@ -1,6 +1,7 @@
 import React from 'react';
 import { useBookManagement } from '../../../hooks/useBookManagement';
-import { useEbookConfiguration } from '../../../hooks/useEbookConfiguration';
+import { useEbookPublishing } from '../../../hooks/useEbookPublishing';
+import { EbookPublishingModal } from '../admin-ebook-publishing';
 import {
     BookOpen,
     Building2,
@@ -19,7 +20,6 @@ import BookCover from '../../common/BookCover';
 import ToastNotification from '../../common/ToastNotification';
 import styles from './AdminBookManagement.module.css';
 import AdminCatalogForm from './AdminCatalogForm';
-import EBookCOnfigurationField from './EBookCOnfigurationField';
 
 const statusLabels: Record<AdminBookStatus, string> = {
     selling: 'Đang bán',
@@ -31,7 +31,7 @@ const formatCurrency = (value: number) => `${value.toLocaleString('vi-VN')} đ`;
 
 export const AdminBookManagement: React.FC = () => {
     const controller = useBookManagement();
-    const ebookController = useEbookConfiguration();
+    const ebookController = useEbookPublishing(controller.loadData);
     const { categories, publishers, isLoading, error, activeTab, searchText, statusFilter, categoryFilter, publisherFilter, minPrice, maxPrice, pageSize, confirmState, toasts, categoryNameMap, publisherNameMap, stats, currentPage, pageItems, filteredItems, setSearchText, setStatusFilter, setCategoryFilter, setPublisherFilter, setMinPrice, setMaxPrice, setPage, setPageSize, setConfirmState, resetListState, openCreateModal, openEditModal, confirmDelete, removeToast } = controller;
 
     return (
@@ -317,7 +317,7 @@ export const AdminBookManagement: React.FC = () => {
             </section>
 
             <AdminCatalogForm controller={controller} />
-            {ebookController.book && <EBookCOnfigurationField controller={ebookController} />}
+            {ebookController.book && <EbookPublishingModal controller={ebookController} />}
 
             {/* MODAL XÁC NHẬN XÓA */}
             {confirmState && (

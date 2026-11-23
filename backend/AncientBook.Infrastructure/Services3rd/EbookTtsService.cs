@@ -178,6 +178,7 @@ namespace AncientBook.Infrastructure.Services
                 .OrderBy(s => s.SegmentIndex)
                 .Select(s => new PageTtsResponseDto
                 {
+                    Id = s.Id,
                     SegmentIndex = s.SegmentIndex,
                     PageNumber = s.PageNumber,
                     TextContent = s.TextContent,

@@ -49,105 +49,121 @@ namespace AncientBook.Infrastructure.Services
             if (edition == null) return false;
 
             edition.PresetType = selectedPresetType;
+            if (selectedPresetType != EbookPresetType.EpubStandard)
+            {
+                edition.IsTtsEnabled = false;
+            }
+            edition.Status = EditionPublishStatus.Processing;
+            await _context.SaveChangesAsync(ct);
+
             int bookId = edition.BookId;
 
-            // =========================================================================
-            // GIAI ĐOẠN 1: BÓC TÁCH VĂN BẢN VÀ SINH VECTOR RAG (NẾU CẦN)
-            // =========================================================================
-            var embeddingsToInsert = new List<BookEmbedding>();
-
-            if (selectedPresetType != EbookPresetType.ScannedBook)
+            try
             {
-                // Preset 1 (EpubStandard) & Preset 2 (PdfStandard): Bóc tách text và nạp vector AI
-                using var fileStream = await _fileStorageService.GetFileStreamAsync(edition.DropboxPath, ct);
-                var rawPages = await _documentExtractor.ExtractRawPagesAsync(fileStream, edition.Format, ct);
+                // =========================================================================
+                // GIAI ĐOẠN 1: BÓC TÁCH VĂN BẢN VÀ SINH VECTOR RAG (NẾU CẦN)
+                // =========================================================================
+                var embeddingsToInsert = new List<BookEmbedding>();
 
-                var chunks = _textChunker.ChunkText(rawPages);
-
-                foreach (var chunk in chunks)
+                if (selectedPresetType != EbookPresetType.ScannedBook)
                 {
-                    var vector = await _geminiService.GetEmbeddingAsync(chunk.Text, ct);
+                    // Preset 1 (EpubStandard) & Preset 2 (PdfStandard): Bóc tách text và nạp vector AI
+                    using var fileStream = await _fileStorageService.GetFileStreamAsync(edition.DropboxPath, ct);
+                    var rawPages = await _documentExtractor.ExtractRawPagesAsync(fileStream, edition.Format, ct);
 
-                    // Gán tường minh cả EmbeddingJson để lưu trực tiếp vào SQL Server
-                    embeddingsToInsert.Add(new BookEmbedding
+                    var chunks = _textChunker.ChunkText(rawPages);
+
+                    foreach (var chunk in chunks)
                     {
-                        EditionId = edition.Id,
-                        PageNumber = chunk.PageNumber,
-                        ChunkIndex = chunk.ChunkIndex,
-                        ChunkContent = chunk.Text,
-                        EmbeddingJson = JsonSerializer.Serialize(vector),
-                        Vector = vector
-                    });
+                        var vector = await _geminiService.GetEmbeddingAsync(chunk.Text, ct);
 
-                    // Nghỉ ngắn giữa các request để tránh rate-limit API của Google
-                    await Task.Delay(80, ct);
-                }
-            }
+                        // Gán tường minh cả EmbeddingJson để lưu trực tiếp vào SQL Server
+                        embeddingsToInsert.Add(new BookEmbedding
+                        {
+                            EditionId = edition.Id,
+                            PageNumber = chunk.PageNumber,
+                            ChunkIndex = chunk.ChunkIndex,
+                            ChunkContent = chunk.Text,
+                            EmbeddingJson = JsonSerializer.Serialize(vector),
+                            Vector = vector
+                        });
 
-            // =========================================================================
-            // GIAI ĐOẠN 2: CLEAN REPLACE (XÓA TOÀN BỘ FILE & DỮ LIỆU CŨ CỦA ĐẦU SÁCH NÀY)
-            // =========================================================================
-
-            // 1. Tìm tất cả các edition cũ của cùng BookId (khác editionId đang publish)
-            var oldEditions = await _context.EbookEditions
-                .Where(e => e.BookId == bookId && e.Id != editionId)
-                .ToListAsync(ct);
-
-            if (oldEditions.Any())
-            {
-                var oldEditionIds = oldEditions.Select(e => e.Id).ToList();
-
-                // a. Xóa toàn bộ embeddings cũ trong bảng BookEmbeddings
-                var oldEmbeddings = await _context.BookEmbeddings
-                    .Where(b => oldEditionIds.Contains(b.EditionId))
-                    .ToListAsync(ct);
-
-                if (oldEmbeddings.Any())
-                {
-                    _context.BookEmbeddings.RemoveRange(oldEmbeddings);
-                }
-
-                // b. Xóa các file vật lý cũ trên Dropbox
-                foreach (var oldEdition in oldEditions)
-                {
-                    if (!string.IsNullOrWhiteSpace(oldEdition.DropboxPath))
-                    {
-                        await _fileStorageService.DeleteFileAsync(oldEdition.DropboxPath);
+                        // Nghỉ ngắn giữa các request để tránh rate-limit API của Google
+                        await Task.Delay(80, ct);
                     }
                 }
 
-                // c. Xóa các bản ghi cũ trong bảng EbookEditions
-                _context.EbookEditions.RemoveRange(oldEditions);
+                // =========================================================================
+                // GIAI ĐOẠN 2: CLEAN REPLACE (XÓA TOÀN BỘ FILE & DỮ LIỆU CŨ CỦA ĐẦU SÁCH NÀY)
+                // =========================================================================
+
+                // 1. Tìm tất cả các edition cũ của cùng BookId (khác editionId đang publish)
+                var oldEditions = await _context.EbookEditions
+                    .Where(e => e.BookId == bookId && e.Id != editionId)
+                    .ToListAsync(ct);
+
+                if (oldEditions.Any())
+                {
+                    var oldEditionIds = oldEditions.Select(e => e.Id).ToList();
+
+                    // a. Xóa toàn bộ embeddings cũ trong bảng BookEmbeddings
+                    var oldEmbeddings = await _context.BookEmbeddings
+                        .Where(b => oldEditionIds.Contains(b.EditionId))
+                        .ToListAsync(ct);
+
+                    if (oldEmbeddings.Any())
+                    {
+                        _context.BookEmbeddings.RemoveRange(oldEmbeddings);
+                    }
+
+                    // b. Xóa các file vật lý cũ trên Dropbox
+                    foreach (var oldEdition in oldEditions)
+                    {
+                        if (!string.IsNullOrWhiteSpace(oldEdition.DropboxPath))
+                        {
+                            await _fileStorageService.DeleteFileAsync(oldEdition.DropboxPath);
+                        }
+                    }
+
+                    // c. Xóa các bản ghi cũ trong bảng EbookEditions
+                    _context.EbookEditions.RemoveRange(oldEditions);
+                }
+
+                // 2. Dọn sạch embeddings cũ của chính bản ghi này nếu từng được chạy thử trước đó
+                var selfOldEmbeddings = await _context.BookEmbeddings
+                    .Where(b => b.EditionId == editionId)
+                    .ToListAsync(ct);
+
+                if (selfOldEmbeddings.Any())
+                {
+                    _context.BookEmbeddings.RemoveRange(selfOldEmbeddings);
+                }
+
+                // =========================================================================
+                // GIAI ĐOẠN 3: LƯU EMBEDDINGS MỚI & CẬP NHẬT TRẠNG THÁI SÁCH
+                // =========================================================================
+                if (embeddingsToInsert.Any())
+                {
+                    await _context.BookEmbeddings.AddRangeAsync(embeddingsToInsert, ct);
+                }
+
+                edition.Status = EditionPublishStatus.Published;
+                edition.PublishedAt = TimeZoneHelper.GetVietnamTime();
+
+                if (edition.Book != null)
+                {
+                    edition.Book.IsEBookAvailable = true;
+                }
+
+                await _context.SaveChangesAsync(ct);
+                return true;
             }
-
-            // 2. Dọn sạch embeddings cũ của chính bản ghi này nếu từng được chạy thử trước đó
-            var selfOldEmbeddings = await _context.BookEmbeddings
-                .Where(b => b.EditionId == editionId)
-                .ToListAsync(ct);
-
-            if (selfOldEmbeddings.Any())
+            catch (Exception)
             {
-                _context.BookEmbeddings.RemoveRange(selfOldEmbeddings);
+                edition.Status = EditionPublishStatus.Failed;
+                await _context.SaveChangesAsync(CancellationToken.None);
+                throw;
             }
-
-            // =========================================================================
-            // GIAI ĐOẠN 3: LƯU EMBEDDINGS MỚI & CẬP NHẬT TRẠNG THÁI SÁCH
-            // =========================================================================
-            if (embeddingsToInsert.Any())
-            {
-                await _context.BookEmbeddings.AddRangeAsync(embeddingsToInsert, ct);
-            }
-
-            edition.Status = EditionPublishStatus.Published;
-            edition.PublishedAt = TimeZoneHelper.GetVietnamTime();
-
-            if (edition.Book != null)
-            {
-                edition.Book.IsEBookAvailable = true;
-            }
-
-            await _context.SaveChangesAsync(ct);
-            return true;
         }
     }
 }

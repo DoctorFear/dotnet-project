@@ -51,6 +51,8 @@ export const EbookReaderPage: React.FC = () => {
                     loadingPages={reader.loadingPages}
                     scale={reader.scale}
                     activeSegmentId={reader.activeSegmentId}
+                    ttsEnabled={reader.edition?.ttsEnabled ?? false}
+                    chatEnabled={reader.edition?.chatEnabled ?? false}
                     onPlaySegment={reader.playSegment}
                     onPrevSpread={reader.prevSpread}
                     onNextSpread={reader.nextSpread}
@@ -66,6 +68,8 @@ export const EbookReaderPage: React.FC = () => {
                         voiceGender={reader.voiceGender}
                         navbarHidden={reader.navbarHidden}
                         copilotOpen={reader.copilotOpen}
+                        ttsEnabled={reader.edition?.ttsEnabled ?? false}
+                        chatEnabled={reader.edition?.chatEnabled ?? false}
                         onPageInputChange={reader.setPageInput}
                         onPageJump={handlePageJump}
                         onPrevSpread={reader.prevSpread}
@@ -80,12 +84,14 @@ export const EbookReaderPage: React.FC = () => {
                     />
                 </ReaderSpreadStage>
 
-                <ReaderCopilotSidebar
-                    isOpen={reader.copilotOpen}
-                    messages={reader.messages}
-                    onClose={reader.toggleCopilot}
-                    onAsk={reader.askCopilot}
-                />
+                {reader.edition?.chatEnabled && (
+                    <ReaderCopilotSidebar
+                        isOpen={reader.copilotOpen}
+                        messages={reader.messages}
+                        onClose={reader.toggleCopilot}
+                        onAsk={reader.askCopilot}
+                    />
+                )}
             </main>
 
             {reader.toastMessage && <div className={styles.toast}>{reader.toastMessage}</div>}
