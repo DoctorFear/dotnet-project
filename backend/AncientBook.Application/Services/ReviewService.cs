@@ -34,7 +34,8 @@ namespace AncientBook.Application.Services
             var verifiedItem = order.OrderItems.Where(i => i.BookId == request.BookId &&
                 (i.PurchaseType == PurchaseType.Physical && order.Status == OrderStatus.Completed && order.IsPaid ||
                  i.PurchaseType == PurchaseType.Rental && order.IsPaid && order.Status == OrderStatus.Completed &&
-                 i.RentalStartDate.HasValue && i.RentalStartDate <= now))
+                 i.RentalStartDate.HasValue && i.RentalStartDate <= now ||
+                 i.PurchaseType == PurchaseType.EBook && order.IsPaid && order.Status == OrderStatus.Completed))
                 .OrderBy(i => i.PurchaseType).ThenBy(i => i.Id).FirstOrDefault();
             if (verifiedItem == null) throw new InvalidOperationException("Sách không thuộc giao dịch mua/thuê đã hoàn tất.");
             // UC21: Mỗi giao dịch chỉ được thưởng đánh giá một lần, kể cả khi đánh giá cũ đã bị ẩn.
@@ -159,6 +160,7 @@ namespace AncientBook.Application.Services
                 && o.Status == OrderStatus.Completed && o.IsPaid
                 && !_db.Set<BookReview>().Any(r => r.UserId == userId && r.OrderId == o.Id)
                 && o.OrderItems.Any(i => i.PurchaseType == PurchaseType.Physical
+                    || i.PurchaseType == PurchaseType.EBook
                     || i.PurchaseType == PurchaseType.Rental && i.RentalStartDate <= now));
             var count = await query.CountAsync();
             var items = await query.OrderByDescending(o => o.OrderDate).ThenByDescending(o => o.Id)
@@ -166,6 +168,7 @@ namespace AncientBook.Application.Services
                 {
                     OrderId = o.Id, OrderDate = o.OrderDate,
                     Books = o.OrderItems.Where(i => i.PurchaseType == PurchaseType.Physical
+                        || i.PurchaseType == PurchaseType.EBook
                         || i.PurchaseType == PurchaseType.Rental && i.RentalStartDate <= now)
                         .Select(i => new ReviewEligibleBookDto { BookId = i.BookId, Title = i.Book!.Title,
                             CoverImg = i.Book.CoverImg, PurchaseType = i.PurchaseType }).ToList()
@@ -207,6 +210,7 @@ namespace AncientBook.Application.Services
                 {
                     PurchaseType.Physical => "Đã mua sách",
                     PurchaseType.Rental => "Đã thuê sách",
+                    PurchaseType.EBook => "Đã mua E-Book",
                     _ => null
                 },
                 Status = review.Status,

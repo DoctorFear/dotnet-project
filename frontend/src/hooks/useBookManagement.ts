@@ -2,6 +2,8 @@ import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { createBook, deleteBook, getBooks, getBookById, updateBook, updateBookStatus } from '../services/bookService';
 import { createCategory, deleteCategory, getCategories, updateCategory } from '../services/categoryService';
 import { createPublisher, deletePublisher, getPublishers, updatePublisher } from '../services/publisherService';
+import { ebookPublishingService } from '../services/ebookPublishingService';
+import { matchesVietnameseSearch } from '../utils/vietnameseSearch';
 import type { AdminBookData, AdminBookStatus, SaveBookRequest } from '../types/book';
 import type { CategoryData } from '../types/category';
 import type { PublisherData } from '../types/publisher';
@@ -191,26 +193,74 @@ export const useBookManagement = () => {
         };
     }, [books]);
 
-    // Lọc dữ liệu theo từng Tab
+    // Lọc dữ liệu không phân biệt dấu tiếng Việt theo từng Tab
     const filteredItems = useMemo(() => {
-        const q = searchText.trim().toLowerCase();
-
         if (activeTab === 'books') {
             return books.filter((book) => {
-                const publisherName = (book.publisherId === null ? book.publisher : publisherNameMap.get(book.publisherId)) || '';
-                const categoryNames = book.categoryIds.map((id) => categoryNameMap.get(id) || '').join(' ');
-                const matchesText = !q || `${book.title} ${book.author} ${book.isbn} ${publisherName} ${categoryNames}`.toLowerCase().includes(q);
+                const publisherName =
+                    (book.publisherId === null
+                        ? book.publisher
+                        : publisherNameMap.get(book.publisherId)) || '';
+                const categoryNames = book.categoryIds
+                    .map((id) => categoryNameMap.get(id) || '')
+                    .join(' ');
+
+                const matchesText = matchesVietnameseSearch(
+                    searchText,
+                    book.title,
+                    book.author,
+                    book.isbn,
+                    publisherName,
+                    categoryNames
+                );
                 const matchesStatus = !statusFilter || book.status === statusFilter;
-                return matchesText && matchesStatus && (!categoryFilter || book.categoryIds.includes(Number(categoryFilter))) && (!publisherFilter || book.publisherId === Number(publisherFilter)) && (!minPrice || book.physicalPrice >= Number(minPrice)) && (!maxPrice || book.physicalPrice <= Number(maxPrice));
+                const matchesCategory =
+                    !categoryFilter || book.categoryIds.includes(Number(categoryFilter));
+                const matchesPublisher =
+                    !publisherFilter || book.publisherId === Number(publisherFilter);
+                const matchesMinPrice = !minPrice || book.physicalPrice >= Number(minPrice);
+                const matchesMaxPrice = !maxPrice || book.physicalPrice <= Number(maxPrice);
+
+                return (
+                    matchesText &&
+                    matchesStatus &&
+                    matchesCategory &&
+                    matchesPublisher &&
+                    matchesMinPrice &&
+                    matchesMaxPrice
+                );
             });
         }
 
         if (activeTab === 'categories') {
-            return categories.filter((cat) => !q || `${cat.name} ${cat.description || ''}`.toLowerCase().includes(q));
+            return categories.filter((cat) =>
+                matchesVietnameseSearch(searchText, cat.name, cat.description)
+            );
         }
 
-        return publishers.filter((pub) => !q || `${pub.name} ${pub.address || ''} ${pub.phone || ''} ${pub.email || ''}`.toLowerCase().includes(q));
-    }, [activeTab, books, categories, categoryNameMap, publishers, publisherNameMap, searchText, statusFilter, categoryFilter, publisherFilter, minPrice, maxPrice]);
+        return publishers.filter((pub) =>
+            matchesVietnameseSearch(
+                searchText,
+                pub.name,
+                pub.address,
+                pub.phone,
+                pub.email
+            )
+        );
+    }, [
+        activeTab,
+        books,
+        categories,
+        categoryNameMap,
+        publishers,
+        publisherNameMap,
+        searchText,
+        statusFilter,
+        categoryFilter,
+        publisherFilter,
+        minPrice,
+        maxPrice,
+    ]);
 
     const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
     const currentPage = Math.min(page, totalPages);
@@ -257,7 +307,7 @@ export const useBookManagement = () => {
                 categoryIds: [],
                 coverImg: '',
                 physicalPrice: 0,
-                isPhysicalAvailable: true,
+                isPhysicalAvailable: false,
                 isEBookAvailable: false,
                 isRentalAvailable: false,
                 eBookPrice: 0,
@@ -265,7 +315,8 @@ export const useBookManagement = () => {
                 monthlyRentalPrice: 0,
                 yearlyRentalPrice: 0,
                 stockCount: 0,
-                status: 'selling',
+                hasPublishedEbook: false,
+                status: 'upcoming',
             });
         } else if (activeTab === 'categories') {
             setDraft({ name: '', parentId: '', description: '' });
@@ -280,8 +331,23 @@ export const useBookManagement = () => {
         if (kind === 'books') {
             try {
                 const book = await loadBookDetail(id);
+                // Kiểm tra xem đầu sách đã có ấn bản E-Book được xuất bản chính thức hay chưa
+                let hasPublishedEbook = false;
+                try {
+                    const editionRes = await ebookPublishingService.getEditionByBookId(id);
+                    hasPublishedEbook = Boolean(
+                        editionRes?.hasEdition &&
+                        (editionRes.edition?.statusName === 'Published' || editionRes.edition?.status === 2)
+                    );
+                } catch {
+                    hasPublishedEbook = false;
+                }
                 // Nạp đầy đủ thể loại và metadata của sách trước khi sửa.
-                setDraft({ ...book, galleryImages: book.galleryImages.join('\n') });
+                setDraft({
+                    ...book,
+                    galleryImages: book.galleryImages.join('\n'),
+                    hasPublishedEbook,
+                });
                 setEditingId(id);
                 setFormWarn('');
                 setModalKind(kind);
@@ -334,6 +400,16 @@ export const useBookManagement = () => {
         const duplicatedIsbn = books.some((b) => b.isbn === isbnStr && b.id !== editingId);
         if (duplicatedIsbn) {
             setFormWarn('Mã ISBN đã tồn tại trong hệ thống.');
+            return;
+        }
+
+        const isPhysicalGreen = draft.isPhysicalAvailable === true && (Number(draft.stockCount) || 0) > 0;
+        const isEBookGreen = draft.isEBookAvailable === true && draft.hasPublishedEbook === true;
+        const isRentalGreen = draft.isRentalAvailable === true && draft.isEBookAvailable === true && draft.hasPublishedEbook === true;
+        const hasAnyGreen = isPhysicalGreen || isEBookGreen || isRentalGreen;
+
+        if (draft.status === 'selling' && !hasAnyGreen) {
+            setFormWarn('Không thể chọn trạng thái "Đang bán" khi chưa có hình thức phát hành nào khả dụng (màu xanh). Vui lòng chọn "Sắp phát hành" hoặc "Ngừng bán".');
             return;
         }
 

@@ -47,6 +47,15 @@ namespace AncientBook.Application.Services
                 }
                 request.Quantity = 1; 
             }
+            else if (request.PurchaseType == PurchaseType.EBook)
+            {
+                if (!book.IsEBookAvailable)
+                {
+                    throw new InvalidOperationException($"Sách '{book.Title}' không hỗ trợ mua E-Book online.");
+                }
+                request.Quantity = 1;
+                request.RentalDuration = null;
+            }
 
             var cart = await _cartRepository.GetByUserIdAsync(request.UserId);
             if (cart == null)
@@ -63,9 +72,13 @@ namespace AncientBook.Application.Services
                 {
                     existingItem.Quantity += request.Quantity;
                 }
-                else
+                else if (request.PurchaseType == PurchaseType.Rental)
                 {
                     existingItem.RentalDuration = request.RentalDuration;
+                }
+                else
+                {
+                    existingItem.Quantity = 1;
                 }
                 await _cartRepository.UpdateItemAsync(existingItem);
             }
@@ -112,6 +125,10 @@ namespace AncientBook.Application.Services
                         RentalDurationType.Yearly => ci.Book.YearlyRentalPrice,   
                         _ => 0
                     };
+                }
+                else if (ci.PurchaseType == PurchaseType.EBook)
+                {
+                    unitPrice = ci.Book.EBookPrice;
                 }
 
                 decimal itemTotal = unitPrice * ci.Quantity;
@@ -178,6 +195,12 @@ namespace AncientBook.Application.Services
                 if (!book.IsRentalAvailable) throw new InvalidOperationException("Sách này không hỗ trợ cho thuê online."); 
                 if (!request.RentalDuration.HasValue) throw new ArgumentException("Vui lòng chọn thời gian thuê.");
                 request.Quantity = 1;
+            }
+            else if (request.PurchaseType == PurchaseType.EBook)
+            {
+                if (!book.IsEBookAvailable) throw new InvalidOperationException("Sách này không hỗ trợ mua E-Book online.");
+                request.Quantity = 1;
+                request.RentalDuration = null;
             }
 
             if (cartItem.PurchaseType != request.PurchaseType)

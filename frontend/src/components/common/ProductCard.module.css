@@ -139,3 +139,16 @@
         color: #ffffff;
         border-color: var(--egyptian, #0B409C);
     }
+
+    .btnAddCartFast:disabled {
+        background: #f1f5f9;
+        color: #94a3b8;
+        border-color: #e2e8f0;
+        cursor: not-allowed;
+    }
+
+    .btnAddCartFast:disabled:hover {
+        background: #f1f5f9;
+        color: #94a3b8;
+        border-color: #e2e8f0;
+    }

@@ -14,7 +14,7 @@ export interface CartItem {
 
 export interface CartItemDto {  
     item: any;
-    onSelect: (id: number, isSelected: Boolean) => void;
+    onSelect: (id: number, isSelected: boolean) => void;
     onFormatChange: (id: number, type: number) => void;
     onDurationChange: (id: number, duration: number) => void;
     onQtyChange: (id: number, delta: number) => void;

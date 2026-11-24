@@ -51,19 +51,62 @@ namespace AncientBook.Application.Services
             if (pageSize < 1) pageSize = 10;
             if (pageSize > 100) pageSize = 100;
 
-            var query = _publisherRepository.GetQuery();
+            var sortedQuery = _publisherRepository
+                .GetQuery()
+                .OrderByDescending(p => p.Id);
 
-            if (!string.IsNullOrWhiteSpace(searchTerm))
+            int totalCount;
+            IQueryable<Publisher> pageQuery;
+            string normalizedTerm = VietnameseSearchHelper.Normalize(searchTerm);
+
+            // Nếu có từ khóa, lọc không dấu trên bộ nhớ rồi cắt trang
+            if (!string.IsNullOrEmpty(normalizedTerm))
             {
-                var term = searchTerm.Trim().ToLower();
-                query = query.Where(p => p.Name.ToLower().Contains(term) || (p.Phone != null && p.Phone.Contains(term)) || (p.Email != null && p.Email.ToLower().Contains(term)));
+                var candidates = await sortedQuery
+                    .Select(p => new
+                    {
+                        p.Id,
+                        p.Name,
+                        p.Phone,
+                        p.Email
+                    })
+                    .ToListAsync();
+
+                var matchedIds = candidates
+                    .Where(p => VietnameseSearchHelper.MatchesAny(
+                        normalizedTerm,
+                        p.Name,
+                        p.Phone,
+                        p.Email))
+                    .Select(p => p.Id)
+                    .ToList();
+
+                totalCount = matchedIds.Count;
+                var pageIds = matchedIds
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
+                if (pageIds.Count == 0)
+                {
+                    return new PagedResult<PublisherDto>(
+                        new List<PublisherDto>(),
+                        totalCount,
+                        pageNumber,
+                        pageSize);
+                }
+
+                pageQuery = sortedQuery.Where(p => pageIds.Contains(p.Id));
+            }
+            else
+            {
+                totalCount = await sortedQuery.CountAsync();
+                pageQuery = sortedQuery
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize);
             }
 
-            var totalCount = await query.CountAsync();
-            var items = await query
-                .OrderByDescending(p => p.Id)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
+            var items = await pageQuery
                 .Select(p => new PublisherDto
                 {
                     Id = p.Id,

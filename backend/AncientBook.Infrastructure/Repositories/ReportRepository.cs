@@ -18,9 +18,9 @@ public class ReportRepository(ApplicationDbContext context) : IReportRepository
         {
             TotalRevenue = group.Sum(line => line.Revenue),
             PhysicalRevenue = group.Sum(line => line.Type == PurchaseType.Physical ? line.Revenue : 0),
-            RentalRevenue = group.Sum(line => line.Type == PurchaseType.Rental ? line.Revenue : 0),
+            RentalRevenue = group.Sum(line => line.Type == PurchaseType.Rental || line.Type == PurchaseType.EBook ? line.Revenue : 0),
             PhysicalQuantity = group.Sum(line => line.Type == PurchaseType.Physical ? line.Quantity : 0),
-            RentalQuantity = group.Sum(line => line.Type == PurchaseType.Rental ? line.Quantity : 0),
+            RentalQuantity = group.Sum(line => line.Type == PurchaseType.Rental || line.Type == PurchaseType.EBook ? line.Quantity : 0),
             CompletedOrders = group.Select(line => line.OrderId).Distinct().Count()
         }).FirstOrDefaultAsync() ?? new DashboardReportDto();
         report.TotalBooks = await books.CountAsync();
@@ -36,7 +36,7 @@ public class ReportRepository(ApplicationDbContext context) : IReportRepository
                 Date = group.Key,
                 Revenue = group.Sum(line => line.Revenue),
                 PhysicalRevenue = group.Sum(line => line.Type == PurchaseType.Physical ? line.Revenue : 0),
-                RentalRevenue = group.Sum(line => line.Type == PurchaseType.Rental ? line.Revenue : 0),
+                RentalRevenue = group.Sum(line => line.Type == PurchaseType.Rental || line.Type == PurchaseType.EBook ? line.Revenue : 0),
                 CompletedOrders = group.Select(line => line.OrderId).Distinct().Count()
             }).ToListAsync();
         report.TopBooks = await lines.GroupBy(line => new { line.BookId, line.Title, line.CoverImg })
@@ -44,7 +44,7 @@ public class ReportRepository(ApplicationDbContext context) : IReportRepository
             {
                 BookId = group.Key.BookId, Title = group.Key.Title, CoverImg = group.Key.CoverImg,
                 SoldQuantity = group.Sum(line => line.Type == PurchaseType.Physical ? line.Quantity : 0),
-                RentalQuantity = group.Sum(line => line.Type == PurchaseType.Rental ? line.Quantity : 0),
+                RentalQuantity = group.Sum(line => line.Type == PurchaseType.Rental || line.Type == PurchaseType.EBook ? line.Quantity : 0),
                 TotalAmount = group.Sum(line => line.Revenue)
             }).OrderByDescending(book => book.SoldQuantity + book.RentalQuantity)
             .ThenByDescending(book => book.TotalAmount).ThenBy(book => book.BookId).Take(10).ToListAsync();
@@ -82,6 +82,7 @@ public class ReportRepository(ApplicationDbContext context) : IReportRepository
         if (filter.PublisherId.HasValue) items = items.Where(item => item.Book!.PublisherId == filter.PublisherId);
         if (filter.PurchaseType == "physical") items = items.Where(item => item.PurchaseType == PurchaseType.Physical);
         if (filter.PurchaseType == "rental") items = items.Where(item => item.PurchaseType == PurchaseType.Rental);
+        if (filter.PurchaseType == "ebook") items = items.Where(item => item.PurchaseType == PurchaseType.EBook);
         // Phân bổ giảm giá theo giá trị dòng; lọc sách không cộng cả các dòng ngoài bộ lọc.
         return items.Select(item => new ReportLine
         {
