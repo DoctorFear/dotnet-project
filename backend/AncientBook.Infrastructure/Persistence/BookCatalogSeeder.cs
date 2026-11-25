@@ -283,6 +283,164 @@ public static class BookCatalogSeeder
 
             await context.Inventories.AddRangeAsync(inventories);
             await context.SaveChangesAsync();
+
+            var ebookBooks = await context.Books
+                .Where(b => b.IsEBookAvailable)
+                .OrderBy(b => b.Id)
+                .ToListAsync();
+
+            if (ebookBooks.Count == 0) return;
+
+            var existingBookIds = await context.EbookEditions
+                .Select(e => e.BookId)
+                .Distinct()
+                .ToListAsync();
+
+            var now = TimeZoneHelper.GetVietnamTime();
+
+            var seedPdfDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "ebooks");
+            Directory.CreateDirectory(seedPdfDir);
+
+            foreach (var book in ebookBooks)
+            {
+                if (existingBookIds.Contains(book.Id)) continue;
+
+                var edition = new EbookEdition
+                {
+                    BookId = book.Id,
+                    FileTitle = $"{book.Isbn}.pdf",
+                    Format = EbookFormat.Pdf,
+                    DropboxPath = $"/ebooks/{book.Isbn}.pdf",
+                    FileSizeBytes = 1_048_576,
+                    TotalPages = 4,
+                    PresetType = EbookPresetType.PdfStandard,
+                    Status = EditionPublishStatus.Published,
+                    PublishedAt = now,
+                    IsTtsEnabled = true,
+                    CreatedBy = "BookCatalogSeeder"
+                };
+
+                context.EbookEditions.Add(edition);
+                await context.SaveChangesAsync();
+
+                var segments = new List<BookTtsSegment>
+                {
+                    new()
+                    {
+                        EditionId = edition.Id,
+                        PageNumber = 1,
+                        SegmentIndex = 0,
+                        TextContent = $"{book.Title} — Tác giả: {book.Author}.",
+                        CreatedAt = now
+                    },
+                    new()
+                    {
+                        EditionId = edition.Id,
+                        PageNumber = 1,
+                        SegmentIndex = 1,
+                        TextContent = book.Description ?? $"Giới thiệu nội dung tác phẩm {book.Title}.",
+                        CreatedAt = now
+                    },
+                    new()
+                    {
+                        EditionId = edition.Id,
+                        PageNumber = 2,
+                        SegmentIndex = 0,
+                        TextContent = $"Chương I: Bối cảnh và khởi đầu của {book.Title}. Người đọc có thể nhấp vào từng đoạn văn để kích hoạt giọng đọc AI hoặc bôi đen văn bản để hỏi trợ lý Copilot.",
+                        CreatedAt = now
+                    },
+                    new()
+                    {
+                        EditionId = edition.Id,
+                        PageNumber = 2,
+                        SegmentIndex = 1,
+                        TextContent = "Từng trang sách được chia thành các khối văn bản độc lập giúp đồng bộ hóa âm thanh và trích dẫn ngữ cảnh chính xác theo số trang.",
+                        CreatedAt = now
+                    },
+                    new()
+                    {
+                        EditionId = edition.Id,
+                        PageNumber = 3,
+                        SegmentIndex = 0,
+                        TextContent = $"Chương II: Những luận điểm và giá trị cốt lõi trong {book.Title}.",
+                        CreatedAt = now
+                    },
+                    new()
+                    {
+                        EditionId = edition.Id,
+                        PageNumber = 4,
+                        SegmentIndex = 0,
+                        TextContent = $"Tổng kết tác phẩm {book.Title}. Cảm ơn bạn đã đọc sách tại ancientBOOK.",
+                        CreatedAt = now
+                    }
+                };
+
+                context.BookTtsSegments.AddRange(segments);
+                await context.SaveChangesAsync();
+            }
         }
+    }
+
+    private static byte[] CreateSamplePdfBytes(string title, string author, string isbn, int pageCount)
+    {
+        var sb = new System.Text.StringBuilder();
+        var offsets = new List<int> { 0 };
+
+        void WriteObj(int id, string body)
+        {
+            offsets.Add(System.Text.Encoding.ASCII.GetByteCount(sb.ToString()));
+            sb.Append($"{id} 0 obj\n{body}\nendobj\n");
+        }
+
+        // Standard PDF 1.4 Header
+        sb.Append("%PDF-1.4\n");
+
+        // 1: Catalog, 2: Pages root, 3: Built-in Helvetica Font
+        WriteObj(1, "<< /Type /Catalog /Pages 2 0 R >>");
+
+        var kids = string.Join(" ", Enumerable.Range(0, pageCount).Select(i => $"{4 + i * 2} 0 R"));
+        WriteObj(2, $"<< /Type /Pages /Kids [ {kids} ] /Count {pageCount} >>");
+        WriteObj(3, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+
+        // Strip non-ASCII accents for standard Type1 Helvetica stream safety
+        static string SafeAscii(string input)
+        {
+            var normalized = input.Normalize(System.Text.NormalizationForm.FormD);
+            var chars = normalized.Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                .Select(c => c == 'đ' ? 'd' : c == 'Đ' ? 'D' : c)
+                .Where(c => c >= 32 && c <= 126)
+                .ToArray();
+            return new string(chars).Replace("\\", "\\\\").Replace("(", "\\(").Replace(")", "\\)");
+        }
+
+        var safeTitle = SafeAscii(title);
+        var safeAuthor = SafeAscii(author);
+
+        for (int p = 0; p < pageCount; p++)
+        {
+            int pageObjId = 4 + p * 2;
+            int contentObjId = 5 + p * 2;
+
+            string contentStream =
+                $"BT /F1 18 Tf 50 750 Td ({safeTitle}) Tj " +
+                $"0 -28 Td /F1 12 Tf (Author: {safeAuthor} | ISBN: {isbn}) Tj " +
+                $"0 -28 Td (Page {p + 1} of {pageCount} - AncientBook Sample E-Book) Tj ET";
+
+            WriteObj(pageObjId,
+                $"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents {contentObjId} 0 R >>");
+            WriteObj(contentObjId,
+                $"<< /Length {contentStream.Length} >>\nstream\n{contentStream}\nendstream");
+        }
+
+        int xrefOffset = System.Text.Encoding.ASCII.GetByteCount(sb.ToString());
+        sb.Append($"xref\n0 {offsets.Count}\n");
+        sb.Append("0000000000 65535 f \n");
+        for (int i = 1; i < offsets.Count; i++)
+        {
+            sb.Append($"{offsets[i]:D10} 00000 n \n");
+        }
+
+        sb.Append($"trailer\n<< /Size {offsets.Count} /Root 1 0 R >>\nstartxref\n{xrefOffset}\n%%EOF");
+        return System.Text.Encoding.ASCII.GetBytes(sb.ToString());
     }
 }

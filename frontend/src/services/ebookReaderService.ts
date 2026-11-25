@@ -3,7 +3,7 @@ import type { BookTtsSegmentDto, ReaderEditionDto } from '../types/reader';
 
 export const ebookReaderService = {
     getEditionByBookId(bookId: string): Promise<ReaderEditionDto> {
-        return requestApi<ReaderEditionDto>(`/ebooks/book/${bookId}/edition`, {
+        return requestApi<ReaderEditionDto>(`/EbookEditions/book/${bookId}/edition`, {
             method: 'GET',
         });
     },
@@ -14,7 +14,7 @@ export const ebookReaderService = {
     ): Promise<BookTtsSegmentDto[]> {
         try {
             return await requestApi<BookTtsSegmentDto[]>(
-                `/ebooks/${editionId}/pages/${pageNumber}/segments`,
+                `/EbookEditions/${editionId}/tts/pages/${pageNumber}/segments`,
                 { method: 'GET' }
             );
         } catch {
@@ -25,14 +25,15 @@ export const ebookReaderService = {
     async askCopilot(
         editionId: number | string,
         question: string,
-        currentPage: number
+        currentPage: number,
+        selectedText?: string
     ): Promise<string> {
         try {
             const data = await requestApi<{ answer?: string }>(
-                `/ebooks/${editionId}/copilot`,
+                `/EbookEditions/${editionId}/ask-copilot`,
                 {
                     method: 'POST',
-                    body: JSON.stringify({ question, currentPage }),
+                    body: JSON.stringify({ question, currentPage, selectedText }),
                 }
             );
             return data?.answer ?? `Đã phân tích ngữ cảnh trang ${currentPage}.`;

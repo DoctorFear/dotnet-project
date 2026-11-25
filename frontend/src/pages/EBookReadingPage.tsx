@@ -1,4 +1,3 @@
-// src/pages/EbookReaderPage.tsx
 import React from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import TopBar from '../components/layout/TopBar';
@@ -55,7 +54,7 @@ export const EbookReaderPage: React.FC = () => {
                     onPrevSpread={reader.prevSpread}
                     onNextSpread={reader.nextSpread}
                     onSendSelectionToCopilot={(text) =>
-                        void reader.askCopilot(`Giải thích đoạn trích: "${text}"`)
+                        void reader.askCopilot('Giải thích đoạn trích này', text)
                     }
                 >
                     <ReaderBottomDock

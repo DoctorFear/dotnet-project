@@ -187,19 +187,22 @@ export const useEbookReader = (
         setPageInput(String(normalizedLeft));
     };
 
-    const askCopilot = async (question: string) => {
+    const askCopilot = async (question: string, selectedText?: string) => {
         if (!question.trim()) return;
-        setMessages((prev) => [...prev, { id: `${Date.now()}-u`, role: 'user', content: question }]);
+        const displayMsg = selectedText
+            ? `${question}\n"${selectedText}"`
+            : question;
+        setMessages((prev) => [...prev, { id: `${Date.now()}-u`, role: 'user', content: displayMsg }]);
         if (!copilotOpen) setCopilotOpen(true);
 
         const answer = await ebookReaderService.askCopilot(
             edition?.editionId ?? bookId ?? 0,
             question,
-            leftPage
+            leftPage,
+            selectedText
         );
         setMessages((prev) => [...prev, { id: `${Date.now()}-b`, role: 'bot', content: answer }]);
     };
-
     return {
         edition,
         leftPage,

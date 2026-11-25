@@ -312,5 +312,35 @@ namespace AncientBook.API.Controllers
 
             return Ok(histories);
         }
+
+        [HttpGet("book/{bookId:int}/edition")]
+        [Authorize]
+        public async Task<IActionResult> GetPublishedEditionByBookId(
+            [FromRoute] int bookId,
+            CancellationToken ct)
+        {
+            var edition = await _context.EbookEditions
+                .AsNoTracking()
+                .Include(e => e.Book)
+                .Where(e => e.BookId == bookId && e.Status == EditionPublishStatus.Published)
+                .OrderByDescending(e => e.PublishedAt ?? e.CreatedAt)
+                .FirstOrDefaultAsync(ct);
+
+            if (edition == null)
+            {
+                return NotFound(new { message = "Sách này chưa có ấn bản điện tử được xuất bản." });
+            }
+
+            return Ok(new
+            {
+                editionId = edition.Id,
+                bookId = edition.BookId,
+                title = edition.Book?.Title ?? edition.FileTitle,
+                author = edition.Book?.Author ?? string.Empty,
+                totalPages = edition.TotalPages,
+                ttsEnabled = edition.IsTtsEnabled,
+                chatEnabled = edition.PresetType != EbookPresetType.PdfStandard
+            });
+        }
     }
 }

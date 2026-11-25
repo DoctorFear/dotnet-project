@@ -42,11 +42,23 @@
 .centerStage {
     flex: 1;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: flex-start;
+    justify-content: flex-start;
     position: relative;
     overflow: auto;
-    padding: 28px 20px 88px 20px;
+    padding: 24px 64px 88px 64px;
+}
+
+.doubleSpread {
+    display: flex;
+    margin: auto;
+    background: #ffffff;
+    box-shadow: 0 16px 42px rgba(7, 18, 51, 0.22);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.2s ease;
+    transform-origin: top center;
 }
 
 .spreadNavBtn {
@@ -68,17 +80,8 @@
 .spreadNavBtn:disabled { opacity: 0.35; cursor: not-allowed; }
 .prevBtn { left: 18px; }
 .nextBtn { right: 18px; }
+ransform-origin: center center;
 
-.doubleSpread {
-    display: flex;
-    background: #ffffff;
-    box-shadow: 0 16px 42px rgba(7, 18, 51, 0.22);
-    border-radius: 6px;
-    overflow: hidden;
-    position: relative;
-    transition: transform 0.2s ease;
-    transform-origin: center center;
-}
 .doubleSpread::after {
     content: "";
     position: absolute;
