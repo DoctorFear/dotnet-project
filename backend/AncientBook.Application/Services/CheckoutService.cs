@@ -132,6 +132,14 @@ namespace AncientBook.Application.Services
                                 throw new ArgumentException("Gói thời gian thuê không hợp lệ.");
                         }
                     }
+                    else if (itemDto.PurchaseType == PurchaseType.EBook)
+                    {
+                        if (!book.IsEBookAvailable)
+                        {
+                            throw new InvalidOperationException($"Sách '{book.Title}' không hỗ trợ mua E-Book online.");
+                        }
+                        unitPrice = book.EBookPrice;
+                    }
                     subTotal += unitPrice * itemDto.Quantity;
                     orderItemsToCreate.Add(new OrderItem
                     {

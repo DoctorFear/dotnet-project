@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useUser } from '../context/UserContext';
 import TopBar from '../components/layout/TopBar';
 import Header from '../components/layout/Header';
 import Navbar from '../components/layout/Navbar';
@@ -21,12 +22,13 @@ import BookGallery from '../components/features/storefront/BookGallery';
 import BookReviews from '../components/features/storefront/BookReviews';
 import WishlistLoginPrompt from '../components/features/storefront/WishlistLoginPrompt';
 import { useBookFilterOptions } from '../hooks/useBookFilterOptions';
-import StockAvailabilityBadge from '../components/common/StockAvailabilityBadge';
 
 export const BookDetailPage: React.FC = () => {
     const { id } = useParams();
     const { book: bookData, relatedBooks, sameAuthorBooks, isLoading, error } = useBookDetail(id);
     const navigate = useNavigate();
+    const location = useLocation();
+    const { isLoggedIn } = useUser();
     const wishlist = useWishlist();
     const options = useBookFilterOptions();
     const purchaseData = bookData;
@@ -53,7 +55,37 @@ export const BookDetailPage: React.FC = () => {
     }
 
 
-    const canPurchase = bookData.status === 'selling' && !(selection.format === 'physical' && bookData.stockCount < selection.quantity);
+    // Mua ngay: Chuyển hướng trực tiếp đến trang xác nhận thanh toán chỉ riêng sản phẩm được chọn
+    const handleBuyNow = () => {
+        if (!bookData || !canPurchase) return;
+        if (!isLoggedIn) {
+            navigate('/login', { state: { from: location } });
+            return;
+        }
+
+        const immediateCheckoutItem = {
+            cartItemId: 0,
+            bookId: bookData.id,
+            title: bookData.title,
+            author: bookData.author,
+            coverImg: bookData.coverImg,
+            quantity: selection.format === 'physical' ? selection.quantity : 1,
+            purchaseType: selection.format === 'physical' ? 1 : selection.format === 'rental' ? 2 : 3,
+            rentalDuration: selection.format === 'rental' ? { week: 1, month: 2, year: 3 }[selection.duration] : null,
+            unitPrice: selection.price,
+            isSelected: true,
+        };
+
+        navigate('/checkout', { state: { selectedItems: [immediateCheckoutItem] } });
+    };
+
+    const hasPhysical = bookData.isPhysicalAvailable && (bookData.stockCount ?? 0) > 0;
+    const hasPublishedEbook = Boolean(bookData.hasPublishedEbook);
+    const hasEBook = bookData.isEBookAvailable && bookData.eBookPrice > 0 && hasPublishedEbook;
+    const hasRental = bookData.isRentalAvailable && bookData.isEBookAvailable && (bookData.weeklyRentalPrice ?? 0) > 0 && hasPublishedEbook;
+    const hasAnyActiveFormat = hasPhysical || hasEBook || hasRental;
+
+    const canPurchase = bookData.status === 'selling' && hasAnyActiveFormat && selection.isCurrentFormatAvailable && !(selection.format === 'physical' && bookData.stockCount < selection.quantity);
     return (
         <div className={styles.page}>
             {wishlist.loginPromptOpen && <WishlistLoginPrompt onClose={wishlist.closeLoginPrompt} onLogin={wishlist.goToLogin} />}
@@ -93,7 +125,6 @@ export const BookDetailPage: React.FC = () => {
                         </div>
 
                         <StarRating rating={bookData.rating} reviewsCount={reviewCounts[bookData.id] ?? bookData.reviewsCount} />
-                        <StockAvailabilityBadge book={bookData} />
 
                         <div className={styles.priceBoxPanel}>
                             <span className={styles.detailSalePrice}>
@@ -101,27 +132,84 @@ export const BookDetailPage: React.FC = () => {
                             </span>
                         </div>
 
-                        {bookData.status !== 'selling' && <p role="status">{bookData.status === 'stopped' ? 'Sách đã ngừng kinh doanh.' : 'Sách sắp phát hành.'}</p>}
-                        {bookData.status === 'selling' && purchaseData && <BookPurchaseOptions book={purchaseData} selection={selection} disabled={isSubmitting} />}
+                        {bookData.status === 'stopped' && (
+                            <div>
+                                <div style={{ padding: '12px 16px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#991b1b', fontSize: '13.5px', fontWeight: 600, margin: '14px 0' }}>
+                                    Tác phẩm hiện đã ngừng kinh doanh trên toàn hệ thống.
+                                </div>
+                                <div className={styles.actionBtnsGroup}>
+                                    <button
+                                        type="button"
+                                        className={styles.btnAddCartLg}
+                                        disabled
+                                        style={{ backgroundColor: '#f1f5f9', color: '#94a3b8', borderColor: '#e2e8f0', cursor: 'not-allowed' }}
+                                    >
+                                        Ngừng kinh doanh
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
-                        {bookData.status === 'selling' && <div className={styles.actionBtnsGroup}>
-                            <button
-                                type="button"
-                                className={styles.btnAddCartLg}
-                                disabled={isSubmitting || !canPurchase}
-                                onClick={() => { if (purchaseData) void submitPurchase(purchaseData, selection); }}
-                            >
-                                Thêm vào giỏ hàng
-                            </button>
-                            <button
-                                type="button"
-                                className={styles.btnBuyNowLg}
-                                disabled={isSubmitting || !canPurchase}
-                                onClick={async () => { if (purchaseData && await submitPurchase(purchaseData, selection)) navigate('/cart'); }}
-                            >
-                                Mua ngay
-                            </button>
-                        </div>}
+                        {bookData.status === 'upcoming' && (
+                            <div>
+                                <div style={{ padding: '12px 16px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', color: '#166534', fontSize: '13.5px', fontWeight: 600, margin: '14px 0' }}>
+                                    Sách sắp phát hành. Quý độc giả vui lòng đón đọc!
+                                </div>
+                                <div className={styles.actionBtnsGroup}>
+                                    <button
+                                        type="button"
+                                        className={styles.btnAddCartLg}
+                                        disabled
+                                        style={{ backgroundColor: '#f1f5f9', color: '#94a3b8', borderColor: '#e2e8f0', cursor: 'not-allowed' }}
+                                    >
+                                        Sắp phát hành
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {bookData.status === 'selling' && !hasAnyActiveFormat && (
+                            <div>
+                                <div style={{ padding: '12px 16px', backgroundColor: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', color: '#92400e', fontSize: '13.5px', fontWeight: 600, margin: '14px 0' }}>
+                                    Sản phẩm tạm thời hết hàng. Quý khách vui lòng quay lại sau!
+                                </div>
+                                <div className={styles.actionBtnsGroup}>
+                                    <button
+                                        type="button"
+                                        className={styles.btnAddCartLg}
+                                        disabled
+                                        style={{ backgroundColor: '#f1f5f9', color: '#94a3b8', borderColor: '#e2e8f0', cursor: 'not-allowed' }}
+                                    >
+                                        Tạm hết hàng
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {bookData.status === 'selling' && hasAnyActiveFormat && purchaseData && (
+                            <BookPurchaseOptions book={purchaseData} selection={selection} disabled={isSubmitting} />
+                        )}
+
+                        {bookData.status === 'selling' && hasAnyActiveFormat && (
+                            <div className={styles.actionBtnsGroup}>
+                                <button
+                                    type="button"
+                                    className={styles.btnAddCartLg}
+                                    disabled={isSubmitting || !canPurchase}
+                                    onClick={() => { if (purchaseData) void submitPurchase(purchaseData, selection); }}
+                                >
+                                    Thêm vào giỏ hàng
+                                </button>
+                                <button
+                                    type="button"
+                                    className={styles.btnBuyNowLg}
+                                    disabled={isSubmitting || !canPurchase}
+                                    onClick={handleBuyNow}
+                                >
+                                    Mua ngay
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 

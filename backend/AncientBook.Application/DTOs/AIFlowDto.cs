@@ -81,6 +81,7 @@ public class TtsSegmentDto
 
 public class PageTtsResponseDto
 {
+    public int Id { get; set; }
     public int SegmentIndex { get; set; }
     public int PageNumber { get; set; }
     public string TextContent { get; set; } = string.Empty;
@@ -94,5 +95,26 @@ public class TtsGenerateResultDto
     public string Message { get; set; } = string.Empty;
     public int TotalSegmentsGenerated { get; set; }
 }   
+
+public class EbookEditionDetailDto
+{
+    public int Id { get; set; }
+    public int BookId { get; set; }
+    public string BookTitle { get; set; } = string.Empty;
+    public string FileTitle { get; set; } = string.Empty;
+    public string Format { get; set; } = string.Empty;
+    public string DropboxPath { get; set; } = string.Empty;
+    public long FileSizeBytes { get; set; }
+    public int TotalPages { get; set; }
+    public EbookPresetType PresetType { get; set; }
+    public string PresetTypeName { get; set; } = string.Empty;
+    public EditionPublishStatus Status { get; set; }
+    public string StatusName { get; set; } = string.Empty;
+    public DateTime? PublishedAt { get; set; }
+    public bool IsTtsEnabled { get; set; }
+    public int TotalEmbeddings { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+}
 
 

@@ -275,7 +275,12 @@ namespace AncientBook.Infrastructure.Storage
         {
             if (string.IsNullOrEmpty(dropboxUrl)) return string.Empty;
 
-            var uri = new UriBuilder(dropboxUrl);
+            // Chuyển đổi sang direct CDN dl.dropboxusercontent.com để tránh chuyển hướng 302, tăng tốc độ tải audio lên gấp 4 lần
+            var directDomain = dropboxUrl
+                .Replace("www.dropbox.com", "dl.dropboxusercontent.com")
+                .Replace("dropbox.com", "dl.dropboxusercontent.com");
+
+            var uri = new UriBuilder(directDomain);
             var query = QueryHelpers.ParseQuery(uri.Query);
             query.Remove("dl");
             query["raw"] = "1";

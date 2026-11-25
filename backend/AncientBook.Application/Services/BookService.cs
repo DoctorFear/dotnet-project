@@ -51,16 +51,6 @@ namespace AncientBook.Application.Services
             if (!string.IsNullOrWhiteSpace(filter.Author))
                 query = query.Where(book => book.Author == filter.Author.Trim());
 
-            // Lọc theo tên sách, tác giả, nhà xuất bản hoặc ISBN.
-            if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
-            {
-                var term = filter.SearchTerm.Trim().ToLower();
-                query = query.Where(b => b.Title.ToLower().Contains(term) ||
-                                         b.Author.ToLower().Contains(term) ||
-                                         (b.PublisherEntity != null && b.PublisherEntity.Name.ToLower().Contains(term)) ||
-                                         b.Isbn.ToLower().Contains(term));
-            }
-
             // Lọc theo danh mục thể loại
             if (filter.CategoryIds != null && filter.CategoryIds.Any())
             {
@@ -98,10 +88,60 @@ namespace AncientBook.Application.Services
                 _ => query.OrderByDescending(b => b.Id)
             };
 
-            var totalCount = await query.CountAsync();
-            var items = await query
-                .Skip((filter.PageNumber - 1) * filter.PageSize)
-                .Take(filter.PageSize)
+            int totalCount;
+            IQueryable<Book> pageQuery;
+            string normalizedTerm = VietnameseSearchHelper.Normalize(filter.SearchTerm);
+
+            // Nếu có từ khóa, lọc không dấu trên bộ nhớ sau khi đã áp dụng các bộ lọc và sắp xếp SQL
+            if (!string.IsNullOrEmpty(normalizedTerm))
+            {
+                var candidates = await query
+                    .Select(b => new
+                    {
+                        b.Id,
+                        b.Title,
+                        b.Author,
+                        PublisherName = b.PublisherEntity != null ? b.PublisherEntity.Name : null,
+                        b.Isbn
+                    })
+                    .ToListAsync();
+
+                var matchedIds = candidates
+                    .Where(b => VietnameseSearchHelper.MatchesAny(
+                        normalizedTerm,
+                        b.Title,
+                        b.Author,
+                        b.PublisherName,
+                        b.Isbn))
+                    .Select(b => b.Id)
+                    .ToList();
+
+                totalCount = matchedIds.Count;
+                var pageIds = matchedIds
+                    .Skip((filter.PageNumber - 1) * filter.PageSize)
+                    .Take(filter.PageSize)
+                    .ToList();
+
+                if (pageIds.Count == 0)
+                {
+                    return new PagedResult<BookListDto>(
+                        new List<BookListDto>(),
+                        totalCount,
+                        filter.PageNumber,
+                        filter.PageSize);
+                }
+
+                pageQuery = query.Where(b => pageIds.Contains(b.Id));
+            }
+            else
+            {
+                totalCount = await query.CountAsync();
+                pageQuery = query
+                    .Skip((filter.PageNumber - 1) * filter.PageSize)
+                    .Take(filter.PageSize);
+            }
+
+            var items = await pageQuery
                 .Select(b => new BookListDto
                 {
                     Id = b.Id,
@@ -121,6 +161,7 @@ namespace AncientBook.Application.Services
                     WeeklyRentalPrice = b.WeeklyRentalPrice,
                     MonthlyRentalPrice = b.MonthlyRentalPrice,
                     YearlyRentalPrice = b.YearlyRentalPrice,
+                    HasPublishedEbook = b.EbookEditions.Any(e => e.Status == EditionPublishStatus.Published),
                     Rating = b.Rating,
                     ReviewsCount = b.ReviewsCount,
                     StockStatus = StockWarningPolicy.GetStatus(b.IsPhysicalAvailable, b.StockCount, threshold),
@@ -159,6 +200,7 @@ namespace AncientBook.Application.Services
                 WeeklyRentalPrice = b.WeeklyRentalPrice,
                 MonthlyRentalPrice = b.MonthlyRentalPrice,
                 YearlyRentalPrice = b.YearlyRentalPrice,
+                HasPublishedEbook = b.EbookEditions.Any(e => e.Status == EditionPublishStatus.Published),
                 Rating = b.Rating,
                 ReviewsCount = b.ReviewsCount,
                 StockStatus = StockWarningPolicy.GetStatus(b.IsPhysicalAvailable, b.StockCount, threshold),

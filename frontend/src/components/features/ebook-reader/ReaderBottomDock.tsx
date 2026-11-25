@@ -9,6 +9,8 @@ interface Props {
     voiceGender: 'female' | 'male';
     navbarHidden: boolean;
     copilotOpen: boolean;
+    ttsEnabled?: boolean;
+    chatEnabled?: boolean;
     onPageInputChange: (val: string) => void;
     onPageJump: () => void;
     onPrevSpread: () => void;
@@ -55,31 +57,37 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
                 ›
             </button>
 
-            <div className={styles.dockSep} />
+            {props.ttsEnabled !== false && (
+                <>
+                    <div className={styles.dockSep} />
 
-            <div className={styles.audioDockGroup}>
-                <button type="button" className={styles.playSpeechBtn} onClick={props.onTogglePlayPause}>
-                    {props.isPlaying ? '❚❚' : '▶'}
-                </button>
-                <select
-                    className={styles.dockSelect}
-                    value={props.speechRate}
-                    onChange={(e) => props.onRateChange(parseFloat(e.target.value))}
-                >
-                    <option value={0.85}>0.85x</option>
-                    <option value={1.0}>1.0x</option>
-                    <option value={1.25}>1.25x</option>
-                    <option value={1.5}>1.5x</option>
-                </select>
-                <select
-                    className={styles.dockSelect}
-                    value={props.voiceGender}
-                    onChange={(e) => props.onGenderChange(e.target.value as 'female' | 'male')}
-                >
-                    <option value="female">Nữ AI</option>
-                    <option value="male">Nam AI</option>
-                </select>
-            </div>
+                    <div className={styles.audioDockGroup}>
+                        <button type="button" className={styles.playSpeechBtn} onClick={props.onTogglePlayPause} title="Phát/Tạm dừng giọng đọc số">
+                            {props.isPlaying ? '❚❚' : '▶'}
+                        </button>
+                        <select
+                            className={styles.dockSelect}
+                            value={props.speechRate}
+                            onChange={(e) => props.onRateChange(parseFloat(e.target.value))}
+                            title="Tốc độ đọc"
+                        >
+                            <option value={0.85}>0.85x</option>
+                            <option value={1.0}>1.0x</option>
+                            <option value={1.25}>1.25x</option>
+                            <option value={1.5}>1.5x</option>
+                        </select>
+                        <select
+                            className={styles.dockSelect}
+                            value={props.voiceGender}
+                            onChange={(e) => props.onGenderChange(e.target.value as 'female' | 'male')}
+                            title="Giọng đọc"
+                        >
+                            <option value="female">Nữ AI</option>
+                            <option value="male">Nam AI</option>
+                        </select>
+                    </div>
+                </>
+            )}
 
             <div className={styles.dockSep} />
 
@@ -103,14 +111,16 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
             >
                 ☰
             </button>
-            <button
-                type="button"
-                className={`${styles.dockToolBtn} ${props.copilotOpen ? styles.activeTool : ''}`}
-                onClick={props.onToggleCopilot}
-                title="Bật/Tắt AI Copilot"
-            >
-                AI
-            </button>
+            {props.chatEnabled !== false && (
+                <button
+                    type="button"
+                    className={`${styles.dockToolBtn} ${props.copilotOpen ? styles.activeTool : ''}`}
+                    onClick={props.onToggleCopilot}
+                    title="Bật/Tắt AI Copilot"
+                >
+                    AI
+                </button>
+            )}
         </div>
     );
 };

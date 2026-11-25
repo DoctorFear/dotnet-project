@@ -49,19 +49,60 @@ namespace AncientBook.Application.Services
             if (pageSize < 1) pageSize = 10;
             if (pageSize > 100) pageSize = 100;
 
-            var query = _categoryRepository.GetQuery();
+            var sortedQuery = _categoryRepository
+                .GetQuery()
+                .OrderByDescending(c => c.Id);
 
-            if (!string.IsNullOrWhiteSpace(searchTerm))
+            int totalCount;
+            IQueryable<Category> pageQuery;
+            string normalizedTerm = VietnameseSearchHelper.Normalize(searchTerm);
+
+            // Nếu có từ khóa, lọc không dấu trên bộ nhớ rồi cắt trang
+            if (!string.IsNullOrEmpty(normalizedTerm))
             {
-                var term = searchTerm.Trim().ToLower();
-                query = query.Where(c => c.Name.ToLower().Contains(term) || (c.Description != null && c.Description.ToLower().Contains(term)));
+                var candidates = await sortedQuery
+                    .Select(c => new
+                    {
+                        c.Id,
+                        c.Name,
+                        c.Description
+                    })
+                    .ToListAsync();
+
+                var matchedIds = candidates
+                    .Where(c => VietnameseSearchHelper.MatchesAny(
+                        normalizedTerm,
+                        c.Name,
+                        c.Description))
+                    .Select(c => c.Id)
+                    .ToList();
+
+                totalCount = matchedIds.Count;
+                var pageIds = matchedIds
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
+                if (pageIds.Count == 0)
+                {
+                    return new PagedResult<CategoryDto>(
+                        new List<CategoryDto>(),
+                        totalCount,
+                        pageNumber,
+                        pageSize);
+                }
+
+                pageQuery = sortedQuery.Where(c => pageIds.Contains(c.Id));
+            }
+            else
+            {
+                totalCount = await sortedQuery.CountAsync();
+                pageQuery = sortedQuery
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize);
             }
 
-            var totalCount = await query.CountAsync();
-            var items = await query
-                .OrderByDescending(c => c.Id)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
+            var items = await pageQuery
                 .Select(c => new CategoryDto
                 {
                     Id = c.Id,

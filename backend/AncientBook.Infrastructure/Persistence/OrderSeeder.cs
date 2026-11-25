@@ -25,7 +25,7 @@ public static class OrderSeeder
         }
         if (user.Role != UserRole.Member) throw new InvalidOperationException("member_an phải là tài khoản Member.");
         await db.LockUserAsync(user.Id);
-        var books = await db.Books.AsNoTracking().Where(b => b.IsPhysicalAvailable && b.IsRentalAvailable)
+        var books = await db.Books.AsNoTracking().Where(b => b.Status == BookStatus.Selling && b.IsPhysicalAvailable && b.StockCount > 0)
             .OrderBy(b => b.Id).ToListAsync();
         if (books.Count < 3) { await tx.CommitAsync(); return; }
         var scenarios = new (int Code, string Format, int ItemCount, bool Old, bool Reviewed)[]

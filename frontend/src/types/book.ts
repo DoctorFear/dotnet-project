@@ -28,6 +28,7 @@ export interface BookData {
     reviewsCount: number;
     stockStatus: 'in_stock' | 'low_stock' | 'out_of_stock';
     stockCount: number; // Tồn kho sách vật lý (Chỉ được cập nhật qua Phiếu Nhập Kho)
+    hasPublishedEbook?: boolean;
     status: 'selling' | 'upcoming' | 'stopped';
 }
 

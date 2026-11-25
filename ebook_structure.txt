@@ -1,0 +1,118 @@
+================================================================================
+           CẤU TRÚC HỆ THỐNG E-BOOK: STAFF (SỐ HÓA/XUẤT BẢN) & USER (ĐỌC SÁCH)
+           Dự án: AncientBook / Dotnet-Project
+================================================================================
+
+A. PHÍA FRONTEND (frontend/src)
+--------------------------------------------------------------------------------
+
+1. MODULE STAFF - QUẢN LÝ SỐ HÓA & XUẤT BẢN E-BOOK
+   Mục đích: Dành cho Chuyên viên Staff/Admin tải PDF lên, cấu hình AI Copilot (RAG),
+   cấu hình Voice TTS (Nam/Nữ), test QA và xuất bản E-Book.
+
+   ├── pages/
+   │   └── AdminBookManagementPage.tsx         # Trang quản lý sách (/staff/books, /admin/books)
+   │
+   ├── components/features/admin-books/
+   │   ├── AdminBookManagement.tsx             # Danh sách sách, nút mở modal "Số hóa / Ebook" (dòng 198)
+   │   └── AdminBookManagement.module.css      # Style bảng sách và nút mở modal
+   │
+   ├── components/features/admin-ebook-publishing/  # THƯ MỤC MODAL SỐ HÓA E-BOOK
+   │   ├── index.ts                            # Export tập trung các component modal
+   │   ├── EbookPublishingModal.tsx            # Modal Wizard chính điều phối các bước
+   │   ├── EbookPublishingModal.module.css     # CSS style toàn bộ modal
+   │   ├── EbookModalHeader.tsx                # Header: Thông tin sách, ấn bản, nút đóng
+   │   ├── EbookPresetSelectorStep.tsx         # Bước 1: Chọn Preset tối ưu (Văn học, Giáo trình, Scan...)
+   │   ├── EbookFileUploadStep.tsx             # Bước 2: Kéo thả / Tải lên tệp PDF số hóa
+   │   ├── EbookSmartFeaturesStep.tsx          # Bước 3: Container cấu hình tính năng AI thông minh
+   │   ├── EbookAiCopilotSection.tsx           # Cấu hình RAG Copilot + Khung hỏi đáp test QA trực tiếp
+   │   ├── EbookVoiceTtsSection.tsx            # Cấu hình TTS (Nam/Nữ, dải trang) + Audio preview player
+   │   └── EbookModalFooter.tsx                # Footer: Nút Hủy, Quay lại, Tiến hành Xuất bản, Progress bar
+   │
+   ├── hooks/
+   │   └── useEbookPublishing.ts               # Hook quản lý state form, upload, publish, preview test
+   │
+   ├── services/
+   │   └── ebookPublishingService.ts           # Gọi API: upload PDF, publish, test Copilot, kiểm tra status
+   │
+   └── types/
+       └── ebookPublishing.ts                  # Interfaces: EbookPublishingDraftState, Presets, DTOs
+
+--------------------------------------------------------------------------------
+
+2. MODULE USER / CUSTOMER - TRÌNH ĐỌC SÁCH THÔNG MINH (READER)
+   Mục đích: Dành cho Độc giả đọc E-Book dạng sách mở đôi (spread), nghe giọng đọc AI,
+   tự động highlight câu đang đọc và tương tác với AI Copilot.
+
+   ├── pages/
+   │   ├── EBookReadingPage.tsx                # Trang đọc sách chính (Route: /reader/:bookId)
+   │   └── EbookReaderPage.module.css          # CSS giao diện sân khấu sách, dock nổi, sidebar AI
+   │
+   ├── components/features/ebook-reader/       # THƯ MỤC CÁC COMPONENT TRÌNH ĐỌC
+   │   ├── ReaderSpreadStage.tsx               # Sân khấu 2 trang sách mở đôi (Trái / Phải),
+   │   │                                       # render văn bản, real-time karaoke highlight,
+   │   │                                       # bôi đen text gửi câu hỏi sang Copilot
+   │   ├── ReaderBottomDock.tsx                # Thanh điều khiển đáy: Play/Pause, đổi giọng Nam/Nữ,
+   │   │                                       # tốc độ đọc (0.75x-1.5x), lật trang, zoom cỡ chữ
+   │   └── ReaderCopilotSidebar.tsx            # Cửa sổ trợ lý AI bên phải: chat giải nghĩa, tóm tắt,
+   │                                           # tự động đính kèm đoạn text vừa bôi đen
+   │
+   ├── hooks/
+   │   └── useEbookReader.ts                   # Hook quản lý phát audio TTS, nạp trước (preload),
+   │                                           # biến nối câu AUDIO_OVERLAP_SECONDS, lật trang đôi,
+   │                                           # đồng bộ karaoke highlight, lịch sử chat Copilot
+   │
+   ├── services/
+   │   └── ebookReaderService.ts               # Gọi API: lấy ấn bản, lấy text & link audio theo trang,
+   │                                           # gửi câu hỏi kèm context trang lên Copilot
+   │
+   └── types/
+       └── reader.ts                           # Interfaces: ReaderEditionDto, BookTtsSegmentDto
+
+--------------------------------------------------------------------------------
+
+3. MỐI QUAN HỆ GIỮA 2 MODULE Ở FRONTEND
+   * TÍNH ĐỘC LẬP (DECOUPLING): 100% TÁCH BIỆT MÃ NGUỒN.
+   * Module Reader KHÔNG import bất kỳ file nào từ module Staff.
+   * Chỉnh sửa giao diện hoặc logic của Reader không gây ảnh hưởng tới Staff và ngược lại.
+   * Chỉ dùng chung hạ tầng mạng (apiClient.ts) và layout toàn cục (Header, TopBar, Navbar).
+
+================================================================================
+
+B. PHÍA BACKEND LIÊN QUAN (backend/)
+--------------------------------------------------------------------------------
+
+1. API CONTROLLERS:
+   ├── Controllers/EbookEditionsController.cs  # API chung & API dành cho Reader:
+   │                                           # - Lấy ấn bản: GET /api/EbookEditions/book/{bookId}
+   │                                           # - Lấy segments: GET /api/EbookEditions/{id}/tts/pages/{page}/segments
+   │                                           # - Hỏi Copilot: POST /api/EbookEditions/{id}/ask-copilot
+   └── Controllers/EbookTtsController.cs       # API quản lý số hóa & phát sinh audio TTS
+
+2. APPLICATION & REPOSITORIES:
+   ├── AncientBook.Domain/Entities/
+   │   ├── EbookEdition.cs                     # Bảng ấn bản sách điện tử (Format, Preset, Status, FileUrl)
+   │   ├── BookTtsSegment.cs                   # Bảng lưu từng câu/đoạn văn bản + link audio Nam/Nữ (Dropbox CDN)
+   │   └── BookEmbedding.cs                    # Bảng lưu vector tri thức RAG của từng đoạn sách
+   │
+   ├── AncientBook.Application/Interfaces/
+   │   ├── IEbookEditionRepository.cs
+   │   ├── IBookTtsSegmentRepository.cs
+   │   ├── IBookEmbeddingRepository.cs
+   │   ├── IEbookPublishService.cs
+   │   ├── ITtsAudioService.cs
+   │   ├── ITtsDocumentExtractorService.cs
+   │   ├── IGeminiEmbeddingService.cs
+   │   ├── IRagSearchService.cs
+   │   └── IFileStorageService.cs
+
+3. INFRASTRUCTURE & 3RD-PARTY SERVICES:
+   ├── Services3rd/EbookPublishService.cs      # Xử lý quy trình xuất bản, chunking, nạp vector
+   ├── Services3rd/TtsDocumentExtractorService.cs # Bóc tách PDF / Text từng trang, lọc bỏ header/footer
+   ├── Services3rd/TtsAudioService.cs          # Gọi TTS server tạo audio song song (Nam & Nữ)
+   ├── Services3rd/GeminiEmbeddingService.cs   # Nạp và tìm kiếm vector embeddings qua Gemini
+   ├── Services3rd/RagSearchService.cs         # Tìm kiếm đoạn văn tương đồng & trả lời câu hỏi Copilot
+   ├── Storage/DropboxStorageService.cs        # Upload tệp PDF & MP3 lên Dropbox, trả link CDN trực tiếp
+   └── tts_server.py                           # Python FastAPI Server (Edge TTS Neural Voices) trên port 5050
+
+================================================================================

@@ -15,10 +15,11 @@ const getCurrentUserId = () => {
     }
 };
 
+// Thêm sách vào giỏ hàng hỗ trợ cả 3 hình thức: Sách giấy (1), Thuê đọc (2), Mua E-Book (3)
 export const addBookToCart = (book: PurchasableBook, selection: BookPurchaseSelection) => {
-    if (selection.format === 'ebook') throw new Error('Giỏ hàng hiện chưa hỗ trợ mua E-book vĩnh viễn.');
+    if (selection.format === 'ebook' && (!book.isEBookAvailable || !book.hasPublishedEbook)) throw new Error('Sách chưa có ấn bản E-Book đã xuất bản.');
     if (selection.format === 'physical' && !book.isPhysicalAvailable) throw new Error('Sách không có phiên bản vật lý.');
-    if (selection.format === 'rental' && !book.isRentalAvailable) throw new Error('Sách không hỗ trợ thuê đọc.');
+    if (selection.format === 'rental' && (!book.isRentalAvailable || !book.isEBookAvailable || !book.hasPublishedEbook)) throw new Error('Sách chưa có ấn bản E-Book để thuê đọc.');
     if (selection.format === 'physical' && (book.stockCount ?? 0) < selection.quantity) throw new Error('Số lượng sách tồn kho không đủ.');
     return requestApi<{ message: string }>('/cart/items', {
         method: 'POST',
@@ -26,7 +27,7 @@ export const addBookToCart = (book: PurchasableBook, selection: BookPurchaseSele
             userId: getCurrentUserId(),
             bookId: book.id,
             quantity: selection.format === 'physical' ? selection.quantity : 1,
-            purchaseType: selection.format === 'physical' ? 1 : 2,
+            purchaseType: selection.format === 'physical' ? 1 : selection.format === 'rental' ? 2 : 3,
             rentalDuration: selection.format === 'rental' ? { week: 1, month: 2, year: 3 }[selection.duration] : null,
         }),
     });

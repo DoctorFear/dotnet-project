@@ -6,6 +6,7 @@ import Breadcrumb from '../components/common/Breadcrumb';
 import { useUser } from '../context/UserContext';
 import { useMyLibrary } from '../hooks/useMyLibrary';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { matchesVietnameseSearch } from '../utils/vietnameseSearch';
 
 export const MyLibraryPage: React.FC = () => {
     const { isLoggedIn } = useUser();
@@ -46,10 +47,16 @@ export const MyLibraryPage: React.FC = () => {
     }
 
     const filteredBooks = libraryBooks.filter((book) => {
-        const matchesSearch =
-            book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            book.author.toLowerCase().includes(searchQuery.toLowerCase());
-        if (activeTab === 'active') return matchesSearch && !book.isExpired;
+        const matchesSearch = matchesVietnameseSearch(
+            searchQuery,
+            book.title,
+            book.author
+        );
+
+        if (activeTab === 'active') {
+            return matchesSearch && !book.isExpired;
+        }
+
         return matchesSearch && book.isExpired;
     });
 

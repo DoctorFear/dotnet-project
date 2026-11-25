@@ -4,39 +4,42 @@ backend/
 │   ├── Common/
 │   │   └── BaseEntity.cs                       # Định nghĩa Id, CreatedAt, UpdatedAt
 │   ├── Entities/
-│   │   ├── Book.cs                             # Thực thể đầu sách (liên kết 1-N với EbookEditions)
-│   │   ├── EbookEdition.cs                     # Ấn bản số hóa (Format, DropboxPath, PresetType, Status, IsTtsEnabled...)
+│   │   ├── Book.cs                             # Thực thể đầu sách (liên kết 1-N với EbookEditions, IsEBookAvailable)
+│   │   ├── EbookEdition.cs                     # Ấn bản số hóa (Format, DropboxPath, PresetType, Status, IsTtsEnabled, PublishedAt...)
 │   │   ├── BookEmbedding.cs                    # Các chunk văn bản, số trang và vector nạp tri thức (EmbeddingJson, Vector)
 │   │   └── CopilotChatHistory.cs               # Lịch sử hội thoại hỏi-đáp AI (EditionId, UserId, SelectedText, Question, Answer...)
 │   └── Enums/
 │       ├── EbookFormat.cs                      # Epub = 1, Pdf = 2
-│       ├── EbookPresetType.cs                  # EpubStandard = 1, PdfStandard = 2, ScannedBook = 3
+│       ├── EbookPresetType.cs                  # EpubStandard = 1 (Văn học), PdfStandard = 2 (Học thuật), ScannedBook = 3 (Thị giác)
 │       └── EditionPublishStatus.cs             # Draft = 0, Processing = 1, Published = 2, Failed = 3
 │
 ├── AncientBook.Application/                    # [Lớp 2: Application / Contracts & DTOs]
 │   ├── Common/
 │   │   ├── Interfaces/
 │   │   │   ├── IDocumentExtractor.cs           # Interface bóc tách trang và nội dung sách PDF/EPUB
-│   │   │   ├── ITextChunker.cs                 # Interface chia đoạn văn bản
-│   │   │   ├── IGeminiEmbeddingService.cs      # Interface gọi Gemini API (Embedding & LLM Response)
+│   │   │   ├── ITextChunker.cs                 # Interface chia đoạn văn bản (ChunkSize: 450, ChunkOverlap: 90)
+│   │   │   ├── IGeminiEmbeddingService.cs      # Interface gọi Gemini API (Embedding text-embedding-004 & Gemini Copilot)
 │   │   │   ├── IRagSearchService.cs            # Interface tìm kiếm Cosine Similarity
-│   │   │   └── IEbookPublishService.cs         # Interface luồng quy trình xuất bản
+│   │   │   ├── IEbookPublishService.cs         # Interface luồng quy trình xuất bản
+│   │   │   └── Repositories/
+│   │   │       └── IEbookEditionRepository.cs  # GetById, GetLatestByBookIdAsync, GetAllByBookIdAsync, Add, Update
 │   │   └── Models/
 │   │       └── DocumentChunk.cs                # Model trung gian của chunk (PageNumber, ChunkIndex, Text)
 │   └── DTOs/
 │       └── AIFlowDto.cs                        # Toàn bộ DTOs của luồng E-Book & Copilot:
 │                                               # - UploadEditionRequest / UploadEditionResponse
 │                                               # - SaveDraftRequest / PublishEditionRequest
+│                                               # - EbookEditionDetailDto (chi tiết ấn bản & số chunk vector)
 │                                               # - CopilotQueryRequest / CopilotQueryResponse
-│                                               # - BookEmbeddingCitationDto
-│                                               # - CopilotHistoryItemDto
+│                                               # - BookEmbeddingCitationDto / CopilotHistoryItemDto
+│                                               # - TtsSegmentDto / PageTtsResponseDto / TtsGenerateResultDto
 │
 ├── AncientBook.Infrastructure/                 # [Lớp 3: Infrastructure / Processing & Persistence]
 │   ├── Persistence/
 │   │   ├── ApplicationDbContext.cs             # Cấu hình EF Core DbSets (EbookEditions, BookEmbeddings, CopilotChatHistories)
 │   │   └── Repositories/
-│   │       ├── EbookEditionRepository.cs       # Truy vấn dữ liệu ấn bản (IEbookEditionRepository)
-│   │       └── BookEmbeddingRepository.cs      # Thao tác lưu/truy vấn vector embeddings (IBookEmbeddingRepository)
+│   │       ├── EbookEditionRepository.cs       # Truy vấn dữ liệu ấn bản (kèm Book entity qua Include)
+│   │       └── BookEmbeddingRepository.cs      # Thao tác lưu/truy vấn vector embeddings
 │   ├── Storage/
 │   │   ├── IFileStorageService.cs              # Hợp đồng quản lý tệp lưu trữ
 │   │   └── DropboxStorageService.cs            # Tải tệp lên Dropbox, bóc tách direct link và đọc luồng stream
@@ -45,15 +48,46 @@ backend/
 │       ├── TextChunker.cs                      # Cắt text theo ChunkSize (450) & ChunkOverlap (90)
 │       ├── GeminiEmbeddingService.cs           # Gọi Google Gemini (gemini-embedding-001 & gemini-flash)
 │       ├── RagSearchService.cs                 # Thuật toán tính độ tương đồng Cosine Similarity
-│       └── EbookPublishService.cs              # Xử lý quy trình: Extract -> Chunk -> Embed -> Clean Replace -> Publish
+│       └── EbookPublishService.cs              # Xử lý quy trình: Trạng thái Processing -> Extract -> Chunk -> Embed -> Clean Replace -> Published (hoặc Failed)
 │
 └── AncientBook.API/                            # [Lớp 4: Web API Presentation Layer]
     ├── Controllers/
-    │   └── EbookEditionsController.cs          # Các API Endpoints:
-    │                                           # - POST /api/EbookEditions/upload         [Authorize(Roles = "Staff")]
-    │                                           # - PUT  /api/EbookEditions/{id}/draft    [Authorize(Roles = "Staff")]
-    │                                           # - POST /api/EbookEditions/{id}/publish  [Authorize(Roles = "Staff")]
-    │                                           # - POST /api/EbookEditions/{id}/ask-copilot      [Authorize]
-    │                                           # - GET  /api/EbookEditions/{id}/copilot-history  [Authorize]
+    │   ├── EbookEditionsController.cs          # Các API Endpoints:
+    │   │                                       # - GET  /api/EbookEditions/book/{bookId} [Authorize(Roles = "Staff,Admin")]
+    │   │                                       # - GET  /api/EbookEditions/{id}          [Authorize(Roles = "Staff,Admin")]
+    │   │                                       # - POST /api/EbookEditions/upload         [Authorize(Roles = "Staff")] -> Ghi AuditLog UPLOAD_EBOOK + Check SystemSettings MAX_EBOOK_FILE_SIZE_MB
+    │   │                                       # - PUT  /api/EbookEditions/{id}/draft    [Authorize(Roles = "Staff")] -> Ghi AuditLog SAVE_DRAFT_EBOOK
+    │   │                                       # - POST /api/EbookEditions/{id}/publish  [Authorize(Roles = "Staff")] -> Ghi AuditLog PUBLISH_EBOOK + Chuyển trạng thái Processing -> Published
+    │   │                                       # - POST /api/EbookEditions/{id}/ask-copilot      [Authorize]
+    │   │                                       # - GET  /api/EbookEditions/{id}/copilot-history  [Authorize]
+    │   └── EbookTtsController.cs               # API Giọng đọc số TTS:
+    │                                           # - POST /api/EbookEditions/{id}/tts/generate     [Authorize(Roles = "Staff")] -> Ghi AuditLog GENERATE_TTS_EBOOK
+    │                                           # - GET  /api/EbookEditions/{id}/tts/pages/{page}/segments [Authorize]
     ├── appsettings.json                        # Cấu hình Gemini ApiKey, Dropbox, RagSettings (TopK, MinSimilarityScore...)
     └── Program.cs                              # Đăng ký Dependency Injection và HTTP Pipeline
+
+------------------------------------------------------------------------------------------------------------------------
+
+frontend/
+│
+├── src/
+│   ├── types/
+│   │   └── ebookPublishing.ts                  # Types & Enums (EbookFormatType, EbookPresetEnum, EditionPublishStatusType, EbookEditionDetail, DraftState...)
+│   │
+│   ├── services/
+│   │   └── ebookPublishingService.ts           # Service API gọi Backend (/api/EbookEditions: getEditionByBookId, uploadEdition, saveDraft, publishEdition, generateTts)
+│   │
+│   ├── hooks/
+│   │   └── useEbookPublishing.ts               # Custom Hook quản lý state Modal, kéo thả tệp, kiểm tra hạn mức 100MB, lưu nháp, xuất bản, tạo TTS
+│   │
+│   └── components/features/
+│       ├── admin-ebook-publishing/             # Module riêng biệt độc lập cho Use Case Quản lý số hóa & Xuất bản E-Book
+│       │   ├── EbookFileUploadStep.tsx         # [Bước 1 & Luồng A2] Kéo thả / Chọn tệp PDF/EPUB, hiển thị dung lượng, định dạng, tổng số trang/chương
+│       │   ├── EbookPresetSelectorStep.tsx     # [Bước 2] 3 Thẻ chọn Nhóm cấu hình: Nhóm Văn học, Nhóm Học thuật, Nhóm Thị giác (Scan)
+│       │   ├── EbookSmartFeaturesStep.tsx      # [Bước 3 & 4] Bật/tắt Trợ lý AI Copilot & Giọng đọc số TTS; chọn ngôn ngữ, khoảng trang, nút Tạo giọng đọc
+│       │   ├── EbookPublishingModal.tsx        # [Modal chính] Header (Huy hiệu trạng thái), Banner thông báo, Hộp tiến trình nạp tri thức, Footer (Lưu nháp, Xuất bản)
+│       │   ├── EbookPublishingModal.module.css # CSS riêng biệt, giao diện hiện đại, responsive, không xung đột class
+│       │   └── index.ts                        # Barrel export cho module
+│       │
+│       └── admin-books/                        # Module Quản lý sách (giữ nguyên vẹn 100% của tác giả khác)
+│           └── AdminBookManagement.tsx         # Chỉ import useEbookPublishing & EbookPublishingModal để mở Modal khi bấm nút "EBook"

@@ -33,6 +33,7 @@ namespace AncientBook.Infrastructure.Repositories
                 .Include(book => book.BookCategories)
                 .ThenInclude(bookCategory => bookCategory.Category)
                 .Include(book => book.BookImages)
+                .Include(book => book.EbookEditions)
                 .AsSplitQuery()
                 .FirstOrDefaultAsync(book => book.Id == id);
         }

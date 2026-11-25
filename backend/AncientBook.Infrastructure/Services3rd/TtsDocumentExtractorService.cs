@@ -76,7 +76,7 @@ namespace AncientBook.Infrastructure.Services
                         foreach (var line in subLines)
                         {
                             var clean = Regex.Replace(line.Trim(), @"\s+", " ");
-                            if (clean.Length >= MinSegmentLength)
+                            if (clean.Length >= MinSegmentLength && Regex.IsMatch(clean, @"[\p{L}\p{N}]"))
                             {
                                 linesInChapter.Add(clean);
                             }
@@ -91,7 +91,7 @@ namespace AncientBook.Infrastructure.Services
                     foreach (var line in allLines)
                     {
                         var clean = Regex.Replace(line.Trim(), @"\s+", " ");
-                        if (clean.Length >= MinSegmentLength)
+                        if (clean.Length >= MinSegmentLength && Regex.IsMatch(clean, @"[\p{L}\p{N}]"))
                         {
                             linesInChapter.Add(clean);
                         }
@@ -147,8 +147,8 @@ namespace AncientBook.Infrastructure.Services
                 {
                     var cleanText = Regex.Replace(line.Trim(), @"\s+", " ");
 
-                    // Bỏ qua dòng rác, số trang đơn lẻ hoặc ký tự linh tinh dưới 10 ký tự
-                    if (cleanText.Length < MinSegmentLength) continue;
+                    // Bỏ qua dòng rác, số trang đơn lẻ hoặc dòng chỉ gồm dấu câu/ký hiệu không đọc được
+                    if (cleanText.Length < MinSegmentLength || !Regex.IsMatch(cleanText, @"[\p{L}\p{N}]")) continue;
 
                     segments.Add(new TtsSegmentDto
                     {

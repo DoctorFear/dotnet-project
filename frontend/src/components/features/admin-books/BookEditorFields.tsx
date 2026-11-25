@@ -6,23 +6,78 @@ import styles from './AdminBookManagement.module.css';
 
 export default function BookEditorFields({ controller }: { controller: ReturnType<typeof useBookManagement> }) {
     const { categories, publishers, editingId, draft, isCategoryDropdownOpen, categoryDropdownRef, selectedCategoriesText, isEBookDisabled, setIsCategoryDropdownOpen, updateDraft, toggleCategorySelection } = controller;
+
+    // Tính toán trạng thái Xanh / Vàng của từng hình thức phát hành theo ràng buộc thực tế
+    const isPhysicalGreen = draft.isPhysicalAvailable === true && (Number(draft.stockCount) || 0) > 0;
+    const isPhysicalYellow = draft.isPhysicalAvailable === true && (Number(draft.stockCount) || 0) <= 0;
+
+    const isEBookGreen = draft.isEBookAvailable === true && draft.hasPublishedEbook === true;
+    const isEBookYellow = draft.isEBookAvailable === true && !draft.hasPublishedEbook;
+
+    const isRentalGreen = draft.isRentalAvailable === true && draft.isEBookAvailable === true && draft.hasPublishedEbook === true;
+    const isRentalYellow = draft.isRentalAvailable === true && (!draft.isEBookAvailable || !draft.hasPublishedEbook);
+
+    const hasAnyGreen = isPhysicalGreen || isEBookGreen || isRentalGreen;
+
     return (
 <div className={styles.formGrid}>
                                     <fieldset className={styles.publicationFormats}>
                                         <legend>Hình thức phát hành</legend>
                                         <div className={styles.publicationOptions}>
-                                            {([['isPhysicalAvailable', 'Sách giấy'], ['isEBookAvailable', 'E-book'], ['isRentalAvailable', 'Thuê đọc']] as const).map(([field, label]) => (
-                                                <label key={field} className={styles.publicationOption}>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={draft[field] === true}
-                                                        disabled={field === 'isRentalAvailable' && draft.isEBookAvailable !== true}
-                                                        onChange={event => updateDraft(field, event.target.checked)}
-                                                    />
-                                                    <span>{label}</span>
-                                                </label>
-                                            ))}
+                                            <label
+                                                className={`${styles.publicationOption} ${isPhysicalGreen ? styles.optionGreen : isPhysicalYellow ? styles.optionYellow : ''}`}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={draft.isPhysicalAvailable === true}
+                                                    onChange={(event) => updateDraft('isPhysicalAvailable', event.target.checked)}
+                                                />
+                                                <span>Sách giấy</span>
+                                                {isPhysicalGreen && <span className={styles.badgeStatusGreen}>Tồn: {draft.stockCount}</span>}
+                                                {isPhysicalYellow && <span className={styles.badgeStatusYellow}>Tồn: 0</span>}
+                                            </label>
+
+                                            <label
+                                                className={`${styles.publicationOption} ${isEBookGreen ? styles.optionGreen : isEBookYellow ? styles.optionYellow : ''}`}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={draft.isEBookAvailable === true}
+                                                    onChange={(event) => updateDraft('isEBookAvailable', event.target.checked)}
+                                                />
+                                                <span>E-book</span>
+                                                {isEBookGreen && <span className={styles.badgeStatusGreen}>Đã có file</span>}
+                                                {isEBookYellow && <span className={styles.badgeStatusYellow}>Chưa có file</span>}
+                                            </label>
+
+                                            <label
+                                                className={`${styles.publicationOption} ${isRentalGreen ? styles.optionGreen : isRentalYellow ? styles.optionYellow : ''}`}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={draft.isRentalAvailable === true}
+                                                    disabled={draft.isEBookAvailable !== true}
+                                                    onChange={(event) => updateDraft('isRentalAvailable', event.target.checked)}
+                                                />
+                                                <span>Thuê đọc</span>
+                                                {isRentalGreen && <span className={styles.badgeStatusGreen}>Đã có file</span>}
+                                                {isRentalYellow && <span className={styles.badgeStatusYellow}>Chưa có file</span>}
+                                            </label>
                                         </div>
+
+                                        {(isPhysicalYellow || isEBookYellow || isRentalYellow) && (
+                                            <div className={styles.formatNoticeBox}>
+                                                {isPhysicalYellow && (
+                                                    <div>• <strong>Sách giấy:</strong> Hết hàng tồn kho</div>
+                                                )}
+                                                {isEBookYellow && (
+                                                    <div>• <strong>E-Book:</strong> Chưa có ấn bản điện tử xuất bản</div>
+                                                )}
+                                                {isRentalYellow && (
+                                                    <div>• <strong>Thuê đọc:</strong> Chưa có ấn bản điện tử xuất bản</div>
+                                                )}
+                                            </div>
+                                        )}
                                     </fieldset>
                                     <div className={styles.formGroup}>
                                         <label htmlFor="title">Tên sách *</label>
@@ -114,13 +169,20 @@ export default function BookEditorFields({ controller }: { controller: ReturnTyp
                                         <select
                                             id="status"
                                             className={styles.formControl}
-                                            value={(draft.status as AdminBookStatus) || 'selling'}
+                                            value={(draft.status as AdminBookStatus) || (hasAnyGreen ? 'selling' : 'upcoming')}
                                             onChange={(e) => updateDraft('status', e.target.value as AdminBookStatus)}
                                         >
-                                            <option value="selling">Đang bán</option>
+                                            <option value="selling" disabled={!hasAnyGreen}>
+                                                Đang bán {!hasAnyGreen ? '(Khóa: Cần ít nhất 1 hình thức màu xanh)' : ''}
+                                            </option>
                                             <option value="upcoming">Sắp phát hành</option>
                                             <option value="stopped">Ngừng bán</option>
                                         </select>
+                                        {!hasAnyGreen && draft.status === 'selling' && (
+                                            <span className={styles.inputWarningText}>
+                                                Chưa có hình thức nào màu xanh. Vui lòng chọn &quot;Sắp phát hành&quot; hoặc &quot;Ngừng bán&quot;.
+                                            </span>
+                                        )}
                                     </div>
 
                                     <div className={styles.formGroup}>

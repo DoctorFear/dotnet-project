@@ -11,6 +11,8 @@ interface Props {
     loadingPages: boolean;
     scale: number;
     activeSegmentId: number | null;
+    ttsEnabled?: boolean;
+    chatEnabled?: boolean;
     onPlaySegment: (seg: BookTtsSegmentDto) => void;
     onPrevSpread: () => void;
     onNextSpread: () => void;
@@ -27,6 +29,8 @@ export const ReaderSpreadStage: React.FC<Props> = ({
     loadingPages,
     scale,
     activeSegmentId,
+    ttsEnabled = true,
+    chatEnabled = true,
     onPlaySegment,
     onPrevSpread,
     onNextSpread,
@@ -37,6 +41,10 @@ export const ReaderSpreadStage: React.FC<Props> = ({
     const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null);
 
     const handleMouseUp = (e: React.MouseEvent) => {
+        if (!chatEnabled) {
+            setTooltip(null);
+            return;
+        }
         const sel = window.getSelection();
         const text = sel?.toString().trim() ?? '';
         if (text.length > 3 && stageRef.current && sel?.anchorNode && stageRef.current.contains(sel.anchorNode)) {
@@ -57,9 +65,9 @@ export const ReaderSpreadStage: React.FC<Props> = ({
                     segments.map((seg) => (
                         <p
                             key={seg.id}
-                            className={`${styles.ttsBlock} ${activeSegmentId === seg.id ? styles.ttsReading : ''}`}
-                            onClick={() => onPlaySegment(seg)}
-                            title="Bấm để nghe AI đọc đoạn này"
+                            className={ttsEnabled ? `${styles.ttsBlock} ${activeSegmentId === seg.id ? styles.ttsReading : ''}` : undefined}
+                            onClick={ttsEnabled ? () => onPlaySegment(seg) : undefined}
+                            title={ttsEnabled ? 'Bấm để nghe AI đọc đoạn này' : undefined}
                         >
                             {seg.textContent}
                         </p>

@@ -29,6 +29,25 @@ namespace AncientBook.Infrastructure.Repositories
             return await _context.EbookEditions
                 .FirstOrDefaultAsync(e => e.Id == editionId, ct);
         }
+
+        public async Task<EbookEdition?> GetLatestByBookIdAsync(int bookId, CancellationToken ct = default)
+        {
+            return await _context.EbookEditions
+                .Include(e => e.Book)
+                .Where(e => e.BookId == bookId)
+                .OrderByDescending(e => e.CreatedAt)
+                .FirstOrDefaultAsync(ct);
+        }
+
+        public async Task<List<EbookEdition>> GetAllByBookIdAsync(int bookId, CancellationToken ct = default)
+        {
+            return await _context.EbookEditions
+                .Include(e => e.Book)
+                .Where(e => e.BookId == bookId)
+                .OrderByDescending(e => e.CreatedAt)
+                .ToListAsync(ct);
+        }
+
         public async Task AddAsync(EbookEdition edition, CancellationToken ct = default)
         {
             await _context.EbookEditions.AddAsync(edition, ct);

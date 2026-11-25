@@ -33,7 +33,7 @@ export default function BookPurchaseDialog({ book, isSubmitting, onClose, onConf
             </div>
             <footer className={styles.footer}>
                 <button type="button" disabled={isSubmitting} onClick={onClose}>Hủy</button>
-                <button type="button" className={styles.confirm} disabled={isSubmitting || selection.formats.length === 0 || (selection.format === 'rental' && selection.rentals.length === 0) || (selection.format === 'physical' && (book.stockCount ?? 0) < selection.quantity)} onClick={async () => { if (await onConfirm(book, selection)) onClose(); }}><ShoppingCart size={16} />{isSubmitting ? 'Đang thêm...' : 'Thêm vào giỏ'}</button>
+                <button type="button" className={styles.confirm} disabled={isSubmitting || !selection.isCurrentFormatAvailable || selection.formats.length === 0 || (selection.format === 'rental' && selection.rentals.length === 0) || (selection.format === 'physical' && (book.stockCount ?? 0) < selection.quantity)} onClick={async () => { if (await onConfirm(book, selection)) onClose(); }}><ShoppingCart size={16} />{isSubmitting ? 'Đang thêm...' : 'Thêm vào giỏ'}</button>
             </footer>
         </dialog>
     );

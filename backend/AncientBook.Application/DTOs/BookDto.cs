@@ -22,6 +22,7 @@ namespace AncientBook.Application.DTOs
         public decimal WeeklyRentalPrice { get; set; }
         public decimal MonthlyRentalPrice { get; set; }
         public decimal YearlyRentalPrice { get; set; }
+        public bool HasPublishedEbook { get; set; } = false;
         public double Rating { get; set; }
         public int ReviewsCount { get; set; }
         public string StockStatus { get; set; } = "in_stock";

@@ -21,7 +21,7 @@ public class ReportPdfExporter : IReportPdfExporter
                 column.Spacing(10);
                 column.Item().Text($"Kỳ báo cáo: {report.FromDate:dd/MM/yyyy} đến {report.ToDate:dd/MM/yyyy}").Bold();
                 column.Item().Text($"Xuất lúc {report.GeneratedAt:dd/MM/yyyy HH:mm} (giờ Việt Nam) | Người xuất: {report.ExportedBy}");
-                var type = report.PurchaseType switch { "physical" => "Sách giấy", "rental" => "Thuê đọc", _ => "Tất cả" };
+                var type = report.PurchaseType switch { "physical" => "Sách giấy", "rental" => "Thuê đọc", "ebook" => "E-Book", _ => "Tất cả" };
                 column.Item().Text($"Thể loại: {report.Category ?? "Tất cả"} | NXB: {report.Publisher ?? "Tất cả"} | Hình thức: {type}");
                 column.Item().Text("Doanh thu sau giảm giá của đơn đã thanh toán và hoàn thành, theo ngày đặt đơn.");
                 column.Item().Background("#F2F6FF").Padding(10).Column(summary =>

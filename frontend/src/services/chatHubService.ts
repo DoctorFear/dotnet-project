@@ -51,14 +51,14 @@ class ChatHubService {
             .then(() => {
                 // Connected successfully
             })
-            .catch((err) => {
+            .catch((err: unknown) => {
                 console.warn('[SignalR] Lỗi kết nối Hub LiveChat:', err);
             })
             .finally(() => {
                 this.connectionPromise = null;
             });
 
-        return this.connectionPromise;
+        await this.connectionPromise;
     }
 
     public async stop(): Promise<void> {

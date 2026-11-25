@@ -6,6 +6,7 @@ import Header from '../components/layout/Header';
 import { CartItemCard } from '../components/common/CartItemCard';
 import { MoveLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { updateCart } from '../services/bookCartService';
 
 export const CartPage: React.FC = () => {
     const { items, setItems, loading, error, updateItemQty, removeCartItem } = useCartData();
@@ -14,9 +15,10 @@ export const CartPage: React.FC = () => {
 
     const navigate = useNavigate();
 
+    // Cập nhật cài đặt hoặc số lượng của một sản phẩm trong giỏ hàng
     const updateItemSettings = async (
         id: number,
-        updates: { quantity?: number; purchaseType?: number; rentalDuration?: number | null, isSelected?: Boolean }
+        updates: { quantity?: number; purchaseType?: number; rentalDuration?: number | null, isSelected?: boolean }
     ) => {
         const item = items.find((i) => i.cartItemId === id);
         if (!item) return;
@@ -28,34 +30,51 @@ export const CartPage: React.FC = () => {
         let newDuration = item.rentalDuration;
         if (newType === 2) {
             newDuration = updates.rentalDuration !== undefined ? updates.rentalDuration : (item.rentalDuration || 1);
-        } else if (newType === 1) {
+        } else {
             newDuration = null;
         }
 
         if (newQty < 1 && newType === 1) return;
 
+        const effectiveQty = (newType === 2 || newType === 3) ? 1 : newQty;
+
         setItems(
             items.map((i) =>
                 i.cartItemId === id
-                    ? { ...i, quantity: newType === 2 ? 1 : newQty, purchaseType: newType, rentalDuration: newDuration, isSelected: newSelected }
+                    ? { ...i, quantity: effectiveQty, purchaseType: newType, rentalDuration: newDuration, isSelected: newSelected }
                     : i
             )
         );
 
         try {
-            await updateItemQty(id, newType === 2 ? 1 : newQty, newType, newDuration, newSelected);
+            await updateItemQty(id, effectiveQty, newType, newDuration, newSelected);
         } catch (e) {}
     };
 
-    const toggleSelectAll = () => {
+    // Chọn hoặc bỏ chọn tất cả sản phẩm trong giỏ hàng
+    const toggleSelectAll = async () => {
         const nextState = !allSelected;
-        setItems(items.map((i) => ({ ...i, selected: nextState })));
+        setItems((prev) => prev.map((i) => ({ ...i, isSelected: nextState })));
+        try {
+            await Promise.all(
+                items.map((i) =>
+                    updateCart(i.cartItemId, {
+                        quantity: i.quantity,
+                        purchaseType: i.purchaseType,
+                        rentalDuration: i.rentalDuration,
+                        isSelected: nextState,
+                    })
+                )
+            );
+        } catch (e) {
+            console.error(e);
+        }
     };
 
-    const toggleSelectItem = (id: number, isSelected: Boolean) => {
+    // Chọn hoặc bỏ chọn một sản phẩm trong giỏ hàng
+    const toggleSelectItem = (id: number, isSelected: boolean) => {
         const item = items.find((i) => i.cartItemId === id);
-        console.log(isSelected, item.isSelected)
-        if (item) updateItemSettings(id, { isSelected: isSelected})
+        if (item) updateItemSettings(id, { isSelected });
     };
 
     const adjustQty = (id: number, delta: number) => {

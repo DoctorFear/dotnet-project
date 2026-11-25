@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using AncientBook.Application.Common;
 using AncientBook.Application.Interfaces;
 using AncientBook.Domain.Entities;
 using AncientBook.Domain.Enums;
@@ -194,24 +195,6 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
                 dbQuery = dbQuery.Where(o => o.Status == query.Status.Value);
             }
 
-            if (!string.IsNullOrWhiteSpace(query.SearchKeyword))
-            {
-                var keyword = query.SearchKeyword.Trim().ToLower();
-                dbQuery = dbQuery.Where(o => 
-                    (o.User != null && (o.User.Username.ToLower().Contains(keyword) || 
-                                        o.User.Email.ToLower().Contains(keyword) || 
-                                        o.User.FullName.ToLower().Contains(keyword))) ||
-                    o.Id.ToString() == keyword
-                );
-            }
-
-            // Lọc tên sách, ngày đặt, loại đơn và nhóm trạng thái.
-            if (!string.IsNullOrWhiteSpace(query.BookTitle))
-            {
-                var bookTitle = query.BookTitle.ToLower();
-                dbQuery = dbQuery.Where(o => o.OrderItems.Any(i => i.Book != null && i.Book.Title.ToLower().Contains(bookTitle)));
-            }
-
             if (query.FromDate.HasValue)
             {
                 var fromDate = query.FromDate.Value.Date;
@@ -253,8 +236,6 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
                 dbQuery = dbQuery.Where(o => o.Status == OrderStatus.ReturnRequested || o.Status == OrderStatus.ReturnApproved || o.Status == OrderStatus.Returned);
             }
 
-            int totalCount = await dbQuery.CountAsync();
-
             // Sắp xếp đơn hàng trước khi phân trang.
             var sortedQuery = dbQuery.OrderByDescending(o => o.OrderDate).ThenByDescending(o => o.Id);
             if (query.SortBy == "oldest")
@@ -270,9 +251,70 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
                 sortedQuery = dbQuery.OrderByDescending(o => o.FinalAmount).ThenByDescending(o => o.OrderDate).ThenByDescending(o => o.Id);
             }
 
-            var items = await sortedQuery
-                .Skip((query.PageNumber - 1) * query.PageSize)
-                .Take(query.PageSize)
+            int totalCount;
+            IQueryable<Order> pageQuery;
+            string normalizedKeyword = VietnameseSearchHelper.Normalize(query.SearchKeyword);
+            string normalizedBookTitle = VietnameseSearchHelper.Normalize(query.BookTitle);
+
+            // Lọc không dấu theo từ khóa người dùng hoặc tên sách sau khi đã áp dụng điều kiện lọc và sắp xếp SQL
+            if (!string.IsNullOrEmpty(normalizedKeyword) || !string.IsNullOrEmpty(normalizedBookTitle))
+            {
+                var candidates = await sortedQuery
+                    .Select(o => new
+                    {
+                        o.Id,
+                        Username = o.User != null ? o.User.Username : null,
+                        Email = o.User != null ? o.User.Email : null,
+                        FullName = o.User != null ? o.User.FullName : null,
+                        BookTitles = o.OrderItems
+                            .Where(i => i.Book != null)
+                            .Select(i => i.Book!.Title)
+                            .ToList()
+                    })
+                    .ToListAsync();
+
+                var matchedIds = candidates
+                    .Where(o =>
+                    {
+                        bool keywordMatched = string.IsNullOrEmpty(normalizedKeyword)
+                            || o.Id.ToString() == normalizedKeyword
+                            || VietnameseSearchHelper.MatchesAny(
+                                normalizedKeyword,
+                                o.Username,
+                                o.Email,
+                                o.FullName);
+
+                        bool bookTitleMatched = string.IsNullOrEmpty(normalizedBookTitle)
+                            || o.BookTitles.Any(title =>
+                                VietnameseSearchHelper.ContainsNormalized(title, normalizedBookTitle));
+
+                        return keywordMatched && bookTitleMatched;
+                    })
+                    .Select(o => o.Id)
+                    .ToList();
+
+                totalCount = matchedIds.Count;
+                var pageIds = matchedIds
+                    .Skip((query.PageNumber - 1) * query.PageSize)
+                    .Take(query.PageSize)
+                    .ToList();
+
+                if (pageIds.Count == 0)
+                {
+                    return (new List<OrderResponseDto>(), totalCount);
+                }
+
+                pageQuery = sortedQuery.Where(o => pageIds.Contains(o.Id));
+            }
+            else
+            {
+                totalCount = await dbQuery.CountAsync();
+                pageQuery = sortedQuery
+                    .Skip((query.PageNumber - 1) * query.PageSize)
+                    .Take(query.PageSize);
+            }
+
+            var items = await pageQuery
                 .Select(o => new OrderResponseDto
                 {
                     Id = o.Id,

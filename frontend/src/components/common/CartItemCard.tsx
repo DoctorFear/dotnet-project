@@ -32,6 +32,11 @@ export const CartItemCard: React.FC<CartItemDto> = ({
                             / {item.rentalDuration === 1 ? 'Tuần' : item.rentalDuration === 2 ? 'Tháng' : 'Năm'}
                         </span>
                     )}
+                    {item.purchaseType === 3 && (
+                        <span className={styles.rentalLabel} style={{ color: '#0B409C', fontWeight: 600 }}>
+                            (Sở hữu vĩnh viễn)
+                        </span>
+                    )}
                 </div>
             </div>
 
@@ -42,7 +47,7 @@ export const CartItemCard: React.FC<CartItemDto> = ({
                     onChange={(e) => onFormatChange(item.cartItemId, Number(e.target.value))}
                 >
                     <option value={1}>Sách Giấy</option>
-                    <option value={3} disabled>E-Book Online</option>
+                    <option value={3}>E-Book Online</option>
                     <option value={2}>Thuê Đọc</option>
                 </select>
 
@@ -65,6 +70,12 @@ export const CartItemCard: React.FC<CartItemDto> = ({
                             <option value={2}>Gói 1 Tháng</option>
                             <option value={3}>Gói 1 Năm</option>
                         </select>
+                    )}
+
+                    {item.purchaseType === 3 && (
+                        <span style={{ fontSize: '13px', color: '#64748b', fontStyle: 'italic' }}>
+                            SL: 1
+                        </span>
                     )}
                 </div>
             </div>

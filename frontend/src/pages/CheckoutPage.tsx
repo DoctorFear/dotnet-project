@@ -20,6 +20,16 @@ export const CheckoutPage: React.FC = () => {
         !!item.rentalDuration
     );
 
+    const hasOnlineItem = cartItems.some((item: OrderItem) =>
+        item.purchaseType === 2 ||
+        item.purchaseType === '2' ||
+        item.purchaseType === 'Rental' ||
+        item.purchaseType === 3 ||
+        item.purchaseType === '3' ||
+        item.purchaseType === 'EBook' ||
+        !!item.rentalDuration
+    );
+
     const {
         addresses,
         selectedAddrId,
@@ -50,20 +60,19 @@ export const CheckoutPage: React.FC = () => {
     }, [cartItems, navigate]);
 
     useEffect(() => {
-        if (hasRentalItem) {
-            if (paymentMethod === 'cod') {
-                setPaymentMethod('momo');
-            }
-            if (pointsUsed > 0) {
-                handlePointsChange('0');
-            }
+        if (hasOnlineItem && paymentMethod === 'cod') {
+            setPaymentMethod('momo');
         }
-    }, [hasRentalItem, paymentMethod, pointsUsed, setPaymentMethod, handlePointsChange]);
+        if (hasRentalItem && pointsUsed > 0) {
+            handlePointsChange('0');
+        }
+    }, [hasOnlineItem, hasRentalItem, paymentMethod, pointsUsed, setPaymentMethod, handlePointsChange]);
 
     const renderPurchaseFormat = (item: OrderItem) => {
-        const isEbook = item.purchaseType === 2 || item.purchaseType === '2' || item.purchaseType === 'Rental' || !!item.rentalDuration;
+        const isRental = item.purchaseType === 2 || item.purchaseType === '2' || item.purchaseType === 'Rental' || !!item.rentalDuration;
+        const isEbook = item.purchaseType === 3 || item.purchaseType === '3' || item.purchaseType === 'EBook';
 
-        if (isEbook) {
+        if (isRental) {
             const durationMap: Record<string | number, string> = {
                 1: '1 Tuần (7 ngày)',
                 2: '1 Tháng (30 ngày)',
@@ -74,13 +83,23 @@ export const CheckoutPage: React.FC = () => {
             };
             const durationText = item.rentalDuration ? (durationMap[item.rentalDuration] || `${item.rentalDuration}`) : '1 Tuần (7 ngày)';
 
-            
             return (
                 <div className={styles.formatWrapper}>
                     <span className={styles.badgeEbook}>Thuê đọc E-Book</span>
                     <span className={styles.metaDuration}>
                         <Clock size={14} /> 
                         <div>Thời hạn thuê: <strong>{durationText}</strong></div>
+                    </span>
+                </div>
+            );
+        }
+
+        if (isEbook) {
+            return (
+                <div className={styles.formatWrapper}>
+                    <span className={styles.badgeEbook}>E-Book Online</span>
+                    <span className={styles.metaDuration}>
+                        <div>Hình thức: <strong>Sở hữu vĩnh viễn</strong></div>
                     </span>
                 </div>
             );
@@ -103,8 +122,8 @@ export const CheckoutPage: React.FC = () => {
 
             <main className={styles.checkoutContainer}>
                 <div className={styles.checkoutLeftColumn}>
-                    <a href="/cart" onClick={(e) => { e.preventDefault(); navigate('/cart'); }} className={styles.backToShop}>
-                        ← Quay lại Giỏ hàng
+                    <a href="/cart" onClick={(e) => { e.preventDefault(); navigate(-1); }} className={styles.backToShop}>
+                        ← Quay lại
                     </a>
 
                     <section className={styles.checkoutCard}>
@@ -179,8 +198,8 @@ export const CheckoutPage: React.FC = () => {
                         </div>
 
                         <div className={styles.cartItemsFullList}>
-                            {cartItems.map((item: any) => (
-                                <div key={item.cartItemId} className={styles.cartItemCard}>
+                            {cartItems.map((item: any, idx: number) => (
+                                <div key={item.cartItemId || `${item.bookId}-${idx}`} className={styles.cartItemCard}>
                                     <BookCover src={item.coverImg} className={styles.cartItemImg} title={item.title} />
                                     <div className={styles.cartItemInfo}>
                                         <h4 className={styles.cartItemTitle}>{item.title}</h4>

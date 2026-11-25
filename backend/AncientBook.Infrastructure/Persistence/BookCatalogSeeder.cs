@@ -59,35 +59,105 @@ public static class BookCatalogSeeder
         for (var index = 0; index < samples.Length && remaining > 0; index++)
         {
             var isbn = $"978-604-99-{index + 1:0000}-0";
-            if (existingIsbns.Contains(isbn)) continue;
+            if (existingIsbns.Contains(isbn))
+            {
+                continue;
+            }
+
             var sample = samples[index];
+            var profile = ResolveSampleProfile(index);
+            var stockStatus = profile.StockCount > 0
+                ? StockStatus.InStock
+                : StockStatus.OutOfStock;
+
             var newBook = new Book
             {
-                Isbn = isbn, Title = sample.Title, Author = sample.Author,
+                Isbn = isbn,
+                Title = sample.Title,
+                Author = sample.Author,
                 PublisherId = publishers[index % publishers.Count].Id,
                 CoverImg = "https://covers.openlibrary.org/b/id/8231856-L.jpg",
-                IsPhysicalAvailable = true, PhysicalPrice = 65000 + index * 5000,
-                IsEBookAvailable = true, EBookPrice = 30000 + index * 2000,
-                IsRentalAvailable = true, WeeklyRentalPrice = 10000,
-                MonthlyRentalPrice = 25000, YearlyRentalPrice = 80000,
-                Rating = new double[] { 5, 4.5, 3.5, 2.5 }[index % 4], ReviewsCount = 10 + index,
+                IsPhysicalAvailable = profile.IsPhysical,
+                PhysicalPrice = profile.IsPhysical ? 65000 + index * 5000 : 0,
+                IsEBookAvailable = profile.IsEBook,
+                EBookPrice = 30000 + index * 2000,
+                IsRentalAvailable = profile.IsRental,
+                WeeklyRentalPrice = 10000,
+                MonthlyRentalPrice = 25000,
+                YearlyRentalPrice = 80000,
+                Rating = new double[] { 5, 4.5, 3.5, 2.5 }[index % 4],
+                ReviewsCount = 10 + index,
                 PublicationYear = 2024 + index % 3,
-                StockCount = 50,
-                StockStatus = StockStatus.InStock,
+                StockCount = profile.StockCount,
+                StockStatus = stockStatus,
+                Status = profile.Status,
                 Description = $"Dữ liệu mẫu giới thiệu sách {sample.Title} của {sample.Author}.",
-                BookCategories = [new BookCategory { CategoryId = categories[sample.Category] }]
+                BookCategories =
+                [
+                    new BookCategory
+                    {
+                        CategoryId = categories[sample.Category]
+                    }
+                ]
             };
+
             context.Books.Add(newBook);
-            
             context.Inventories.Add(new Inventory
             {
                 Book = newBook,
-                QuantityOnHand = 50,
-                ReorderLevel = 5,
+                QuantityOnHand = profile.StockCount,
+                ReorderLevel = 5
             });
             remaining--;
         }
         await context.SaveChangesAsync();
+    }
+
+    private readonly record struct SampleBookProfile(
+        bool IsPhysical,
+        bool IsEBook,
+        bool IsRental,
+        BookStatus Status,
+        int StockCount);
+
+    // Phân bổ đa dạng tổ hợp hình thức bán (1/3, 2/3, 3/3) và trạng thái cho 20 sách bổ sung
+    private static SampleBookProfile ResolveSampleProfile(int index)
+    {
+        return index switch
+        {
+            19 => new(true, true, true, BookStatus.Selling, 50),
+            18 => new(true, true, false, BookStatus.Selling, 0),
+            17 => new(false, true, false, BookStatus.Upcoming, 0),
+            16 => new(true, true, false, BookStatus.Selling, 50),
+            15 => new(false, true, true, BookStatus.Stopped, 0),
+            14 => new(true, false, false, BookStatus.Selling, 50),
+            9 => new(true, false, false, BookStatus.Stopped, 0),
+            8 => new(false, true, true, BookStatus.Upcoming, 0),
+            _ => (index % 5) switch
+            {
+                0 => new(true, false, false, BookStatus.Selling, 50),
+                1 => new(true, true, false, BookStatus.Selling, 50),
+                2 => new(true, true, true, BookStatus.Selling, 50),
+                3 => new(false, true, false, BookStatus.Upcoming, 0),
+                _ => new(true, true, true, BookStatus.Selling, 50)
+            }
+        };
+    }
+
+    // Phân bổ đa dạng tổ hợp hình thức bán (1/3, 2/3, 3/3) và trạng thái cho 10 sách khởi tạo ban đầu
+    private static SampleBookProfile ResolveInitialCatalogProfile(int index)
+    {
+        return index switch
+        {
+            3 => new(false, true, false, BookStatus.Upcoming, 0),
+            7 => new(false, true, true, BookStatus.Upcoming, 0),
+            _ => (index % 4) switch
+            {
+                0 => new(true, false, false, BookStatus.Selling, 50),
+                1 => new(true, true, false, BookStatus.Selling, 50),
+                _ => new(true, true, true, BookStatus.Selling, 50)
+            }
+        };
     }
 
     // Seed catalog ban đầu; tồn kho chỉ tăng qua dữ liệu nhập kho.
@@ -248,20 +318,30 @@ public static class BookCatalogSeeder
             for (var index = 0; index < sampleBooks.Count; index++)
             {
                 var book = sampleBooks[index];
+                var profile = ResolveInitialCatalogProfile(index);
+
                 book.PublisherId = publishers[index % publishers.Count].Id;
                 book.CoverImg = coverImages[index % coverImages.Length];
-                book.IsEBookAvailable = true;
-                book.IsRentalAvailable = true;
+                book.IsPhysicalAvailable = profile.IsPhysical;
+                book.PhysicalPrice = profile.IsPhysical ? book.PhysicalPrice : 0;
+                book.IsEBookAvailable = profile.IsEBook;
+                book.IsRentalAvailable = profile.IsRental;
                 book.WeeklyRentalPrice = 15000 + (index * 1000);
                 book.MonthlyRentalPrice = 35000 + (index * 2000);
                 book.YearlyRentalPrice = 95000 + (index * 5000);
                 book.Rating = 4.2 + ((index % 4) * 0.2);
                 book.ReviewsCount = 12 + (index * 7);
-                book.StockCount = 50;
-                book.StockStatus = StockStatus.InStock;
+                book.StockCount = profile.StockCount;
+                book.StockStatus = profile.StockCount > 0
+                    ? StockStatus.InStock
+                    : StockStatus.OutOfStock;
+                book.Status = profile.Status;
                 book.PublicationYear = 2020 + (index % 6);
                 book.Description = $"Ấn bản giới thiệu tác phẩm {book.Title}.";
-                book.BookCategories.Add(new BookCategory { CategoryId = categories[index % categories.Count].Id });
+                book.BookCategories.Add(new BookCategory
+                {
+                    CategoryId = categories[index % categories.Count].Id
+                });
             }
 
             await context.Books.AddRangeAsync(sampleBooks);
@@ -274,7 +354,7 @@ public static class BookCatalogSeeder
                 inventories.Add(new Inventory
                 {
                     BookId = book.Id,
-                    QuantityOnHand = 50,
+                    QuantityOnHand = book.StockCount,
                     ReorderLevel = 5,
                     CreatedAt = DateTime.UtcNow,
                     LastUpdated = DateTime.UtcNow

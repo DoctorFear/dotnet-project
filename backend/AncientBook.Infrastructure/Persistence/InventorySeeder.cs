@@ -27,9 +27,11 @@ public static class InventorySeeder
         var inventories = await context.Inventories.ToDictionaryAsync(inventory => inventory.BookId);
         var suppliers = await context.Suppliers.Where(supplier => supplier.Status == "Active").ToListAsync();
 
-        // Dành hai đầu sách chưa nhập; sách thiếu NXB không được gán tùy ý sang NXB khác.
-        var unreceived = books.Where(book => !book.PublisherId.HasValue)
-            .Concat(books.OrderByDescending(book => book.Id)).Select(book => book.Id).Distinct().Take(2).ToHashSet();
+        // Không tự tạo phiếu nhập cho sách thiếu NXB, sách không ở trạng thái đang bán hoặc sách mẫu có tồn bằng 0.
+        var unreceived = books
+            .Where(book => !book.PublisherId.HasValue || book.Status != BookStatus.Selling || book.StockCount == 0)
+            .Select(book => book.Id)
+            .ToHashSet();
 
         foreach (var book in books)
         {
