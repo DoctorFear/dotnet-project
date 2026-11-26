@@ -6,6 +6,7 @@ interface Props {
     leftPage: number;
     rightPage: number | null;
     totalPages: number;
+    isSinglePage?: boolean;
     leftSegments: BookTtsSegmentDto[];
     rightSegments: BookTtsSegmentDto[];
     loadingPages: boolean;
@@ -24,6 +25,7 @@ export const ReaderSpreadStage: React.FC<Props> = ({
     leftPage,
     rightPage,
     totalPages,
+    isSinglePage = false,
     leftSegments,
     rightSegments,
     loadingPages,
@@ -54,52 +56,85 @@ export const ReaderSpreadStage: React.FC<Props> = ({
         }
     };
 
-    const renderPage = (pageNum: number | null, segments: BookTtsSegmentDto[], side: 'left' | 'right') => (
-        <article className={`${styles.spreadPage} ${side === 'left' ? styles.leftPage : styles.rightPage}`}>
-            <div className={styles.pageContent}>
-                {pageNum === null ? (
-                    <p className={styles.mutedText}>Hết sách.</p>
-                ) : loadingPages ? (
-                    <p className={styles.mutedText}>Đang tải nội dung trang {pageNum}...</p>
-                ) : segments.length > 0 ? (
-                    segments.map((seg) => (
-                        <p
-                            key={seg.id}
-                            className={ttsEnabled ? `${styles.ttsBlock} ${activeSegmentId === seg.id ? styles.ttsReading : ''}` : undefined}
-                            onClick={ttsEnabled ? () => onPlaySegment(seg) : undefined}
-                            title={ttsEnabled ? 'Bấm để nghe AI đọc đoạn này' : undefined}
-                        >
-                            {seg.textContent}
-                        </p>
-                    ))
-                ) : (
-                    <p className={styles.mutedText}>Trang {pageNum} chưa có đoạn văn bản nào.</p>
-                )}
-            </div>
-            {pageNum !== null && (
-                <div className={side === 'left' ? styles.pageNumberLeft : styles.pageNumberRight}>{pageNum}</div>
-            )}
-        </article>
-    );
+    const renderPage = (
+        pageNum: number | null,
+        segments: BookTtsSegmentDto[],
+        side: 'left' | 'right' | 'single'
+    ) => {
+        const articleClass =
+            side === 'single'
+                ? styles.singlePage
+                : `${styles.spreadPage} ${side === 'left' ? styles.leftPage : styles.rightPage}`;
+
+        const pageNumberClass =
+            side === 'single'
+                ? styles.pageNumberCenter
+                : side === 'left'
+                ? styles.pageNumberLeft
+                : styles.pageNumberRight;
+
+        return (
+            <article className={articleClass}>
+                <div className={styles.pageContent}>
+                    {pageNum === null ? (
+                        <p className={styles.mutedText}>Hết sách.</p>
+                    ) : loadingPages ? (
+                        <p className={styles.mutedText}>Đang tải nội dung trang {pageNum}...</p>
+                    ) : segments.length > 0 ? (
+                        segments.map((seg) => (
+                            <p
+                                key={seg.id}
+                                className={
+                                    ttsEnabled
+                                        ? `${styles.ttsBlock} ${activeSegmentId === seg.id ? styles.ttsReading : ''}`
+                                        : undefined
+                                }
+                                onClick={ttsEnabled ? () => onPlaySegment(seg) : undefined}
+                                title={ttsEnabled ? 'Bấm để nghe AI đọc đoạn này' : undefined}
+                            >
+                                {seg.textContent}
+                            </p>
+                        ))
+                    ) : (
+                        <p className={styles.mutedText}>Trang {pageNum} chưa có đoạn văn bản nào.</p>
+                    )}
+                </div>
+                {pageNum !== null && <div className={pageNumberClass}>{pageNum}</div>}
+            </article>
+        );
+    };
+
+    const step = isSinglePage ? 1 : 2;
 
     return (
         <section ref={stageRef} className={styles.centerStage} onMouseUp={handleMouseUp}>
-            <button type="button" className={`${styles.spreadNavBtn} ${styles.prevBtn}`} onClick={onPrevSpread} disabled={leftPage <= 1}>
+            <button
+                type="button"
+                className={`${styles.spreadNavBtn} ${styles.prevBtn}`}
+                onClick={onPrevSpread}
+                disabled={leftPage <= 1}
+            >
                 ‹
             </button>
             <button
                 type="button"
                 className={`${styles.spreadNavBtn} ${styles.nextBtn}`}
                 onClick={onNextSpread}
-                disabled={leftPage + 2 > totalPages}
+                disabled={leftPage + step > totalPages}
             >
                 ›
             </button>
 
-            <div className={styles.doubleSpread} style={{ transform: `scale(${scale})` }}>
-                {renderPage(leftPage, leftSegments, 'left')}
-                {renderPage(rightPage, rightSegments, 'right')}
-            </div>
+            {isSinglePage ? (
+                <div className={styles.singleSpread} style={{ transform: `scale(${scale})` }}>
+                    {renderPage(leftPage, leftSegments, 'single')}
+                </div>
+            ) : (
+                <div className={styles.doubleSpread} style={{ transform: `scale(${scale})` }}>
+                    {renderPage(leftPage, leftSegments, 'left')}
+                    {renderPage(rightPage, rightSegments, 'right')}
+                </div>
+            )}
 
             {tooltip && (
                 <button
@@ -111,7 +146,7 @@ export const ReaderSpreadStage: React.FC<Props> = ({
                         setTooltip(null);
                     }}
                 >
-                    💡 Gửi vào Copilot
+                    Gửi vào Copilot
                 </button>
             )}
 

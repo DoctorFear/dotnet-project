@@ -1,13 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ebookReaderService } from '../services/ebookReaderService';
-import type { BookTtsSegmentDto, ReaderEditionDto } from '../types/reader';
+import { ebookReaderService, type ExtendedReaderEditionDto } from '../services/ebookReaderService';
+import type { BookTtsSegmentDto } from '../types/reader';
 
-// ============================================================================
-// BIẾN SỐ TÙY CHỈNH NỐI FILE ÂM THANH (ĐƠN VỊ: GIÂY)
-// - Khởi điểm: 0 (Chạy liền kề tuần tự bình thường, hết file này phát tiếp file sau)
-// - Khi cần tùy chỉnh: Bạn có thể tăng dần từ 0 lên 0.1, 0.2 ... 1.0 (hoặc số bất kỳ)
-// - Càng tăng giá trị này thì file sau sẽ càng được nối sớm vào file trước bấy nhiêu giây
-// ============================================================================
 export const AUDIO_OVERLAP_SECONDS = 0.86;
 
 export interface ReaderChatMessage {
@@ -20,7 +14,7 @@ export const useEbookReader = (
     bookId: string | undefined,
     fallbackMeta?: { title?: string; author?: string }
 ) => {
-    const [edition, setEdition] = useState<ReaderEditionDto | null>(null);
+    const [edition, setEdition] = useState<ExtendedReaderEditionDto | null>(null);
     const [leftPage, setLeftPage] = useState<number>(1);
     const [pageInput, setPageInput] = useState<string>('1');
     const [leftSegments, setLeftSegments] = useState<BookTtsSegmentDto[]>([]);
@@ -48,7 +42,6 @@ export const useEbookReader = (
         }
     };
 
-    // Chuyển URL Dropbox sang CDN direct dl.dropboxusercontent.com để bỏ qua chuyển hướng 302, tải nhanh gấp 4 lần
     const toDirectAudioUrl = (url: string | null | undefined): string | null => {
         if (!url) return null;
         return url
@@ -70,7 +63,6 @@ export const useEbookReader = (
         }
     }, []);
 
-    // Copilot state
     const [messages, setMessages] = useState<ReaderChatMessage[]>([
         {
             id: 'welcome',
@@ -80,15 +72,15 @@ export const useEbookReader = (
         },
     ]);
 
-    const totalPages = edition?.totalPages ?? 184;
-    const rightPage = leftPage + 1 <= totalPages ? leftPage + 1 : null;
+    const isSinglePage = edition?.isSinglePage ?? false;
+    const totalPages = edition?.totalPages ?? 1;
+    const rightPage = !isSinglePage && leftPage + 1 <= totalPages ? leftPage + 1 : null;
 
     const spreadSegments = useMemo(
         () => [...leftSegments, ...rightSegments],
         [leftSegments, rightSegments]
     );
 
-    // Tự động nạp trước (preload) âm thanh các đoạn trong trang hiện tại vào bộ đệm trình duyệt
     useEffect(() => {
         spreadSegments.forEach((seg) => {
             const url = voiceGender === 'female' ? seg.audioUrlFemale : seg.audioUrlMale;
@@ -114,25 +106,19 @@ export const useEbookReader = (
                     }
                 }
             })
-            .catch(() => {
+            .catch((err: any) => {
                 if (active) {
-                    setEdition({
-                        editionId: Number(bookId),
-                        bookId: Number(bookId),
-                        title: fallbackMeta?.title ?? `Sách điện tử #${bookId}`,
-                        author: fallbackMeta?.author ?? '',
-                        totalPages: 184,
-                        ttsEnabled: false,
-                        chatEnabled: false,
-                    });
+                    setEdition(null);
                     setCopilotOpen(false);
+                    showToast(err?.message || 'Không tìm thấy ấn bản E-Book cho sách này.');
                 }
             });
         return () => {
             active = false;
         };
-    }, [bookId, fallbackMeta?.author, fallbackMeta?.title]);
+    }, [bookId, fallbackMeta?.author, fallbackMeta?.title, showToast]);
 
+    // Fetch extracted text segments (1 page for PDF, 2-page spread for EPUB)
     useEffect(() => {
         if (!edition) return;
         let active = true;
@@ -183,7 +169,6 @@ export const useEbookReader = (
 
             const idx = spreadSegments.findIndex((s) => s.id === segment.id);
 
-            // Preload trước 3 đoạn kế tiếp ngay khi đoạn này phát để sẵn sàng nối tiếp
             if (idx !== -1) {
                 for (let offset = 1; offset <= 3; offset++) {
                     const nextSeg = spreadSegments[idx + offset];
@@ -211,7 +196,6 @@ export const useEbookReader = (
             const audioUrl = toDirectAudioUrl(rawAudioUrl);
 
             if (audioUrl) {
-                // Ưu tiên dùng audio đã được buffer sẵn trong cache
                 let audio = audioCache.current.get(audioUrl);
                 if (!audio) {
                     audio = new Audio(audioUrl);
@@ -222,7 +206,6 @@ export const useEbookReader = (
                 audio.currentTime = 0;
                 audio.playbackRate = speechRate;
 
-                // Nếu bạn tùy chỉnh AUDIO_OVERLAP_SECONDS > 0: Cho phép kích hoạt file sau sớm hơn X giây
                 if (AUDIO_OVERLAP_SECONDS > 0) {
                     monitorIntervalRef.current = window.setInterval(() => {
                         if (!audio || audio.paused || hasAdvanced) return;
@@ -235,11 +218,9 @@ export const useEbookReader = (
                     }, 20);
                 }
 
-                // Chạy liền kề tuần tự bình thường khi hết file (mặc định khi AUDIO_OVERLAP_SECONDS = 0)
                 audio.onended = handleAdvance;
                 audio.onerror = () => {
                     clearMonitor();
-                    // Fallback sang Web Speech API nếu tệp Dropbox gặp sự cố
                     if ('speechSynthesis' in window) {
                         const utter = new SpeechSynthesisUtterance(segment.textContent);
                         utter.lang = 'vi-VN';
@@ -255,7 +236,6 @@ export const useEbookReader = (
                 };
                 audioRef.current = audio;
                 void audio.play().catch(() => {
-                    // Xử lý chặn autoplay trình duyệt
                     stopAudio();
                 });
             } else if ('speechSynthesis' in window) {
@@ -303,7 +283,9 @@ export const useEbookReader = (
 
     const goToPage = (target: number) => {
         const clamped = Math.max(1, Math.min(totalPages, target));
-        const normalizedLeft = clamped % 2 === 1 ? clamped : clamped - 1;
+        const normalizedLeft = isSinglePage
+            ? clamped
+            : (clamped % 2 === 1 ? clamped : clamped - 1);
         stopAudio();
         setLeftPage(normalizedLeft);
         setPageInput(String(normalizedLeft));
@@ -325,8 +307,10 @@ export const useEbookReader = (
         );
         setMessages((prev) => [...prev, { id: `${Date.now()}-b`, role: 'bot', content: answer }]);
     };
+
     return {
         edition,
+        isSinglePage,
         leftPage,
         rightPage,
         totalPages,
@@ -358,8 +342,11 @@ export const useEbookReader = (
         changeSpeechRate,
         changeVoiceGender,
         goToPage,
-        prevSpread: () => leftPage > 1 && goToPage(leftPage - 2),
-        nextSpread: () => leftPage + 2 <= totalPages && goToPage(leftPage + 2),
+        prevSpread: () => leftPage > 1 && goToPage(leftPage - (isSinglePage ? 1 : 2)),
+        nextSpread: () => {
+            const step = isSinglePage ? 1 : 2;
+            if (leftPage + step <= totalPages) goToPage(leftPage + step);
+        },
         messages,
         askCopilot,
     };

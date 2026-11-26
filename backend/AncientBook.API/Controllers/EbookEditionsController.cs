@@ -176,7 +176,7 @@ namespace AncientBook.API.Controllers
         /// Bước 1: Tải tệp PDF/EPUB lên server để trích xuất metadata kỹ thuật và lưu bản nháp
         /// </summary>
         [HttpPost("upload")]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff,Admin")]
         [Consumes("multipart/form-data")]
         [RequestSizeLimit(104_857_600)]
         public async Task<IActionResult> UploadEditionFile(
@@ -350,7 +350,7 @@ namespace AncientBook.API.Controllers
         /// Bước 2: Lưu nháp cấu hình đã chọn (PresetType) khi chưa muốn công khai ngay
         /// </summary>
         [HttpPut("{editionId}/draft")]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff,Admin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> SaveDraft(
@@ -398,7 +398,7 @@ namespace AncientBook.API.Controllers
         /// Bước 3: Xuất bản ấn bản (Bóc tách văn bản, nạp Vector RAG và mở bán sách)
         /// </summary>
         [HttpPost("{editionId}/publish")]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff,Admin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -454,7 +454,7 @@ namespace AncientBook.API.Controllers
         /// Gỡ bỏ/Xóa ấn bản E-Book khỏi sách (Xóa file Dropbox, embeddings, segments và cập nhật lại trạng thái sách) - Dành cho Staff
         /// </summary>
         [HttpDelete("{editionId}")]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff,Admin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteEdition([FromRoute] int editionId, CancellationToken ct)
@@ -562,7 +562,7 @@ namespace AncientBook.API.Controllers
         /// Gỡ bỏ toàn bộ ấn bản E-Book của một đầu sách - Dành cho Staff
         /// </summary>
         [HttpDelete("book/{bookId}")]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff,Admin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteEditionsByBookId([FromRoute] int bookId, CancellationToken ct)
@@ -783,6 +783,30 @@ namespace AncientBook.API.Controllers
                 ttsEnabled = edition.IsTtsEnabled,
                 chatEnabled = edition.PresetType != EbookPresetType.PdfStandard
             });
+        }
+
+        [HttpGet("{editionId:int}/file")]
+        [Authorize(Roles = "Staff,Member,Admin")]
+        public async Task<IActionResult> GetEditionFile([FromRoute] int editionId, CancellationToken ct)
+        {
+            var edition = await _editionRepository.GetByIdAsync(editionId, ct);
+            if (edition == null || string.IsNullOrWhiteSpace(edition.DropboxPath))
+            {
+                return NotFound(new { message = "Không tìm thấy tệp ấn bản E-Book." });
+            }
+
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+            if (userRole == "Member" && edition.Status != EditionPublishStatus.Published)
+            {
+                return NotFound(new { message = "Ấn bản E-Book này chưa được phát hành chính thức." });
+            }
+
+            var stream = await _fileStorageService.GetFileStreamAsync(edition.DropboxPath, ct);
+            string contentType = edition.Format == EbookFormat.Pdf
+                ? "application/pdf"
+                : "application/epub+zip";
+
+            return File(stream, contentType, edition.FileTitle, enableRangeProcessing: true);
         }
     }
 }

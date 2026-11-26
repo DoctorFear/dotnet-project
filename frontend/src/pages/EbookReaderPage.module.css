@@ -80,7 +80,6 @@
 .spreadNavBtn:disabled { opacity: 0.35; cursor: not-allowed; }
 .prevBtn { left: 18px; }
 .nextBtn { right: 18px; }
-ransform-origin: center center;
 
 .doubleSpread::after {
     content: "";
@@ -91,6 +90,39 @@ ransform-origin: center center;
     background: linear-gradient(to right, rgba(0, 0, 0, 0.14), rgba(0, 0, 0, 0.01) 40%, rgba(0, 0, 0, 0.01) 60%, rgba(0, 0, 0, 0.14));
     pointer-events: none;
     z-index: 10;
+}
+
+.singleSpread {
+    display: flex;
+    margin: auto;
+    background: #ffffff;
+    box-shadow: 0 16px 42px rgba(7, 18, 51, 0.22);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.2s ease;
+    transform-origin: top center;
+}
+
+.singlePage {
+    width: min(740px, 84vw);
+    min-height: 760px;
+    padding: 44px 54px 28px 54px;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    user-select: text;
+    line-height: 1.78;
+    font-size: 15px;
+}
+
+.pageNumberCenter {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 800;
+    color: #475569;
+    margin-top: 24px;
 }
 
 .spreadPage {

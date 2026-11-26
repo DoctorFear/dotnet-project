@@ -12,6 +12,7 @@ namespace AncientBook.Infrastructure.Services
 {
     public class GeminiEmbeddingService : IGeminiEmbeddingService
     {
+        private const int EmbeddingDimensions = 768;
         private readonly HttpClient _httpClient;
         private readonly string _apiKey;
 
@@ -23,45 +24,133 @@ namespace AncientBook.Infrastructure.Services
 
         public async Task<float[]> GetEmbeddingAsync(string text, CancellationToken ct = default)
         {
-            // Dùng v1beta với model chính xác có trong danh sách của bạn
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key={_apiKey}";
-
-            // Khi model đã nằm trên URL, payload CHỈ chứa "content", KHÔNG truyền "model" vào body
-            var requestBody = new
+            if (string.IsNullOrWhiteSpace(text))
             {
-                content = new
+                return GenerateLocalEmbedding(string.Empty, EmbeddingDimensions);
+            }
+
+            if (!string.IsNullOrWhiteSpace(_apiKey))
+            {
+                try
                 {
-                    parts = new[]
+                    var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key={_apiKey}";
+
+                    var requestBody = new
                     {
-                new { text = text }
-            }
+                        content = new
+                        {
+                            parts = new[]
+                            {
+                                new { text = text }
+                            }
+                        },
+                        outputDimensionality = EmbeddingDimensions
+                    };
+
+                    using var jsonContent = new StringContent(
+                        JsonSerializer.Serialize(requestBody),
+                        Encoding.UTF8,
+                        "application/json"
+                    );
+
+                    using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                    timeoutCts.CancelAfter(TimeSpan.FromSeconds(10));
+
+                    var response = await _httpClient.PostAsync(url, jsonContent, timeoutCts.Token);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseString = await response.Content.ReadAsStringAsync(timeoutCts.Token);
+                        using var doc = JsonDocument.Parse(responseString);
+
+                        var valuesElement = doc.RootElement
+                            .GetProperty("embedding")
+                            .GetProperty("values");
+
+                        var vector = JsonSerializer.Deserialize<float[]>(valuesElement.GetRawText());
+                        if (vector != null && vector.Length == EmbeddingDimensions)
+                        {
+                            NormalizeL2(vector);
+                            return vector;
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[GeminiEmbeddingService] API Warning ({response.StatusCode}). Fallback sang Local Embedding.");
+                    }
                 }
-            };
-
-            var jsonContent = new StringContent(
-                JsonSerializer.Serialize(requestBody),
-                Encoding.UTF8,
-                "application/json"
-            );
-
-            var response = await _httpClient.PostAsync(url, jsonContent, ct);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorDetail = await response.Content.ReadAsStringAsync(ct);
-                throw new HttpRequestException($"Google API error ({response.StatusCode}): {errorDetail}");
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[GeminiEmbeddingService] Exception connecting to Gemini API ({ex.Message}). Tự động fallback sang Local Embedding.");
+                }
             }
 
-            var responseString = await response.Content.ReadAsStringAsync(ct);
-            using var doc = JsonDocument.Parse(responseString);
-
-            var valuesElement = doc.RootElement
-                .GetProperty("embedding")
-                .GetProperty("values");
-
-            var vector = JsonSerializer.Deserialize<float[]>(valuesElement.GetRawText());
-            return vector ?? Array.Empty<float>();
+            return GenerateLocalEmbedding(text, EmbeddingDimensions);
         }
+
+        public static float[] GenerateLocalEmbedding(string text, int dimensions = EmbeddingDimensions)
+        {
+            var vector = new float[dimensions];
+            if (string.IsNullOrWhiteSpace(text))
+                return vector;
+
+            var clean = text.ToLowerInvariant();
+            var tokens = clean.Split(
+                new[] { ' ', '\r', '\n', '\t', ',', '.', ';', ':', '!', '?', '-', '(', ')', '"', '\'' },
+                StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var token in tokens)
+            {
+                if (token.Length == 0) continue;
+
+                uint hash = 2166136261;
+                foreach (char c in token)
+                {
+                    hash = (hash ^ c) * 16777619;
+                }
+
+                int index = (int)(hash % (uint)dimensions);
+                float sign = ((hash >> 16) & 1) == 0 ? 1.0f : -1.0f;
+                vector[index] += sign * (1.0f + (float)Math.Log(1 + token.Length));
+
+                if (token.Length >= 3)
+                {
+                    for (int i = 0; i <= token.Length - 3; i++)
+                    {
+                        uint triHash = 2166136261;
+                        for (int j = 0; j < 3; j++)
+                        {
+                            triHash = (triHash ^ token[i + j]) * 16777619;
+                        }
+                        int triIdx = (int)(triHash % (uint)dimensions);
+                        float triSign = ((triHash >> 8) & 1) == 0 ? 0.5f : -0.5f;
+                        vector[triIdx] += triSign;
+                    }
+                }
+            }
+
+            NormalizeL2(vector);
+            return vector;
+        }
+
+        private static void NormalizeL2(float[] vector)
+        {
+            double norm = 0.0;
+            for (int i = 0; i < vector.Length; i++)
+            {
+                norm += vector[i] * vector[i];
+            }
+
+            if (norm > 0)
+            {
+                float sqrtNorm = (float)Math.Sqrt(norm);
+                for (int i = 0; i < vector.Length; i++)
+                {
+                    vector[i] /= sqrtNorm;
+                }
+            }
+        }
+
         public async Task<string> GenerateCopilotAnswerAsync(
             string question,
             string? selectedText,
@@ -69,8 +158,12 @@ namespace AncientBook.Infrastructure.Services
             List<string> citations,
             CancellationToken ct = default)
         {
-            // Danh sách các model tương thích theo thứ tự ưu tiên phản hồi nhanh và ổn định
-            var modelsToTry = new[] { "gemini-flash-lite-latest", "gemini-flash-latest", "gemini-3-flash-preview", "gemini-3.8-flash" };
+            if (string.IsNullOrWhiteSpace(_apiKey))
+            {
+                return BuildLocalCopilotFallback(question, selectedText, currentPage, citations);
+            }
+
+            var modelsToTry = new[] { "gemini-flash-lite-latest", "gemini-flash-latest", "gemini-2.5-flash" };
 
             var promptBuilder = new StringBuilder();
             promptBuilder.AppendLine("Bạn là trợ lý đọc sách AI (Copilot) thông thái của nền tảng AncientBook.");
@@ -124,17 +217,10 @@ namespace AncientBook.Infrastructure.Services
                 generationConfig = new
                 {
                     temperature = 0.4,
-                    maxOutputTokens = 4096, // Tăng lên 4096 để AI viết thoải mái không bao giờ bị cụt
-                    thinkingConfig = new
-                    {
-                        thinkingBudget = 0 // Đặt 0 để AI phản hồi tức thì và dành trọn token cho nội dung
-                    }
+                    maxOutputTokens = 4096
                 }
             };
 
-            string lastError = string.Empty;
-
-            // Thử lần lượt các model cho đến khi thành công (giới hạn 20s mỗi model để tránh treo 100s)
             foreach (var model in modelsToTry)
             {
                 var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={_apiKey}";
@@ -165,35 +251,61 @@ namespace AncientBook.Infrastructure.Services
                                 .GetProperty("text")
                                 .GetString();
 
-                            return text ?? "Không nhận được câu trả lời từ AI.";
+                            if (!string.IsNullOrWhiteSpace(text))
+                                return text;
                         }
-
-                        return "AI không thể xử lý câu trả lời lúc này.";
                     }
-
-                    lastError = $"[{model} - {(int)response.StatusCode}] {responseString}";
-
-                    // Chỉ ném lỗi ngay với lỗi xác thực/payload (400/401/403), còn 404/429/500/503 thì fallback sang model tiếp theo
-                    var statusCode = (int)response.StatusCode;
-                    if (statusCode != 404 && statusCode != 429 && statusCode < 500)
+                    else
                     {
-                        throw new HttpRequestException($"Google API Generation error ({response.StatusCode}): {responseString}");
+                        Console.WriteLine($"[GeminiCopilot] Model {model} failed ({(int)response.StatusCode}): {responseString}");
                     }
                 }
-                catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
                 {
-                    lastError = $"[{model}] Quá thời gian chờ (timeout 20s)";
+                    throw;
                 }
-                catch (HttpRequestException ex)
+                catch (Exception ex)
                 {
-                    lastError = $"[{model}] {ex.Message}";
+                    Console.WriteLine($"[GeminiCopilot] Model {model} exception: {ex.Message}");
                 }
 
-                // Chờ ngắn trước khi thử model tiếp theo
-                await Task.Delay(500, ct);
+                await Task.Delay(300, ct);
             }
 
-            throw new HttpRequestException($"Tất cả mô hình AI hiện đang quá tải hoặc không phản hồi: {lastError}");
+            return BuildLocalCopilotFallback(question, selectedText, currentPage, citations);
+        }
+
+        private static string BuildLocalCopilotFallback(
+            string question,
+            string? selectedText,
+            int? currentPage,
+            List<string>? citations)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("*(Phản hồi từ chế độ Tri thức RAG Cục bộ do dịch vụ AI trực tuyến tạm thời gián đoạn)*\n");
+
+            if (currentPage.HasValue && currentPage.Value > 0)
+            {
+                sb.AppendLine($"**Vị trí đang đọc:** Trang {currentPage.Value}\n");
+            }
+
+            if (!string.IsNullOrWhiteSpace(selectedText))
+            {
+                sb.AppendLine($"**Đoạn văn bản đã chọn:**\n> \"{selectedText.Trim()}\"\n");
+            }
+
+            if (citations != null && citations.Count > 0)
+            {
+                sb.AppendLine($"**Các đoạn trích dẫn liên quan trong sách cho câu hỏi** *\"{question}\"**:\n");
+                foreach (var cite in citations)
+                {
+                    sb.AppendLine($"> {cite}\n");
+                }
+                return sb.ToString().TrimEnd();
+            }
+
+            sb.Append($"Hiện chưa kết nối được tới máy chủ AI và không tìm thấy trích đoạn trùng khớp trong sách cho câu hỏi: \"{question}\".");
+            return sb.ToString();
         }
     }
 }

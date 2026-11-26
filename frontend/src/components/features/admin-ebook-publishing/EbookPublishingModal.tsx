@@ -36,6 +36,7 @@ export const EbookPublishingModal: React.FC<Props> = ({ controller }) => {
         selectPresetType,
         selectFile,
         saveDraft,
+        generateFileFromChapters,
         publish,
         generateAudio,
         // TTS audio preview
@@ -118,6 +119,7 @@ export const EbookPublishingModal: React.FC<Props> = ({ controller }) => {
 
                 {/* 1. Bước Tải tệp nội dung số (PDF / EPUB) */}
                 <EbookFileUploadStep
+                    defaultBookTitle={book.title}
                     draft={draft}
                     isUploading={isUploading}
                     isBusy={isBusy}
@@ -126,8 +128,9 @@ export const EbookPublishingModal: React.FC<Props> = ({ controller }) => {
                     onDragLeave={() => setIsDragging(false)}
                     onDrop={selectFile}
                     onFileSelected={selectFile}
+                    onGenerateFile={generateFileFromChapters}
                 />
-
+                
                 {/* 2. Bước Phân loại & Nhóm cấu hình ấn bản (Văn học, Học thuật, Thị giác) */}
                 <EbookPresetSelectorStep
                     selectedPresetType={draft.presetType}

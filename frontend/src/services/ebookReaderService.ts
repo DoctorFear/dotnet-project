@@ -1,8 +1,21 @@
 import { requestApi } from './apiClient';
 import type { BookTtsSegmentDto, ReaderEditionDto } from '../types/reader';
 
+export interface ExtendedReaderEditionDto extends ReaderEditionDto {
+    format: 'Pdf' | 'Epub';
+    isSinglePage: boolean;
+}
+
+function normalizePreset(rawPreset: unknown, rawPresetName?: unknown): number {
+    const name = String(rawPresetName ?? rawPreset ?? '').trim();
+    if (name === 'EpubStandard' || Number(rawPreset) === 1) return 1;
+    if (name === 'PdfStandard' || Number(rawPreset) === 2) return 2;
+    if (name === 'ScannedBook' || Number(rawPreset) === 3) return 3;
+    return 0;
+}
+
 export const ebookReaderService = {
-    async getEditionByBookId(bookId: string): Promise<ReaderEditionDto> {
+    async getEditionByBookId(bookId: string): Promise<ExtendedReaderEditionDto> {
         const res = await requestApi<{ hasEdition: boolean; edition: any }>(`/EbookEditions/book/${bookId}`, {
             method: 'GET',
         });
@@ -10,20 +23,21 @@ export const ebookReaderService = {
             throw new Error('Chưa có ấn bản E-Book khả dụng cho cuốn sách này.');
         }
         const ed = res.edition;
-        const preset = Number(ed.presetType);
+        const preset = normalizePreset(ed.presetType, ed.presetTypeName);
+        const rawFormat = String(ed.format ?? '').toLowerCase();
+        const isPdf = rawFormat === 'pdf' || preset === 2 || preset === 3;
+
         return {
             editionId: ed.id,
             bookId: ed.bookId,
-            title: ed.bookTitle,
+            title: ed.bookTitle || ed.fileTitle,
             author: '',
-            totalPages: ed.totalPages,
-            // Giới hạn tính năng nghiêm ngặt theo nhóm phân loại ấn bản (Preset):
-            // - Nhóm 1 (preset 1 - Văn học): TTS bật (nếu có audio), Copilot bật.
-            // - Nhóm 2 (preset 2 - Học thuật): TTS TẮT HOÀN TOÀN, Copilot bật.
-            // - Nhóm 3 (preset 3 - Thị giác): TTS TẮT HOÀN TOÀN, Copilot TẮT HOÀN TOÀN.
+            totalPages: Math.max(1, Number(ed.totalPages) || 1),
             ttsEnabled: preset === 1 && Boolean(ed.isTtsEnabled),
             chatEnabled: preset === 1 || preset === 2,
             presetType: preset,
+            format: isPdf ? 'Pdf' : 'Epub',
+            isSinglePage: isPdf,
         };
     },
 

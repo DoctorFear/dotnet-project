@@ -45,6 +45,7 @@ export const EbookReaderPage: React.FC = () => {
                     leftPage={reader.leftPage}
                     rightPage={reader.rightPage}
                     totalPages={reader.totalPages}
+                    isSinglePage={reader.isSinglePage}
                     leftSegments={reader.leftSegments}
                     rightSegments={reader.rightSegments}
                     loadingPages={reader.loadingPages}

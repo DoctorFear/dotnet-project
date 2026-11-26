@@ -92,4 +92,17 @@ export const ebookPublishingService = {
             method: 'DELETE',
         });
     },
+
+    async generateEditionFile(payload: {
+        bookId: number;
+        fileTitle: string;
+        format: 'Epub' | 'Pdf';
+        author?: string;
+        chapters: { title: string; content: string }[];
+    }): Promise<UploadEditionResponse> {
+        return requestApi<UploadEditionResponse>('/EbookEditions/generate-file', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+    },
 };
