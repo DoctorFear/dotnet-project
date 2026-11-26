@@ -203,7 +203,7 @@ export const useEbookReader = (
                 // Nếu backend chưa có segments, nạp sách mẫu để trải nghiệm đầy đủ
                 loadSample(SAMPLE_BOOKS[0]);
             })
-            .catch(() => {
+            .catch((err: any) => {
                 if (active) {
                     loadSample(SAMPLE_BOOKS[0]);
                 }
@@ -212,7 +212,7 @@ export const useEbookReader = (
         return () => {
             active = false;
         };
-    }, [bookId, fallbackMeta?.author, fallbackMeta?.title]);
+    }, [bookId, fallbackMeta?.author, fallbackMeta?.title, showToast]);
 
     // Chuyển trang an toàn
     const goToPage = useCallback(

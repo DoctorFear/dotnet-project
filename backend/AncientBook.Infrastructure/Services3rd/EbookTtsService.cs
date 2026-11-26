@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using AncientBook.Application.Common.Interfaces.Repositories;
 using AncientBook.Application.DTOs;
 using AncientBook.Domain.Entities;
+using AncientBook.Domain.Enums;
 using AncientBook.Domain.Interfaces;
 
 namespace AncientBook.Infrastructure.Services
@@ -55,7 +56,6 @@ namespace AncientBook.Infrastructure.Services
             int? toPage = null,
             CancellationToken ct = default)
         {
-            // 1. Lấy thông tin ấn bản sách qua Repo
             var edition = await _editionRepo.GetByIdAsync(editionId, ct);
             if (edition == null)
             {
@@ -67,7 +67,6 @@ namespace AncientBook.Infrastructure.Services
                 throw new InvalidOperationException("Ấn bản chưa có đường dẫn tệp trên Dropbox (DropboxPath).");
             }
 
-            // 2. Tải Stream tệp gốc (.epub/.pdf) từ Dropbox
             Stream bookStream;
             try
             {
@@ -78,7 +77,6 @@ namespace AncientBook.Infrastructure.Services
                 throw new InvalidOperationException($"Không thể tải sách từ Dropbox: {ex.Message}", ex);
             }
 
-            // 3. Bóc tách toàn bộ khối văn bản (Overlap = 0)
             List<TtsSegmentDto> rawSegments;
             using (bookStream)
             {
@@ -90,7 +88,6 @@ namespace AncientBook.Infrastructure.Services
                 throw new InvalidOperationException("Không trích xuất được khối văn bản nào từ tệp sách.");
             }
 
-            // Lọc theo dải trang nếu Staff có chỉ định (chống nghẽn / timeout)
             if (fromPage.HasValue)
             {
                 rawSegments = rawSegments.Where(s => s.PageNumber >= fromPage.Value).ToList();
@@ -105,7 +102,6 @@ namespace AncientBook.Infrastructure.Services
                 throw new InvalidOperationException("Không có khối văn bản nào nằm trong khoảng trang đã chọn.");
             }
 
-            // 4. Dọn dẹp bản ghi cũ trong phạm vi dải trang đang chạy lại
             var existingSegments = await _segmentRepo.GetByEditionIdAsync(editionId, ct);
             var targetPages = rawSegments.Select(s => s.PageNumber).Distinct().ToHashSet();
             var segmentsToDelete = existingSegments.Where(s => targetPages.Contains(s.PageNumber)).ToList();
@@ -115,7 +111,6 @@ namespace AncientBook.Infrastructure.Services
                 await _segmentRepo.DeleteRangeAsync(segmentsToDelete, ct);
             }
 
-            // 5. Sinh giọng đọc AI & Upload từng đoạn MP3 lên thư mục Dropbox: tts-audio/{editionId}
             var newSegments = new List<BookTtsSegment>();
             string ttsSubFolder = $"tts-audio/{editionId}";
 
@@ -127,12 +122,10 @@ namespace AncientBook.Infrastructure.Services
                 var fileFemaleName = $"p{seg.PageNumber}_s{seg.SegmentIndex}_female.mp3";
                 var fileMaleName = $"p{seg.PageNumber}_s{seg.SegmentIndex}_male.mp3";
 
-                // Giọng nữ
                 var femaleBytes = await _ttsAudioService.SynthesizeSpeechAsync(seg.TextContent, "female", language, ct);
                 var urlFemale = await _fileStorageService.SaveBytesFileAsync(femaleBytes, fileFemaleName, ttsSubFolder);
                 await Task.Delay(120, ct);
 
-                // Giọng nam
                 var maleBytes = await _ttsAudioService.SynthesizeSpeechAsync(seg.TextContent, "male", language, ct);
                 var urlMale = await _fileStorageService.SaveBytesFileAsync(maleBytes, fileMaleName, ttsSubFolder);
                 await Task.Delay(120, ct);
@@ -149,11 +142,9 @@ namespace AncientBook.Infrastructure.Services
                 });
             }
 
-            // 6. Lưu segments mới vào database
             await _segmentRepo.AddRangeAsync(newSegments, ct);
             await _segmentRepo.SaveChangesAsync(ct);
 
-            // 7. Đồng bộ cờ IsTtsEnabled = true cho EbookEdition
             edition.IsTtsEnabled = true;
             _editionRepo.Update(edition);
             await _editionRepo.SaveChangesAsync(ct);
@@ -174,18 +165,85 @@ namespace AncientBook.Infrastructure.Services
         {
             var segments = await _segmentRepo.GetByEditionAndPageAsync(editionId, pageNumber, ct);
 
-            return segments
-                .OrderBy(s => s.SegmentIndex)
-                .Select(s => new PageTtsResponseDto
+            if (segments.Any())
+            {
+                return segments
+                    .OrderBy(s => s.SegmentIndex)
+                    .Select(s => new PageTtsResponseDto
+                    {
+                        Id = s.Id,
+                        SegmentIndex = s.SegmentIndex,
+                        PageNumber = s.PageNumber,
+                        TextContent = s.TextContent,
+                        AudioUrlFemale = s.AudioUrlFemale,
+                        AudioUrlMale = s.AudioUrlMale
+                    })
+                    .ToList();
+            }
+
+            // Nếu ấn bản chưa có bất kỳ đoạn văn bản nào lưu trong DB (ví dụ PDF xuất bản trước đó),
+            // tự động bóc tách từ Dropbox 1 lần và lưu vào DB để các lần đọc sau tải tức thì
+            var anyExistingForEdition = await _segmentRepo.GetByEditionIdAsync(editionId, ct);
+            if (anyExistingForEdition.Any())
+            {
+                return new List<PageTtsResponseDto>();
+            }
+
+            var edition = await _editionRepo.GetByIdAsync(editionId, ct);
+            if (edition == null ||
+                string.IsNullOrWhiteSpace(edition.DropboxPath) ||
+                edition.PresetType == EbookPresetType.ScannedBook)
+            {
+                return new List<PageTtsResponseDto>();
+            }
+
+            try
+            {
+                using var stream = await _fileStorageService.GetFileStreamAsync(edition.DropboxPath, ct);
+                var extracted = _ttsExtractor.ExtractSegments(stream, edition.PresetType);
+                if (extracted == null || !extracted.Any())
                 {
-                    Id = s.Id,
-                    SegmentIndex = s.SegmentIndex,
-                    PageNumber = s.PageNumber,
-                    TextContent = s.TextContent,
-                    AudioUrlFemale = s.AudioUrlFemale,
-                    AudioUrlMale = s.AudioUrlMale
-                })
-                .ToList();
+                    return new List<PageTtsResponseDto>();
+                }
+
+                var entitiesToCache = extracted
+                    .Where(s => !string.IsNullOrWhiteSpace(s.TextContent))
+                    .Select(s => new BookTtsSegment
+                    {
+                        EditionId = editionId,
+                        PageNumber = s.PageNumber,
+                        SegmentIndex = s.SegmentIndex,
+                        TextContent = s.TextContent,
+                        AudioUrlFemale = string.Empty,
+                        AudioUrlMale = string.Empty,
+                        CreatedAt = DateTime.UtcNow
+                    })
+                    .ToList();
+
+                if (entitiesToCache.Any())
+                {
+                    await _segmentRepo.AddRangeAsync(entitiesToCache, ct);
+                    await _segmentRepo.SaveChangesAsync(ct);
+                }
+
+                return entitiesToCache
+                    .Where(s => s.PageNumber == pageNumber)
+                    .OrderBy(s => s.SegmentIndex)
+                    .Select(s => new PageTtsResponseDto
+                    {
+                        Id = s.Id,
+                        PageNumber = s.PageNumber,
+                        SegmentIndex = s.SegmentIndex,
+                        TextContent = s.TextContent,
+                        AudioUrlFemale = string.Empty,
+                        AudioUrlMale = string.Empty
+                    })
+                    .ToList();
+            }
+            catch
+            {
+                return new List<PageTtsResponseDto>();
+            }
         }
     }
 }

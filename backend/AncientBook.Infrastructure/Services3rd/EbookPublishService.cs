@@ -21,6 +21,7 @@ namespace AncientBook.Infrastructure.Services
         private readonly IBookEmbeddingRepository _embeddingRepository;
         private readonly IFileStorageService _fileStorageService;
         private readonly IDocumentExtractor _documentExtractor;
+        private readonly ITtsDocumentExtractorService _ttsDocumentExtractor;
         private readonly ITextChunker _textChunker;
         private readonly IGeminiEmbeddingService _geminiService;
         private readonly ApplicationDbContext _context;
@@ -30,6 +31,7 @@ namespace AncientBook.Infrastructure.Services
             IBookEmbeddingRepository embeddingRepository,
             IFileStorageService fileStorageService,
             IDocumentExtractor documentExtractor,
+            ITtsDocumentExtractorService ttsDocumentExtractor,
             ITextChunker textChunker,
             IGeminiEmbeddingService geminiService,
             ApplicationDbContext context)
@@ -38,6 +40,7 @@ namespace AncientBook.Infrastructure.Services
             _embeddingRepository = embeddingRepository;
             _fileStorageService = fileStorageService;
             _documentExtractor = documentExtractor;
+            _ttsDocumentExtractor = ttsDocumentExtractor;
             _textChunker = textChunker;
             _geminiService = geminiService;
             _context = context;
@@ -61,23 +64,42 @@ namespace AncientBook.Infrastructure.Services
             try
             {
                 // =========================================================================
-                // GIAI ĐOẠN 1: BÓC TÁCH VĂN BẢN VÀ SINH VECTOR RAG (NẾU CẦN)
+                // GIAI ĐOẠN 1: BÓC TÁCH VĂN BẢN, LƯU TEXT THEO TRANG & SINH VECTOR RAG
                 // =========================================================================
                 var embeddingsToInsert = new List<BookEmbedding>();
+                var pageTextSegmentsToInsert = new List<BookTtsSegment>();
 
                 if (selectedPresetType != EbookPresetType.ScannedBook)
                 {
-                    // Preset 1 (EpubStandard) & Preset 2 (PdfStandard): Bóc tách text và nạp vector AI
                     using var fileStream = await _fileStorageService.GetFileStreamAsync(edition.DropboxPath, ct);
-                    var rawPages = await _documentExtractor.ExtractRawPagesAsync(fileStream, edition.Format, ct);
 
+                    // 1a. Bóc tách từng đoạn văn bản theo trang để lưu sẵn vào DB cho E-Reader hiển thị
+                    var extractedSegments = _ttsDocumentExtractor.ExtractSegments(fileStream, selectedPresetType);
+                    foreach (var seg in extractedSegments)
+                    {
+                        if (string.IsNullOrWhiteSpace(seg.TextContent)) continue;
+
+                        pageTextSegmentsToInsert.Add(new BookTtsSegment
+                        {
+                            EditionId = edition.Id,
+                            PageNumber = seg.PageNumber,
+                            SegmentIndex = seg.SegmentIndex,
+                            TextContent = seg.TextContent,
+                            AudioUrlFemale = string.Empty,
+                            AudioUrlMale = string.Empty,
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+
+                    // 1b. Bóc tách & chia chunk để sinh Vector RAG cho Copilot
+                    if (fileStream.CanSeek) fileStream.Position = 0;
+                    var rawPages = await _documentExtractor.ExtractRawPagesAsync(fileStream, edition.Format, ct);
                     var chunks = _textChunker.ChunkText(rawPages);
 
                     foreach (var chunk in chunks)
                     {
                         var vector = await _geminiService.GetEmbeddingAsync(chunk.Text, ct);
 
-                        // Gán tường minh cả EmbeddingJson để lưu trực tiếp vào SQL Server
                         embeddingsToInsert.Add(new BookEmbedding
                         {
                             EditionId = edition.Id,
@@ -88,7 +110,6 @@ namespace AncientBook.Infrastructure.Services
                             Vector = vector
                         });
 
-                        // Nghỉ ngắn giữa các request để tránh rate-limit API của Google
                         await Task.Delay(80, ct);
                     }
                 }
@@ -96,8 +117,6 @@ namespace AncientBook.Infrastructure.Services
                 // =========================================================================
                 // GIAI ĐOẠN 2: CLEAN REPLACE (XÓA TOÀN BỘ FILE & DỮ LIỆU CŨ CỦA ĐẦU SÁCH NÀY)
                 // =========================================================================
-
-                // 1. Tìm tất cả các edition cũ của cùng BookId (khác editionId đang publish)
                 var oldEditions = await _context.EbookEditions
                     .Where(e => e.BookId == bookId && e.Id != editionId)
                     .ToListAsync(ct);
@@ -106,42 +125,56 @@ namespace AncientBook.Infrastructure.Services
                 {
                     var oldEditionIds = oldEditions.Select(e => e.Id).ToList();
 
-                    // a. Xóa toàn bộ embeddings cũ trong bảng BookEmbeddings
                     var oldEmbeddings = await _context.BookEmbeddings
                         .Where(b => oldEditionIds.Contains(b.EditionId))
                         .ToListAsync(ct);
-
                     if (oldEmbeddings.Any())
-                    {
                         _context.BookEmbeddings.RemoveRange(oldEmbeddings);
-                    }
 
-                    // b. Xóa các file vật lý cũ trên Dropbox
+                    var oldSegments = await _context.BookTtsSegments
+                        .Where(s => oldEditionIds.Contains(s.EditionId))
+                        .ToListAsync(ct);
+                    if (oldSegments.Any())
+                        _context.BookTtsSegments.RemoveRange(oldSegments);
+
+                    var oldHistories = await _context.CopilotChatHistories
+                        .Where(h => oldEditionIds.Contains(h.EditionId))
+                        .ToListAsync(ct);
+                    if (oldHistories.Any())
+                        _context.CopilotChatHistories.RemoveRange(oldHistories);
+
                     foreach (var oldEdition in oldEditions)
                     {
                         if (!string.IsNullOrWhiteSpace(oldEdition.DropboxPath))
                         {
-                            await _fileStorageService.DeleteFileAsync(oldEdition.DropboxPath);
+                            try { await _fileStorageService.DeleteFileAsync(oldEdition.DropboxPath); } catch { }
                         }
+                        try { await _fileStorageService.DeleteFileAsync($"tts-audio/{oldEdition.Id}"); } catch { }
                     }
 
-                    // c. Xóa các bản ghi cũ trong bảng EbookEditions
                     _context.EbookEditions.RemoveRange(oldEditions);
                 }
 
-                // 2. Dọn sạch embeddings cũ của chính bản ghi này nếu từng được chạy thử trước đó
                 var selfOldEmbeddings = await _context.BookEmbeddings
                     .Where(b => b.EditionId == editionId)
                     .ToListAsync(ct);
-
                 if (selfOldEmbeddings.Any())
-                {
                     _context.BookEmbeddings.RemoveRange(selfOldEmbeddings);
+
+                var selfOldSegments = await _context.BookTtsSegments
+                    .Where(s => s.EditionId == editionId)
+                    .ToListAsync(ct);
+                if (selfOldSegments.Any())
+                    _context.BookTtsSegments.RemoveRange(selfOldSegments);
+
+                // =========================================================================
+                // GIAI ĐOẠN 3: LƯU TEXT SEGMENTS, EMBEDDINGS MỚI & CẬP NHẬT TRẠNG THÁI SÁCH
+                // =========================================================================
+                if (pageTextSegmentsToInsert.Any())
+                {
+                    await _context.BookTtsSegments.AddRangeAsync(pageTextSegmentsToInsert, ct);
                 }
 
-                // =========================================================================
-                // GIAI ĐOẠN 3: LƯU EMBEDDINGS MỚI & CẬP NHẬT TRẠNG THÁI SÁCH
-                // =========================================================================
                 if (embeddingsToInsert.Any())
                 {
                     await _context.BookEmbeddings.AddRangeAsync(embeddingsToInsert, ct);

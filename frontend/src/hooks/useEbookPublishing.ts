@@ -475,6 +475,74 @@ export const useEbookPublishing = (onChanged?: () => void) => {
         }
     }, [draft.editionId]);
 
+    const generateFileFromChapters = useCallback(
+        async (payload: {
+            fileTitle: string;
+            format: 'Epub' | 'Pdf';
+            chapters: { title: string; content: string }[];
+        }) => {
+            if (!book) return false;
+            if (!payload.fileTitle.trim()) {
+                setError('Vui lòng nhập tên tệp E-Book.');
+                return false;
+            }
+            const validChapters = payload.chapters.filter(
+                c => c.title.trim() && c.content.trim()
+            );
+            if (validChapters.length === 0) {
+                setError('Vui lòng nhập tiêu đề và nội dung cho ít nhất 1 chương.');
+                return false;
+            }
+
+            setError('');
+            setNotice('');
+            setIsUploading(true);
+            setProgressStage('Đang khởi tạo tệp E-Book và đồng bộ lên đám mây Dropbox...');
+
+            try {
+                const res = await ebookPublishingService.generateEditionFile({
+                    bookId: book.id,
+                    fileTitle: payload.fileTitle.trim(),
+                    format: payload.format,
+                    author: book.author,
+                    chapters: validChapters,
+                });
+
+                const format: EbookFormatType =
+                    res.format.toLowerCase() === 'epub' ? 'Epub' : 'Pdf';
+                const suggestedPreset: EbookPresetEnum = format === 'Epub' ? 1 : 2;
+
+                setDraft(current => ({
+                    ...current,
+                    editionId: res.editionId,
+                    file: null,
+                    fileTitle: res.fileTitle,
+                    format,
+                    fileSizeBytes: res.fileSizeBytes,
+                    totalPages: res.totalPages,
+                    presetType: suggestedPreset,
+                    chatAiEnabled: true,
+                    ttsEnabled: suggestedPreset === 1,
+                    status: 'Draft',
+                    savedAt: new Date().toISOString(),
+                }));
+
+                setNotice(
+                    `Đã tạo tệp "${res.fileTitle}" (${res.totalPages} chương) và lưu bản nháp thành công.`
+                );
+                onChanged?.();
+                return true;
+            } catch (err: any) {
+                setError(err.message || 'Không thể tạo tệp E-Book.');
+                return false;
+            } finally {
+                setIsUploading(false);
+                setProgressStage('');
+            }
+        },
+        [book, onChanged]
+    );
+
     return {
         book,
         draft,
@@ -499,6 +567,7 @@ export const useEbookPublishing = (onChanged?: () => void) => {
         saveDraft,
         publish,
         generateAudio,
+        generateFileFromChapters,
         // TTS audio preview
         previewSegments,
         previewPage,

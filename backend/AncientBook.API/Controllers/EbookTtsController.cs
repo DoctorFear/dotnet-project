@@ -43,7 +43,7 @@ namespace AncientBook.API.Controllers
         /// Nhân viên kích hoạt tiến trình tạo giọng đọc AI (Hỗ trợ sinh theo khoảng trang để chống timeout)
         /// </summary>
         [HttpPost("generate")]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff,Admin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

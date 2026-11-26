@@ -117,4 +117,28 @@ public class EbookEditionDetailDto
     public DateTime? UpdatedAt { get; set; }
 }
 
+public class EbookChapterInputDto
+{
+    [Required(ErrorMessage = "Tiêu đề chương không được để trống.")]
+    public string Title { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Nội dung chương không được để trống.")]
+    public string Content { get; set; } = string.Empty;
+}
+
+public class GenerateEbookFileRequest
+{
+    [Required(ErrorMessage = "Mã sách không được để trống.")]
+    public int BookId { get; set; }
+
+    [Required(ErrorMessage = "Tên tệp không được để trống.")]
+    public string FileTitle { get; set; } = string.Empty;
+
+    public string Format { get; set; } = "Epub";
+
+    public string? Author { get; set; }
+
+    [MinLength(1, ErrorMessage = "Cần ít nhất 1 chương nội dung.")]
+    public List<EbookChapterInputDto> Chapters { get; set; } = new();
+}
 

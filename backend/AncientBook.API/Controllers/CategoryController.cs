@@ -29,7 +29,7 @@ namespace AncientBook.API.Controllers
 
         // Lấy danh sách thể loại có phân trang và tìm kiếm.
         [HttpGet("paged")]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff,Admin")]
         public async Task<IActionResult> GetPaged([FromQuery] string? searchTerm, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var result = await _categoryService.GetPagedCategoriesAsync(searchTerm, pageNumber, pageSize);
@@ -47,7 +47,7 @@ namespace AncientBook.API.Controllers
 
         // Thêm thể loại mới.
         [HttpPost]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff,Admin")]
         public async Task<IActionResult> Create([FromBody] SaveCategoryDto dto)
         {
             try
@@ -64,7 +64,7 @@ namespace AncientBook.API.Controllers
 
         // Cập nhật thể loại.
         [HttpPut("{id}")]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff,Admin")]
         public async Task<IActionResult> Update(int id, [FromBody] SaveCategoryDto dto)
         {
             try
@@ -82,7 +82,7 @@ namespace AncientBook.API.Controllers
 
         // Xóa thể loại sau khi kiểm tra các liên kết.
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff,Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             try
