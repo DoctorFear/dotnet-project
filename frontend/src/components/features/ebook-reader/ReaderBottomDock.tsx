@@ -1,30 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
+import type { ReadingMode, ReaderTheme, FontFamily } from '../../../hooks/useEbookReader';
+import type { TtsPlayState, TtsVoiceOption } from '../../../services/frontendTtsService';
 import styles from '../../../pages/EbookReaderPage.module.css';
 
 interface Props {
     pageInput: string;
     totalPages: number;
-    isPlaying: boolean;
+    ttsState: TtsPlayState;
     speechRate: number;
-    voiceGender: 'female' | 'male';
+    availableVoices: TtsVoiceOption[];
+    selectedVoiceId: string;
+    readingMode: ReadingMode;
+    theme: ReaderTheme;
+    fontFamily: FontFamily;
+    fontSize: number;
     navbarHidden: boolean;
     copilotOpen: boolean;
-    ttsEnabled?: boolean;
-    chatEnabled?: boolean;
+    tocOpen: boolean;
     onPageInputChange: (val: string) => void;
     onPageJump: () => void;
     onPrevSpread: () => void;
     onNextSpread: () => void;
     onTogglePlayPause: () => void;
+    onStopTts: () => void;
+    onNextSentence: () => void;
+    onPrevSentence: () => void;
     onRateChange: (rate: number) => void;
-    onGenderChange: (gender: 'female' | 'male') => void;
+    onVoiceChange: (voiceId: string) => void;
+    onReadingModeChange: (mode: ReadingMode) => void;
+    onThemeChange: (theme: ReaderTheme) => void;
+    onFontFamilyChange: (font: FontFamily) => void;
     onZoomOut: () => void;
     onZoomIn: () => void;
     onToggleNavbar: () => void;
     onToggleCopilot: () => void;
+    onToggleToc: () => void;
+    onOpenAiSettings: () => void;
 }
 
 export const ReaderBottomDock: React.FC<Props> = (props) => {
+    const [settingsMenuOpen, setSettingsMenuOpen] = useState(false);
+
     const toggleFullscreen = () => {
         if (!document.fullscreenElement) void document.documentElement.requestFullscreen();
         else void document.exitFullscreen?.();
@@ -32,7 +48,23 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
 
     return (
         <div className={styles.bottomDock}>
-            <button type="button" className={styles.dockToolBtn} onClick={props.onPrevSpread} title="Trang trước">
+            {/* 1. Nút Mục lục */}
+            <button
+                type="button"
+                className={`${styles.dockToolBtn} ${props.tocOpen ? styles.activeTool : ''}`}
+                onClick={props.onToggleToc}
+                title="Mục lục sách (TOC)"
+            >
+                📑
+            </button>
+
+            {/* 2. Điều hướng trang */}
+            <button
+                type="button"
+                className={styles.dockToolBtn}
+                onClick={props.onPrevSpread}
+                title="Trang trước (←)"
+            >
                 ‹
             </button>
 
@@ -53,74 +85,228 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
                 </button>
             </div>
 
-            <button type="button" className={styles.dockToolBtn} onClick={props.onNextSpread} title="Trang sau">
+            <button
+                type="button"
+                className={styles.dockToolBtn}
+                onClick={props.onNextSpread}
+                title="Trang sau (→)"
+            >
                 ›
             </button>
 
-            {props.ttsEnabled !== false && (
-                <>
-                    <div className={styles.dockSep} />
+            <div className={styles.dockSep} />
 
-                    <div className={styles.audioDockGroup}>
-                        <button type="button" className={styles.playSpeechBtn} onClick={props.onTogglePlayPause} title="Phát/Tạm dừng giọng đọc số">
-                            {props.isPlaying ? '❚❚' : '▶'}
-                        </button>
-                        <select
-                            className={styles.dockSelect}
-                            value={props.speechRate}
-                            onChange={(e) => props.onRateChange(parseFloat(e.target.value))}
-                            title="Tốc độ đọc"
-                        >
-                            <option value={0.85}>0.85x</option>
-                            <option value={1.0}>1.0x</option>
-                            <option value={1.25}>1.25x</option>
-                            <option value={1.5}>1.5x</option>
-                        </select>
-                        <select
-                            className={styles.dockSelect}
-                            value={props.voiceGender}
-                            onChange={(e) => props.onGenderChange(e.target.value as 'female' | 'male')}
-                            title="Giọng đọc"
-                        >
-                            <option value="female">Nữ AI</option>
-                            <option value="male">Nam AI</option>
-                        </select>
-                    </div>
-                </>
-            )}
+            {/* 3. Thanh phát giọng đọc AI TTS */}
+            <div className={styles.audioDockGroup}>
+                <button
+                    type="button"
+                    className={styles.dockSubBtn}
+                    onClick={props.onPrevSentence}
+                    title="Câu trước"
+                >
+                    ⏮
+                </button>
+                <button
+                    type="button"
+                    className={`${styles.playSpeechBtn} ${props.ttsState === 'playing' ? styles.pulseGlow : ''}`}
+                    onClick={props.onTogglePlayPause}
+                    title={props.ttsState === 'playing' ? 'Tạm dừng đọc' : 'Phát giọng đọc AI (TTS)'}
+                >
+                    {props.ttsState === 'playing' ? '❚❚' : '▶'}
+                </button>
+                {props.ttsState !== 'idle' && (
+                    <button
+                        type="button"
+                        className={styles.dockSubBtn}
+                        onClick={props.onStopTts}
+                        title="Dừng đọc"
+                    >
+                        ⏹
+                    </button>
+                )}
+                <button
+                    type="button"
+                    className={styles.dockSubBtn}
+                    onClick={props.onNextSentence}
+                    title="Câu tiếp"
+                >
+                    ⏭
+                </button>
+
+                {/* Chọn tốc độ đọc */}
+                <select
+                    className={styles.dockSelect}
+                    value={props.speechRate}
+                    onChange={(e) => props.onRateChange(parseFloat(e.target.value))}
+                    title="Tốc độ giọng đọc"
+                >
+                    <option value={0.75}>0.75x</option>
+                    <option value={1.0}>1.0x</option>
+                    <option value={1.25}>1.25x</option>
+                    <option value={1.5}>1.5x</option>
+                    <option value={2.0}>2.0x</option>
+                </select>
+
+                {/* Chọn giọng đọc */}
+                {props.availableVoices.length > 0 && (
+                    <select
+                        className={`${styles.dockSelect} ${styles.voiceSelect}`}
+                        value={props.selectedVoiceId}
+                        onChange={(e) => props.onVoiceChange(e.target.value)}
+                        title="Giọng đọc AI (Tiếng Việt / Quốc tế)"
+                    >
+                        {props.availableVoices.map((v) => (
+                            <option key={v.id} value={v.id}>
+                                {v.isVietnamese ? '🇻🇳 ' : '🌐 '}
+                                {v.name.slice(0, 18)}
+                            </option>
+                        ))}
+                    </select>
+                )}
+            </div>
 
             <div className={styles.dockSep} />
 
-            <button type="button" className={styles.dockToolBtn} onClick={props.onZoomOut} title="Thu nhỏ">
-                −
-            </button>
-            <button type="button" className={styles.dockToolBtn} onClick={props.onZoomIn} title="Phóng to">
-                +
-            </button>
+            {/* 4. Chế độ xem trang (Spread, Single, Scroll, PDF Native) */}
+            <div className={styles.modeToggleGroup}>
+                <button
+                    type="button"
+                    className={`${styles.modeBtn} ${props.readingMode === 'spread' ? styles.activeMode : ''}`}
+                    onClick={() => props.onReadingModeChange('spread')}
+                    title="Sách mở đôi (Spread)"
+                >
+                    📖 Đôi
+                </button>
+                <button
+                    type="button"
+                    className={`${styles.modeBtn} ${props.readingMode === 'single' ? styles.activeMode : ''}`}
+                    onClick={() => props.onReadingModeChange('single')}
+                    title="Trang đơn (Single)"
+                >
+                    📄 Đơn
+                </button>
+                <button
+                    type="button"
+                    className={`${styles.modeBtn} ${props.readingMode === 'scroll' ? styles.activeMode : ''}`}
+                    onClick={() => props.onReadingModeChange('scroll')}
+                    title="Cuộn dọc liên tục (Scroll)"
+                >
+                    📜 Cuộn
+                </button>
+                <button
+                    type="button"
+                    className={`${styles.modeBtn} ${props.readingMode === 'pdf-native' ? styles.activeMode : ''}`}
+                    onClick={() => props.onReadingModeChange('pdf-native')}
+                    title="Xem PDF gốc"
+                >
+                    📑 PDF
+                </button>
+            </div>
+
+            <div className={styles.dockSep} />
+
+            {/* 5. Menu Tùy chỉnh Giao diện: Theme, Font, Phóng to */}
+            <div className={styles.popoverAnchor}>
+                <button
+                    type="button"
+                    className={`${styles.dockToolBtn} ${settingsMenuOpen ? styles.activeTool : ''}`}
+                    onClick={() => setSettingsMenuOpen((o) => !o)}
+                    title="Tùy chỉnh font chữ & màu nền"
+                >
+                    🎨
+                </button>
+
+                {settingsMenuOpen && (
+                    <div className={styles.dockSettingsMenu}>
+                        <div className={styles.menuRow}>
+                            <span className={styles.menuLabel}>Màu nền:</span>
+                            <div className={styles.themeOptions}>
+                                <button
+                                    type="button"
+                                    className={`${styles.themeDot} ${styles.dotLight} ${props.theme === 'light' ? styles.activeDot : ''}`}
+                                    onClick={() => props.onThemeChange('light')}
+                                    title="Sáng hiện đại"
+                                />
+                                <button
+                                    type="button"
+                                    className={`${styles.themeDot} ${styles.dotSepia} ${props.theme === 'sepia' ? styles.activeDot : ''}`}
+                                    onClick={() => props.onThemeChange('sepia')}
+                                    title="Giấy cổ trang (Sepia)"
+                                />
+                                <button
+                                    type="button"
+                                    className={`${styles.themeDot} ${styles.dotCream} ${props.theme === 'cream' ? styles.activeDot : ''}`}
+                                    onClick={() => props.onThemeChange('cream')}
+                                    title="Vàng ngà dịu mắt"
+                                />
+                                <button
+                                    type="button"
+                                    className={`${styles.themeDot} ${styles.dotDark} ${props.theme === 'dark' ? styles.activeDot : ''}`}
+                                    onClick={() => props.onThemeChange('dark')}
+                                    title="Đêm tối huyền bí"
+                                />
+                            </div>
+                        </div>
+
+                        <div className={styles.menuRow}>
+                            <span className={styles.menuLabel}>Kiểu chữ:</span>
+                            <div className={styles.fontOptions}>
+                                <button
+                                    type="button"
+                                    className={`${styles.fontOptionBtn} ${props.fontFamily === 'serif' ? styles.activeFontOpt : ''}`}
+                                    onClick={() => props.onFontFamilyChange('serif')}
+                                >
+                                    Có chân (Serif)
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`${styles.fontOptionBtn} ${props.fontFamily === 'sans' ? styles.activeFontOpt : ''}`}
+                                    onClick={() => props.onFontFamilyChange('sans')}
+                                >
+                                    Không chân (Sans)
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className={styles.menuRow}>
+                            <span className={styles.menuLabel}>Cỡ chữ: {props.fontSize}px</span>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                                <button type="button" className={styles.fontOptionBtn} onClick={props.onZoomOut}>
+                                    A−
+                                </button>
+                                <button type="button" className={styles.fontOptionBtn} onClick={props.onZoomIn}>
+                                    A+
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
             <button type="button" className={styles.dockToolBtn} onClick={toggleFullscreen} title="Toàn màn hình">
                 ⛶
             </button>
 
-            <div className={styles.dockSep} />
-
             <button
                 type="button"
-                className={`${styles.dockToolBtn} ${props.navbarHidden ? styles.activeTool : ''}`}
-                onClick={props.onToggleNavbar}
-                title="Ẩn/Hiện thanh điều hướng"
+                className={styles.dockToolBtn}
+                onClick={props.onOpenAiSettings}
+                title="Cấu hình Local LLM (Ollama) & Gemini"
             >
-                ☰
+                ⚙️
             </button>
-            {props.chatEnabled !== false && (
-                <button
-                    type="button"
-                    className={`${styles.dockToolBtn} ${props.copilotOpen ? styles.activeTool : ''}`}
-                    onClick={props.onToggleCopilot}
-                    title="Bật/Tắt AI Copilot"
-                >
-                    AI
-                </button>
-            )}
+
+            <div className={styles.dockSep} />
+
+            {/* 6. Nút AI Copilot */}
+            <button
+                type="button"
+                className={`${styles.aiCopilotToggleBtn} ${props.copilotOpen ? styles.activeAiBtn : ''}`}
+                onClick={props.onToggleCopilot}
+                title="Mở trợ lý đọc sách AI (Copilot)"
+            >
+                ✨ Hỏi AI
+            </button>
         </div>
     );
 };
