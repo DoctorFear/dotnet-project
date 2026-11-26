@@ -193,7 +193,54 @@ namespace AncientBook.Infrastructure.Services
                 await Task.Delay(500, ct);
             }
 
-            throw new HttpRequestException($"Tất cả mô hình AI hiện đang quá tải hoặc không phản hồi: {lastError}");
+            // 3. FALLBACK: Thử Local LLM (Ollama hoặc LM Studio) nếu tất cả mô hình Gemini đều bận/hết hạn ngạch
+            try
+            {
+                var localLlmUrl = "http://localhost:11434/api/generate";
+                var localPayload = new
+                {
+                    model = "llama3.2",
+                    prompt = promptBuilder.ToString(),
+                    stream = false
+                };
+
+                using var localContent = new StringContent(
+                    JsonSerializer.Serialize(localPayload),
+                    Encoding.UTF8,
+                    "application/json"
+                );
+
+                using var localCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                localCts.CancelAfter(TimeSpan.FromSeconds(25));
+
+                var localResp = await _httpClient.PostAsync(localLlmUrl, localContent, localCts.Token);
+                if (localResp.IsSuccessStatusCode)
+                {
+                    var localStr = await localResp.Content.ReadAsStringAsync(localCts.Token);
+                    using var localDoc = JsonDocument.Parse(localStr);
+                    if (localDoc.RootElement.TryGetProperty("response", out var respProp))
+                    {
+                        var ans = respProp.GetString();
+                        if (!string.IsNullOrWhiteSpace(ans))
+                        {
+                            return $"{ans}\n\n*(⚡ Trả lời tự động qua Local LLM Fallback (Ollama))*";
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Local LLM không khả dụng
+            }
+
+            // 4. FALLBACK CUỐI CÙNG: Tổng hợp văn học dựa trên trích dẫn sách
+            if (citations != null && citations.Count > 0)
+            {
+                var summary = string.Join("\n", citations.Take(2));
+                return $"Dựa trên ngữ cảnh tác phẩm tại trang {currentPage ?? 1}:\n{summary}\n\n*(Ghi chú: Gemini và Local LLM hiện chưa phản hồi nên hệ thống trích xuất trực tiếp đoạn liên quan từ sách)*";
+            }
+
+            return $"Đã ghi nhận câu hỏi: \"{question}\" trên trang {currentPage ?? 1}. Hệ thống AI đang bận, vui lòng thử lại sau giây lát hoặc sử dụng Local LLM.";
         }
     }
 }
