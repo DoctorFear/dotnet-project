@@ -207,6 +207,7 @@ export const useEbookReader = (
                 if (active) {
                     loadSample(SAMPLE_BOOKS[0]);
                 }
+                console.log(err);
             });
 
         return () => {

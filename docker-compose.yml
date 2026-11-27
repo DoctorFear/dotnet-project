@@ -1,0 +1,129 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ancientbook-sqlserver
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-ChangeMeInEnv123!}
+      MSSQL_PID: ${MSSQL_PID:-Developer}
+    ports:
+      - "${MSSQL_PORT:-1433}:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ancientbook-ollama
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    # Optional: uncomment below if running on an NVIDIA GPU host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  ollama-model-init:
+    image: ollama/ollama:latest
+    container_name: ancientbook-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - LLM_BACKUP_MODEL=${LLM_BACKUP_MODEL:-qwen2.5:3b}
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "ollama pull $${LLM_BACKUP_MODEL} && echo 'Model $${LLM_BACKUP_MODEL} is ready.'"
+    restart: "no"
+
+  tts-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.tts
+    container_name: ancientbook-tts
+    restart: unless-stopped
+    # Override 127.0.0.1 in tts_server.py so Docker networking can reach port 5050
+    command: ["uvicorn", "tts_server:app", "--host", "0.0.0.0", "--port", "5050"]
+    ports:
+      - "${TTS_PORT:-5050}:5050"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:5050/openapi.json').read()\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ancientbook-backend
+    restart: unless-stopped
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+      tts-backend:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=${MSSQL_DB:-AncientBookDb};User Id=sa;Password=${MSSQL_SA_PASSWORD:-ChangeMeInEnv123!};TrustServerCertificate=True;MultipleActiveResultSets=true;"
+      JwtSettings__Secret: ${JWT_SECRET:-SuperSecretKeyWithAtLeast32BytesLengthHereForAncientBookProject!}
+      JwtSettings__Issuer: ${JWT_ISSUER:-AncientBookApi}
+      JwtSettings__Audience: ${JWT_AUDIENCE:-AncientBookClient}
+      Gemini__ApiKey: ${GEMINI_API_KEY:-}
+      LocalLlm__Enabled: "true"
+      LocalLlm__Provider: "Ollama"
+      LocalLlm__BaseUrl: "http://ollama:11434"
+      LocalLlm__Model: "${LLM_BACKUP_MODEL:-qwen2.5:3b}"
+      LocalLlm__TimeoutSeconds: "35"
+      Tts__PreferLocal: "true"
+      Tts__LocalProxyUrl: "http://tts-backend:5050/synthesize"
+      Dropbox__AppKey: ${DROPBOX_APP_KEY:-}
+      Dropbox__AppSecret: ${DROPBOX_APP_SECRET:-}
+      Dropbox__RefreshToken: ${DROPBOX_REFRESH_TOKEN:-}
+      Dropbox__FolderPath: ${DROPBOX_FOLDER_PATH:-/AncientBook}
+      Cors__AllowedOrigins__0: "${CUSTOMER_URL:-http://localhost:5173}"
+      Cors__AllowedOrigins__1: "${ADMIN_URL:-http://localhost:5174}"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080/api}
+        VITE_APP_MODE: ${VITE_APP_MODE:-all}
+    container_name: ancientbook-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+
+volumes:
+  sqldata:
+  ollama_data:
