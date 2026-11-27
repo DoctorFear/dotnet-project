@@ -1,5 +1,6 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, Download } from 'lucide-react';
 import TopBar from '../components/layout/TopBar';
 import Header from '../components/layout/Header';
 import Navbar from '../components/layout/Navbar';
@@ -16,7 +17,6 @@ export const EbookReaderPage: React.FC = () => {
     const { bookId } = useParams<{ bookId: string }>();
     const location = useLocation();
     const navigate = useNavigate();
-    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const reader = useEbookReader(bookId, location.state?.book);
 
@@ -25,27 +25,10 @@ export const EbookReaderPage: React.FC = () => {
         if (!Number.isNaN(parsed)) reader.goToPage(parsed);
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            void reader.loadUploadedFile(file);
-            // Reset input value để chọn lại cùng file nếu muốn
-            e.target.value = '';
-        }
-    };
-
     const readProgressPercent = Math.round((reader.leftPage / reader.totalPages) * 100);
 
     return (
         <div className={styles.readerShell}>
-            {/* Input tệp ẩn */}
-            <input
-                ref={fileInputRef}
-                type="file"
-                accept=".epub,.pdf,.txt,application/pdf,application/epub+zip"
-                style={{ display: 'none' }}
-                onChange={handleFileChange}
-            />
 
             {!reader.navbarHidden && (
                 <>
@@ -64,7 +47,8 @@ export const EbookReaderPage: React.FC = () => {
                         onClick={() => navigate('/my-library')}
                         title="Quay lại tủ sách cá nhân"
                     >
-                        ← Tủ sách
+                        <ArrowLeft size={14} style={{ display: 'inline-block', marginRight: 5, verticalAlign: 'middle' }} />
+                        <span>Tủ sách</span>
                     </button>
 
                     <div className={styles.bookMetaBox}>
@@ -98,7 +82,7 @@ export const EbookReaderPage: React.FC = () => {
                         title="Đổi nhanh sách mẫu kinh điển"
                     >
                         <option value="" disabled>
-                            📚 Chọn sách mẫu kinh điển...
+                            Chọn sách mẫu kinh điển...
                         </option>
                         {SAMPLE_BOOKS.map((b) => (
                             <option key={b.id} value={b.id}>
@@ -107,14 +91,15 @@ export const EbookReaderPage: React.FC = () => {
                         ))}
                     </select>
 
-                    {/* Mở tệp từ máy tính */}
+                    {/* Tải PDF về máy */}
                     <button
                         type="button"
-                        className={styles.openFileBtn}
-                        onClick={() => fileInputRef.current?.click()}
-                        title="Mở tệp PDF, EPUB hoặc TXT từ máy tính"
+                        className={styles.downloadPdfBtn}
+                        onClick={() => void reader.downloadPdf()}
+                        title="Tải tệp PDF của cuốn sách này về máy tính"
                     >
-                        📂 Mở tệp (PDF/EPUB)
+                        <Download size={14} />
+                        <span>Tải PDF về máy</span>
                     </button>
                 </div>
             </div>

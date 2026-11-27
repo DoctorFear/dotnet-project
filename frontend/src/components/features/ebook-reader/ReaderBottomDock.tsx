@@ -1,4 +1,21 @@
 import React, { useState } from 'react';
+import {
+    BookOpen,
+    ChevronLeft,
+    ChevronRight,
+    SkipBack,
+    Play,
+    Pause,
+    Square,
+    SkipForward,
+    FileText,
+    Scroll,
+    FileCode,
+    Palette,
+    Maximize2,
+    Settings,
+    Sparkles,
+} from 'lucide-react';
 import type { ReadingMode, ReaderTheme, FontFamily } from '../../../hooks/useEbookReader';
 import type { TtsPlayState, TtsVoiceOption } from '../../../services/frontendTtsService';
 import styles from '../../../pages/EbookReaderPage.module.css';
@@ -55,7 +72,7 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
                 onClick={props.onToggleToc}
                 title="Mục lục sách (TOC)"
             >
-                📑
+                <BookOpen size={16} />
             </button>
 
             {/* 2. Điều hướng trang */}
@@ -65,7 +82,7 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
                 onClick={props.onPrevSpread}
                 title="Trang trước (←)"
             >
-                ‹
+                <ChevronLeft size={16} />
             </button>
 
             <div className={styles.pageJumpBox}>
@@ -91,7 +108,7 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
                 onClick={props.onNextSpread}
                 title="Trang sau (→)"
             >
-                ›
+                <ChevronRight size={16} />
             </button>
 
             <div className={styles.dockSep} />
@@ -104,7 +121,7 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
                     onClick={props.onPrevSentence}
                     title="Câu trước"
                 >
-                    ⏮
+                    <SkipBack size={15} />
                 </button>
                 <button
                     type="button"
@@ -112,7 +129,7 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
                     onClick={props.onTogglePlayPause}
                     title={props.ttsState === 'playing' ? 'Tạm dừng đọc' : 'Phát giọng đọc AI (TTS)'}
                 >
-                    {props.ttsState === 'playing' ? '❚❚' : '▶'}
+                    {props.ttsState === 'playing' ? <Pause size={15} /> : <Play size={15} fill="currentColor" />}
                 </button>
                 {props.ttsState !== 'idle' && (
                     <button
@@ -121,7 +138,7 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
                         onClick={props.onStopTts}
                         title="Dừng đọc"
                     >
-                        ⏹
+                        <Square size={13} fill="currentColor" />
                     </button>
                 )}
                 <button
@@ -130,7 +147,7 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
                     onClick={props.onNextSentence}
                     title="Câu tiếp"
                 >
-                    ⏭
+                    <SkipForward size={15} />
                 </button>
 
                 {/* Chọn tốc độ đọc */}
@@ -157,8 +174,7 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
                     >
                         {props.availableVoices.map((v) => (
                             <option key={v.id} value={v.id}>
-                                {v.isVietnamese ? '🇻🇳 ' : '🌐 '}
-                                {v.name.slice(0, 18)}
+                                {v.isPreset ? v.name : `${v.isVietnamese ? '[VN] ' : '[EN] '}${v.name.slice(0, 24)}`}
                             </option>
                         ))}
                     </select>
@@ -175,7 +191,8 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
                     onClick={() => props.onReadingModeChange('spread')}
                     title="Sách mở đôi (Spread)"
                 >
-                    📖 Đôi
+                    <BookOpen size={13} style={{ display: 'inline-block', marginRight: 4, verticalAlign: 'middle' }} />
+                    <span>Đôi</span>
                 </button>
                 <button
                     type="button"
@@ -183,7 +200,8 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
                     onClick={() => props.onReadingModeChange('single')}
                     title="Trang đơn (Single)"
                 >
-                    📄 Đơn
+                    <FileText size={13} style={{ display: 'inline-block', marginRight: 4, verticalAlign: 'middle' }} />
+                    <span>Đơn</span>
                 </button>
                 <button
                     type="button"
@@ -191,7 +209,8 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
                     onClick={() => props.onReadingModeChange('scroll')}
                     title="Cuộn dọc liên tục (Scroll)"
                 >
-                    📜 Cuộn
+                    <Scroll size={13} style={{ display: 'inline-block', marginRight: 4, verticalAlign: 'middle' }} />
+                    <span>Cuộn</span>
                 </button>
                 <button
                     type="button"
@@ -199,7 +218,8 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
                     onClick={() => props.onReadingModeChange('pdf-native')}
                     title="Xem PDF gốc"
                 >
-                    📑 PDF
+                    <FileCode size={13} style={{ display: 'inline-block', marginRight: 4, verticalAlign: 'middle' }} />
+                    <span>PDF</span>
                 </button>
             </div>
 
@@ -213,7 +233,7 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
                     onClick={() => setSettingsMenuOpen((o) => !o)}
                     title="Tùy chỉnh font chữ & màu nền"
                 >
-                    🎨
+                    <Palette size={16} />
                 </button>
 
                 {settingsMenuOpen && (
@@ -284,7 +304,7 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
             </div>
 
             <button type="button" className={styles.dockToolBtn} onClick={toggleFullscreen} title="Toàn màn hình">
-                ⛶
+                <Maximize2 size={16} />
             </button>
 
             <button
@@ -293,7 +313,7 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
                 onClick={props.onOpenAiSettings}
                 title="Cấu hình Local LLM (Ollama) & Gemini"
             >
-                ⚙️
+                <Settings size={16} />
             </button>
 
             <div className={styles.dockSep} />
@@ -305,7 +325,8 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
                 onClick={props.onToggleCopilot}
                 title="Mở trợ lý đọc sách AI (Copilot)"
             >
-                ✨ Hỏi AI
+                <Sparkles size={14} style={{ display: 'inline-block', marginRight: 4, verticalAlign: 'middle' }} />
+                <span>Hỏi AI</span>
             </button>
         </div>
     );

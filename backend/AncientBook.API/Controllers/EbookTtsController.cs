@@ -64,9 +64,9 @@ namespace AncientBook.API.Controllers
             {
                 return NotFound(new { message = "Không tìm thấy ấn bản E-Book." });
             }
-            if (edition.PresetType != EbookPresetType.EpubStandard)
+            if (edition.PresetType == EbookPresetType.ScannedBook)
             {
-                return BadRequest(new { message = "Chỉ có ấn bản Nhóm 1 (Văn học - EPUB) mới áp dụng tính năng tạo giọng đọc số TTS." });
+                return BadRequest(new { message = "Ấn bản tài liệu dạng ảnh Scan không áp dụng tính năng tạo giọng đọc số TTS." });
             }
 
             try
@@ -115,8 +115,8 @@ namespace AncientBook.API.Controllers
 
             var segments = await _ttsService.GetPageSegmentsAsync(editionId, pageNumber, ct);
 
-            // Nếu phân loại là Học thuật (PdfStandard) hoặc Thị giác (ScannedBook), TUYỆT ĐỐI KHÔNG cấp Audio URL cho người đọc
-            if (edition.PresetType != EbookPresetType.EpubStandard)
+            // Nếu phân loại là Thị giác (ScannedBook), không cấp Audio URL cho người đọc
+            if (edition.PresetType == EbookPresetType.ScannedBook)
             {
                 var textOnlySegments = segments.Select(s => new PageTtsResponseDto
                 {

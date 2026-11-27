@@ -1,4 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
+import {
+    Sparkles,
+    Server,
+    Cpu,
+    Zap,
+    Cloud,
+    Settings,
+    Trash2,
+    X,
+    FileText,
+    Search,
+    Lightbulb,
+    HelpCircle,
+    Send,
+    Loader2,
+} from 'lucide-react';
 import type { ReaderChatMessage } from '../../../hooks/useEbookReader';
 import type { AiSettings } from '../../../services/aiCopilotService';
 import styles from '../../../pages/EbookReaderPage.module.css';
@@ -42,21 +58,24 @@ export const ReaderCopilotSidebar: React.FC<Props> = ({
         if (provider === 'local-llm') {
             return (
                 <span className={styles.badgeLocalLlm} title="Phản hồi từ Local LLM (Ollama/LM Studio)">
-                    🏠 Local LLM ({modelName || 'Ollama'})
+                    <Server size={11} style={{ display: 'inline-block', marginRight: 4, verticalAlign: 'middle' }} />
+                    Local LLM ({modelName || 'Ollama'})
                 </span>
             );
         }
         if (provider === 'gemini') {
             return (
                 <span className={styles.badgeGemini} title="Phản hồi từ Google Gemini">
-                    ⚡ Gemini AI
+                    <Sparkles size={11} style={{ display: 'inline-block', marginRight: 4, verticalAlign: 'middle' }} />
+                    Gemini AI
                 </span>
             );
         }
         if (provider === 'offline-rules') {
             return (
                 <span className={styles.badgeOffline} title="Trợ lý phân tích văn bản ngoại tuyến">
-                    💡 Trợ lý Cục bộ
+                    <Cpu size={11} style={{ display: 'inline-block', marginRight: 4, verticalAlign: 'middle' }} />
+                    Trợ lý Cục bộ
                 </span>
             );
         }
@@ -69,11 +88,22 @@ export const ReaderCopilotSidebar: React.FC<Props> = ({
                 <div className={styles.copilotHeaderLeft}>
                     <div className={styles.copilotTitle}>ancientBOOK Copilot</div>
                     <div className={styles.copilotStatus}>
-                        {aiSettings.providerMode === 'auto'
-                            ? '⚡ Tự động: Gemini ➔ Local LLM Fallback'
-                            : aiSettings.providerMode === 'local'
-                            ? `🏠 Local LLM (${aiSettings.localModelName})`
-                            : '☁️ Google Gemini'}
+                        {aiSettings.providerMode === 'auto' ? (
+                            <>
+                                <Zap size={11} style={{ display: 'inline-block', marginRight: 3, verticalAlign: 'middle' }} />
+                                <span>Tự động: Gemini ưu tiên -&gt; Local LLM Fallback</span>
+                            </>
+                        ) : aiSettings.providerMode === 'local' ? (
+                            <>
+                                <Server size={11} style={{ display: 'inline-block', marginRight: 3, verticalAlign: 'middle' }} />
+                                <span>Local LLM ({aiSettings.localModelName})</span>
+                            </>
+                        ) : (
+                            <>
+                                <Cloud size={11} style={{ display: 'inline-block', marginRight: 3, verticalAlign: 'middle' }} />
+                                <span>Google Gemini</span>
+                            </>
+                        )}
                     </div>
                 </div>
                 <div className={styles.copilotHeaderActions}>
@@ -83,7 +113,7 @@ export const ReaderCopilotSidebar: React.FC<Props> = ({
                         onClick={onOpenAiSettings}
                         title="Cấu hình AI & Local LLM"
                     >
-                        ⚙️
+                        <Settings size={15} />
                     </button>
                     <button
                         type="button"
@@ -91,7 +121,7 @@ export const ReaderCopilotSidebar: React.FC<Props> = ({
                         onClick={onClearChat}
                         title="Xóa lịch sử chat"
                     >
-                        🗑️
+                        <Trash2 size={15} />
                     </button>
                     <button
                         type="button"
@@ -99,7 +129,7 @@ export const ReaderCopilotSidebar: React.FC<Props> = ({
                         onClick={onClose}
                         title="Đóng thanh AI"
                     >
-                        ✕
+                        <X size={15} />
                     </button>
                 </div>
             </div>
@@ -139,7 +169,8 @@ export const ReaderCopilotSidebar: React.FC<Props> = ({
                         disabled={isAiLoading}
                         onClick={() => void onAsk('Tóm tắt ý chính của trang sách đang mở')}
                     >
-                        📝 Tóm tắt nội dung trang này
+                        <FileText size={12} style={{ display: 'inline-block', marginRight: 4, verticalAlign: 'middle' }} />
+                        <span>Tóm tắt nội dung trang này</span>
                     </button>
                     <button
                         type="button"
@@ -147,7 +178,8 @@ export const ReaderCopilotSidebar: React.FC<Props> = ({
                         disabled={isAiLoading}
                         onClick={() => void onAsk('Giải thích từ cổ, tiếng địa phương và thuật ngữ khó trong trang này')}
                     >
-                        🔍 Giải thích từ ngữ & điển tích
+                        <Search size={12} style={{ display: 'inline-block', marginRight: 4, verticalAlign: 'middle' }} />
+                        <span>Giải thích từ ngữ & điển tích</span>
                     </button>
                     <button
                         type="button"
@@ -155,7 +187,8 @@ export const ReaderCopilotSidebar: React.FC<Props> = ({
                         disabled={isAiLoading}
                         onClick={() => void onAsk('Phân tích tâm lý nhân vật và bối cảnh nghệ thuật trong trang này')}
                     >
-                        💡 Phân tích nhân vật & nghệ thuật
+                        <Lightbulb size={12} style={{ display: 'inline-block', marginRight: 4, verticalAlign: 'middle' }} />
+                        <span>Phân tích nhân vật & nghệ thuật</span>
                     </button>
                     <button
                         type="button"
@@ -163,7 +196,8 @@ export const ReaderCopilotSidebar: React.FC<Props> = ({
                         disabled={isAiLoading}
                         onClick={() => void onAsk('Đặt 1 câu hỏi gợi mở suy ngẫm về đoạn văn trên trang này')}
                     >
-                        ❓ Câu hỏi gợi mở suy ngẫm
+                        <HelpCircle size={12} style={{ display: 'inline-block', marginRight: 4, verticalAlign: 'middle' }} />
+                        <span>Câu hỏi gợi mở suy ngẫm</span>
                     </button>
                 </div>
             </div>
@@ -189,7 +223,14 @@ export const ReaderCopilotSidebar: React.FC<Props> = ({
                     onClick={handleSend}
                     disabled={isAiLoading || !input.trim()}
                 >
-                    {isAiLoading ? '...' : 'Gửi'}
+                    {isAiLoading ? (
+                        <Loader2 size={14} className={styles.spinner} />
+                    ) : (
+                        <>
+                            <Send size={13} style={{ display: 'inline-block', marginRight: 4, verticalAlign: 'middle' }} />
+                            <span>Gửi</span>
+                        </>
+                    )}
                 </button>
             </div>
         </aside>

@@ -206,21 +206,35 @@ export const aiCopilotService = {
         if (qLower.includes('tóm tắt') || qLower.includes('nội dung chính') || qLower.includes('ý chính')) {
             if (pageText) {
                 const lines = pageText.split('\n').filter((l) => l.trim().length > 15);
-                const sampleLines = lines.slice(0, 3).join('\n• ');
-                return `📝 **Tóm tắt trang ${context.currentPage} (${title}):**\n\nNội dung chính của trang tập trung vào các diễn biến:\n• ${sampleLines}\n\n*(Trợ lý trích xuất văn bản cục bộ)*`;
+                const sampleLines = lines.slice(0, 4).join('\n• ');
+                return `**[Tóm tắt trang ${context.currentPage} (${title})]:**\n\nNội dung chính của trang tập trung vào các diễn biến:\n• ${sampleLines}\n\n*(Trợ lý AI đọc sách phân tích ngữ cảnh)*`;
             }
-            return `Trang ${context.currentPage} của "${title}" miêu tả chi tiết bối cảnh và diễn biến tư tưởng của nhân vật.`;
+            return `Trang ${context.currentPage} của "${title}" miêu tả chi tiết bối cảnh, khắc họa tâm lý và diễn biến tư tưởng của nhân vật trong tác phẩm.`;
         }
 
         if (context.selectedText) {
-            return `🔍 **Phân tích đoạn trích:**\n"${context.selectedText}"\n\nĐây là câu văn đặc sắc xuất hiện tại trang ${context.currentPage} của "${title}". Đoạn văn sử dụng hình tượng gợi cảm, phản ánh tâm trạng và không gian nghệ thuật của tác phẩm.`;
+            return `**[Phân tích đoạn trích]:**\n> "${context.selectedText}"\n\nĐoạn văn này xuất hiện tại trang ${context.currentPage} của "${title}". Tác giả sử dụng bút pháp gợi hình, miêu tả sinh động nội tâm nhân vật cùng không gian nghệ thuật đặc sắc, làm nổi bật tư tưởng nhân văn của tác phẩm.`;
         }
 
         if (qLower.includes('tác giả') || qLower.includes('nguyễn du') || qLower.includes('vũ trọng phụng')) {
-            return `Tác phẩm "${title}" được sáng tác bởi ${context.author || 'tác giả'}, là một trong những kiệt tác văn chương tiêu biểu mang giá trị nhân đạo và hiện thực sâu sắc.`;
+            return `Tác phẩm "${title}" được sáng tác bởi ${context.author || 'tác giả'}, là một trong những kiệt tác văn chương tiêu biểu của nền văn học Việt Nam, mang giá trị hiện thực và nhân đạo sâu sắc.`;
         }
 
-        return `Đã ghi nhận câu hỏi: "${question}" về trang ${context.currentPage} của cuốn "${title}". Bạn có thể chọn cụm từ cụ thể trên trang hoặc kết nối Ollama (Local LLM) để được giải thích chi tiết hơn.`;
+        if (qLower.includes('thúy kiều') || qLower.includes('thúy vân') || qLower.includes('kim trọng')) {
+            return `Trong "Truyện Kiều", Nguyễn Du đã khắc họa Thúy Kiều là hình tượng người con gái tài sắc vẹn toàn ("sắc đành đòi một, tài đành họa hai") nhưng số phận truân chuyên. Mối tình đầu đẹp đẽ với Kim Trọng cùng đức hy sinh chữ hiếu là điểm khởi đầu cho chuỗi ngày mười lăm năm lưu lạc.`;
+        }
+
+        if (qLower.includes('xuân tóc đỏ') || qLower.includes('số đỏ')) {
+            return `Trong "Số Đỏ" của Vũ Trọng Phụng, Xuân Tóc Đỏ là nhân vật điển hình cho sự tha hóa và nhố nhăng của xã hội tư sản thành thị Hà Nội thời Pháp thuộc. Từ một kẻ lang thang nhặt banh quần vợt, Xuân đã leo lên đỉnh cao danh vọng nhờ sự giả dối và thói háo danh của tầng lớp thượng lưu rởm.`;
+        }
+
+        if (qLower.includes('nghĩa') || qLower.includes('giải thích')) {
+            if (pageText) {
+                return `**[Giải nghĩa ngữ cảnh trang ${context.currentPage}]:**\n${pageText.slice(0, 300)}...\n\nĐoạn văn sử dụng ngôn từ ước lệ, hàm súc đặc trưng của văn học cổ điển, phản ánh sâu sắc hoàn cảnh và tâm trạng của nhân vật.`;
+            }
+        }
+
+        return `Đã ghi nhận câu hỏi: "${question}" về trang ${context.currentPage} của cuốn "${title}". Bạn có thể chọn bôi đen cụm từ cụ thể trên trang để được giải thích chi tiết hơn hoặc kết nối Ollama (Local LLM) để đàm thoại chuyên sâu.`;
     },
 
     /**
@@ -268,19 +282,19 @@ export const aiCopilotService = {
             } catch (err: any) {
                 // Fallback sang offline
                 return {
-                    answer: `⚠️ **Lỗi Local LLM (${settings.localLlmEndpoint}):** ${err?.message || 'Không thể kết nối'}.\n\n${this.offlineRuleBasedAnswer(question, context)}`,
+                    answer: `**[Lỗi Local LLM (${settings.localLlmEndpoint})]:** ${err?.message || 'Không thể kết nối'}.\n\n${this.offlineRuleBasedAnswer(question, context)}`,
                     provider: 'offline-rules',
                     latencyMs: Date.now() - startTime,
                 };
             }
         }
 
-        // 2. Chế độ 'auto' hoặc 'gemini': Thử gọi Gemini qua Backend trước
-        if (settings.providerMode === 'auto' || settings.providerMode === 'gemini') {
+        // 2. Chế độ 'auto' hoặc 'gemini': Thử gọi Gemini qua Backend trước nếu có ấn bản trên hệ thống
+        const numericEdId = Number(context.editionId);
+        if ((settings.providerMode === 'auto' || settings.providerMode === 'gemini') && numericEdId > 0) {
             try {
-                const editionId = context.editionId || 0;
                 const data = await requestApi<{ answer?: string }>(
-                    `/EbookEditions/${editionId}/ask-copilot`,
+                    `/EbookEditions/${numericEdId}/ask-copilot`,
                     {
                         method: 'POST',
                         body: JSON.stringify({
@@ -304,7 +318,7 @@ export const aiCopilotService = {
                 // Nếu người dùng chọn 'gemini' độc quyền thì ném lỗi
                 if (settings.providerMode === 'gemini') {
                     return {
-                        answer: `⚠️ Không thể kết nối với dịch vụ Gemini: ${backendErr?.message || 'Máy chủ bận'}. Vui lòng thử lại hoặc bật chế độ Local LLM trong phần Cài đặt AI.`,
+                        answer: `Không thể kết nối với dịch vụ Gemini: ${backendErr?.message || 'Máy chủ bận'}. Vui lòng thử lại hoặc bật chế độ Local LLM trong phần Cài đặt AI.`,
                         provider: 'gemini',
                         latencyMs: Date.now() - startTime,
                     };
@@ -316,7 +330,7 @@ export const aiCopilotService = {
         try {
             const localAnswer = await this.queryLocalLlm(question, context, settings);
             return {
-                answer: `${localAnswer}\n\n*(⚡ Đã tự động chuyển đổi sang Local LLM: ${settings.localModelName})*`,
+                answer: `${localAnswer}\n\n*(Đã tự động chuyển đổi sang Local LLM: ${settings.localModelName})*`,
                 provider: 'local-llm',
                 modelName: settings.localModelName,
                 latencyMs: Date.now() - startTime,
@@ -328,7 +342,7 @@ export const aiCopilotService = {
         // 4. Fallback cuối cùng: Trợ lý phân tích văn bản cục bộ ngoại tuyến
         const offlineAns = this.offlineRuleBasedAnswer(question, context);
         return {
-            answer: `${offlineAns}\n\n*(⚡ Đang phản hồi ở chế độ Trợ lý Ngoại tuyến do Gemini & Local LLM chưa sẵn sàng)*`,
+            answer: `${offlineAns}\n\n*(Đang phản hồi ở chế độ Trợ lý Ngoại tuyến do Gemini & Local LLM chưa sẵn sàng)*`,
             provider: 'offline-rules',
             latencyMs: Date.now() - startTime,
         };

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ebookReaderService } from '../services/ebookReaderService';
 import { frontendTts, type TtsSentence, type TtsVoiceOption, type TtsPlayState } from '../services/frontendTtsService';
 import { aiCopilotService, type AiSettings } from '../services/aiCopilotService';
@@ -11,11 +11,19 @@ export type ReadingMode = 'spread' | 'single' | 'scroll' | 'pdf-native';
 export type ReaderTheme = 'light' | 'sepia' | 'cream' | 'dark';
 export type FontFamily = 'serif' | 'sans' | 'mono';
 
+export interface ReaderSegmentItem {
+    segmentIndex: number;
+    textContent: string;
+    audioUrlFemale?: string;
+    audioUrlMale?: string;
+}
+
 export interface ReaderPageItem {
     pageNumber: number;
     chapterTitle: string;
     paragraphs: string[];
     rawText: string;
+    segments?: ReaderSegmentItem[];
 }
 
 export interface ReaderChatMessage {
@@ -59,9 +67,12 @@ export const useEbookReader = (
     const [ttsState, setTtsState] = useState<TtsPlayState>('idle');
     const [activeSentence, setActiveSentence] = useState<TtsSentence | null>(null);
     const [availableVoices, setAvailableVoices] = useState<TtsVoiceOption[]>([]);
-    const [selectedVoiceId, setSelectedVoiceId] = useState<string>('');
+    const [selectedVoiceId, setSelectedVoiceId] = useState<string>('preset-female');
     const [speechRate, setSpeechRate] = useState<number>(1.0);
     const [speechPitch, setSpeechPitch] = useState<number>(1.0);
+
+    // Cache các trang đã tải từ server
+    const loadedPagesRef = useRef<Set<number>>(new Set());
 
     // 4. AI Copilot State
     const [aiSettings, setAiSettings] = useState<AiSettings>(aiCopilotService.getSettings());
@@ -97,14 +108,15 @@ export const useEbookReader = (
         return pages.find((p) => p.pageNumber === rightPage) || null;
     }, [pages, rightPage]);
 
-    // Khởi tạo giọng đọc TTS từ Web Speech API
+    // Khởi tạo giọng đọc TTS
     useEffect(() => {
         const updateVoices = () => {
             const list = frontendTts.getAvailableVoices();
             setAvailableVoices(list);
-            const defaultVi = list.find((v) => v.isVietnamese) || list[0];
-            if (defaultVi && !selectedVoiceId) {
+            if (!selectedVoiceId && list.length > 0) {
+                const defaultVi = list.find((v) => v.id === 'preset-female') || list[0];
                 setSelectedVoiceId(defaultVi.id);
+                frontendTts.setVoiceById(defaultVi.id);
             }
         };
 
@@ -113,12 +125,23 @@ export const useEbookReader = (
         return () => clearTimeout(timer);
     }, [selectedVoiceId]);
 
+    // Hàm chuyển trang an toàn
+    const goToPage = useCallback(
+        (target: number) => {
+            const clamped = Math.max(1, Math.min(totalPages, target));
+            const normalized = readingMode === 'spread' && clamped % 2 === 0 ? clamped - 1 : clamped;
+            frontendTts.stop();
+            setLeftPage(normalized);
+            setPageInput(String(normalized));
+        },
+        [readingMode, totalPages]
+    );
+
     // Đồng bộ sự kiện TTS engine
     useEffect(() => {
         frontendTts.onStateChange = (state) => setTtsState(state);
         frontendTts.onSentenceChange = (sentence) => setActiveSentence(sentence);
         frontendTts.onPageComplete = (finishedPage) => {
-            // Tự động lật trang kế tiếp khi đọc xong trang hiện tại
             if (readingMode === 'spread') {
                 if (finishedPage + 2 <= totalPages) {
                     goToPage(finishedPage + 2);
@@ -133,12 +156,59 @@ export const useEbookReader = (
         return () => {
             frontendTts.stop();
         };
-    }, [readingMode, totalPages]);
+    }, [goToPage, readingMode, totalPages]);
+
+    // Tải các đoạn text segments của trang từ Backend
+    const loadSegmentsForPage = useCallback(
+        async (editionId: number, pageNum: number) => {
+            if (loadedPagesRef.current.has(pageNum)) return;
+            try {
+                const segs = await ebookReaderService.getPageSegments(editionId, pageNum);
+                loadedPagesRef.current.add(pageNum);
+                if (segs.length > 0) {
+                    setPages((prev) =>
+                        prev.map((item) => {
+                            if (item.pageNumber === pageNum) {
+                                return {
+                                    ...item,
+                                    paragraphs: segs.map((s) => s.textContent),
+                                    rawText: segs.map((s) => s.textContent).join('\n\n'),
+                                    segments: segs.map((s) => ({
+                                        segmentIndex: s.segmentIndex,
+                                        textContent: s.textContent,
+                                        audioUrlFemale: s.audioUrlFemale,
+                                        audioUrlMale: s.audioUrlMale,
+                                    })),
+                                };
+                            }
+                            return item;
+                        })
+                    );
+                }
+            } catch {
+                // ignore
+            }
+        },
+        []
+    );
+
+    // Tải dữ liệu các trang đang hiển thị nếu chưa có segments
+    useEffect(() => {
+        if (!edition?.editionId) return;
+        const edId = Number(edition.editionId);
+        if (Number.isNaN(edId) || edId <= 0) return;
+
+        void loadSegmentsForPage(edId, leftPage);
+        if (rightPage) {
+            void loadSegmentsForPage(edId, rightPage);
+        }
+    }, [edition?.editionId, leftPage, rightPage, loadSegmentsForPage]);
 
     // Nạp sách mặc định hoặc sách từ backend
     useEffect(() => {
         let active = true;
         setLoadingPages(true);
+        loadedPagesRef.current.clear();
 
         const loadSample = (sample: SampleBookData) => {
             setBookTitle(sample.title);
@@ -175,35 +245,63 @@ export const useEbookReader = (
                 setBookTitle(data.title || fallbackMeta?.title || `Sách #${bookId}`);
                 setAuthor(data.author || fallbackMeta?.author || '');
 
+                // Nếu là tệp PDF, tự động nạp tệp PDF từ server vào BlobUrl
+                if (data.format === 'Pdf') {
+                    try {
+                        const token = localStorage.getItem('accessToken');
+                        const res = await fetch(`/api/EbookEditions/${data.editionId}/file`, {
+                            headers: token ? { Authorization: `Bearer ${token}` } : {},
+                        });
+                        if (res.ok) {
+                            const blob = await res.blob();
+                            const blobUrl = URL.createObjectURL(blob);
+                            if (active) setPdfBlobUrl(blobUrl);
+                        }
+                    } catch (err) {
+                        console.warn('[PDF Load Failure]', err);
+                    }
+                }
+
                 // Tải các đoạn text segments từ backend
                 try {
                     const page1 = await ebookReaderService.getPageSegments(data.editionId, 1);
-                    const page2 = await ebookReaderService.getPageSegments(data.editionId, 2);
+                    const page2 = data.totalPages > 1 ? await ebookReaderService.getPageSegments(data.editionId, 2) : [];
+                    loadedPagesRef.current.add(1);
+                    if (data.totalPages > 1) loadedPagesRef.current.add(2);
 
-                    if (page1.length > 0 || page2.length > 0) {
-                        const builtPages: ReaderPageItem[] = [];
-                        for (let p = 1; p <= Math.min(data.totalPages || 10, 50); p++) {
-                            const segs = p === 1 ? page1 : p === 2 ? page2 : [];
-                            builtPages.push({
-                                pageNumber: p,
-                                chapterTitle: `Trang ${p}`,
-                                paragraphs: segs.length > 0 ? segs.map((s) => s.textContent) : [`Nội dung trang ${p}`],
-                                rawText: segs.map((s) => s.textContent).join('\n\n'),
-                            });
-                        }
-                        setPages(builtPages);
-                        setToc([{ title: 'Nội dung sách', pageIndex: 1 }]);
-                        setLoadingPages(false);
-                        return;
+                    const totalCount = Math.max(1, data.totalPages || 1);
+                    const builtPages: ReaderPageItem[] = [];
+
+                    for (let p = 1; p <= totalCount; p++) {
+                        const segs = p === 1 ? page1 : p === 2 ? page2 : [];
+                        builtPages.push({
+                            pageNumber: p,
+                            chapterTitle: `Trang ${p}`,
+                            paragraphs: segs.length > 0 ? segs.map((s) => s.textContent) : [`Đang tải nội dung trang ${p}...`],
+                            rawText: segs.map((s) => s.textContent).join('\n\n'),
+                            segments: segs.map((s) => ({
+                                segmentIndex: s.segmentIndex,
+                                textContent: s.textContent,
+                                audioUrlFemale: s.audioUrlFemale,
+                                audioUrlMale: s.audioUrlMale,
+                            })),
+                        });
                     }
-                } catch {
-                    // ignore
-                }
 
-                // Nếu backend chưa có segments, nạp sách mẫu để trải nghiệm đầy đủ
-                loadSample(SAMPLE_BOOKS[0]);
+                    setPages(builtPages);
+                    setToc(
+                        builtPages.slice(0, 15).map((p) => ({
+                            title: `Trang ${p.pageNumber}`,
+                            pageIndex: p.pageNumber,
+                        }))
+                    );
+                    setLoadingPages(false);
+                } catch {
+                    // Nếu backend chưa có segments, nạp sách mẫu để trải nghiệm đầy đủ
+                    loadSample(SAMPLE_BOOKS[0]);
+                }
             })
-            .catch((err: any) => {
+            .catch(() => {
                 if (active) {
                     loadSample(SAMPLE_BOOKS[0]);
                 }
@@ -213,19 +311,7 @@ export const useEbookReader = (
         return () => {
             active = false;
         };
-    }, [bookId, fallbackMeta?.author, fallbackMeta?.title, showToast]);
-
-    // Chuyển trang an toàn
-    const goToPage = useCallback(
-        (target: number) => {
-            const clamped = Math.max(1, Math.min(totalPages, target));
-            const normalized = readingMode === 'spread' && clamped % 2 === 0 ? clamped - 1 : clamped;
-            frontendTts.stop();
-            setLeftPage(normalized);
-            setPageInput(String(normalized));
-        },
-        [readingMode, totalPages]
-    );
+    }, [bookId, fallbackMeta?.author, fallbackMeta?.title]);
 
     const prevSpread = () => {
         if (readingMode === 'spread') {
@@ -245,9 +331,10 @@ export const useEbookReader = (
 
     // Điều khiển giọng đọc TTS
     const playCurrentSpread = () => {
-        const targetPages = readingMode === 'spread'
-            ? [currentLeftPageData, currentRightPageData].filter(Boolean) as ReaderPageItem[]
-            : [currentLeftPageData].filter(Boolean) as ReaderPageItem[];
+        const targetPages =
+            readingMode === 'spread'
+                ? ([currentLeftPageData, currentRightPageData].filter(Boolean) as ReaderPageItem[])
+                : ([currentLeftPageData].filter(Boolean) as ReaderPageItem[]);
 
         if (targetPages.length === 0) {
             showToast('Không có nội dung văn bản để đọc.');
@@ -256,9 +343,15 @@ export const useEbookReader = (
 
         const allSentences: TtsSentence[] = [];
         targetPages.forEach((p) => {
-            const sList = frontendTts.constructor.prototype.constructor.splitIntoSentences(
+            const segmentAudios = p.segments?.map((s) => ({
+                female: s.audioUrlFemale,
+                male: s.audioUrlMale,
+            }));
+
+            const sList = (frontendTts.constructor as any).splitIntoSentences(
                 p.paragraphs,
-                p.pageNumber
+                p.pageNumber,
+                segmentAudios
             );
             allSentences.push(...sList);
         });
@@ -283,7 +376,13 @@ export const useEbookReader = (
     };
 
     const playSpecificParagraph = (text: string, pageNum: number) => {
-        const sentences = frontendTts.constructor.prototype.constructor.splitIntoSentences([text], pageNum);
+        const targetPage = pages.find((p) => p.pageNumber === pageNum);
+        const matchingSegment = targetPage?.segments?.find((s) => s.textContent.trim() === text.trim());
+        const segmentAudios = matchingSegment
+            ? [{ female: matchingSegment.audioUrlFemale, male: matchingSegment.audioUrlMale }]
+            : undefined;
+
+        const sentences = (frontendTts.constructor as any).splitIntoSentences([text], pageNum, segmentAudios);
         if (sentences.length > 0) {
             frontendTts.loadSentences(sentences, 0);
             frontendTts.play();
@@ -293,7 +392,8 @@ export const useEbookReader = (
     const changeVoice = (voiceId: string) => {
         setSelectedVoiceId(voiceId);
         frontendTts.setVoiceById(voiceId);
-        showToast('Đã đổi giọng đọc AI.');
+        const opt = availableVoices.find((v) => v.id === voiceId);
+        showToast(`Đã chọn: ${opt?.name || voiceId}`);
     };
 
     const changeSpeechRate = (rate: number) => {
@@ -306,7 +406,73 @@ export const useEbookReader = (
         frontendTts.setPitch(pitch);
     };
 
-    // Mở tệp sách từ máy tính (.epub, .pdf, .txt)
+    // Tải tệp PDF về máy tính
+    const downloadPdf = async () => {
+        showToast('Đang chuẩn bị tệp PDF tải về...');
+        try {
+            // 1. Nếu đã có Blob URL sẵn
+            if (pdfBlobUrl) {
+                const a = document.createElement('a');
+                a.href = pdfBlobUrl;
+                a.download = `${bookTitle || 'ancientbook-tai-lieu'}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                showToast(`Đã tải xuống tệp PDF: "${bookTitle}"`);
+                return;
+            }
+
+            // 2. Nếu có editionId từ Backend, tải trực tiếp file PDF gốc
+            if (edition?.editionId) {
+                const token = localStorage.getItem('accessToken');
+                const res = await fetch(`/api/EbookEditions/${edition.editionId}/file`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {},
+                });
+                if (res.ok) {
+                    const blob = await res.blob();
+                    const blobUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = `${bookTitle || 'ancientbook-tai-lieu'}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+                    showToast(`Đã tải xuống tệp PDF: "${bookTitle}"`);
+                    return;
+                }
+            }
+
+            // 3. Nếu là sách mẫu hoặc tài liệu văn bản: Tải về tệp tài liệu sách
+            const bookHeader =
+                `============================================================\n` +
+                `TÁC PHẨM: ${bookTitle.toUpperCase()}\n` +
+                `TÁC GIẢ: ${author || 'Khuyết danh'}\n` +
+                `NỀN TẢNG: ancientBOOK — Thư viện Sách & Văn học Số hóa\n` +
+                `NGÀY TẢI: ${new Date().toLocaleDateString('vi-VN')}\n` +
+                `============================================================\n\n`;
+
+            const bodyText = pages
+                .map((p) => `--- [ ${p.chapterTitle} | Trang ${p.pageNumber} ] ---\n\n${p.paragraphs.join('\n\n')}`)
+                .join('\n\n\n');
+
+            const fullText = bookHeader + bodyText;
+            const blob = new Blob([fullText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${bookTitle.replace(/[\\/:*?"<>|]/g, '_')}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+            showToast(`Đã tải tài liệu tác phẩm: "${bookTitle}"`);
+        } catch (err: any) {
+            showToast(`Lỗi tải tệp: ${err?.message || 'Không thể tải tệp'}`);
+        }
+    };
+
+    // Mở tệp sách từ máy tính (hỗ trợ nội bộ nếu cần)
     const loadUploadedFile = async (file: File) => {
         setLoadingPages(true);
         frontendTts.stop();
@@ -329,7 +495,7 @@ export const useEbookReader = (
                 setToc(epubData.toc.map((t) => ({ title: t.title, pageIndex: t.pageIndex })));
                 setReadingMode('spread');
                 goToPage(1);
-                showToast(`Đã mở thành công tệp EPUB: "${epubData.title}" (${converted.length} trang).`);
+                showToast(`Đã mở tệp EPUB: "${epubData.title}" (${converted.length} trang).`);
             } else if (fileName.endsWith('.pdf')) {
                 const pdfData = await extractPdf(buffer, file.name);
                 setBookTitle(pdfData.title);
@@ -345,47 +511,9 @@ export const useEbookReader = (
                 setToc(pdfData.pages.map((p) => ({ title: `Trang ${p.pageNumber}`, pageIndex: p.pageNumber })));
                 setReadingMode('spread');
                 goToPage(1);
-                showToast(`Đã phân tích PDF: "${pdfData.title}" (${converted.length} trang).`);
-            } else if (fileName.endsWith('.txt')) {
-                const text = new TextDecoder('utf-8').decode(buffer);
-                const paras = text.split(/\n\s*\n/).map((p) => p.trim()).filter((p) => p.length > 0);
-                const txtPages: ReaderPageItem[] = [];
-                let pNum = 1;
-                let batch: string[] = [];
-                let len = 0;
-                for (const para of paras) {
-                    batch.push(para);
-                    len += para.length;
-                    if (len >= 800) {
-                        txtPages.push({
-                            pageNumber: pNum++,
-                            chapterTitle: `Phần ${pNum - 1}`,
-                            paragraphs: [...batch],
-                            rawText: batch.join('\n\n'),
-                        });
-                        batch = [];
-                        len = 0;
-                    }
-                }
-                if (batch.length > 0) {
-                    txtPages.push({
-                        pageNumber: pNum++,
-                        chapterTitle: `Phần ${pNum - 1}`,
-                        paragraphs: [...batch],
-                        rawText: batch.join('\n\n'),
-                    });
-                }
-                setBookTitle(file.name.replace(/\.txt$/, ''));
-                setAuthor('Tài liệu Text');
-                setPages(txtPages);
-                setToc([{ title: 'Mở đầu', pageIndex: 1 }]);
-                goToPage(1);
-                showToast(`Đã nạp tệp Text (${txtPages.length} trang).`);
-            } else {
-                showToast('Chỉ hỗ trợ tệp định dạng .EPUB, .PDF hoặc .TXT.');
+                showToast(`Đã nạp PDF: "${pdfData.title}" (${converted.length} trang).`);
             }
         } catch (err: any) {
-            console.error('[Open File Error]', err);
             showToast(`Lỗi phân tích tệp: ${err?.message || 'Tệp hỏng hoặc không đúng định dạng.'}`);
         } finally {
             setLoadingPages(false);
@@ -397,6 +525,8 @@ export const useEbookReader = (
         const found = SAMPLE_BOOKS.find((b) => b.id === sampleId);
         if (found) {
             frontendTts.stop();
+            setPdfBlobUrl(null);
+            setEdition(null);
             setBookTitle(found.title);
             setAuthor(found.author);
             const converted: ReaderPageItem[] = found.pages.map((p) => ({
@@ -526,7 +656,8 @@ export const useEbookReader = (
         prevSentence: () => frontendTts.prev(),
         stopTts: () => frontendTts.stop(),
 
-        // File & Sample Books
+        // File & Download & Sample Books
+        downloadPdf,
         loadUploadedFile,
         switchSampleBook,
 

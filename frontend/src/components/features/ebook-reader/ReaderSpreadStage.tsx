@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight, FileText, Sparkles, Volume2, Copy } from 'lucide-react';
 import type { ReaderPageItem, ReadingMode, ReaderTheme, FontFamily } from '../../../hooks/useEbookReader';
 import type { TtsSentence } from '../../../services/frontendTtsService';
 import styles from '../../../pages/EbookReaderPage.module.css';
@@ -141,7 +142,7 @@ export const ReaderSpreadStage: React.FC<Props> = ({
                         disabled={leftPage <= 1}
                         title="Trang trước (←)"
                     >
-                        ‹
+                        <ChevronLeft size={22} />
                     </button>
                     <button
                         type="button"
@@ -150,7 +151,7 @@ export const ReaderSpreadStage: React.FC<Props> = ({
                         disabled={readingMode === 'spread' ? leftPage + 2 > totalPages : leftPage >= totalPages}
                         title="Trang sau (→)"
                     >
-                        ›
+                        <ChevronRight size={22} />
                     </button>
                 </>
             )}
@@ -166,7 +167,10 @@ export const ReaderSpreadStage: React.FC<Props> = ({
                         />
                     ) : (
                         <div className={styles.emptyPdfNotice}>
-                            <p>Chưa có tệp PDF gốc được nạp. Hãy bấm "Mở tệp" để tải tệp PDF của bạn lên.</p>
+                            <p>
+                                <FileText size={15} style={{ display: 'inline-block', marginRight: 5, verticalAlign: 'middle' }} />
+                                <span>Đang hiển thị bản đọc số hóa. Bấm nút <strong>"Tải PDF về máy"</strong> ở góc trên để tải tệp PDF về máy tính của bạn.</span>
+                            </p>
                         </div>
                     )}
                 </div>
@@ -212,7 +216,8 @@ export const ReaderSpreadStage: React.FC<Props> = ({
                             setTooltip(null);
                         }}
                     >
-                        💡 Hỏi AI
+                        <Sparkles size={13} style={{ display: 'inline-block', marginRight: 4, verticalAlign: 'middle' }} />
+                        <span>Hỏi AI</span>
                     </button>
                     <button
                         type="button"
@@ -222,7 +227,8 @@ export const ReaderSpreadStage: React.FC<Props> = ({
                             setTooltip(null);
                         }}
                     >
-                        🔊 Nghe đọc
+                        <Volume2 size={13} style={{ display: 'inline-block', marginRight: 4, verticalAlign: 'middle' }} />
+                        <span>Nghe đọc</span>
                     </button>
                     <button
                         type="button"
@@ -232,7 +238,8 @@ export const ReaderSpreadStage: React.FC<Props> = ({
                             setTooltip(null);
                         }}
                     >
-                        📋 Sao chép
+                        <Copy size={13} style={{ display: 'inline-block', marginRight: 4, verticalAlign: 'middle' }} />
+                        <span>Sao chép</span>
                     </button>
                 </div>
             )}

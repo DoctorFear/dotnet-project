@@ -158,13 +158,6 @@ namespace AncientBook.Infrastructure.Services
             List<string> citations,
             CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(_apiKey))
-            {
-                return BuildLocalCopilotFallback(question, selectedText, currentPage, citations);
-            }
-
-            var modelsToTry = new[] { "gemini-flash-lite-latest", "gemini-flash-latest", "gemini-2.5-flash" };
-
             var promptBuilder = new StringBuilder();
             promptBuilder.AppendLine("Bạn là trợ lý đọc sách AI (Copilot) thông thái của nền tảng AncientBook.");
             promptBuilder.AppendLine("Nhiệm vụ: Trả lời câu hỏi của độc giả dựa trên tác phẩm văn học đang đọc.");
@@ -201,6 +194,13 @@ namespace AncientBook.Infrastructure.Services
             promptBuilder.AppendLine();
             promptBuilder.AppendLine($"[Câu hỏi của độc giả]: {question}");
             promptBuilder.AppendLine("Câu trả lời của bạn:");
+
+            if (string.IsNullOrWhiteSpace(_apiKey))
+            {
+                return await BuildLocalCopilotFallbackAsync(question, selectedText, currentPage, citations, promptBuilder.ToString(), ct);
+            }
+
+            var modelsToTry = new[] { "gemini-flash-lite-latest", "gemini-flash-latest", "gemini-2.5-flash" };
 
             var payload = new
             {
@@ -272,46 +272,25 @@ namespace AncientBook.Infrastructure.Services
                 await Task.Delay(300, ct);
             }
 
-            return BuildLocalCopilotFallback(question, selectedText, currentPage, citations);
+            return await BuildLocalCopilotFallbackAsync(question, selectedText, currentPage, citations, promptBuilder.ToString(), ct);
         }
 
-        private static string BuildLocalCopilotFallback(
+        private async Task<string> BuildLocalCopilotFallbackAsync(
             string question,
             string? selectedText,
             int? currentPage,
-            List<string>? citations)
+            List<string>? citations,
+            string promptText,
+            CancellationToken ct)
         {
-            var sb = new StringBuilder();
-            sb.AppendLine("*(Phản hồi từ chế độ Tri thức RAG Cục bộ do dịch vụ AI trực tuyến tạm thời gián đoạn)*\n");
-
-            if (currentPage.HasValue && currentPage.Value > 0)
-            {
-                sb.AppendLine($"**Vị trí đang đọc:** Trang {currentPage.Value}\n");
-            }
-
-            if (!string.IsNullOrWhiteSpace(selectedText))
-            {
-                sb.AppendLine($"**Đoạn văn bản đã chọn:**\n> \"{selectedText.Trim()}\"\n");
-            }
-
-            if (citations != null && citations.Count > 0)
-            {
-                sb.AppendLine($"**Các đoạn trích dẫn liên quan trong sách cho câu hỏi** *\"{question}\"**:\n");
-                foreach (var cite in citations)
-                {
-                    sb.AppendLine($"> {cite}\n");
-                }
-                return sb.ToString().TrimEnd();
-            }
-
-            // 3. FALLBACK: Thử Local LLM (Ollama hoặc LM Studio) nếu tất cả mô hình Gemini đều bận/hết hạn ngạch
+            // 1. Thử Local LLM (Ollama hoặc LM Studio) nếu có
             try
             {
                 var localLlmUrl = "http://localhost:11434/api/generate";
                 var localPayload = new
                 {
                     model = "llama3.2",
-                    prompt = promptBuilder.ToString(),
+                    prompt = promptText,
                     stream = false
                 };
 
@@ -322,7 +301,7 @@ namespace AncientBook.Infrastructure.Services
                 );
 
                 using var localCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                localCts.CancelAfter(TimeSpan.FromSeconds(25));
+                localCts.CancelAfter(TimeSpan.FromSeconds(10));
 
                 var localResp = await _httpClient.PostAsync(localLlmUrl, localContent, localCts.Token);
                 if (localResp.IsSuccessStatusCode)
@@ -344,14 +323,32 @@ namespace AncientBook.Infrastructure.Services
                 // Local LLM không khả dụng
             }
 
-            // 4. FALLBACK CUỐI CÙNG: Tổng hợp văn học dựa trên trích dẫn sách
-            if (citations != null && citations.Count > 0)
+            // 2. Fallback dựa trên trích dẫn của sách
+            var sb = new StringBuilder();
+            sb.AppendLine("*(Phản hồi từ chế độ Tri thức RAG Cục bộ do dịch vụ AI trực tuyến tạm thời gián đoạn)*\n");
+
+            if (currentPage.HasValue && currentPage.Value > 0)
             {
-                var summary = string.Join("\n", citations.Take(2));
-                return $"Dựa trên ngữ cảnh tác phẩm tại trang {currentPage ?? 1}:\n{summary}\n\n*(Ghi chú: Gemini và Local LLM hiện chưa phản hồi nên hệ thống trích xuất trực tiếp đoạn liên quan từ sách)*";
+                sb.AppendLine($"**Vị trí đang đọc:** Trang {currentPage.Value}\n");
             }
 
-            return $"Đã ghi nhận câu hỏi: \"{question}\" trên trang {currentPage ?? 1}. Hệ thống AI đang bận, vui lòng thử lại sau giây lát hoặc sử dụng Local LLM.";
+            if (!string.IsNullOrWhiteSpace(selectedText))
+            {
+                sb.AppendLine($"**Đoạn văn bản đã chọn:**\n> \"{selectedText.Trim()}\"\n");
+            }
+
+            if (citations != null && citations.Count > 0)
+            {
+                sb.AppendLine($"**Các đoạn trích dẫn liên quan trong sách cho câu hỏi** *\"{question}\"*:\n");
+                foreach (var cite in citations)
+                {
+                    sb.AppendLine($"> {cite}\n");
+                }
+                return sb.ToString().TrimEnd();
+            }
+
+            sb.AppendLine($"Đã ghi nhận câu hỏi: \"{question}\" trên trang {currentPage ?? 1}. Hệ thống AI đang bận hoặc ngoại tuyến, vui lòng thử lại sau giây lát hoặc kết nối Local LLM.");
+            return sb.ToString().TrimEnd();
         }
     }
 }

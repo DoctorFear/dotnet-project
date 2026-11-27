@@ -116,7 +116,7 @@ export const TransferSessionModal: React.FC<TransferSessionModalProps> = ({
                                     const isOnline = onlineStaffIds.includes(st.id);
                                     return (
                                         <option key={st.id} value={st.id}>
-                                            {st.fullName} (@{st.username}) - {isOnline ? '🟢 Trực tuyến' : '⚪ Ngoại tuyến'}
+                                            {st.fullName} (@{st.username}) - {isOnline ? '[Trực tuyến]' : '[Ngoại tuyến]'}
                                         </option>
                                     );
                                 })}
