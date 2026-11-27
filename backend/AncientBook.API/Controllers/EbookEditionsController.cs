@@ -91,10 +91,10 @@ namespace AncientBook.API.Controllers
 
             int totalEmbeddings = await _context.BookEmbeddings.CountAsync(e => e.EditionId == edition.Id, ct);
 
-            // Cấu hình tính năng nghiêm ngặt theo phân loại ấn bản (Preset):
-            // - Nhóm 1 (EpubStandard): Hỗ trợ TTS nếu đã sinh audio.
-            // - Nhóm 2 (PdfStandard) & Nhóm 3 (ScannedBook): Tuyệt đối KHÔNG áp dụng TTS kể cả DB còn lưu audio cũ.
-            bool effectiveTtsEnabled = (edition.PresetType == EbookPresetType.EpubStandard) && edition.IsTtsEnabled;
+            // Cấu hình tính năng:
+            // - Nhóm 1 (EpubStandard) & Nhóm 2 (PdfStandard): Hỗ trợ TTS nếu đã bật/sinh audio.
+            // - Nhóm 3 (ScannedBook): Tuyệt đối KHÔNG áp dụng TTS vì là ảnh scan nguyên bản.
+            bool effectiveTtsEnabled = (edition.PresetType != EbookPresetType.ScannedBook) && edition.IsTtsEnabled;
 
             var dto = new EbookEditionDetailDto
             {
@@ -143,10 +143,10 @@ namespace AncientBook.API.Controllers
 
             int totalEmbeddings = await _context.BookEmbeddings.CountAsync(e => e.EditionId == edition.Id, ct);
 
-            // Cấu hình tính năng nghiêm ngặt theo phân loại ấn bản (Preset):
-            // - Nhóm 1 (EpubStandard): Hỗ trợ TTS nếu đã sinh audio.
-            // - Nhóm 2 (PdfStandard) & Nhóm 3 (ScannedBook): Tuyệt đối KHÔNG áp dụng TTS kể cả DB còn lưu audio cũ.
-            bool effectiveTtsEnabled = (edition.PresetType == EbookPresetType.EpubStandard) && edition.IsTtsEnabled;
+            // Cấu hình tính năng:
+            // - Nhóm 1 (EpubStandard) & Nhóm 2 (PdfStandard): Hỗ trợ TTS nếu đã bật/sinh audio.
+            // - Nhóm 3 (ScannedBook): Tuyệt đối KHÔNG áp dụng TTS vì là ảnh scan nguyên bản.
+            bool effectiveTtsEnabled = (edition.PresetType != EbookPresetType.ScannedBook) && edition.IsTtsEnabled;
 
             var dto = new EbookEditionDetailDto
             {
@@ -364,7 +364,7 @@ namespace AncientBook.API.Controllers
 
             var oldPreset = edition.PresetType.ToString();
             edition.PresetType = request.PresetType;
-            if (request.PresetType != EbookPresetType.EpubStandard)
+            if (request.PresetType == EbookPresetType.ScannedBook)
             {
                 edition.IsTtsEnabled = false;
             }
@@ -781,7 +781,7 @@ namespace AncientBook.API.Controllers
                 author = edition.Book?.Author ?? string.Empty,
                 totalPages = edition.TotalPages,
                 ttsEnabled = edition.IsTtsEnabled,
-                chatEnabled = edition.PresetType != EbookPresetType.PdfStandard
+                chatEnabled = edition.PresetType != EbookPresetType.ScannedBook
             });
         }
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { BookOpen, X } from 'lucide-react';
 import styles from '../../../pages/EbookReaderPage.module.css';
 
 interface Props {
@@ -21,11 +22,14 @@ export const ReaderTocDrawer: React.FC<Props> = ({ isOpen, toc, currentPage, onC
             <aside className={styles.tocDrawer} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.tocHeader}>
                     <div>
-                        <h3 className={styles.tocTitle}>📑 Mục lục tác phẩm</h3>
+                        <h3 className={styles.tocTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                            <BookOpen size={18} />
+                            <span>Mục lục tác phẩm</span>
+                        </h3>
                         <span className={styles.tocSubTitle}>{toc.length} chương / phần mục</span>
                     </div>
                     <button type="button" className={styles.closeBtn} onClick={onClose}>
-                        ✕
+                        <X size={18} />
                     </button>
                 </div>
 

@@ -116,6 +116,7 @@
     outline: none;
 }
 
+.downloadPdfBtn,
 .openFileBtn {
     background: #0B409C;
     color: #ffffff;
@@ -127,9 +128,14 @@
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(11, 64, 156, 0.25);
     transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
+.downloadPdfBtn:hover,
 .openFileBtn:hover {
     background: #09327d;
+    transform: translateY(-1px);
 }
 
 /* ----------------------------------------------------------------------------
@@ -578,7 +584,7 @@
     cursor: pointer;
 }
 .voiceSelect {
-    max-width: 115px;
+    max-width: 175px;
 }
 
 /* Mode toggles */

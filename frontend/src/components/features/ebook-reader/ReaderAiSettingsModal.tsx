@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Settings, X, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { aiCopilotService, type AiSettings } from '../../../services/aiCopilotService';
 import styles from '../../../pages/EbookReaderPage.module.css';
 
@@ -37,9 +38,12 @@ export const ReaderAiSettingsModal: React.FC<Props> = ({ isOpen, settings, onClo
         <div className={styles.modalOverlay} onClick={onClose}>
             <div className={styles.settingsModal} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.settingsHeader}>
-                    <h3>⚙️ Cấu hình Trợ lý AI & Local LLM Fallback</h3>
+                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                        <Settings size={18} />
+                        <span>Cấu hình Trợ lý AI & Local LLM Fallback</span>
+                    </h3>
                     <button type="button" className={styles.closeBtn} onClick={onClose}>
-                        ✕
+                        <X size={18} />
                     </button>
                 </div>
 
@@ -53,9 +57,9 @@ export const ReaderAiSettingsModal: React.FC<Props> = ({ isOpen, settings, onClo
                                 setLocalSettings((prev) => ({ ...prev, providerMode: e.target.value as any }))
                             }
                         >
-                            <option value="auto">⚡ Tự động: Gemini ưu tiên ➔ Local LLM Fallback (Khuyên dùng)</option>
-                            <option value="gemini">☁️ Chỉ dùng Google Gemini (Cloud API)</option>
-                            <option value="local">🏠 Chỉ dùng Local LLM (Ollama / LM Studio cục bộ)</option>
+                            <option value="auto">Tự động: Gemini ưu tiên -&gt; Local LLM Fallback (Khuyên dùng)</option>
+                            <option value="gemini">Chỉ dùng Google Gemini (Cloud API)</option>
+                            <option value="local">Chỉ dùng Local LLM (Ollama / LM Studio cục bộ)</option>
                         </select>
                         <span className={styles.formHint}>
                             Khi chọn Tự động, hệ thống sẽ gọi Gemini trước. Nếu Gemini quá tải, mất mạng hoặc hết quota,
@@ -81,7 +85,14 @@ export const ReaderAiSettingsModal: React.FC<Props> = ({ isOpen, settings, onClo
                                 onClick={handleTestConnection}
                                 disabled={testResult.loading}
                             >
-                                {testResult.loading ? 'Đang test...' : 'Kiểm tra'}
+                                {testResult.loading ? (
+                                    <>
+                                        <Loader2 size={13} className={styles.spinner} style={{ display: 'inline', marginRight: 4 }} />
+                                        <span>Đang test...</span>
+                                    </>
+                                ) : (
+                                    'Kiểm tra'
+                                )}
                             </button>
                         </div>
                         <span className={styles.formHint}>
@@ -93,7 +104,15 @@ export const ReaderAiSettingsModal: React.FC<Props> = ({ isOpen, settings, onClo
                         <div
                             className={testResult.ok ? styles.testSuccess : styles.testError}
                         >
-                            <strong>{testResult.ok ? '✓ Thành công:' : '✗ Không kết nối được:'}</strong> {testResult.message}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                {testResult.ok ? (
+                                    <CheckCircle size={15} style={{ color: '#059669', flexShrink: 0 }} />
+                                ) : (
+                                    <AlertCircle size={15} style={{ color: '#dc2626', flexShrink: 0 }} />
+                                )}
+                                <strong>{testResult.ok ? 'Thành công:' : 'Không kết nối được:'}</strong>
+                            </div>
+                            <div>{testResult.message}</div>
                             {testResult.models && testResult.models.length > 0 && (
                                 <div style={{ marginTop: '4px', fontSize: '11.5px' }}>
                                     Models khả dụng: {testResult.models.slice(0, 5).join(', ')}

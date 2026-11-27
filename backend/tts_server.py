@@ -30,9 +30,12 @@ class TtsRequest(BaseModel):
     text: str
     language: str = "vi"
     gender: str = "female"
+    voice: str | None = None
+    rate: str = "+0%"
+    pitch: str = "+0Hz"
 
-async def _synthesize(text: str, voice_name: str) -> bytes:
-    communicate = edge_tts.Communicate(text, voice_name)
+async def _synthesize(text: str, voice_name: str, rate: str = "+0%", pitch: str = "+0Hz") -> bytes:
+    communicate = edge_tts.Communicate(text, voice_name, rate=rate, pitch=pitch)
     audio_stream = io.BytesIO()
     async for chunk in communicate.stream():
         if chunk["type"] == "audio":
@@ -49,20 +52,26 @@ async def synthesize_speech(req: TtsRequest):
     if not any(ch.isalnum() for ch in content):
         return Response(content=SILENT_MP3, media_type="audio/mpeg")
 
-    # Map ngôn ngữ và giới tính
-    lang_key = (req.language or "vi").lower().strip()[:2]
-    lang_voices = VOICE_MAP.get(lang_key, VOICE_MAP["vi"])
-    voice_name = lang_voices.get(req.gender.lower(), lang_voices["female"])
+    # Map ngôn ngữ và giới tính hoặc dùng giọng chỉ định
+    if req.voice:
+        voice_name = req.voice
+    else:
+        lang_key = (req.language or "vi").lower().strip()[:2]
+        lang_voices = VOICE_MAP.get(lang_key, VOICE_MAP["vi"])
+        voice_name = lang_voices.get(req.gender.lower(), lang_voices["female"])
+
+    rate_str = req.rate if req.rate else "+0%"
+    pitch_str = req.pitch if req.pitch else "+0Hz"
 
     try:
-        audio_bytes = await _synthesize(content, voice_name)
+        audio_bytes = await _synthesize(content, voice_name, rate_str, pitch_str)
     except edge_tts.exceptions.NoAudioReceived:
         # Thử lọc bỏ ký tự đặc biệt giữ lại chữ/số/khoảng trắng; nếu vẫn không có âm thanh thì trả về silent MP3
         cleaned = re.sub(r"[^\w\s.,!?;:\-]", " ", content).strip()
         if not any(ch.isalnum() for ch in cleaned):
             return Response(content=SILENT_MP3, media_type="audio/mpeg")
         try:
-            audio_bytes = await _synthesize(cleaned, voice_name)
+            audio_bytes = await _synthesize(cleaned, voice_name, rate_str, pitch_str)
         except edge_tts.exceptions.NoAudioReceived:
             return Response(content=SILENT_MP3, media_type="audio/mpeg")
 
