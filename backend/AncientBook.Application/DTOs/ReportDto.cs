@@ -22,8 +22,10 @@ namespace AncientBook.Application.DTOs
         public string? Publisher { get; set; }
         public int CompletedOrders { get; set; }
         public int PhysicalQuantity { get; set; }
+        public int EBookQuantity { get; set; }
         public int RentalQuantity { get; set; }
         public decimal PhysicalRevenue { get; set; }
+        public decimal EBookRevenue { get; set; }
         public decimal RentalRevenue { get; set; }
         public List<RevenuePeriodDto> RevenueTrend { get; set; } = [];
         public PagedResult<TopSellingBookDto> TopBooksPage { get; set; } = new([], 0, 1, 5);
@@ -37,6 +39,7 @@ namespace AncientBook.Application.DTOs
         public int BookId { get; set; }
         public string Title { get; set; } = string.Empty;
         public int SoldQuantity { get; set; }
+        public int EBookQuantity { get; set; }
         public decimal TotalAmount { get; set; }
         public int RentalQuantity { get; set; }
         public string? CoverImg { get; set; }
@@ -47,6 +50,7 @@ namespace AncientBook.Application.DTOs
         public DateTime Date { get; set; }
         public decimal Revenue { get; set; }
         public decimal PhysicalRevenue { get; set; }
+        public decimal EBookRevenue { get; set; }
         public decimal RentalRevenue { get; set; }
         public int CompletedOrders { get; set; }
     }

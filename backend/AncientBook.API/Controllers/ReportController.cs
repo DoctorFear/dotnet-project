@@ -9,7 +9,7 @@ namespace AncientBook.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Staff")]
     public class ReportsController : ControllerBase
     {
         private readonly IReportService _reportService;
@@ -23,20 +23,33 @@ namespace AncientBook.API.Controllers
         [HttpGet("dashboard")]
         public async Task<IActionResult> GetDashboardReport([FromQuery] ReportFilterDto filter)
         {
-            try { return Ok(await _reportService.GetDashboardReportAsync(filter)); }
-            catch (System.ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+            try
+            {
+                var report = await _reportService.GetDashboardReportAsync(filter);
+                return Ok(report);
+            }
+            catch (System.ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
-        // Xuất file PDF báo cáo danh sách & doanh thu sách
+        // Xuất file PDF báo cáo danh sách & doanh thu sách.
         [HttpGet("export-pdf")]
         public async Task<IActionResult> ExportPdf([FromQuery] ReportFilterDto filter, [FromQuery] bool detailed = false)
         {
             try
             {
-                var pdfBytes = await _reportService.ExportPdfReportAsync(filter, User.FindFirstValue(ClaimTypes.Name) ?? "Admin", detailed);
+                var exportedBy = User.FindFirstValue(ClaimTypes.Name)
+                    ?? User.FindFirstValue(ClaimTypes.Email)
+                    ?? "Quản trị viên";
+                var pdfBytes = await _reportService.ExportPdfReportAsync(filter, exportedBy, detailed);
                 return File(pdfBytes, "application/pdf", "BaoCao_AncientBook.pdf");
             }
-            catch (System.ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+            catch (System.ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }

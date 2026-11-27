@@ -6,7 +6,7 @@ export interface ReportQuery {
     toDate: string;
     categoryId?: number;
     publisherId?: number;
-    purchaseType: 'all' | 'physical' | 'rental';
+    purchaseType: 'all' | 'physical' | 'ebook' | 'rental';
     topPage: number;
     topPageSize: number;
     inventoryPage: number;
@@ -16,6 +16,7 @@ export interface RevenuePeriod {
     date: string;
     revenue: number;
     physicalRevenue: number;
+    eBookRevenue: number;
     rentalRevenue: number;
     completedOrders: number;
 }
@@ -24,6 +25,7 @@ export interface TopReportBook {
     title: string;
     coverImg: string | null;
     soldQuantity: number;
+    eBookQuantity: number;
     rentalQuantity: number;
     totalAmount: number;
 }
@@ -44,9 +46,11 @@ export interface DashboardReport {
     lowStockThreshold: number;
     totalRevenue: number;
     physicalRevenue: number;
+    eBookRevenue: number;
     rentalRevenue: number;
     completedOrders: number;
     physicalQuantity: number;
+    eBookQuantity: number;
     rentalQuantity: number;
     revenueTrend: RevenuePeriod[];
     topBooksPage: PagedResult<TopReportBook>;

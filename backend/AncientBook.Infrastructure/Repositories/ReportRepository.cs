@@ -14,40 +14,64 @@ public class ReportRepository(ApplicationDbContext context) : IReportRepository
     {
         var books = FilterBooks(filter);
         var lines = FilterLines(filter);
-        var report = await lines.GroupBy(line => 1).Select(group => new DashboardReportDto
-        {
-            TotalRevenue = group.Sum(line => line.Revenue),
-            PhysicalRevenue = group.Sum(line => line.Type == PurchaseType.Physical ? line.Revenue : 0),
-            RentalRevenue = group.Sum(line => line.Type == PurchaseType.Rental || line.Type == PurchaseType.EBook ? line.Revenue : 0),
-            PhysicalQuantity = group.Sum(line => line.Type == PurchaseType.Physical ? line.Quantity : 0),
-            RentalQuantity = group.Sum(line => line.Type == PurchaseType.Rental || line.Type == PurchaseType.EBook ? line.Quantity : 0),
-            CompletedOrders = group.Select(line => line.OrderId).Distinct().Count()
-        }).FirstOrDefaultAsync() ?? new DashboardReportDto();
+        var report = await lines
+            .GroupBy(line => 1)
+            .Select(group => new DashboardReportDto
+            {
+                TotalRevenue = group.Sum(line => line.Revenue),
+                PhysicalRevenue = group.Sum(line => line.Type == PurchaseType.Physical ? line.Revenue : 0),
+                EBookRevenue = group.Sum(line => line.Type == PurchaseType.EBook ? line.Revenue : 0),
+                RentalRevenue = group.Sum(line => line.Type == PurchaseType.Rental ? line.Revenue : 0),
+                PhysicalQuantity = group.Sum(line => line.Type == PurchaseType.Physical ? line.Quantity : 0),
+                EBookQuantity = group.Sum(line => line.Type == PurchaseType.EBook ? line.Quantity : 0),
+                RentalQuantity = group.Sum(line => line.Type == PurchaseType.Rental ? line.Quantity : 0),
+                CompletedOrders = group.Select(line => line.OrderId).Distinct().Count()
+            })
+            .FirstOrDefaultAsync() ?? new DashboardReportDto();
+
         report.TotalBooks = await books.CountAsync();
         report.TotalSellingBooks = await books.CountAsync(book => book.Status == BookStatus.Selling);
         report.LowStockThreshold = threshold;
         report.LowStockBooksPage = await GetLowStockBooksAsync(filter, threshold, filter.InventoryPage, filter.InventoryPageSize);
         report.TotalLowStockBooks = report.LowStockBooksPage.TotalCount;
-        report.Category = filter.CategoryId.HasValue ? await context.Categories.Where(x => x.Id == filter.CategoryId).Select(x => x.Name).FirstOrDefaultAsync() : null;
-        report.Publisher = filter.PublisherId.HasValue ? await context.Publishers.Where(x => x.Id == filter.PublisherId).Select(x => x.Name).FirstOrDefaultAsync() : null;
-        report.RevenueTrend = await lines.GroupBy(line => line.Date).OrderBy(group => group.Key)
+        report.Category = filter.CategoryId.HasValue
+            ? await context.Categories.Where(x => x.Id == filter.CategoryId).Select(x => x.Name).FirstOrDefaultAsync()
+            : null;
+        report.Publisher = filter.PublisherId.HasValue
+            ? await context.Publishers.Where(x => x.Id == filter.PublisherId).Select(x => x.Name).FirstOrDefaultAsync()
+            : null;
+
+        report.RevenueTrend = await lines
+            .GroupBy(line => line.Date)
+            .OrderBy(group => group.Key)
             .Select(group => new RevenuePeriodDto
             {
                 Date = group.Key,
                 Revenue = group.Sum(line => line.Revenue),
                 PhysicalRevenue = group.Sum(line => line.Type == PurchaseType.Physical ? line.Revenue : 0),
-                RentalRevenue = group.Sum(line => line.Type == PurchaseType.Rental || line.Type == PurchaseType.EBook ? line.Revenue : 0),
+                EBookRevenue = group.Sum(line => line.Type == PurchaseType.EBook ? line.Revenue : 0),
+                RentalRevenue = group.Sum(line => line.Type == PurchaseType.Rental ? line.Revenue : 0),
                 CompletedOrders = group.Select(line => line.OrderId).Distinct().Count()
-            }).ToListAsync();
-        report.TopBooks = await lines.GroupBy(line => new { line.BookId, line.Title, line.CoverImg })
+            })
+            .ToListAsync();
+
+        report.TopBooks = await lines
+            .GroupBy(line => new { line.BookId, line.Title, line.CoverImg })
             .Select(group => new TopSellingBookDto
             {
-                BookId = group.Key.BookId, Title = group.Key.Title, CoverImg = group.Key.CoverImg,
+                BookId = group.Key.BookId,
+                Title = group.Key.Title,
+                CoverImg = group.Key.CoverImg,
                 SoldQuantity = group.Sum(line => line.Type == PurchaseType.Physical ? line.Quantity : 0),
-                RentalQuantity = group.Sum(line => line.Type == PurchaseType.Rental || line.Type == PurchaseType.EBook ? line.Quantity : 0),
+                EBookQuantity = group.Sum(line => line.Type == PurchaseType.EBook ? line.Quantity : 0),
+                RentalQuantity = group.Sum(line => line.Type == PurchaseType.Rental ? line.Quantity : 0),
                 TotalAmount = group.Sum(line => line.Revenue)
-            }).OrderByDescending(book => book.SoldQuantity + book.RentalQuantity)
-            .ThenByDescending(book => book.TotalAmount).ThenBy(book => book.BookId).Take(10).ToListAsync();
+            })
+            .OrderByDescending(book => book.SoldQuantity + book.EBookQuantity + book.RentalQuantity)
+            .ThenByDescending(book => book.TotalAmount)
+            .ThenBy(book => book.BookId)
+            .Take(10)
+            .ToListAsync();
         var topPage = Math.Clamp(filter.TopPage, 1, Math.Max(1, (int)Math.Ceiling(report.TopBooks.Count / (double)filter.TopPageSize)));
         report.TopBooksPage = new(report.TopBooks.Skip((topPage - 1) * filter.TopPageSize).Take(filter.TopPageSize).ToList(), report.TopBooks.Count, topPage, filter.TopPageSize);
         return report;

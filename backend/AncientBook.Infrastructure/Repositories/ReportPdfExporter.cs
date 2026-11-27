@@ -29,6 +29,7 @@ public class ReportPdfExporter : IReportPdfExporter
                     summary.Spacing(4);
                     summary.Item().Text($"Doanh thu: {Money(report.TotalRevenue)} | Đơn hoàn thành: {report.CompletedOrders}").Bold();
                     summary.Item().Text($"Sách giấy: {report.PhysicalQuantity} cuốn / {Money(report.PhysicalRevenue)}");
+                    summary.Item().Text($"E-Book vĩnh viễn: {report.EBookQuantity} bản / {Money(report.EBookRevenue)}");
                     summary.Item().Text($"Thuê đọc: {report.RentalQuantity} lượt / {Money(report.RentalRevenue)}");
                     summary.Item().Text($"Đầu sách: {report.TotalBooks} | Đang kinh doanh: {report.TotalSellingBooks}");
                     summary.Item().Text($"Tồn kho hiện tại: {report.TotalLowStockBooks} đầu sách giấy còn tối đa {report.LowStockThreshold} cuốn (gồm hết hàng).");
@@ -37,13 +38,33 @@ public class ReportPdfExporter : IReportPdfExporter
                 if (report.TopBooks.Count == 0) column.Item().Text("Không có giao dịch trong kỳ.");
                 else column.Item().Table(table =>
                 {
-                    table.ColumnsDefinition(c => { c.ConstantColumn(25); c.RelativeColumn(); c.ConstantColumn(42); c.ConstantColumn(42); c.ConstantColumn(95); });
-                    table.Header(h => { Cell(h.Cell(), "#", true); Cell(h.Cell(), "Tên sách", true); Cell(h.Cell(), "Giấy", true); Cell(h.Cell(), "Thuê", true); Cell(h.Cell(), "Doanh thu", true); });
+                    table.ColumnsDefinition(c =>
+                    {
+                        c.ConstantColumn(25);
+                        c.RelativeColumn();
+                        c.ConstantColumn(40);
+                        c.ConstantColumn(45);
+                        c.ConstantColumn(40);
+                        c.ConstantColumn(90);
+                    });
+                    table.Header(h =>
+                    {
+                        Cell(h.Cell(), "#", true);
+                        Cell(h.Cell(), "Tên sách", true);
+                        Cell(h.Cell(), "Giấy", true);
+                        Cell(h.Cell(), "E-Book", true);
+                        Cell(h.Cell(), "Thuê", true);
+                        Cell(h.Cell(), "Doanh thu", true);
+                    });
                     for (var i = 0; i < report.TopBooks.Count; i++)
                     {
                         var book = report.TopBooks[i];
-                        Cell(table.Cell(), (i + 1).ToString()); Cell(table.Cell(), book.Title);
-                        Cell(table.Cell(), book.SoldQuantity.ToString()); Cell(table.Cell(), book.RentalQuantity.ToString()); Cell(table.Cell(), Money(book.TotalAmount));
+                        Cell(table.Cell(), (i + 1).ToString());
+                        Cell(table.Cell(), book.Title);
+                        Cell(table.Cell(), book.SoldQuantity.ToString());
+                        Cell(table.Cell(), book.EBookQuantity.ToString());
+                        Cell(table.Cell(), book.RentalQuantity.ToString());
+                        Cell(table.Cell(), Money(book.TotalAmount));
                     }
                 });
                 if (report.DetailedExport) ComposeDetails(column, report);
@@ -65,12 +86,29 @@ public class ReportPdfExporter : IReportPdfExporter
         column.Item().Text("Doanh thu theo ngày").FontSize(13).Bold();
         column.Item().Table(table =>
         {
-            table.ColumnsDefinition(c => { c.RelativeColumn(); c.RelativeColumn(); c.RelativeColumn(); c.RelativeColumn(); c.ConstantColumn(35); });
-            table.Header(h => { Cell(h.Cell(), "Ngày", true); Cell(h.Cell(), "Sách giấy", true); Cell(h.Cell(), "Thuê đọc", true); Cell(h.Cell(), "Tổng", true); Cell(h.Cell(), "Đơn", true); });
+            table.ColumnsDefinition(c =>
+            {
+                c.RelativeColumn();
+                c.RelativeColumn();
+                c.RelativeColumn();
+                c.RelativeColumn();
+                c.RelativeColumn();
+                c.ConstantColumn(32);
+            });
+            table.Header(h =>
+            {
+                Cell(h.Cell(), "Ngày", true);
+                Cell(h.Cell(), "Sách giấy", true);
+                Cell(h.Cell(), "E-Book", true);
+                Cell(h.Cell(), "Thuê đọc", true);
+                Cell(h.Cell(), "Tổng", true);
+                Cell(h.Cell(), "Đơn", true);
+            });
             foreach (var day in report.RevenueTrend)
             {
                 Cell(table.Cell(), day.Date.ToString("dd/MM/yyyy"));
                 Cell(table.Cell(), Money(day.PhysicalRevenue));
+                Cell(table.Cell(), Money(day.EBookRevenue));
                 Cell(table.Cell(), Money(day.RentalRevenue));
                 Cell(table.Cell(), Money(day.Revenue));
                 Cell(table.Cell(), day.CompletedOrders.ToString());

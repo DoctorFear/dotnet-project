@@ -12,13 +12,14 @@
 .iconButton { width: 36px; color: var(--egyptian); background: var(--white); }
 .primary:disabled { opacity: .55; cursor: not-allowed; }
 .scope { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
-.summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.summary { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
 .metric { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--hairline); border-radius: 8px; background: var(--white); min-width: 0; }
 .metricTitle { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; font-weight: 600; color: var(--muted); }
 .metricValue { font-size: 23px; line-height: 1.3; color: var(--catalina); overflow-wrap: anywhere; }
 .muted { font-size: 12px; color: var(--muted); }
 .money, .paper { color: var(--egyptian); }
 .orders { color: var(--success); }
+.ebook { color: #0f766e; }
 .rental { color: #a16207; }
 .panelHeader { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; }
 .panelHeader h2 { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 14px; color: var(--catalina); }
@@ -29,6 +30,7 @@
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend i { width: 10px; height: 10px; border-radius: 2px; }
 .paperSwatch, .paperBar { background: var(--egyptian); }
+.ebookSwatch, .ebookBar { background: #0f766e; }
 .rentalSwatch, .rentalBar { background: var(--saffron); }
 .chartScroll { overflow-x: auto; }
 .chart { display: grid; grid-template-columns: repeat(var(--bar-count), minmax(44px, 1fr)); height: 232px; padding: 20px 0 0; border-bottom: 1px solid var(--hairline); }
@@ -59,4 +61,5 @@
 .error { color: var(--danger); }
 .error button { display: block; margin: 14px auto 0; padding: 7px 14px; border: 1px solid var(--hairline); background: var(--white); color: var(--egyptian); border-radius: 4px; cursor: pointer; }
 @media (max-width: 1200px) { .tables { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1100px) { .summary { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .filterRow, .filterRow:last-child { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .commands { justify-content: flex-end; } .summary { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .filters, .panel { padding: 14px; } .metric { padding: 12px; } .metricValue { font-size: 19px; } }
