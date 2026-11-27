@@ -67,17 +67,53 @@ namespace AncientBook.Application.Services
         }
 
         // Lưu toàn bộ cấu hình và nhật ký trong cùng giao dịch.
-        public async Task<bool> UpdateSettingsAsync(SystemSettingsDto dto, int currentUserId, string? ipAddress = null)
+        public Task<bool> UpdateSettingsAsync(SystemSettingsDto dto, int currentUserId, string? ipAddress = null)
         {
-            if (dto.LowStockThreshold < 0 || dto.MaxPointsPerOrder < 0 || dto.MaxReturnDays < 1 ||
-                dto.PointRateBronze < 0 || dto.PointRateBronze > 100 ||
+            return SaveSettingsAsync(dto, currentUserId, ipAddress, "Cập nhật cài đặt hệ thống");
+        }
+
+        // Khôi phục tham số mặc định.
+        public Task<bool> RestoreDefaultSettingsAsync(int currentUserId, string? ipAddress = null)
+        {
+            var defaultDto = new SystemSettingsDto();
+            return SaveSettingsAsync(defaultDto, currentUserId, ipAddress, "Khôi phục cài đặt mặc định");
+        }
+
+        // Kiểm tra ràng buộc và ghi nhận thay đổi cấu hình cùng Audit Log.
+        private async Task<bool> SaveSettingsAsync(SystemSettingsDto dto, int currentUserId, string? ipAddress, string auditAction)
+        {
+            if (dto.LowStockThreshold < 1 || dto.LowStockThreshold > 100)
+            {
+                throw new ArgumentException("Ngưỡng cảnh báo sách sắp hết phải là số nguyên từ 1 đến 100.");
+            }
+
+            if (dto.MaxReturnDays < 1)
+            {
+                throw new ArgumentException("Thời hạn tối đa yêu cầu hoàn hàng phải lớn hơn hoặc bằng 1 ngày.");
+            }
+
+            if (dto.MaxPointsPerOrder < 0 || dto.MaxPointsPerOrder > 1000)
+            {
+                throw new ArgumentException("Mức điểm sử dụng tối đa phải nằm trong khoảng từ 0 đến 1.000 F-Point.");
+            }
+
+            if (dto.PointRateBronze < 0 || dto.PointRateBronze > 100 ||
                 dto.PointRateSilver < 0 || dto.PointRateSilver > 100 ||
-                dto.PointRateGold < 0 || dto.PointRateGold > 100 ||
-                dto.MemberUpgradeSpendingBronze < 0 ||
+                dto.PointRateGold < 0 || dto.PointRateGold > 100)
+            {
+                throw new ArgumentException("Tỉ lệ tích điểm phải nằm trong khoảng từ 0% đến 100%.");
+            }
+
+            if (dto.PointRateSilver < dto.PointRateBronze || dto.PointRateGold < dto.PointRateSilver)
+            {
+                throw new ArgumentException("Tỉ lệ tích điểm phải đảm bảo Hạng Vàng >= Hạng Bạc >= Hạng Đồng.");
+            }
+
+            if (dto.MemberUpgradeSpendingBronze < 0 ||
                 dto.MemberUpgradeSpendingSilver < dto.MemberUpgradeSpendingBronze ||
                 dto.MemberUpgradeSpendingGold < dto.MemberUpgradeSpendingSilver)
             {
-                throw new ArgumentException("Dữ liệu cài đặt hệ thống không hợp lệ!");
+                throw new ArgumentException("Ngưỡng chi tiêu thăng hạng không được âm và phải tăng dần (Vàng >= Bạc >= Đồng).");
             }
 
             var dict = new Dictionary<string, (string Value, string DataType)>
@@ -93,7 +129,10 @@ namespace AncientBook.Application.Services
                 { "MEMBER_UPGRADE_SPENDING_GOLD", (dto.MemberUpgradeSpendingGold.ToString(CultureInfo.InvariantCulture), "DECIMAL") }
             };
 
-            await using var transaction = _workflow.Database.CurrentTransaction == null ? await _workflow.Database.BeginTransactionAsync() : null;
+            await using var transaction = _workflow.Database.CurrentTransaction == null
+                ? await _workflow.Database.BeginTransactionAsync()
+                : null;
+
             foreach (var item in dict)
             {
                 var setting = await _systemSettingRepository.GetByKeyAsync(item.Key);
@@ -107,37 +146,48 @@ namespace AncientBook.Application.Services
                         CreatedBy = currentUserId.ToString()
                     };
                     _systemSettingRepository.Add(setting);
-                    await _auditLogs.LogAsync("Tạo cài đặt hệ thống", "SystemSettings", "SystemSetting", item.Key,
+                    await _auditLogs.LogAsync(
+                        "Tạo cài đặt hệ thống",
+                        "SystemSettings",
+                        "SystemSetting",
+                        item.Key,
                         newValues: JsonSerializer.Serialize(new { SettingValue = item.Value.Value }),
-                        details: $"Giá trị mới: {item.Value.Value}", userId: currentUserId, ipAddress: ipAddress);
+                        details: $"Giá trị mới: {item.Value.Value}",
+                        userId: currentUserId,
+                        ipAddress: ipAddress);
                 }
                 else
                 {
                     if (setting.SettingValue == item.Value.Value)
+                    {
                         continue;
+                    }
 
                     var previousValue = setting.SettingValue;
                     setting.SettingValue = item.Value.Value;
                     setting.DataType = item.Value.DataType;
                     setting.UpdatedAt = TimeZoneHelper.GetVietnamTime();
                     setting.UpdatedBy = currentUserId.ToString();
-                    await _auditLogs.LogAsync("Cập nhật cài đặt hệ thống", "SystemSettings", "SystemSetting", item.Key,
+                    await _auditLogs.LogAsync(
+                        auditAction,
+                        "SystemSettings",
+                        "SystemSetting",
+                        item.Key,
                         oldValues: JsonSerializer.Serialize(new { SettingValue = previousValue }),
                         newValues: JsonSerializer.Serialize(new { SettingValue = item.Value.Value }),
-                        details: $"Giá trị cũ: {previousValue}; Giá trị mới: {item.Value.Value}", userId: currentUserId, ipAddress: ipAddress);
+                        details: $"Giá trị cũ: {previousValue}; Giá trị mới: {item.Value.Value}",
+                        userId: currentUserId,
+                        ipAddress: ipAddress);
                 }
             }
 
             await _systemSettingRepository.SaveChangesAsync();
-            if (transaction != null) await transaction.CommitAsync();
-            return true;
-        }
+            if (transaction != null)
+            {
+                await transaction.CommitAsync();
+            }
 
-        // Khôi phục tham số mặc định 
-        public async Task<bool> RestoreDefaultSettingsAsync(int currentUserId, string? ipAddress = null)
-        {
-            var defaultDto = new SystemSettingsDto();
-            return await UpdateSettingsAsync(defaultDto, currentUserId, ipAddress);
+            return true;
         }
     }
 }

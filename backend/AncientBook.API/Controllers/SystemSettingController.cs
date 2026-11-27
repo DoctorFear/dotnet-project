@@ -10,7 +10,7 @@ namespace AncientBook.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Staff")]
     public class SystemSettingsController : ControllerBase
     {
         private readonly ISystemSettingService _settingService;
@@ -20,7 +20,7 @@ namespace AncientBook.API.Controllers
             _settingService = settingService;
         }
 
-        // Lấy cấu hình cài đặt vận hành hiện tại.
+        // Lấy cấu hình cài đặt vận hành hiện tại (Admin & Staff xem).
         [HttpGet]
         public async Task<IActionResult> GetSettings()
         {
@@ -28,8 +28,9 @@ namespace AncientBook.API.Controllers
             return Ok(result);
         }
 
-        // Cập nhật các tham số cài đặt hệ thống.
+        // Cập nhật các tham số cài đặt hệ thống (Chỉ Admin).
         [HttpPut]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateSettings([FromBody] SystemSettingsDto dto)
         {
             try
@@ -44,8 +45,9 @@ namespace AncientBook.API.Controllers
             }
         }
 
-        // Khôi phục các tham số cài đặt về mặc định.
+        // Khôi phục các tham số cài đặt về mặc định (Chỉ Admin).
         [HttpPost("restore-default")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> RestoreDefault()
         {
             try
