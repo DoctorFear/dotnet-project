@@ -52,7 +52,7 @@ namespace AncientBook.Infrastructure.Services
             if (edition == null) return false;
 
             edition.PresetType = selectedPresetType;
-            if (selectedPresetType != EbookPresetType.EpubStandard)
+            if (selectedPresetType == EbookPresetType.ScannedBook)
             {
                 edition.IsTtsEnabled = false;
             }

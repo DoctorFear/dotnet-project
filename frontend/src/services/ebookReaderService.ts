@@ -33,7 +33,7 @@ export const ebookReaderService = {
             title: ed.bookTitle || ed.fileTitle,
             author: '',
             totalPages: Math.max(1, Number(ed.totalPages) || 1),
-            ttsEnabled: preset === 1 && Boolean(ed.isTtsEnabled),
+            ttsEnabled: preset !== 3 && Boolean(ed.isTtsEnabled),
             chatEnabled: preset === 1 || preset === 2,
             presetType: preset,
             format: isPdf ? 'Pdf' : 'Epub',
