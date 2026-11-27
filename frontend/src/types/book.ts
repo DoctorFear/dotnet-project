@@ -60,6 +60,7 @@ export interface BookFilterParams {
     minRating?: number;
     maxRatingExclusive?: number;
     status?: string;
+    includeStopped?: boolean;
     sortBy?: string;
     pageNumber?: number;
     pageSize?: number;

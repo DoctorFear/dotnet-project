@@ -36,8 +36,11 @@ namespace AncientBook.Application.Services
 
         // Năm xuất bản thực tế để bộ lọc không dùng danh sách cố định.
         public Task<List<int>> GetPublicationYearsAsync() => _bookRepository.GetBookListQuery()
-            .Where(book => book.PublicationYear.HasValue).Select(book => book.PublicationYear!.Value)
-            .Distinct().OrderByDescending(year => year).ToListAsync();
+            .Where(book => book.Status != BookStatus.Stopped && book.PublicationYear.HasValue)
+            .Select(book => book.PublicationYear!.Value)
+            .Distinct()
+            .OrderByDescending(year => year)
+            .ToListAsync();
 
         // Tra cứu, lọc nâng cao và phân trang danh sách sách
         public async Task<PagedResult<BookListDto>> GetFilteredBooksAsync(BookFilterRequestDto filter)
@@ -46,8 +49,18 @@ namespace AncientBook.Application.Services
             if (filter.PageSize < 1) filter.PageSize = 12;
             if (filter.PageSize > 100) filter.PageSize = 100;
 
+            // Đảo lại khoảng giá nếu giá tối thiểu lớn hơn giá tối đa (UC10 E2).
+            if (filter.MinPrice.HasValue && filter.MaxPrice.HasValue && filter.MinPrice.Value > filter.MaxPrice.Value)
+            {
+                (filter.MinPrice, filter.MaxPrice) = (filter.MaxPrice, filter.MinPrice);
+            }
+
             var query = _bookRepository.GetBookListQuery();
             var threshold = await StockWarningPolicy.GetThresholdAsync(_settings);
+            if (!filter.IncludeStopped)
+            {
+                query = query.Where(b => b.Status != BookStatus.Stopped);
+            }
             if (!string.IsNullOrWhiteSpace(filter.Author))
                 query = query.Where(book => book.Author == filter.Author.Trim());
 
@@ -419,13 +432,29 @@ namespace AncientBook.Application.Services
             if (!Enum.TryParse<BookStatus>(dto.Status, true, out var status) || !Enum.IsDefined(status))
                 throw new ArgumentException("Trạng thái kinh doanh không hợp lệ.");
             if (dto.PhysicalPrice < 0 || dto.EBookPrice < 0 || dto.WeeklyRentalPrice < 0 || dto.MonthlyRentalPrice < 0 || dto.YearlyRentalPrice < 0)
+            {
                 throw new ArgumentException("Giá bán và giá thuê không được âm.");
+            }
+
             if (!dto.IsPhysicalAvailable && !dto.IsEBookAvailable && !dto.IsRentalAvailable)
+            {
                 throw new ArgumentException("Sách phải có ít nhất một hình thức phát hành.");
-            if (dto.IsPhysicalAvailable && dto.PhysicalPrice <= 0 || dto.IsEBookAvailable && dto.EBookPrice <= 0)
-                throw new ArgumentException("Giá của phiên bản đang bán phải lớn hơn 0.");
-            if (dto.IsRentalAvailable && (!dto.IsEBookAvailable || dto.WeeklyRentalPrice <= 0 && dto.MonthlyRentalPrice <= 0 && dto.YearlyRentalPrice <= 0))
-                throw new ArgumentException("Thuê đọc cần phiên bản E-book và ít nhất một giá thuê hợp lệ.");
+            }
+
+            if (dto.IsPhysicalAvailable && dto.PhysicalPrice <= 0)
+            {
+                throw new ArgumentException("Giá bán sách giấy phải lớn hơn 0 khi bật bán sách giấy.");
+            }
+
+            if (dto.IsEBookAvailable && dto.EBookPrice <= 0)
+            {
+                throw new ArgumentException("Giá bán E-book phải lớn hơn 0 khi bật bán E-book.");
+            }
+
+            if (dto.IsRentalAvailable && dto.WeeklyRentalPrice <= 0 && dto.MonthlyRentalPrice <= 0 && dto.YearlyRentalPrice <= 0)
+            {
+                throw new ArgumentException("Vui lòng nhập ít nhất một mức giá thuê hợp lệ (> 0) khi bật hình thức Thuê đọc.");
+            }
             if (dto.Pages is <= 0 || dto.Weight is <= 0 || dto.PublicationYear is < 1 || dto.PublicationYear > DateTime.UtcNow.Year + 1)
                 throw new ArgumentException("Số trang, trọng lượng hoặc năm xuất bản không hợp lệ.");
             if (dto.PublisherId is null || dto.CategoryIds == null || dto.CategoryIds.Count == 0 || dto.CategoryIds.Any(id => id <= 0))

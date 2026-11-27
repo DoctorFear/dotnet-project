@@ -594,7 +594,18 @@ textarea.formControl {
 .formWarn {
     font-size: 12.5px;
     color: var(--danger);
-    margin-top: 12px;
+    margin-top: 8px;
+    padding: 9px 12px;
+    background: var(--danger-bg);
+    border-radius: 6px;
+    line-height: 1.4;
+}
+
+.formWarnTop {
+    font-size: 12.5px;
+    color: var(--danger);
+    margin-top: 0;
+    margin-bottom: 12px;
     padding: 9px 12px;
     background: var(--danger-bg);
     border-radius: 6px;

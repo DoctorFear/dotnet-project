@@ -15,6 +15,7 @@ namespace AncientBook.Application.DTOs
         public double? MinRating { get; set; }
         public double? MaxRatingExclusive { get; set; }
         public string? Status { get; set; }
+        public bool IncludeStopped { get; set; } = false;
         public string? SortBy { get; set; } = "newest";
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 12;

@@ -22,13 +22,13 @@ const useAdminBookData = () => {
         setError('');
         try {
             const [bookResult, categoryResult, publisherResult] = await Promise.all([
-                getBooks({ pageNumber: 1, pageSize: 100 }),
+                getBooks({ pageNumber: 1, pageSize: 100, includeStopped: true }),
                 getCategories(),
                 getPublishers(),
             ]);
             const allBooks = [...bookResult.items];
             for (let pageNumber = 2; pageNumber <= bookResult.totalPages; pageNumber++) {
-                const nextPage = await getBooks({ pageNumber, pageSize: 100 });
+                const nextPage = await getBooks({ pageNumber, pageSize: 100, includeStopped: true });
                 allBooks.push(...nextPage.items);
             }
             setBooks(allBooks);
@@ -275,12 +275,7 @@ export const useBookManagement = () => {
     };
 
     const updateDraft = (key: string, value: DraftValue) => {
-        setDraft((prev) => {
-            const updated = { ...prev, [key]: value };
-            if (key === 'isEBookAvailable' && value === false) updated.isRentalAvailable = false;
-
-            return updated;
-        });
+        setDraft((prev) => ({ ...prev, [key]: value }));
     };
 
     // Chọn hoặc bỏ chọn thể loại trong danh sách nhiều lựa chọn.
@@ -403,17 +398,51 @@ export const useBookManagement = () => {
             return;
         }
 
-        const isPhysicalGreen = draft.isPhysicalAvailable === true && (Number(draft.stockCount) || 0) > 0;
-        const isEBookGreen = draft.isEBookAvailable === true && draft.hasPublishedEbook === true;
-        const isRentalGreen = draft.isRentalAvailable === true && draft.isEBookAvailable === true && draft.hasPublishedEbook === true;
-        const hasAnyGreen = isPhysicalGreen || isEBookGreen || isRentalGreen;
+        const isPhysicalAvailable = draft.isPhysicalAvailable === true;
+        const isEBookAvailable = draft.isEBookAvailable === true;
+        const isRentalAvailable = draft.isRentalAvailable === true;
 
-        if (draft.status === 'selling' && !hasAnyGreen) {
-            setFormWarn('Không thể chọn trạng thái "Đang bán" khi chưa có hình thức phát hành nào khả dụng (màu xanh). Vui lòng chọn "Sắp phát hành" hoặc "Ngừng bán".');
+        if (!isPhysicalAvailable && !isEBookAvailable && !isRentalAvailable) {
+            setFormWarn('Vui lòng chọn ít nhất một hình thức phát hành cho sách.');
             return;
         }
 
+        const physicalPriceVal = Number(draft.physicalPrice || 0);
         const eBookPriceVal = Number(draft.eBookPrice || 0);
+        const weeklyRentalPriceVal = Number(draft.weeklyRentalPrice || 0);
+        const monthlyRentalPriceVal = Number(draft.monthlyRentalPrice || 0);
+        const yearlyRentalPriceVal = Number(draft.yearlyRentalPrice || 0);
+
+        if (
+            physicalPriceVal < 0 ||
+            eBookPriceVal < 0 ||
+            weeklyRentalPriceVal < 0 ||
+            monthlyRentalPriceVal < 0 ||
+            yearlyRentalPriceVal < 0
+        ) {
+            setFormWarn('Giá bán và giá thuê không được nhỏ hơn 0.');
+            return;
+        }
+
+        if (isPhysicalAvailable && physicalPriceVal <= 0) {
+            setFormWarn('Vui lòng nhập Giá bán sách giấy lớn hơn 0.');
+            return;
+        }
+
+        if (isEBookAvailable && eBookPriceVal <= 0) {
+            setFormWarn('Vui lòng nhập Giá bán E-book lớn hơn 0.');
+            return;
+        }
+
+        if (
+            isRentalAvailable &&
+            weeklyRentalPriceVal <= 0 &&
+            monthlyRentalPriceVal <= 0 &&
+            yearlyRentalPriceVal <= 0
+        ) {
+            setFormWarn('Vui lòng nhập ít nhất một mức giá thuê (Tuần, Tháng hoặc Năm) lớn hơn 0.');
+            return;
+        }
 
         const request = {
             title: titleStr,
@@ -422,14 +451,14 @@ export const useBookManagement = () => {
             publisherId: Number(draft.publisherId),
             categoryIds,
             coverImg: (typeof draft.coverImg === 'string' && draft.coverImg.trim()) || '',
-            isPhysicalAvailable: draft.isPhysicalAvailable === true,
-            physicalPrice: Number(draft.physicalPrice || 0),
-            isEBookAvailable: draft.isEBookAvailable === true,
+            isPhysicalAvailable,
+            physicalPrice: physicalPriceVal,
+            isEBookAvailable,
             eBookPrice: eBookPriceVal,
-            isRentalAvailable: draft.isRentalAvailable === true,
-            weeklyRentalPrice: Number(draft.weeklyRentalPrice || 0),
-            monthlyRentalPrice: Number(draft.monthlyRentalPrice || 0),
-            yearlyRentalPrice: Number(draft.yearlyRentalPrice || 0),
+            isRentalAvailable,
+            weeklyRentalPrice: weeklyRentalPriceVal,
+            monthlyRentalPrice: monthlyRentalPriceVal,
+            yearlyRentalPrice: yearlyRentalPriceVal,
             status: draft.status as AdminBookStatus,
             pages: draft.pages ? Number(draft.pages) : null,
             weight: draft.weight ? Number(draft.weight) : null,
@@ -514,8 +543,62 @@ export const useBookManagement = () => {
         return selectedIds.map((id) => categoryNameMap.get(id)).filter(Boolean).join(', ');
     }, [draft.categoryIds, categoryNameMap]);
 
-    const isEBookDisabled = draft.isEBookAvailable !== true || draft.isRentalAvailable !== true;
+    const isRentalDisabled = draft.isRentalAvailable !== true;
 
-
-    return { loadData, uploadCount, onUploadBusyChange, isSaving, books, categories, publishers, isLoading, error, activeTab, searchText, statusFilter, categoryFilter, publisherFilter, minPrice, maxPrice, pageSize, modalKind, editingId, draft, formWarn, confirmState, toasts, isCategoryDropdownOpen, categoryDropdownRef, categoryNameMap, publisherNameMap, stats, currentPage, pageItems, filteredItems, selectedCategoriesText, isEBookDisabled, setSearchText, setStatusFilter, setCategoryFilter, setPublisherFilter, setMinPrice, setMaxPrice, setPage, setPageSize, setConfirmState, setIsCategoryDropdownOpen, resetListState, updateDraft, toggleCategorySelection, openCreateModal, openEditModal, closeModal, saveModal, confirmDelete, removeToast, changeBookStatus, addToast };
+    return {
+        loadData,
+        uploadCount,
+        onUploadBusyChange,
+        isSaving,
+        books,
+        categories,
+        publishers,
+        isLoading,
+        error,
+        activeTab,
+        searchText,
+        statusFilter,
+        categoryFilter,
+        publisherFilter,
+        minPrice,
+        maxPrice,
+        pageSize,
+        modalKind,
+        editingId,
+        draft,
+        formWarn,
+        confirmState,
+        toasts,
+        isCategoryDropdownOpen,
+        categoryDropdownRef,
+        categoryNameMap,
+        publisherNameMap,
+        stats,
+        currentPage,
+        pageItems,
+        filteredItems,
+        selectedCategoriesText,
+        isRentalDisabled,
+        setSearchText,
+        setStatusFilter,
+        setCategoryFilter,
+        setPublisherFilter,
+        setMinPrice,
+        setMaxPrice,
+        setPage,
+        setPageSize,
+        setConfirmState,
+        setIsCategoryDropdownOpen,
+        resetListState,
+        updateDraft,
+        toggleCategorySelection,
+        openCreateModal,
+        openEditModal,
+        closeModal,
+        saveModal,
+        confirmDelete,
+        removeToast,
+        changeBookStatus,
+        addToast,
+    };
 };

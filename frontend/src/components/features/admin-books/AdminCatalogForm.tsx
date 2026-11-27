@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import type { useBookManagement } from '../../../hooks/useBookManagement';
 import BookEditorFields from './BookEditorFields';
@@ -5,6 +6,21 @@ import styles from './AdminBookManagement.module.css';
 
 export default function AdminCatalogForm({ controller }: { controller: ReturnType<typeof useBookManagement> }) {
     const { modalKind, editingId, formWarn, closeModal, saveModal } = controller;
+    const modalBodyRef = useRef<HTMLDivElement>(null);
+    const [submitAttempt, setSubmitAttempt] = useState(0);
+
+    // Tự động cuộn lên đầu modal khi có thông báo lỗi để người dùng thấy ngay.
+    useEffect(() => {
+        if (modalKind && formWarn) {
+            modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }, [modalKind, formWarn, submitAttempt]);
+
+    const handleSaveClick = async () => {
+        setSubmitAttempt((current) => current + 1);
+        await saveModal();
+    };
+
     return <>
 {/* MODAL THÊM / SỬA SÁCH, THỂ LOẠI & NXB */}
             {modalKind && (
@@ -23,21 +39,35 @@ export default function AdminCatalogForm({ controller }: { controller: ReturnTyp
                             </button>
                         </div>
 
-                        <div className={styles.modalBody}>
+                        <div className={styles.modalBody} ref={modalBodyRef}>
+                            {modalKind !== 'books' && formWarn && (
+                                <div className={styles.formWarnTop} role="alert">
+                                    {formWarn}
+                                </div>
+                            )}
+
                             {modalKind === 'books' && <BookEditorFields controller={controller} />}
 
                             {modalKind === 'categories' && <CategoryEditorFields controller={controller} />}
 
                             {modalKind === 'publishers' && <PublisherEditorFields controller={controller} />}
-
-                            {formWarn && <div className={styles.formWarn}>{formWarn}</div>}
                         </div>
 
                         <div className={styles.modalFooter}>
-                            <button type="button" className={styles.btnSecondary} disabled={controller.isSaving || controller.uploadCount > 0} onClick={closeModal}>
+                            <button
+                                type="button"
+                                className={styles.btnSecondary}
+                                disabled={controller.isSaving || controller.uploadCount > 0}
+                                onClick={closeModal}
+                            >
                                 Hủy
                             </button>
-                            <button type="button" className={styles.btnPrimary} disabled={controller.isSaving || controller.uploadCount > 0} onClick={saveModal}>
+                            <button
+                                type="button"
+                                className={styles.btnPrimary}
+                                disabled={controller.isSaving || controller.uploadCount > 0}
+                                onClick={() => void handleSaveClick()}
+                            >
                                 {controller.isSaving ? 'Đang lưu...' : 'Lưu'}
                             </button>
                         </div>
