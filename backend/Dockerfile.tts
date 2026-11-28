@@ -3,7 +3,13 @@ FROM python:3.12-slim AS runtime
 WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PIPER_MODELS_DIR=/app/models/piper
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    espeak-ng \
+    libespeak1 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
 COPY requirements.txt* ./
@@ -11,8 +17,13 @@ RUN pip install --no-cache-dir --upgrade pip && \
     if [ -f requirements.txt ]; then \
         pip install --no-cache-dir -r requirements.txt; \
     else \
-        pip install --no-cache-dir fastapi "uvicorn[standard]" edge-tts; \
+        pip install --no-cache-dir fastapi "uvicorn[standard]" edge-tts piper-tts lameenc pyttsx3; \
     fi
+
+RUN mkdir -p /app/models/piper && \
+    python -m piper.download_voices --data-dir /app/models/piper vi_VN-vais1000-medium && \
+    python -m piper.download_voices --data-dir /app/models/piper en_US-lessac-medium && \
+    python -m piper.download_voices --data-dir /app/models/piper en_US-ryan-medium
 
 COPY tts_server.py ./
 

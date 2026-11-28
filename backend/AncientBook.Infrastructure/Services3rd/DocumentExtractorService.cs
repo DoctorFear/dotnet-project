@@ -38,10 +38,16 @@ namespace AncientBook.Infrastructure.Services
         {
             var rawPages = new List<(int? PageNum, string Content)>();
 
+            if (fileStream.CanSeek)
+                fileStream.Position = 0;
+
+            using var workingStream = new MemoryStream();
+            await fileStream.CopyToAsync(workingStream, ct);
+            workingStream.Position = 0;
+
             if (format == EbookFormat.Pdf)
             {
-                fileStream.Position = 0;
-                using var document = PdfDocument.Open(fileStream);
+                using var document = PdfDocument.Open(workingStream);
                 foreach (var page in document.GetPages())
                 {
                     if (ct.IsCancellationRequested) break;
@@ -54,8 +60,7 @@ namespace AncientBook.Infrastructure.Services
             }
             else if (format == EbookFormat.Epub)
             {
-                fileStream.Position = 0;
-                var epub = await EpubReader.ReadBookAsync(fileStream);
+                var epub = await EpubReader.ReadBookAsync(workingStream);
                 int sectionNumber = 1;
                 foreach (var textContent in epub.ReadingOrder)
                 {

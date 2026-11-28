@@ -428,6 +428,8 @@ namespace AncientBook.API.Controllers
                 });
             }
 
+            var updatedEdition = await _editionRepository.GetByIdAsync(editionId, ct);
+
             // Ghi nhật ký hoạt động hệ thống (Audit Log - UC07)
             await _auditLogService.LogAsync(
                 action: "PUBLISH_EBOOK",
@@ -446,7 +448,8 @@ namespace AncientBook.API.Controllers
                 message = "Xuất bản ấn bản E-Book thành công.",
                 EditionId = editionId,
                 PresetType = request.PresetType.ToString(),
-                Status = EditionPublishStatus.Published.ToString()
+                Status = EditionPublishStatus.Published.ToString(),
+                IsTtsEnabled = updatedEdition?.IsTtsEnabled ?? false
             });
         }
 

@@ -9,7 +9,15 @@ namespace AncientBook.Domain.Entities
         public int PageNumber { get; set; }
         public int SegmentIndex { get; set; } // Thứ tự khối trên trang: 0, 1, 2...
         public string TextContent { get; set; } = string.Empty;
+        public string AudioUrlViFemale { get; set; } = string.Empty;
+
+        public string AudioUrlViMale { get; set; } = string.Empty;
+
+        public string AudioUrlEnFemale { get; set; } = string.Empty;
+
+        public string AudioUrlEnMale { get; set; } = string.Empty;
         public string AudioUrlFemale { get; set; } = string.Empty;
+
         public string AudioUrlMale { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

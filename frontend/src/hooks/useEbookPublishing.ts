@@ -323,6 +323,8 @@ export const useEbookPublishing = (onChanged?: () => void) => {
 
             if (draft.presetType === 3) {
                 setProgressStage('Đang hoàn tất phát hành ấn bản tài liệu thị giác...');
+            } else if (draft.presetType === 1) {
+                setProgressStage('Đang trích xuất nội dung, nạp chỉ mục AI (RAG) và tạo giọng đọc số TTS...');
             } else {
                 setProgressStage('Đang trích xuất nội dung, phân đoạn và lập chỉ mục tri thức AI (RAG Embedding)...');
             }
@@ -330,11 +332,12 @@ export const useEbookPublishing = (onChanged?: () => void) => {
             await ebookPublishingService.publishEdition(targetEditionId, draft.presetType);
             const now = new Date().toISOString();
 
-            // Lấy lại chi tiết để cập nhật số lượng chunks embedding thực tế
             let totalEmbeddings = 0;
+            let isTtsEnabled = draft.ttsEnabled;
             try {
                 const updated = await ebookPublishingService.getEditionById(targetEditionId);
                 totalEmbeddings = updated.totalEmbeddings;
+                isTtsEnabled = updated.isTtsEnabled;
             } catch {
                 // ignore
             }
@@ -345,9 +348,25 @@ export const useEbookPublishing = (onChanged?: () => void) => {
                 status: 'Published',
                 publishedAt: now,
                 totalEmbeddings,
+                ttsEnabled: isTtsEnabled,
                 savedAt: now,
             }));
-            setNotice('Xuất bản ấn bản điện tử thành công! Độc giả đã có thể đọc sách trên nền tảng.');
+
+            if (isTtsEnabled) {
+                try {
+                    const segments = await ebookPublishingService.getPageSegments(targetEditionId, 1);
+                    setPreviewSegments(segments);
+                    setPreviewPage(1);
+                } catch {
+                    // ignore preview fetch error
+                }
+            }
+
+            setNotice(
+                isTtsEnabled
+                    ? 'Xuất bản ấn bản điện tử và tạo giọng đọc AI thành công!'
+                    : 'Xuất bản ấn bản điện tử thành công! Độc giả đã có thể đọc sách trên nền tảng.'
+            );
             onChanged?.();
         } catch (err: any) {
             setError(err.message || 'Xuất bản thất bại trong quá trình nạp tri thức AI.');

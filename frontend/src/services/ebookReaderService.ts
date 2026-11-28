@@ -51,15 +51,22 @@ export const ebookReaderService = {
                 { method: 'GET' }
             );
             if (!Array.isArray(data)) return [];
-            return data.map((item, idx) => ({
-                id: item.id || (pageNumber * 1000 + idx),
-                editionId,
-                pageNumber: item.pageNumber,
-                segmentIndex: item.segmentIndex,
-                textContent: item.textContent,
-                audioUrlFemale: item.audioUrlFemale,
-                audioUrlMale: item.audioUrlMale,
-            }));
+            return data.map((item, idx) => {
+                const audioUrlFemale = item.audioUrlFemale ?? item.AudioUrlFemale ?? '';
+                const audioUrlMale = item.audioUrlMale ?? item.AudioUrlMale ?? '';
+                return {
+                    id: item.id ?? item.Id ?? (pageNumber * 1000 + idx),
+                    segmentIndex: item.segmentIndex ?? item.SegmentIndex ?? idx,
+                    pageNumber: item.pageNumber ?? item.PageNumber ?? pageNumber,
+                    textContent: item.textContent ?? item.TextContent ?? '',
+                    audioUrlFemale,
+                    audioUrlMale,
+                    audioUrlViFemale: item.audioUrlViFemale ?? item.AudioUrlViFemale ?? audioUrlFemale,
+                    audioUrlViMale: item.audioUrlViMale ?? item.AudioUrlViMale ?? audioUrlMale,
+                    audioUrlEnFemale: item.audioUrlEnFemale ?? item.AudioUrlEnFemale ?? '',
+                    audioUrlEnMale: item.audioUrlEnMale ?? item.AudioUrlEnMale ?? '',
+                };
+            });
         } catch {
             return [];
         }

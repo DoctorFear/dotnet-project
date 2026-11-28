@@ -12,6 +12,7 @@ using AncientBook.Domain.Enums;
 using AncientBook.Infrastructure.Persistence;
 using AncientBook.Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
+using System.IO;
 
 namespace AncientBook.Infrastructure.Services
 {
@@ -24,6 +25,7 @@ namespace AncientBook.Infrastructure.Services
         private readonly ITtsDocumentExtractorService _ttsDocumentExtractor;
         private readonly ITextChunker _textChunker;
         private readonly IGeminiEmbeddingService _geminiService;
+        private readonly IEbookTtsService _ttsService;
         private readonly ApplicationDbContext _context;
 
         public EbookPublishService(
@@ -34,6 +36,7 @@ namespace AncientBook.Infrastructure.Services
             ITtsDocumentExtractorService ttsDocumentExtractor,
             ITextChunker textChunker,
             IGeminiEmbeddingService geminiService,
+            IEbookTtsService ttsService,
             ApplicationDbContext context)
         {
             _editionRepository = editionRepository;
@@ -43,6 +46,7 @@ namespace AncientBook.Infrastructure.Services
             _ttsDocumentExtractor = ttsDocumentExtractor;
             _textChunker = textChunker;
             _geminiService = geminiService;
+            _ttsService = ttsService;
             _context = context;
         }
 
@@ -71,46 +75,61 @@ namespace AncientBook.Infrastructure.Services
 
                 if (selectedPresetType != EbookPresetType.ScannedBook)
                 {
-                    using var fileStream = await _fileStorageService.GetFileStreamAsync(edition.DropboxPath, ct);
+                    byte[] fileBytes;
+                    using (var downloadStream = await _fileStorageService.GetFileStreamAsync(edition.DropboxPath, ct))
+                    using (var buffer = new MemoryStream())
+                    {
+                        await downloadStream.CopyToAsync(buffer, ct);
+                        fileBytes = buffer.ToArray();
+                    }
 
                     // 1a. Bóc tách từng đoạn văn bản theo trang để lưu sẵn vào DB cho E-Reader hiển thị
-                    var extractedSegments = _ttsDocumentExtractor.ExtractSegments(fileStream, selectedPresetType);
-                    foreach (var seg in extractedSegments)
+                    using (var ttsStream = new MemoryStream(fileBytes))
                     {
-                        if (string.IsNullOrWhiteSpace(seg.TextContent)) continue;
-
-                        pageTextSegmentsToInsert.Add(new BookTtsSegment
+                        var extractedSegments = _ttsDocumentExtractor.ExtractSegments(ttsStream, selectedPresetType);
+                        foreach (var seg in extractedSegments)
                         {
-                            EditionId = edition.Id,
-                            PageNumber = seg.PageNumber,
-                            SegmentIndex = seg.SegmentIndex,
-                            TextContent = seg.TextContent,
-                            AudioUrlFemale = string.Empty,
-                            AudioUrlMale = string.Empty,
-                            CreatedAt = DateTime.UtcNow
-                        });
+                            if (string.IsNullOrWhiteSpace(seg.TextContent)) continue;
+
+                            pageTextSegmentsToInsert.Add(new BookTtsSegment
+                            {
+                                EditionId = edition.Id,
+                                PageNumber = seg.PageNumber,
+                                SegmentIndex = seg.SegmentIndex,
+                                TextContent = seg.TextContent,
+                                AudioUrlFemale = string.Empty,
+                                AudioUrlMale = string.Empty,
+                                AudioUrlViFemale = string.Empty,
+                                AudioUrlViMale = string.Empty,
+                                AudioUrlEnFemale = string.Empty,
+                                AudioUrlEnMale = string.Empty,
+                                CreatedAt = DateTime.UtcNow
+                            });
+                        }
                     }
 
                     // 1b. Bóc tách & chia chunk để sinh Vector RAG cho Copilot
-                    if (fileStream.CanSeek) fileStream.Position = 0;
-                    var rawPages = await _documentExtractor.ExtractRawPagesAsync(fileStream, edition.Format, ct);
-                    var chunks = _textChunker.ChunkText(rawPages);
-
-                    foreach (var chunk in chunks)
+                    using (var ragStream = new MemoryStream(fileBytes))
                     {
-                        var vector = await _geminiService.GetEmbeddingAsync(chunk.Text, ct);
+                        var rawPages = await _documentExtractor.ExtractRawPagesAsync(ragStream, edition.Format, ct);
+                        var chunks = _textChunker.ChunkText(rawPages);
 
-                        embeddingsToInsert.Add(new BookEmbedding
+                        foreach (var chunk in chunks)
                         {
-                            EditionId = edition.Id,
-                            PageNumber = chunk.PageNumber,
-                            ChunkIndex = chunk.ChunkIndex,
-                            ChunkContent = chunk.Text,
-                            EmbeddingJson = JsonSerializer.Serialize(vector),
-                            Vector = vector
-                        });
+                            var vector = await _geminiService.GetEmbeddingAsync(chunk.Text, ct);
 
-                        await Task.Delay(80, ct);
+                            embeddingsToInsert.Add(new BookEmbedding
+                            {
+                                EditionId = edition.Id,
+                                PageNumber = chunk.PageNumber,
+                                ChunkIndex = chunk.ChunkIndex,
+                                ChunkContent = chunk.Text,
+                                EmbeddingJson = JsonSerializer.Serialize(vector),
+                                Vector = vector
+                            });
+
+                            await Task.Delay(80, ct);
+                        }
                     }
                 }
 
@@ -189,6 +208,20 @@ namespace AncientBook.Infrastructure.Services
                 }
 
                 await _context.SaveChangesAsync(ct);
+
+                if (selectedPresetType == EbookPresetType.EpubStandard)
+                {
+                    try
+                    {
+                        await _ttsService.GenerateTtsAsync(editionId, "both", null, null, ct);
+                    }
+                    catch (Exception ttsEx)
+                    {
+                        // Keep the book published; staff can retry TTS or reader falls back to Web Speech
+                        Console.WriteLine($"[Publish TTS Warning] Edition #{editionId}: {ttsEx.Message}");
+                    }
+                }
+
                 return true;
             }
             catch (Exception)

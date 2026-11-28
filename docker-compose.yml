@@ -65,6 +65,8 @@ services:
     restart: unless-stopped
     # Override 127.0.0.1 in tts_server.py so Docker networking can reach port 5050
     command: ["uvicorn", "tts_server:app", "--host", "0.0.0.0", "--port", "5050"]
+    environment:
+      PIPER_MODELS_DIR: /app/models/piper
     ports:
       - "${TTS_PORT:-5050}:5050"
     healthcheck:

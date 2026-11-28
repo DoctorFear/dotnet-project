@@ -1,9 +1,6 @@
 // ============================================================================
 // HỆ THỐNG GIỌNG ĐỌC AI FRONTEND (CLIENT-SIDE TTS ENGINE)
-// Hỗ trợ đồng thời:
-// 1. Giọng đọc tạo sẵn (Pre-generated Neural Audio MP3: Nữ Hoài My, Nam Nam Minh)
-// 2. Trình tổng hợp giọng nói Web Speech API (fallback khi chưa tạo sẵn audio)
-// Karaoke highlight thời gian thực, điều chỉnh tốc độ (0.75x - 2.0x), chuyển câu & lật trang tự động.
+// Ưu tiên: File MP3 trên Dropbox -> Live TTS Server -> Browser Web Speech
 // ============================================================================
 
 export interface TtsVoiceOption {
@@ -17,64 +14,94 @@ export interface TtsVoiceOption {
     voice?: SpeechSynthesisVoice;
 }
 
-export interface TtsSentence {
-    id: number;
-    text: string;
-    pageNumber: number;
-    paragraphIndex: number;
+export type TtsPresetId = 'vi-female' | 'vi-male' | 'en-female' | 'en-male';
+export type TtsFallbackId = TtsPresetId | 'auto';
+
+export const DEFAULT_TTS_VOICE_ID: TtsPresetId = 'vi-female';
+export const DEFAULT_TTS_FALLBACK_ID: TtsFallbackId = 'auto';
+
+export const TTS_VOICE_PRESETS: readonly (TtsVoiceOption & { id: TtsPresetId; gender: 'female' | 'male' })[] = [
+    { id: 'vi-female', name: 'Nữ - Tiếng Việt (Hoài My)', lang: 'vi-VN', isVietnamese: true, isPreset: true, gender: 'female', isDefault: true },
+    { id: 'vi-male', name: 'Nam - Tiếng Việt (Nam Minh)', lang: 'vi-VN', isVietnamese: true, isPreset: true, gender: 'male' },
+    { id: 'en-female', name: 'Nữ - Tiếng Anh (Ava HD)', lang: 'en-US', isVietnamese: false, isPreset: true, gender: 'female' },
+    { id: 'en-male', name: 'Nam - Tiếng Anh (Andrew HD)', lang: 'en-US', isVietnamese: false, isPreset: true, gender: 'male' },
+];
+
+const TTS_PROXY_SYNTHESIZE_URL =
+    (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_TTS_PROXY_URL) ||
+    'http://127.0.0.1:5050/synthesize';
+
+export function normalizeTtsVoiceId(id: string): TtsPresetId {
+    if (id === 'preset-female') return 'vi-female';
+    if (id === 'preset-male') return 'vi-male';
+    return TTS_VOICE_PRESETS.find(v => v.id === id)?.id ?? DEFAULT_TTS_VOICE_ID;
+}
+
+export function normalizeTtsFallbackId(id: string): TtsFallbackId {
+    if (id === 'auto') return 'auto';
+    if (id === 'preset-female') return 'vi-female';
+    if (id === 'preset-male') return 'vi-male';
+    return TTS_VOICE_PRESETS.find(v => v.id === id)?.id ?? DEFAULT_TTS_FALLBACK_ID;
+}
+
+export interface TtsAudioUrls {
+    audioUrlViFemale?: string;
+    audioUrlViMale?: string;
+    audioUrlEnFemale?: string;
+    audioUrlEnMale?: string;
     audioUrlFemale?: string;
     audioUrlMale?: string;
 }
 
+export interface TtsSegmentAudios extends TtsAudioUrls {
+    viFemale?: string;
+    viMale?: string;
+    enFemale?: string;
+    enMale?: string;
+    female?: string;
+    male?: string;
+}
+
+export interface TtsSentence extends TtsAudioUrls {
+    id: number;
+    text: string;
+    pageNumber: number;
+    paragraphIndex: number;
+}
+
 export type TtsPlayState = 'idle' | 'playing' | 'paused';
 
-class FrontendTtsEngine {
+export class FrontendTtsEngine {
     private synth: SpeechSynthesis | null = null;
     private currentUtterance: SpeechSynthesisUtterance | null = null;
     private voices: SpeechSynthesisVoice[] = [];
-    private selectedVoiceId: string = 'preset-female';
-    private selectedBrowserVoice: SpeechSynthesisVoice | null = null;
+    private selectedVoiceId: TtsPresetId = DEFAULT_TTS_VOICE_ID;
+    private fallbackVoiceId: TtsFallbackId = DEFAULT_TTS_FALLBACK_ID;
+    private playbackVersion = 0;
     private rate: number = 1.0;
     private pitch: number = 1.0;
     private volume: number = 1.0;
 
-    // Audio HTML5 cho giọng đọc tạo sẵn (Dropbox CDN / MP3)
     private audioElement: HTMLAudioElement | null = null;
+    private blobUrlCache = new Map<string, string>();
+    private activeAbortController: AbortController | null = null;
 
     private sentences: TtsSentence[] = [];
     private currentIndex: number = -1;
     private playState: TtsPlayState = 'idle';
 
-    // Event listeners
     public onStateChange?: (state: TtsPlayState) => void;
     public onSentenceChange?: (sentence: TtsSentence | null, index: number) => void;
     public onFinishedAll?: () => void;
     public onPageComplete?: (pageNumber: number) => void;
 
     constructor() {
-        if (typeof window !== 'undefined') {
-            if ('speechSynthesis' in window) {
-                this.synth = window.speechSynthesis;
-                this.initVoices();
-                if (this.synth.onvoiceschanged !== undefined) {
-                    this.synth.onvoiceschanged = () => this.initVoices();
-                }
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+            this.synth = window.speechSynthesis;
+            this.initVoices();
+            if (this.synth.onvoiceschanged !== undefined) {
+                this.synth.onvoiceschanged = () => this.initVoices();
             }
-
-            // Khởi tạo Audio Element
-            this.audioElement = new Audio();
-            this.audioElement.preload = 'auto';
-
-            this.audioElement.onended = () => {
-                if (this.playState !== 'playing') return;
-                this.handleSentenceFinished();
-            };
-
-            this.audioElement.onerror = (e) => {
-                console.warn('[Audio Playback Error, falling back to Web Speech]', e);
-                // Nếu tệp âm thanh bị lỗi hoặc CORS, chuyển sang Web Speech để tiếp tục đọc
-                this.playWithWebSpeech();
-            };
         }
     }
 
@@ -87,52 +114,8 @@ class FrontendTtsEngine {
         this.voices = this.synth.getVoices();
     }
 
-    /**
-     * Danh sách giọng đọc kết hợp:
-     * - 2 Giọng đọc tạo sẵn chất lượng cao Neural (Nữ Hoài My & Nam Nam Minh)
-     * - Các giọng đọc tổng hợp của hệ thống / trình duyệt
-     */
     public getAvailableVoices(): TtsVoiceOption[] {
-        const presets: TtsVoiceOption[] = [
-            {
-                id: 'preset-female',
-                name: 'Nữ AI (Hoài My - Neural) [Tiếng Việt]',
-                lang: 'vi-VN',
-                isVietnamese: true,
-                isPreset: true,
-                gender: 'female',
-                isDefault: true,
-            },
-            {
-                id: 'preset-male',
-                name: 'Nam AI (Nam Minh - Neural) [Tiếng Việt]',
-                lang: 'vi-VN',
-                isVietnamese: true,
-                isPreset: true,
-                gender: 'male',
-            },
-        ];
-
-        let browserOptions: TtsVoiceOption[] = [];
-        if (this.synth) {
-            const rawList = this.synth.getVoices();
-            if (rawList.length > 0) this.voices = rawList;
-
-            browserOptions = this.voices.map((v, i) => {
-                const isVi = v.lang.toLowerCase().startsWith('vi') || v.name.toLowerCase().includes('vietnam');
-                return {
-                    id: `sys-${v.lang}-${v.name}-${i}`,
-                    name: `${v.name} (${v.lang})${isVi ? ' [Tiếng Việt]' : ''}`,
-                    lang: v.lang,
-                    isVietnamese: isVi,
-                    isDefault: false,
-                    isPreset: false,
-                    voice: v,
-                };
-            });
-        }
-
-        return [...presets, ...browserOptions];
+        return TTS_VOICE_PRESETS.map(v => ({ ...v }));
     }
 
     public getSelectedVoiceId(): string {
@@ -140,18 +123,27 @@ class FrontendTtsEngine {
     }
 
     public setVoiceById(voiceId: string) {
-        this.selectedVoiceId = voiceId;
-        const all = this.getAvailableVoices();
-        const found = all.find((v) => v.id === voiceId);
+        const nextVoice = normalizeTtsVoiceId(voiceId);
+        if (this.selectedVoiceId === nextVoice) return;
+        this.selectedVoiceId = nextVoice;
 
-        if (found) {
-            if (found.voice) {
-                this.selectedBrowserVoice = found.voice;
-            } else {
-                this.selectedBrowserVoice = null;
-            }
+        if (this.playState === 'playing') {
+            this.playCurrent();
+        } else if (this.playState === 'paused') {
+            this.clearPlayback();
+            this.playState = 'idle';
+            this.onStateChange?.(this.playState);
         }
+    }
 
+    public getFallbackVoiceId(): TtsFallbackId {
+        return this.fallbackVoiceId;
+    }
+
+    public setFallbackVoiceId(voiceId: string) {
+        const nextFallback = normalizeTtsFallbackId(voiceId);
+        if (this.fallbackVoiceId === nextFallback) return;
+        this.fallbackVoiceId = nextFallback;
         if (this.playState === 'playing') {
             this.playCurrent();
         }
@@ -162,7 +154,7 @@ class FrontendTtsEngine {
         if (this.audioElement) {
             this.audioElement.playbackRate = this.rate;
         }
-        if (this.currentUtterance && this.synth?.speaking) {
+        if (this.playState === 'playing' && this.currentUtterance && this.synth?.speaking) {
             this.playCurrent();
         }
     }
@@ -186,68 +178,63 @@ class FrontendTtsEngine {
         return this.currentIndex;
     }
 
-    /**
-     * Nạp danh sách các đoạn câu để đọc tuần tự
-     */
     public loadSentences(sentences: TtsSentence[], startIndex: number = 0) {
         this.stop();
         this.sentences = sentences;
         this.currentIndex = Math.max(0, Math.min(sentences.length - 1, startIndex));
     }
 
-    /**
-     * Tách văn bản thành danh sách câu đọc (hỗ trợ kèm audioUrls từ segments)
-     */
     public static splitIntoSentences(
         paragraphs: string[],
         pageNumber: number = 1,
-        segmentAudios?: { female?: string; male?: string }[]
+        segmentAudios?: TtsSegmentAudios[]
     ): TtsSentence[] {
         const result: TtsSentence[] = [];
         let counter = 1;
 
         paragraphs.forEach((para, pIdx) => {
-            if (!para.trim()) return;
-            const aud = segmentAudios && segmentAudios[pIdx] ? segmentAudios[pIdx] : undefined;
+            const text = para.trim();
+            if (!text) return;
+            const aud = segmentAudios?.[pIdx];
+            const urls: TtsAudioUrls = {
+                audioUrlViFemale: aud?.audioUrlViFemale || aud?.viFemale || aud?.audioUrlFemale || aud?.female,
+                audioUrlViMale: aud?.audioUrlViMale || aud?.viMale || aud?.audioUrlMale || aud?.male,
+                audioUrlEnFemale: aud?.audioUrlEnFemale || aud?.enFemale,
+                audioUrlEnMale: aud?.audioUrlEnMale || aud?.enMale,
+                audioUrlFemale: aud?.audioUrlFemale || aud?.female,
+                audioUrlMale: aud?.audioUrlMale || aud?.male,
+            };
 
-            // Tách theo dấu câu tiếng Việt hoặc xuống dòng
-            const rawSentences = para
-                .split(/(?<=[.?!…\n])\s+/)
-                .map((s) => s.trim())
-                .filter((s) => s.length > 0);
+            const hasAudio = [
+                urls.audioUrlViFemale,
+                urls.audioUrlViMale,
+                urls.audioUrlEnFemale,
+                urls.audioUrlEnMale,
+                urls.audioUrlFemale,
+                urls.audioUrlMale,
+            ].some(Boolean);
 
-            if (rawSentences.length === 0) {
-                result.push({
-                    id: counter++,
-                    text: para.trim(),
-                    pageNumber,
-                    paragraphIndex: pIdx,
-                    audioUrlFemale: aud?.female,
-                    audioUrlMale: aud?.male,
-                });
-            } else {
-                for (const raw of rawSentences) {
-                    result.push({
-                        id: counter++,
-                        text: raw,
-                        pageNumber,
-                        paragraphIndex: pIdx,
-                        audioUrlFemale: aud?.female,
-                        audioUrlMale: aud?.male,
-                    });
-                }
+            const parts = hasAudio
+                ? [text]
+                : text.split(/(?<=[.?!…\n])\s+/).map(s => s.trim()).filter(Boolean);
+
+            for (const part of parts) {
+                result.push({ id: counter++, text: part, pageNumber, paragraphIndex: pIdx, ...urls });
             }
         });
-
         return result;
     }
 
     public play() {
         if (this.playState === 'paused') {
             if (this.audioElement && this.audioElement.src && this.audioElement.paused) {
-                this.audioElement.play().catch(() => {});
+                const version = this.playbackVersion;
                 this.playState = 'playing';
                 this.onStateChange?.(this.playState);
+                void this.audioElement.play().catch(() => {
+                    if (version !== this.playbackVersion || this.playState !== 'playing') return;
+                    this.playCurrent();
+                });
                 return;
             }
             if (this.synth && this.synth.paused) {
@@ -284,23 +271,27 @@ class FrontendTtsEngine {
     }
 
     public resume() {
-        if (this.playState === 'paused') {
-            this.play();
-        } else {
-            this.play();
+        this.play();
+    }
+
+    private clearPlayback() {
+        this.playbackVersion++;
+        if (this.activeAbortController) {
+            this.activeAbortController.abort();
+            this.activeAbortController = null;
         }
+        if (this.audioElement) {
+            this.audioElement.onended = null;
+            this.audioElement.onerror = null;
+            this.audioElement.pause();
+            this.audioElement = null;
+        }
+        this.currentUtterance = null;
+        this.synth?.cancel();
     }
 
     public stop() {
-        if (this.audioElement) {
-            this.audioElement.pause();
-            this.audioElement.currentTime = 0;
-            this.audioElement.removeAttribute('src');
-        }
-        if (this.synth) {
-            this.synth.cancel();
-            this.currentUtterance = null;
-        }
+        this.clearPlayback();
         this.playState = 'idle';
         this.onStateChange?.(this.playState);
         this.onSentenceChange?.(null, -1);
@@ -330,6 +321,113 @@ class FrontendTtsEngine {
         }
     }
 
+    private startAudioElement(srcUrl: string, version: number, onFailure: (err: unknown) => void) {
+        if (version !== this.playbackVersion) return;
+
+        const audio = new Audio();
+        audio.preload = 'auto';
+        this.audioElement = audio;
+
+        audio.onended = () => {
+            if (version === this.playbackVersion && this.playState === 'playing') {
+                this.handleSentenceFinished();
+            }
+        };
+        audio.onerror = (err) => {
+            if (version !== this.playbackVersion || this.playState !== 'playing') return;
+            onFailure(err);
+        };
+
+        this.playState = 'playing';
+        this.onStateChange?.(this.playState);
+
+        try {
+            audio.src = srcUrl;
+            audio.playbackRate = this.rate;
+            audio.volume = this.volume;
+            void audio.play().catch((err) => {
+                if (version !== this.playbackVersion || this.playState !== 'playing') return;
+                onFailure(err);
+            });
+        } catch (err) {
+            onFailure(err);
+        }
+    }
+
+    private playRemoteOrBlobUrl(url: string, version: number, onAllFailed: (err: unknown) => void) {
+        const cachedBlob = this.blobUrlCache.get(url);
+        if (cachedBlob) {
+            this.startAudioElement(cachedBlob, version, onAllFailed);
+            return;
+        }
+
+        // 1. Try direct <audio src="https://dl.dropboxusercontent.com/...">
+        this.startAudioElement(url, version, async (directErr) => {
+            if (version !== this.playbackVersion || this.playState !== 'playing') return;
+            console.warn('[TTS] Direct MP3 stream failed, retrying via Blob fetch:', url, directErr);
+
+            // 2. Retry via fetch() -> Blob URL (bypasses strict content-type/streaming issues)
+            try {
+                const controller = new AbortController();
+                this.activeAbortController = controller;
+                const res = await fetch(url, { signal: controller.signal });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const blob = await res.blob();
+                if (version !== this.playbackVersion) return;
+
+                const objectUrl = URL.createObjectURL(blob);
+                this.blobUrlCache.set(url, objectUrl);
+                this.startAudioElement(objectUrl, version, onAllFailed);
+            } catch (fetchErr) {
+                if (version !== this.playbackVersion || (fetchErr as any)?.name === 'AbortError') return;
+                onAllFailed(fetchErr);
+            }
+        });
+    }
+
+    private async synthesizeLiveProxy(text: string, presetId: TtsPresetId, version: number): Promise<string> {
+        const cacheKey = `proxy::${presetId}::${text}`;
+        const cached = this.blobUrlCache.get(cacheKey);
+        if (cached) return cached;
+
+        const [language, gender] = presetId.split('-') as ['vi' | 'en', 'female' | 'male'];
+        const controller = new AbortController();
+        this.activeAbortController = controller;
+
+        const res = await fetch(TTS_PROXY_SYNTHESIZE_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, language, gender, engine: 'auto' }),
+            signal: controller.signal,
+        });
+
+        if (!res.ok) {
+            throw new Error(`TTS proxy HTTP ${res.status}`);
+        }
+
+        const blob = await res.blob();
+        if (version !== this.playbackVersion) {
+            throw new DOMException('Aborted', 'AbortError');
+        }
+
+        const blobUrl = URL.createObjectURL(blob);
+        this.blobUrlCache.set(cacheKey, blobUrl);
+        return blobUrl;
+    }
+
+    private resolveUrlForVoice(sentence: TtsSentence, voiceId: TtsPresetId): string | undefined {
+        switch (voiceId) {
+            case 'vi-female':
+                return sentence.audioUrlViFemale || sentence.audioUrlFemale || undefined;
+            case 'vi-male':
+                return sentence.audioUrlViMale || sentence.audioUrlMale || undefined;
+            case 'en-female':
+                return sentence.audioUrlEnFemale || undefined;
+            case 'en-male':
+                return sentence.audioUrlEnMale || undefined;
+        }
+    }
+
     private playCurrent() {
         if (this.sentences.length === 0) return;
         if (this.currentIndex < 0 || this.currentIndex >= this.sentences.length) {
@@ -338,97 +436,109 @@ class FrontendTtsEngine {
             return;
         }
 
-        // Hủy phát hiện tại
-        if (this.audioElement) {
-            this.audioElement.pause();
-            this.audioElement.removeAttribute('src');
-        }
-        if (this.synth) {
-            this.synth.cancel();
-        }
+        this.clearPlayback();
+        const version = this.playbackVersion;
 
         const sentence = this.sentences[this.currentIndex];
         this.onSentenceChange?.(sentence, this.currentIndex);
 
-        // 1. Kiểm tra xem có tệp âm thanh tạo sẵn (Neural MP3) phù hợp không
-        const isPresetFemale = this.selectedVoiceId === 'preset-female';
-        const isPresetMale = this.selectedVoiceId === 'preset-male';
+        const primaryUrl = this.resolveUrlForVoice(sentence, this.selectedVoiceId);
+        const backupPreset =
+            this.fallbackVoiceId !== 'auto' && this.fallbackVoiceId !== this.selectedVoiceId
+                ? this.fallbackVoiceId
+                : undefined;
+        const backupUrl = backupPreset ? this.resolveUrlForVoice(sentence, backupPreset) : undefined;
 
-        let targetAudioUrl: string | undefined;
-        if (isPresetFemale && sentence.audioUrlFemale) {
-            targetAudioUrl = sentence.audioUrlFemale;
-        } else if (isPresetMale && sentence.audioUrlMale) {
-            targetAudioUrl = sentence.audioUrlMale;
-        }
+        const runBrowserSpeechBackup = () => {
+            if (version !== this.playbackVersion) return;
+            console.warn('[TTS] Falling back to browser speechSynthesis for:', sentence.text);
+            this.playWithWebSpeech(backupPreset ?? this.selectedVoiceId);
+        };
 
-        if (targetAudioUrl && this.audioElement) {
-            try {
-                this.audioElement.src = targetAudioUrl;
-                this.audioElement.playbackRate = this.rate;
-                this.audioElement.volume = this.volume;
-                this.audioElement
-                    .play()
-                    .then(() => {
-                        this.playState = 'playing';
-                        this.onStateChange?.(this.playState);
-                    })
-                    .catch((err) => {
-                        console.warn('[Pre-generated Audio Playback blocked/failed, falling back to Web Speech]', err);
-                        this.playWithWebSpeech();
+        const runLiveProxyOrBackup = () => {
+            if (version !== this.playbackVersion) return;
+            this.playState = 'playing';
+            this.onStateChange?.(this.playState);
+
+            void this.synthesizeLiveProxy(sentence.text, this.selectedVoiceId, version)
+                .then((blobUrl) => {
+                    if (version !== this.playbackVersion || this.playState !== 'playing') return;
+                    this.startAudioElement(blobUrl, version, () => {
+                        if (backupUrl) {
+                            this.playRemoteOrBlobUrl(backupUrl, version, runBrowserSpeechBackup);
+                        } else {
+                            runBrowserSpeechBackup();
+                        }
                     });
-                return;
-            } catch (err) {
-                console.warn('[Pre-generated Audio exception, falling back to Web Speech]', err);
-            }
+                })
+                .catch((err) => {
+                    if (version !== this.playbackVersion || (err as any)?.name === 'AbortError') return;
+                    if (backupUrl) {
+                        this.playRemoteOrBlobUrl(backupUrl, version, runBrowserSpeechBackup);
+                    } else {
+                        runBrowserSpeechBackup();
+                    }
+                });
+        };
+
+        if (primaryUrl) {
+            this.playRemoteOrBlobUrl(primaryUrl, version, (err) => {
+                console.warn('[TTS] Primary Dropbox MP3 failed:', primaryUrl, err);
+                runLiveProxyOrBackup();
+            });
+            return;
         }
 
-        // 2. Fallback: Phát bằng Web Speech API
-        this.playWithWebSpeech();
+        runLiveProxyOrBackup();
     }
 
-    private playWithWebSpeech() {
-        if (!this.synth || this.sentences.length === 0) return;
+    private playWithWebSpeech(presetId: TtsPresetId = this.selectedVoiceId) {
+        if (!this.synth || this.sentences.length === 0) {
+            this.stop();
+            return;
+        }
         if (this.currentIndex < 0 || this.currentIndex >= this.sentences.length) return;
 
         const sentence = this.sentences[this.currentIndex];
         const utter = new SpeechSynthesisUtterance(sentence.text);
 
-        // Xác định giọng đọc phù hợp
-        if (this.selectedBrowserVoice) {
-            utter.voice = this.selectedBrowserVoice;
-            utter.lang = this.selectedBrowserVoice.lang;
-        } else {
-            // Tìm giọng tiếng Việt trong hệ thống
-            const viVoice = this.voices.find(
-                (v) => v.lang.toLowerCase().startsWith('vi') || v.name.toLowerCase().includes('vietnam')
-            );
-            if (viVoice) {
-                utter.voice = viVoice;
-                utter.lang = viVoice.lang;
-            } else {
-                utter.lang = 'vi-VN';
-            }
-        }
+        const preset = TTS_VOICE_PRESETS.find(v => v.id === presetId) ?? TTS_VOICE_PRESETS[0];
+        this.initVoices();
+        const langPrefix = preset.lang.slice(0, 2).toLowerCase();
+        const matching = this.voices.filter(v => v.lang.toLowerCase().split(/[-_]/)[0] === langPrefix);
 
-        // Tùy chỉnh pitch theo giới tính preset
-        let effectivePitch = this.pitch;
-        if (this.selectedVoiceId === 'preset-female') {
-            effectivePitch = Math.min(1.4, this.pitch * 1.15);
-        } else if (this.selectedVoiceId === 'preset-male') {
-            effectivePitch = Math.max(0.6, this.pitch * 0.85);
-        }
+        const names: Record<TtsPresetId, RegExp> = {
+            'vi-female': /ho[àa]i\s*my|linh|female|\bnu\b|nữ/i,
+            'vi-male': /nam\s*minh|an|\bmale\b|\bnam\b/i,
+            'en-female': /ava|jenny|zira|aria|samantha|female/i,
+            'en-male': /andrew|guy|david|mark|\bmale\b/i,
+        };
+        const preferred = matching.find(v => names[preset.id].test(v.name));
+        const browserVoice =
+            preferred ??
+            matching.find(v => v.lang.toLowerCase() === preset.lang.toLowerCase()) ??
+            matching[0];
+
+        utter.lang = browserVoice?.lang ?? preset.lang;
+        if (browserVoice) utter.voice = browserVoice;
+
+        const effectivePitch = preferred
+            ? this.pitch
+            : preset.gender === 'female'
+              ? Math.min(1.4, this.pitch * 1.15)
+              : Math.max(0.6, this.pitch * 0.85);
 
         utter.rate = this.rate;
         utter.pitch = effectivePitch;
         utter.volume = this.volume;
 
         utter.onend = () => {
-            if (this.playState !== 'playing') return;
+            if (this.currentUtterance !== utter || this.playState !== 'playing') return;
             this.handleSentenceFinished();
         };
 
         utter.onerror = (e) => {
-            if (e.error === 'interrupted' || e.error === 'canceled') return;
+            if (this.currentUtterance !== utter || e.error === 'interrupted' || e.error === 'canceled') return;
             console.warn('[Frontend TTS Web Speech Error]', e);
             this.stop();
         };
@@ -453,7 +563,6 @@ class FrontendTtsEngine {
         if (nextIdx < this.sentences.length) {
             const nextSentence = this.sentences[nextIdx];
             if (nextSentence.pageNumber !== sentence.pageNumber) {
-                // Tự động chuyển trang khi hết trang
                 this.onPageComplete?.(sentence.pageNumber);
             }
             this.currentIndex = nextIdx;

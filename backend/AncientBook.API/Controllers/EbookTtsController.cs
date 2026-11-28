@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using AncientBook.Application.DTOs;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
@@ -40,7 +42,7 @@ namespace AncientBook.API.Controllers
         }
 
         /// <summary>
-        /// Nhân viên kích hoạt tiến trình tạo giọng đọc AI (Hỗ trợ sinh theo khoảng trang để chống timeout)
+        /// Nhân viên kích hoạt tiến trình tạo giọng đọc AI (Hỗ trợ sinh cả tiếng Việt & tiếng Anh, lưu theo từng trang)
         /// </summary>
         [HttpPost("generate")]
         [Authorize(Roles = "Staff,Admin")]
@@ -49,11 +51,24 @@ namespace AncientBook.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GenerateTts(
             [FromRoute] int editionId,
-            [FromQuery] string language = "vi",
+            [FromQuery] string language = "both",
+            [FromQuery] bool includeAllLanguages = true,
             [FromQuery] int? fromPage = null,
             [FromQuery] int? toPage = null,
             CancellationToken ct = default)
         {
+            language = string.IsNullOrWhiteSpace(language)
+                ? "both"
+                : language.Trim().ToLowerInvariant();
+
+            if (language != "vi" && language != "en" && language != "both")
+                return BadRequest(new { message = "Language must be vi, en or both." });
+
+            // Đảm bảo luôn tạo đủ cả 2 ngôn ngữ (vi + en) trừ khi tắt rõ ràng includeAllLanguages=false
+            string effectiveLanguage = includeAllLanguages ? "both" : language;
+
+            if (fromPage is <= 0 || toPage is <= 0)
+                return BadRequest(new { message = "Page numbers must be positive." });
             if (fromPage.HasValue && toPage.HasValue && fromPage > toPage)
             {
                 return BadRequest(new { message = "Trang bắt đầu (fromPage) không được lớn hơn trang kết thúc (toPage)." });
@@ -71,15 +86,14 @@ namespace AncientBook.API.Controllers
 
             try
             {
-                var result = await _ttsService.GenerateTtsAsync(editionId, language, fromPage, toPage, ct);
+                var result = await _ttsService.GenerateTtsAsync(editionId, effectiveLanguage, fromPage, toPage, ct);
 
-                // Ghi nhật ký Audit Log
                 await _auditLogService.LogAsync(
                     action: "GENERATE_TTS_EBOOK",
                     module: "EbookManagement",
                     entityName: "EbookEdition",
                     recordId: editionId.ToString(),
-                    details: $"Kích hoạt tạo giọng đọc số TTS cho ấn bản #{editionId} (Ngôn ngữ: {language}, Từ trang: {fromPage?.ToString() ?? "đầu"}, Đến trang: {toPage?.ToString() ?? "cuối"}, Tổng đoạn tạo: {result.TotalSegmentsGenerated}).",
+                    details: $"Kích hoạt tạo giọng đọc số TTS cho ấn bản #{editionId} (Ngôn ngữ: {effectiveLanguage}, Từ trang: {fromPage?.ToString() ?? "đầu"}, Đến trang: {toPage?.ToString() ?? "cuối"}, Tổng đoạn tạo: {result.TotalSegmentsGenerated}).",
                     userId: CurrentUserId,
                     ipAddress: HttpContext.Connection.RemoteIpAddress?.ToString()
                 );
@@ -97,7 +111,7 @@ namespace AncientBook.API.Controllers
         }
 
         /// <summary>
-        /// Độc giả lấy danh sách các đoạn âm thanh MP3 kèm text hiển thị theo từng trang sách (Dành cho Staff và Customer)
+        /// Độc giả lấy danh sách các đoạn âm thanh MP3 kèm text hiển thị theo từng trang sách
         /// </summary>
         [HttpGet("pages/{pageNumber:int}/segments")]
         [Authorize(Roles = "Staff,Member,Admin")]
@@ -113,9 +127,11 @@ namespace AncientBook.API.Controllers
                 return NotFound(new { message = "Không tìm thấy ấn bản E-Book." });
             }
 
+            if (User.IsInRole("Member") && edition.Status != EditionPublishStatus.Published)
+                return NotFound(new { message = "Ấn bản E-Book này chưa được phát hành chính thức." });
+
             var segments = await _ttsService.GetPageSegmentsAsync(editionId, pageNumber, ct);
 
-            // Nếu phân loại là Thị giác (ScannedBook), không cấp Audio URL cho người đọc
             if (edition.PresetType == EbookPresetType.ScannedBook)
             {
                 var textOnlySegments = segments.Select(s => new PageTtsResponseDto
@@ -125,7 +141,11 @@ namespace AncientBook.API.Controllers
                     SegmentIndex = s.SegmentIndex,
                     TextContent = s.TextContent,
                     AudioUrlFemale = string.Empty,
-                    AudioUrlMale = string.Empty
+                    AudioUrlMale = string.Empty,
+                    AudioUrlViFemale = string.Empty,
+                    AudioUrlViMale = string.Empty,
+                    AudioUrlEnFemale = string.Empty,
+                    AudioUrlEnMale = string.Empty
                 }).ToList();
                 return Ok(textOnlySegments);
             }
@@ -133,4 +153,4 @@ namespace AncientBook.API.Controllers
             return Ok(segments);
         }
     }
-}   
+}

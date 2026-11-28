@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download, Upload } from 'lucide-react';
 import TopBar from '../components/layout/TopBar';
 import Header from '../components/layout/Header';
 import Navbar from '../components/layout/Navbar';
@@ -17,12 +17,21 @@ export const EbookReaderPage: React.FC = () => {
     const { bookId } = useParams<{ bookId: string }>();
     const location = useLocation();
     const navigate = useNavigate();
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const reader = useEbookReader(bookId, location.state?.book);
 
     const handlePageJump = () => {
         const parsed = parseInt(reader.pageInput, 10);
         if (!Number.isNaN(parsed)) reader.goToPage(parsed);
+    };
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            void reader.loadUploadedFile(file);
+            e.target.value = '';
+        }
     };
 
     const readProgressPercent = Math.round((reader.leftPage / reader.totalPages) * 100);
@@ -72,35 +81,6 @@ export const EbookReaderPage: React.FC = () => {
                 </div>
 
                 <div className={styles.statusBarRight}>
-                    {/* Chọn sách mẫu nhanh */}
-                    <select
-                        className={styles.sampleSelect}
-                        value={SAMPLE_BOOKS.find((b) => b.title === reader.bookTitle)?.id || ''}
-                        onChange={(e) => {
-                            if (e.target.value) reader.switchSampleBook(e.target.value);
-                        }}
-                        title="Đổi nhanh sách mẫu kinh điển"
-                    >
-                        <option value="" disabled>
-                            Chọn sách mẫu kinh điển...
-                        </option>
-                        {SAMPLE_BOOKS.map((b) => (
-                            <option key={b.id} value={b.id}>
-                                {b.title} ({b.author})
-                            </option>
-                        ))}
-                    </select>
-
-                    {/* Tải PDF về máy */}
-                    <button
-                        type="button"
-                        className={styles.downloadPdfBtn}
-                        onClick={() => void reader.downloadPdf()}
-                        title="Tải tệp PDF của cuốn sách này về máy tính"
-                    >
-                        <Download size={14} />
-                        <span>Tải PDF về máy</span>
-                    </button>
                 </div>
             </div>
 
@@ -135,6 +115,7 @@ export const EbookReaderPage: React.FC = () => {
                         speechRate={reader.speechRate}
                         availableVoices={reader.availableVoices}
                         selectedVoiceId={reader.selectedVoiceId}
+                        fallbackVoiceId={reader.fallbackVoiceId}
                         readingMode={reader.readingMode}
                         theme={reader.theme}
                         fontFamily={reader.fontFamily}
@@ -152,6 +133,7 @@ export const EbookReaderPage: React.FC = () => {
                         onPrevSentence={reader.prevSentence}
                         onRateChange={reader.changeSpeechRate}
                         onVoiceChange={reader.changeVoice}
+                        onFallbackVoiceChange={reader.changeFallbackVoice}
                         onReadingModeChange={reader.setReadingMode}
                         onThemeChange={reader.setTheme}
                         onFontFamilyChange={reader.setFontFamily}

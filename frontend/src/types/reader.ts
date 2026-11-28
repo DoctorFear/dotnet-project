@@ -1,11 +1,14 @@
 export interface BookTtsSegmentDto {
     id: number;
-    editionId: number;
-    pageNumber: number;
     segmentIndex: number;
+    pageNumber: number;
     textContent: string;
     audioUrlFemale: string;
     audioUrlMale: string;
+    audioUrlViFemale: string;
+    audioUrlViMale: string;
+    audioUrlEnFemale: string;
+    audioUrlEnMale: string;
 }
 
 export interface ReaderEditionDto {

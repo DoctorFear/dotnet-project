@@ -16,7 +16,7 @@ namespace AncientBook.Infrastructure.Services
     {
         Task<TtsGenerateResultDto> GenerateTtsAsync(
             int editionId,
-            string language = "vi",
+            string language = "both",
             int? fromPage = null,
             int? toPage = null,
             CancellationToken ct = default);
@@ -29,6 +29,11 @@ namespace AncientBook.Infrastructure.Services
 
     public class EbookTtsService : IEbookTtsService
     {
+        private static readonly SemaphoreSlim SynthesisGate = new SemaphoreSlim(2);
+        private static readonly SemaphoreSlim UploadGate = new SemaphoreSlim(3);
+        private static readonly SemaphoreSlim[] EditionGates = Enumerable.Range(0, 64)
+            .Select(_ => new SemaphoreSlim(1)).ToArray();
+
         private readonly IEbookEditionRepository _editionRepo;
         private readonly IBookTtsSegmentRepository _segmentRepo;
         private readonly ITtsDocumentExtractorService _ttsExtractor;
@@ -51,16 +56,78 @@ namespace AncientBook.Infrastructure.Services
 
         public async Task<TtsGenerateResultDto> GenerateTtsAsync(
             int editionId,
-            string language = "vi",
+            string language = "both",
             int? fromPage = null,
             int? toPage = null,
             CancellationToken ct = default)
+        {
+            language = (language ?? "both").Trim().ToLowerInvariant();
+            if (language != "vi" && language != "en" && language != "both")
+                throw new InvalidOperationException("Language must be vi, en or both.");
+            if (editionId <= 0 || fromPage is <= 0 || toPage is <= 0 ||
+                (fromPage.HasValue && toPage.HasValue && fromPage > toPage))
+                throw new InvalidOperationException("Invalid edition or page range.");
+
+            var gate = EditionGates[editionId % EditionGates.Length];
+            await gate.WaitAsync(ct);
+            try
+            {
+                return await GenerateCoreAsync(editionId, language, fromPage, toPage, ct);
+            }
+            finally { gate.Release(); }
+        }
+
+        private async Task<string> GenerateVoiceAsync(
+            string text, string gender, string language,
+            string fileName, string folder, CancellationToken ct)
+        {
+            byte[]? bytes = null;
+            await SynthesisGate.WaitAsync(ct);
+            try
+            {
+                for (int attempt = 1; attempt <= 3; attempt++)
+                {
+                    try
+                    {
+                        bytes = await _ttsAudioService.SynthesizeSpeechAsync(text, gender, language, ct);
+                        if (bytes != null && bytes.Length > 0)
+                            break;
+                    }
+                    catch (Exception) when (attempt < 3 && !ct.IsCancellationRequested)
+                    {
+                        await Task.Delay(attempt * 600, ct);
+                    }
+                }
+
+                if (bytes == null || bytes.Length == 0)
+                    throw new InvalidOperationException($"TTS returned empty audio for {language}-{gender}.");
+            }
+            finally { SynthesisGate.Release(); }
+
+            await UploadGate.WaitAsync(ct);
+            try
+            {
+                ct.ThrowIfCancellationRequested();
+                var url = await _fileStorageService.SaveBytesFileAsync(bytes, fileName, folder);
+                if (string.IsNullOrWhiteSpace(url))
+                    throw new InvalidOperationException("Audio upload returned an empty URL.");
+                return url;
+            }
+            finally { UploadGate.Release(); }
+        }
+
+        private async Task<TtsGenerateResultDto> GenerateCoreAsync(
+            int editionId, string language,
+            int? fromPage, int? toPage, CancellationToken ct)
         {
             var edition = await _editionRepo.GetByIdAsync(editionId, ct);
             if (edition == null)
             {
                 throw new KeyNotFoundException($"Không tìm thấy ấn bản sách với ID {editionId}.");
             }
+
+            if (edition.PresetType == EbookPresetType.ScannedBook)
+                throw new InvalidOperationException("Scanned books do not support TTS.");
 
             if (string.IsNullOrWhiteSpace(edition.DropboxPath))
             {
@@ -72,7 +139,7 @@ namespace AncientBook.Infrastructure.Services
             {
                 bookStream = await _fileStorageService.GetFileStreamAsync(edition.DropboxPath, ct);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 throw new InvalidOperationException($"Không thể tải sách từ Dropbox: {ex.Message}", ex);
             }
@@ -105,45 +172,82 @@ namespace AncientBook.Infrastructure.Services
             var existingSegments = await _segmentRepo.GetByEditionIdAsync(editionId, ct);
             var targetPages = rawSegments.Select(s => s.PageNumber).Distinct().ToHashSet();
             var segmentsToDelete = existingSegments.Where(s => targetPages.Contains(s.PageNumber)).ToList();
+            var existingByKey = segmentsToDelete
+                .GroupBy(s => (s.PageNumber, s.SegmentIndex))
+                .ToDictionary(g => g.Key, g => g.First());
 
-            if (segmentsToDelete.Any())
+            var work = rawSegments.Where(s => !string.IsNullOrWhiteSpace(s.TextContent)).ToList();
+            if (work.Count == 0)
+                throw new InvalidOperationException("No readable segments in the selected pages.");
+
+            string ttsSubFolder = $"tts-audio/{editionId}/{Guid.NewGuid():N}";
+            bool generateVi = language == "vi" || language == "both";
+            bool generateEn = language == "en" || language == "both";
+            int totalGenerated = 0;
+
+            var pagesGrouped = work
+                .GroupBy(s => s.PageNumber)
+                .OrderBy(g => g.Key)
+                .ToList();
+
+            foreach (var pageGroup in pagesGrouped)
             {
-                await _segmentRepo.DeleteRangeAsync(segmentsToDelete, ct);
-            }
+                ct.ThrowIfCancellationRequested();
+                int pageNum = pageGroup.Key;
+                var pageWork = pageGroup.OrderBy(s => s.SegmentIndex).ToList();
+                var pageResults = new List<BookTtsSegment>(pageWork.Count);
 
-            var newSegments = new List<BookTtsSegment>();
-            string ttsSubFolder = $"tts-audio/{editionId}";
-
-            foreach (var seg in rawSegments)
-            {
-                if (string.IsNullOrWhiteSpace(seg.TextContent))
-                    continue;
-
-                var fileFemaleName = $"p{seg.PageNumber}_s{seg.SegmentIndex}_female.mp3";
-                var fileMaleName = $"p{seg.PageNumber}_s{seg.SegmentIndex}_male.mp3";
-
-                var femaleBytes = await _ttsAudioService.SynthesizeSpeechAsync(seg.TextContent, "female", language, ct);
-                var urlFemale = await _fileStorageService.SaveBytesFileAsync(femaleBytes, fileFemaleName, ttsSubFolder);
-                await Task.Delay(120, ct);
-
-                var maleBytes = await _ttsAudioService.SynthesizeSpeechAsync(seg.TextContent, "male", language, ct);
-                var urlMale = await _fileStorageService.SaveBytesFileAsync(maleBytes, fileMaleName, ttsSubFolder);
-                await Task.Delay(120, ct);
-
-                newSegments.Add(new BookTtsSegment
+                foreach (var seg in pageWork)
                 {
-                    EditionId = editionId,
-                    PageNumber = seg.PageNumber,
-                    SegmentIndex = seg.SegmentIndex,
-                    TextContent = seg.TextContent,
-                    AudioUrlFemale = urlFemale,
-                    AudioUrlMale = urlMale,
-                    CreatedAt = DateTime.UtcNow
-                });
-            }
+                    ct.ThrowIfCancellationRequested();
+                    existingByKey.TryGetValue((seg.PageNumber, seg.SegmentIndex), out var old);
+                    if (old != null && !string.Equals(old.TextContent, seg.TextContent, StringComparison.Ordinal))
+                        old = null;
 
-            await _segmentRepo.AddRangeAsync(newSegments, ct);
-            await _segmentRepo.SaveChangesAsync(ct);
+                    string prefix = $"p{seg.PageNumber}_s{seg.SegmentIndex}";
+                    Task<string> EnsureVoice(bool requested, string? existing, string lang, string gender)
+                    {
+                        if (!string.IsNullOrWhiteSpace(existing)) return Task.FromResult(existing!);
+                        if (!requested) return Task.FromResult(string.Empty);
+                        return GenerateVoiceAsync(seg.TextContent, gender, lang,
+                            $"{prefix}_{lang}_{gender}.mp3", ttsSubFolder, ct);
+                    }
+
+                    var viFemale = EnsureVoice(generateVi, old?.AudioUrlViFemale, "vi", "female");
+                    var viMale = EnsureVoice(generateVi, old?.AudioUrlViMale, "vi", "male");
+                    var enFemale = EnsureVoice(generateEn, old?.AudioUrlEnFemale, "en", "female");
+                    var enMale = EnsureVoice(generateEn, old?.AudioUrlEnMale, "en", "male");
+                    await Task.WhenAll(viFemale, viMale, enFemale, enMale);
+
+                    var viFemaleUrl = await viFemale;
+                    var viMaleUrl = await viMale;
+                    var enFemaleUrl = await enFemale;
+                    var enMaleUrl = await enMale;
+
+                    pageResults.Add(new BookTtsSegment
+                    {
+                        EditionId = editionId,
+                        PageNumber = seg.PageNumber,
+                        SegmentIndex = seg.SegmentIndex,
+                        TextContent = seg.TextContent,
+                        AudioUrlViFemale = viFemaleUrl,
+                        AudioUrlViMale = viMaleUrl,
+                        AudioUrlEnFemale = enFemaleUrl,
+                        AudioUrlEnMale = enMaleUrl,
+                        AudioUrlFemale = !string.IsNullOrWhiteSpace(viFemaleUrl) ? viFemaleUrl : enFemaleUrl,
+                        AudioUrlMale = !string.IsNullOrWhiteSpace(viMaleUrl) ? viMaleUrl : enMaleUrl,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+
+                var oldPageSegments = segmentsToDelete.Where(s => s.PageNumber == pageNum).ToList();
+                if (oldPageSegments.Any())
+                    await _segmentRepo.DeleteRangeAsync(oldPageSegments, ct);
+
+                await _segmentRepo.AddRangeAsync(pageResults, ct);
+                await _segmentRepo.SaveChangesAsync(ct);
+                totalGenerated += pageResults.Count;
+            }
 
             edition.IsTtsEnabled = true;
             _editionRepo.Update(edition);
@@ -157,11 +261,21 @@ namespace AncientBook.Infrastructure.Services
             {
                 Success = true,
                 Message = $"Tạo âm thanh TTS ({language}){pageRangeInfo} và đồng bộ lên Dropbox thành công.",
-                TotalSegmentsGenerated = newSegments.Count
+                TotalSegmentsGenerated = totalGenerated
             };
         }
 
         public async Task<List<PageTtsResponseDto>> GetPageSegmentsAsync(int editionId, int pageNumber, CancellationToken ct = default)
+        {
+            if (editionId <= 0 || pageNumber <= 0)
+                return new List<PageTtsResponseDto>();
+            var gate = EditionGates[editionId % EditionGates.Length];
+            await gate.WaitAsync(ct);
+            try { return await GetPageCoreAsync(editionId, pageNumber, ct); }
+            finally { gate.Release(); }
+        }
+
+        private async Task<List<PageTtsResponseDto>> GetPageCoreAsync(int editionId, int pageNumber, CancellationToken ct)
         {
             var segments = await _segmentRepo.GetByEditionAndPageAsync(editionId, pageNumber, ct);
 
@@ -176,13 +290,15 @@ namespace AncientBook.Infrastructure.Services
                         PageNumber = s.PageNumber,
                         TextContent = s.TextContent,
                         AudioUrlFemale = s.AudioUrlFemale,
-                        AudioUrlMale = s.AudioUrlMale
+                        AudioUrlMale = s.AudioUrlMale,
+                        AudioUrlViFemale = s.AudioUrlViFemale ?? string.Empty,
+                        AudioUrlViMale = s.AudioUrlViMale ?? string.Empty,
+                        AudioUrlEnFemale = s.AudioUrlEnFemale ?? string.Empty,
+                        AudioUrlEnMale = s.AudioUrlEnMale ?? string.Empty
                     })
                     .ToList();
             }
 
-            // Nếu ấn bản chưa có bất kỳ đoạn văn bản nào lưu trong DB (ví dụ PDF xuất bản trước đó),
-            // tự động bóc tách từ Dropbox 1 lần và lưu vào DB để các lần đọc sau tải tức thì
             var anyExistingForEdition = await _segmentRepo.GetByEditionIdAsync(editionId, ct);
             if (anyExistingForEdition.Any())
             {
@@ -216,6 +332,10 @@ namespace AncientBook.Infrastructure.Services
                         TextContent = s.TextContent,
                         AudioUrlFemale = string.Empty,
                         AudioUrlMale = string.Empty,
+                        AudioUrlViFemale = string.Empty,
+                        AudioUrlViMale = string.Empty,
+                        AudioUrlEnFemale = string.Empty,
+                        AudioUrlEnMale = string.Empty,
                         CreatedAt = DateTime.UtcNow
                     })
                     .ToList();
@@ -236,11 +356,15 @@ namespace AncientBook.Infrastructure.Services
                         SegmentIndex = s.SegmentIndex,
                         TextContent = s.TextContent,
                         AudioUrlFemale = string.Empty,
-                        AudioUrlMale = string.Empty
+                        AudioUrlMale = string.Empty,
+                        AudioUrlViFemale = string.Empty,
+                        AudioUrlViMale = string.Empty,
+                        AudioUrlEnFemale = string.Empty,
+                        AudioUrlEnMale = string.Empty
                     })
                     .ToList();
             }
-            catch
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 return new List<PageTtsResponseDto>();
             }

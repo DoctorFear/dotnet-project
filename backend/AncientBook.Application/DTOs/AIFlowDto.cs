@@ -85,7 +85,15 @@ public class PageTtsResponseDto
     public int SegmentIndex { get; set; }
     public int PageNumber { get; set; }
     public string TextContent { get; set; } = string.Empty;
+    public string AudioUrlViFemale { get; set; } = string.Empty;
+
+    public string AudioUrlViMale { get; set; } = string.Empty;
+
+    public string AudioUrlEnFemale { get; set; } = string.Empty;
+
+    public string AudioUrlEnMale { get; set; } = string.Empty;
     public string AudioUrlFemale { get; set; } = string.Empty;
+
     public string AudioUrlMale { get; set; } = string.Empty;
 }
 

@@ -17,7 +17,13 @@ import {
     Sparkles,
 } from 'lucide-react';
 import type { ReadingMode, ReaderTheme, FontFamily } from '../../../hooks/useEbookReader';
-import type { TtsPlayState, TtsVoiceOption } from '../../../services/frontendTtsService';
+import {
+    TTS_VOICE_PRESETS,
+    DEFAULT_TTS_FALLBACK_ID,
+    normalizeTtsVoiceId,
+    normalizeTtsFallbackId,
+} from '../../../services/frontendTtsService';
+import type { TtsPlayState, TtsVoiceOption, TtsFallbackId } from '../../../services/frontendTtsService';
 import styles from '../../../pages/EbookReaderPage.module.css';
 
 interface Props {
@@ -27,6 +33,7 @@ interface Props {
     speechRate: number;
     availableVoices: TtsVoiceOption[];
     selectedVoiceId: string;
+    fallbackVoiceId?: TtsFallbackId;
     readingMode: ReadingMode;
     theme: ReaderTheme;
     fontFamily: FontFamily;
@@ -44,6 +51,7 @@ interface Props {
     onPrevSentence: () => void;
     onRateChange: (rate: number) => void;
     onVoiceChange: (voiceId: string) => void;
+    onFallbackVoiceChange?: (voiceId: string) => void;
     onReadingModeChange: (mode: ReadingMode) => void;
     onThemeChange: (theme: ReaderTheme) => void;
     onFontFamilyChange: (font: FontFamily) => void;
@@ -96,7 +104,8 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
                     onChange={(e) => props.onPageInputChange(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && props.onPageJump()}
                 />
-                <span className={styles.pageTotal}>/ {props.totalPages}</span>
+                <span className={styles.pageTotal}>/ </span>
+                <span className={styles.pageTotal}>{props.totalPages}</span>
                 <button type="button" className={styles.jumpGoBtn} onClick={props.onPageJump}>
                     Đến
                 </button>
@@ -164,21 +173,25 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
                     <option value={2.0}>2.0x</option>
                 </select>
 
-                {/* Chọn giọng đọc */}
-                {props.availableVoices.length > 0 && (
-                    <select
-                        className={`${styles.dockSelect} ${styles.voiceSelect}`}
-                        value={props.selectedVoiceId}
-                        onChange={(e) => props.onVoiceChange(e.target.value)}
-                        title="Giọng đọc AI (Tiếng Việt / Quốc tế)"
-                    >
-                        {props.availableVoices.map((v) => (
-                            <option key={v.id} value={v.id}>
-                                {v.isPreset ? v.name : `${v.isVietnamese ? '[VN] ' : '[EN] '}${v.name.slice(0, 24)}`}
-                            </option>
+                {/* Chọn giọng đọc chính (Tiếng Việt / Tiếng Anh) */}
+                <select
+                    className={`${styles.dockSelect} ${styles.voiceSelect}`}
+                    value={normalizeTtsVoiceId(props.selectedVoiceId)}
+                    onChange={(e) => props.onVoiceChange(normalizeTtsVoiceId(e.target.value))}
+                    title="Giọng đọc AI (Tiếng Việt / Tiếng Anh)"
+                    aria-label="Giọng đọc AI"
+                >
+                    <optgroup label="Tiếng Việt">
+                        {TTS_VOICE_PRESETS.filter(v => v.isVietnamese).map(v => (
+                            <option key={v.id} value={v.id}>{v.name}</option>
                         ))}
-                    </select>
-                )}
+                    </optgroup>
+                    <optgroup label="Tiếng Anh">
+                        {TTS_VOICE_PRESETS.filter(v => !v.isVietnamese).map(v => (
+                            <option key={v.id} value={v.id}>{v.name}</option>
+                        ))}
+                    </optgroup>
+                </select>
             </div>
 
             <div className={styles.dockSep} />
@@ -225,7 +238,7 @@ export const ReaderBottomDock: React.FC<Props> = (props) => {
 
             <div className={styles.dockSep} />
 
-            {/* 5. Menu Tùy chỉnh Giao diện: Theme, Font, Phóng to */}
+            {/* 5. Menu Tùy chỉnh Giao diện */}
             <div className={styles.popoverAnchor}>
                 <button
                     type="button"
