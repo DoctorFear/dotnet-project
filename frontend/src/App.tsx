@@ -80,10 +80,14 @@ export const App: React.FC = () => {
                         <Route path="/reader/:bookId" element={<EbookReaderPage />} />
                     </Route>
 
-                    {/* 3. Staff Routes: Quản lý sách, catalog, kho bãi và đơn hàng */}
-                    <Route element={<ProtectedRoute allowedRoles={['Staff']} />}>
+                    {/* UC14: Staff sách và Admin cùng quản lý danh mục thể loại. */}
+                    <Route element={<ProtectedRoute allowedRoles={['Staff', 'Admin']} />}>
                         <Route path="/admin/books" element={<AdminBookManagementPage />} />
                         <Route path="/staff/books" element={<AdminBookManagementPage />} />
+                    </Route>
+
+                    {/* 3. Staff Routes: Quản lý sách, catalog, kho bãi và đơn hàng */}
+                    <Route element={<ProtectedRoute allowedRoles={['Staff']} />}>
                         <Route path="/admin/warehouse" element={<WarehouseLogisticsPage />} />
                         <Route path="/staff/warehouse" element={<WarehouseLogisticsPage />} />
                         <Route path="/admin/shippers" element={<StaffShipperManagementPage />} />
@@ -111,6 +115,7 @@ export const App: React.FC = () => {
                     <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
                         <Route path="/admin/users" element={<AdminUserManagementPage />} />
                         <Route path="/admin/audit-logs" element={<AuditLogPage />} />
+                        <Route path="/admin/packing" element={<FulfillmentPage />} />
                     </Route>
                 </Routes>
                 {/* Widget Live Chat nổi dành cho độc giả / khách hàng trên Storefront (UC23) */}

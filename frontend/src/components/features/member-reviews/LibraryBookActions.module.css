@@ -1,0 +1,37 @@
+.actions {
+    display: grid;
+    gap: 8px;
+    margin-top: auto;
+}
+
+.actions button {
+    width: 100%;
+    padding: 9px;
+    color: var(--egyptian, #0b409c);
+    background: var(--white, #fff);
+    border: 1px solid var(--egyptian, #0b409c);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.actions button:hover,
+.actions button:focus-visible {
+    background: var(--alice, #f2f7ff);
+}
+
+.actions .primary {
+    color: var(--white, #fff);
+    background: var(--egyptian, #0b409c);
+    border-color: var(--egyptian, #0b409c);
+}
+
+.actions .primary:hover,
+.actions .primary:focus-visible {
+    background: var(--catalina, #0d226b);
+}
+
+.actions .secondary {
+    background: var(--alice, #f2f7ff);
+}

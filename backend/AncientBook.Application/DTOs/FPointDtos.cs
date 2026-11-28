@@ -20,11 +20,33 @@ namespace AncientBook.Application.DTOs
         public int UserId { get; set; }
         public int? OrderId { get; set; }
         public int PointUsed { get; set; }
+        public int BalanceAfter { get; set; }
         public string TransactionType { get; set; } = string.Empty;  // "Earn", "Redeem"
         public string? Description { get; set; }
         public DateTime CreatedAt { get; set; }
         public string Status { get; set; } = "Available";
         public DateTime? AvailableAt { get; set; }
+    }
+
+    public class FPointHistoryQuery
+    {
+        public int PageNumber { get; set; } = 1;
+        public int PageSize { get; set; } = 10;
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
+        public string? TransactionType { get; set; }
+    }
+
+    public class FPointHistoryResultDto
+    {
+        public List<FPointTransactionDto> Items { get; set; } = new();
+        public int TotalCount { get; set; }
+        public int PageNumber { get; set; }
+        public int PageSize { get; set; }
+        public int TotalPages => PageSize > 0 ? (int)Math.Ceiling((double)TotalCount / PageSize) : 0;
+        public int TotalEarned { get; set; }
+        public int TotalRedeemed { get; set; }
+        public int TotalRefunded { get; set; }
     }
 
     public class ConfirmReceiptRequest

@@ -36,9 +36,9 @@ namespace AncientBook.API.Controllers
 
         [HttpGet("eligible-orders")]
         [Authorize(Roles = "Member")]
-        public async Task<IActionResult> GetEligibleOrders(int pageNumber = 1, int pageSize = 10)
+        public async Task<IActionResult> GetEligibleOrders(int pageNumber = 1, int pageSize = 10, int? bookId = null)
         {
-            return Ok(await _reviewService.GetEligibleOrdersAsync(GetCurrentUserId(), pageNumber, pageSize));
+            return Ok(await _reviewService.GetEligibleOrdersAsync(GetCurrentUserId(), pageNumber, pageSize, bookId));
         }
 
         [HttpPost("images")]
@@ -56,7 +56,6 @@ namespace AncientBook.API.Controllers
             catch (Exception) { return StatusCode(502, new { message = "Chưa thể tải ảnh lên. Vui lòng thử lại." }); }
         }
 
-        // UC21: Tạo đánh giá
         [HttpPost]
         [Authorize(Roles = "Member")]
         public async Task<IActionResult> CreateReview([FromBody] CreateReviewRequest request)
@@ -73,7 +72,7 @@ namespace AncientBook.API.Controllers
 
                 return Ok(new
                 {
-                    message = $"Gửi đánh giá thành công! Bạn được cộng thêm điểm thưởng.",
+                    message = $"Gửi đánh giá thành công! Bạn được cộng thêm {result.RewardPointsAwarded} điểm thưởng F-Point.",
                     data = result
                 });
             }
@@ -95,7 +94,6 @@ namespace AncientBook.API.Controllers
             }
         }
 
-        // UC21: Sửa đánh giá
         [HttpPut("{reviewId}")]
         [Authorize(Roles = "Member")]
         public async Task<IActionResult> UpdateReview(int reviewId, [FromBody] UpdateReviewRequest request)
@@ -126,7 +124,6 @@ namespace AncientBook.API.Controllers
             }
         }
 
-        // UC21: Xóa đánh giá
         [HttpDelete("{reviewId}")]
         [Authorize(Roles = "Member")]
         public async Task<IActionResult> DeleteReview(int reviewId)
@@ -191,12 +188,13 @@ namespace AncientBook.API.Controllers
         // Lấy đánh giá của tôi
         [HttpGet("my-reviews")]
         [Authorize(Roles = "Member")]
-        public async Task<IActionResult> GetMyReviews([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetMyReviews(
+            [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] int? bookId = null)
         {
             try
             {
                 var userId = GetCurrentUserId();
-                var result = await _reviewService.GetMyReviewsAsync(userId, pageNumber, pageSize);
+                var result = await _reviewService.GetMyReviewsAsync(userId, pageNumber, pageSize, bookId);
                 return Ok(result);
             }
             catch (Exception ex)

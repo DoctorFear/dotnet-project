@@ -85,8 +85,8 @@ public static class BookCatalogSeeder
                 WeeklyRentalPrice = 10000,
                 MonthlyRentalPrice = 25000,
                 YearlyRentalPrice = 80000,
-                Rating = new double[] { 5, 4.5, 3.5, 2.5 }[index % 4],
-                ReviewsCount = 10 + index,
+                Rating = 0,
+                ReviewsCount = 0,
                 PublicationYear = 2024 + index % 3,
                 StockCount = profile.StockCount,
                 StockStatus = stockStatus,
@@ -329,8 +329,8 @@ public static class BookCatalogSeeder
                 book.WeeklyRentalPrice = 15000 + (index * 1000);
                 book.MonthlyRentalPrice = 35000 + (index * 2000);
                 book.YearlyRentalPrice = 95000 + (index * 5000);
-                book.Rating = 4.2 + ((index % 4) * 0.2);
-                book.ReviewsCount = 12 + (index * 7);
+                book.Rating = 0;
+                book.ReviewsCount = 0;
                 book.StockCount = profile.StockCount;
                 book.StockStatus = profile.StockCount > 0
                     ? StockStatus.InStock

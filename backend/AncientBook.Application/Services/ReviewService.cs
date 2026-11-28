@@ -34,11 +34,9 @@ namespace AncientBook.Application.Services
             var verifiedItem = order.OrderItems.Where(i => i.BookId == request.BookId &&
                 (i.PurchaseType == PurchaseType.Physical && order.Status == OrderStatus.Completed && order.IsPaid ||
                  i.PurchaseType == PurchaseType.Rental && order.IsPaid && order.Status == OrderStatus.Completed &&
-                 i.RentalStartDate.HasValue && i.RentalStartDate <= now ||
-                 i.PurchaseType == PurchaseType.EBook && order.IsPaid && order.Status == OrderStatus.Completed))
+                 i.RentalStartDate.HasValue && i.RentalStartDate <= now))
                 .OrderBy(i => i.PurchaseType).ThenBy(i => i.Id).FirstOrDefault();
             if (verifiedItem == null) throw new InvalidOperationException("Sách không thuộc giao dịch mua/thuê đã hoàn tất.");
-            // UC21: Mỗi giao dịch chỉ được thưởng đánh giá một lần, kể cả khi đánh giá cũ đã bị ẩn.
             if (await _db.Set<BookReview>().AnyAsync(r => r.UserId == userId && r.OrderId == request.OrderId))
                 throw new InvalidOperationException("Giao dịch này đã được đánh giá. Hãy chỉnh sửa đánh giá cũ.");
             await WorkflowSupport.LockBookAsync(_db, request.BookId);
@@ -59,18 +57,17 @@ namespace AncientBook.Application.Services
                 Status = ReviewStatus.Approved, IsPointsAwarded = true
             };
             _db.Set<BookReview>().Add(review);
-            var before = user.FPoints;
             user.FPoints = checked(user.FPoints + reward);
             _db.Set<FPoints>().Add(new FPoints { UserId = userId, OrderId = order.Id, PointUsed = -reward,
                 SourceKey = source, Description = $"Thưởng đánh giá sách #{book.Id}, đơn #{order.Id}" });
-            WorkflowSupport.Audit(_db, "ReviewPointsEarned", "User", userId, new { FPoints = before },
-                new { user.FPoints }, details: $"Đánh giá đơn #{order.Id}: +{reward} F-Point.");
             await _db.SaveChangesAsync();
             await RefreshRatingAsync(book);
             await _db.SaveChangesAsync();
             await tx.CommitAsync();
             review.User = user; review.Book = book;
-            return MapToResponse(review, book.Title);
+            var response = MapToResponse(review, book.Title);
+            response.RewardPointsAwarded = reward;
+            return response;
         }
 
         public async Task<ReviewResponse> UpdateReviewAsync(int userId, UpdateReviewRequest request)
@@ -115,14 +112,18 @@ namespace AncientBook.Application.Services
         {
             var ratings = _db.Set<BookReview>().Where(r => r.BookId == book.Id && r.Status == ReviewStatus.Approved);
             book.ReviewsCount = await ratings.CountAsync();
-            book.Rating = await ratings.AverageAsync(r => (double?)r.Rating) ?? 0;
+            var average = await ratings.AverageAsync(r => (double?)r.Rating) ?? 0;
+            book.Rating = Math.Round(average, 1, MidpointRounding.AwayFromZero);
         }
 
         private static void ValidateReview(int rating, string? content, string? title, string? images)
         {
-            if (rating < 1 || rating > 5 || string.IsNullOrWhiteSpace(content))
-                throw new InvalidOperationException("Vui lòng chọn số sao (1–5) và nhập nội dung bình luận.");
-            if (content.Length > 4000 || title?.Length > 200 || images?.Length > 2000)
+            var normalizedContent = content?.Trim();
+            if (rating < 1 || rating > 5)
+                throw new InvalidOperationException("Vui lòng chọn số sao từ 1 đến 5.");
+            if (string.IsNullOrWhiteSpace(normalizedContent) || normalizedContent.Length < 10)
+                throw new InvalidOperationException("Nội dung đánh giá phải có ít nhất 10 ký tự.");
+            if (normalizedContent.Length > 4000 || title?.Length > 200 || images?.Length > 2000)
                 throw new InvalidOperationException("Nội dung đánh giá hoặc ảnh vượt độ dài cho phép.");
         }
 
@@ -139,19 +140,21 @@ namespace AncientBook.Application.Services
             return new PagedResult<ReviewResponse>(result, totalCount, query.PageNumber, query.PageSize);
         }
 
-        public async Task<PagedResult<ReviewResponse>> GetMyReviewsAsync(int userId, int pageNumber, int pageSize)
+        public async Task<PagedResult<ReviewResponse>> GetMyReviewsAsync(
+            int userId, int pageNumber, int pageSize, int? bookId = null)
         {
             if (pageNumber < 1) pageNumber = 1;
             if (pageSize < 1) pageSize = 10;
             if (pageSize > 100) pageSize = 100;
 
-            var (items, totalCount) = await _reviewRepository.GetByUserAsync(userId, pageNumber, pageSize);
+            var (items, totalCount) = await _reviewRepository.GetByUserAsync(
+                userId, pageNumber, pageSize, bookId);
 
             var result = items.Select(r => MapToResponse(r, r.Book?.Title)).ToList();
             return new PagedResult<ReviewResponse>(result, totalCount, pageNumber, pageSize);
         }
 
-        public async Task<PagedResult<ReviewEligibleOrderDto>> GetEligibleOrdersAsync(int userId, int pageNumber, int pageSize)
+        public async Task<PagedResult<ReviewEligibleOrderDto>> GetEligibleOrdersAsync(int userId, int pageNumber, int pageSize, int? bookId = null)
         {
             pageNumber = Math.Max(1, pageNumber);
             pageSize = Math.Clamp(pageSize, 1, 100);
@@ -160,16 +163,19 @@ namespace AncientBook.Application.Services
                 && o.Status == OrderStatus.Completed && o.IsPaid
                 && !_db.Set<BookReview>().Any(r => r.UserId == userId && r.OrderId == o.Id)
                 && o.OrderItems.Any(i => i.PurchaseType == PurchaseType.Physical
-                    || i.PurchaseType == PurchaseType.EBook
                     || i.PurchaseType == PurchaseType.Rental && i.RentalStartDate <= now));
+            if (bookId.HasValue)
+                query = query.Where(o => o.OrderItems.Any(i => i.BookId == bookId.Value
+                    && (i.PurchaseType == PurchaseType.Physical
+                        || i.PurchaseType == PurchaseType.Rental && i.RentalStartDate <= now)));
             var count = await query.CountAsync();
             var items = await query.OrderByDescending(o => o.OrderDate).ThenByDescending(o => o.Id)
                 .Skip((pageNumber - 1) * pageSize).Take(pageSize).Select(o => new ReviewEligibleOrderDto
                 {
                     OrderId = o.Id, OrderDate = o.OrderDate,
-                    Books = o.OrderItems.Where(i => i.PurchaseType == PurchaseType.Physical
-                        || i.PurchaseType == PurchaseType.EBook
-                        || i.PurchaseType == PurchaseType.Rental && i.RentalStartDate <= now)
+                    Books = o.OrderItems.Where(i => (!bookId.HasValue || i.BookId == bookId.Value)
+                        && (i.PurchaseType == PurchaseType.Physical
+                            || i.PurchaseType == PurchaseType.Rental && i.RentalStartDate <= now))
                         .Select(i => new ReviewEligibleBookDto { BookId = i.BookId, Title = i.Book!.Title,
                             CoverImg = i.Book.CoverImg, PurchaseType = i.PurchaseType }).ToList()
                 }).ToListAsync();
@@ -184,7 +190,7 @@ namespace AncientBook.Application.Services
             return new BookReviewSummaryResponse
             {
                 BookId = bookId,
-                AverageRating = avgRating,
+                AverageRating = Math.Round(avgRating, 1, MidpointRounding.AwayFromZero),
                 TotalReviews = totalCount,
                 RatingBreakdown = breakdown
             };
@@ -208,7 +214,7 @@ namespace AncientBook.Application.Services
                 PurchaseType = review.IsVerifiedPurchase ? review.VerifiedPurchaseType : null,
                 VerificationLabel = !review.IsVerifiedPurchase ? null : review.VerifiedPurchaseType switch
                 {
-                    PurchaseType.Physical => "Đã mua sách",
+                    PurchaseType.Physical => "Đã mua hàng",
                     PurchaseType.Rental => "Đã thuê sách",
                     PurchaseType.EBook => "Đã mua E-Book",
                     _ => null

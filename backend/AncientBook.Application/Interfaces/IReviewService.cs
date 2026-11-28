@@ -11,8 +11,8 @@ namespace AncientBook.Application.Interfaces
         Task<bool> DeleteReviewAsync(int userId, int reviewId);
 
         Task<PagedResult<ReviewResponse>> GetByBookAsync(int bookId, BookReviewQuery query);
-        Task<PagedResult<ReviewResponse>> GetMyReviewsAsync(int userId, int pageNumber, int pageSize);
-        Task<PagedResult<ReviewEligibleOrderDto>> GetEligibleOrdersAsync(int userId, int pageNumber, int pageSize);
+        Task<PagedResult<ReviewResponse>> GetMyReviewsAsync(int userId, int pageNumber, int pageSize, int? bookId = null);
+        Task<PagedResult<ReviewEligibleOrderDto>> GetEligibleOrdersAsync(int userId, int pageNumber, int pageSize, int? bookId = null);
         Task<BookReviewSummaryResponse> GetBookSummaryAsync(int bookId);
     }
 }

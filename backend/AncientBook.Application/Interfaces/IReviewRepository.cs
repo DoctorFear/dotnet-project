@@ -12,7 +12,7 @@ namespace AncientBook.Application.Interfaces
         Task UpdateAsync(BookReview review);
         Task DeleteAsync(int id);
         Task<(List<BookReview> Items, int TotalCount)> GetByBookAsync(int bookId, int pageNumber, int pageSize, int? ratingFilter, bool? verifiedOnly);
-        Task<(List<BookReview> Items, int TotalCount)> GetByUserAsync(int userId, int pageNumber, int pageSize);
+        Task<(List<BookReview> Items, int TotalCount)> GetByUserAsync(int userId, int pageNumber, int pageSize, int? bookId = null);
         Task<(double AverageRating, int TotalCount)> CalculateBookRatingAsync(int bookId);
         Task<Dictionary<int, int>> GetRatingBreakdownAsync(int bookId);
     }

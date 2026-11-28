@@ -20,6 +20,7 @@ import { useWishlist } from '../hooks/useWishList';
 import WishListButton from '../components/common/WishListButton';
 import BookGallery from '../components/features/storefront/BookGallery';
 import BookReviews from '../components/features/storefront/BookReviews';
+import BookReviewEntry from '../components/features/storefront/BookReviewEntry';
 import WishlistLoginPrompt from '../components/features/storefront/WishlistLoginPrompt';
 import StockAvailabilityBadge from '../components/common/StockAvailabilityBadge';
 import { useBookFilterOptions } from '../hooks/useBookFilterOptions';
@@ -41,8 +42,12 @@ export const BookDetailPage: React.FC = () => {
     const [purchaseBook, setPurchaseBook] = useState<ProductData | null>(null);
     const [activeTab, setActiveTab] = useState<'desc' | 'specs' | 'reviews'>('desc');
     const [reviewCounts, setReviewCounts] = useState<Record<number, number>>({});
+    const [reviewRefreshVersion, setReviewRefreshVersion] = useState(0);
     const updateReviewCount = useCallback((bookId: number, count: number) => {
         setReviewCounts(current => current[bookId] === count ? current : { ...current, [bookId]: count });
+    }, []);
+    const refreshReviews = useCallback(() => {
+        setReviewRefreshVersion((current) => current + 1);
     }, []);
 
     const galleryImages = bookData ? [...new Set([bookData.coverImg, ...bookData.galleryImages].filter(Boolean))] : [];
@@ -264,7 +269,14 @@ export const BookDetailPage: React.FC = () => {
                     )}
 
                     {activeTab === 'reviews' && (
-                        <BookReviews key={bookData.id} bookId={bookData.id} onCountChange={updateReviewCount} />
+                        <div className={styles.reviewTabContent}>
+                            <BookReviewEntry bookId={bookData.id} onReviewSaved={refreshReviews} />
+                            <BookReviews
+                                key={`${bookData.id}-${reviewRefreshVersion}`}
+                                bookId={bookData.id}
+                                onCountChange={updateReviewCount}
+                            />
+                        </div>
                     )}
                 </div>
 

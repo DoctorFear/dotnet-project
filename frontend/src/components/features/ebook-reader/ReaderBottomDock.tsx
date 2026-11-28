@@ -19,9 +19,7 @@ import {
 import type { ReadingMode, ReaderTheme, FontFamily } from '../../../hooks/useEbookReader';
 import {
     TTS_VOICE_PRESETS,
-    DEFAULT_TTS_FALLBACK_ID,
     normalizeTtsVoiceId,
-    normalizeTtsFallbackId,
 } from '../../../services/frontendTtsService';
 import type { TtsPlayState, TtsVoiceOption, TtsFallbackId } from '../../../services/frontendTtsService';
 import styles from '../../../pages/EbookReaderPage.module.css';

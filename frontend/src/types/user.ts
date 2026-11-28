@@ -7,6 +7,7 @@ export interface UserInfo {
     fullName: string;
     role: UserRole;
     fPoints: number;
+    membershipTierName?: string | null;
     avatarUrl?: string;
 }
 
@@ -29,6 +30,7 @@ export interface LoginResponseDto {
     fullName: string;
     role: UserRole;
     fPoints: number;
+    membershipTierName?: string | null;
     accessToken: string;
     refreshToken: string;
 }

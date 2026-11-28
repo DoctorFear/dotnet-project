@@ -48,7 +48,7 @@ namespace AncientBook.API.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Unauthorized(new { message = ex.Message });
+                return StatusCode(403, new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -72,7 +72,7 @@ namespace AncientBook.API.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Unauthorized(new { message = ex.Message });
+                return StatusCode(403, new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -101,7 +101,7 @@ namespace AncientBook.API.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Unauthorized(new { message = ex.Message });
+                return StatusCode(403, new { message = ex.Message });
             }
             catch (InvalidOperationException ex)
             {
@@ -115,7 +115,6 @@ namespace AncientBook.API.Controllers
 
         // UC19: Lấy danh sách lý do giao thất bại
         [HttpGet("failure-reasons")]
-        [AllowAnonymous]
         public async Task<IActionResult> GetFailureReasons()
         {
             try

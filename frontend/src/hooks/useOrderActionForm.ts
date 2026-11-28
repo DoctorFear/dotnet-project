@@ -1,18 +1,23 @@
 import { useState } from 'react';
-import { OrderStatus, type Order, type OrderItem, type OrderHistoryReview } from '../types/order';
+import { type Order, type OrderItem } from '../types/order';
 import { bookIdOf, canCancelOrder, canReturnOrder, canReviewOrder, withinReturnWindow } from '../utils/orderHistory';
-import { updateOrderPresentation } from '../services/orderHistoryService';
+import { notifyOrderHistoryChanged } from '../services/orderHistoryService';
+import { cancelOrder } from '../services/orderService';
 import { submitRefundRequest } from '../services/refundService';
 import type { RefundRequest } from '../types/refund';
+import { useWorkflow } from '../context/WorkflowContext';
+import { useUser } from '../context/UserContext';
 
 export type OrderActionMode = 'cancel' | 'return' | 'review';
 export const returnReasons = ['Sách bị hư hỏng', 'Giao sai sách', 'Sách thiếu trang hoặc lỗi in', 'Thiếu sản phẩm', 'Lý do khác'];
 export const lowRatingReasons = ['Sản phẩm không đúng mô tả', 'Chất lượng sách chưa tốt', 'Đóng gói chưa tốt', 'Giao hàng chưa tốt', 'Lý do khác'];
 
 export const useOrderActionForm = (order: Order, initialItem?: OrderItem) => {
+    const { api } = useWorkflow();
+    const { updateUser } = useUser();
     const [mode, setMode] = useState<OrderActionMode | null>(null);
     const [itemId, setItemId] = useState(initialItem?.id ?? order.orderItems[0]?.id ?? 0);
-    const [rating, setRating] = useState(5);
+    const [rating, setRating] = useState(0);
     const [reason, setReason] = useState('');
     const [description, setDescription] = useState('');
     const [shippingMethod, setShippingMethod] = useState('');
@@ -25,7 +30,7 @@ export const useOrderActionForm = (order: Order, initialItem?: OrderItem) => {
     const review = order.reviews?.find(entry => entry.itemId ? entry.itemId === itemId : entry.bookId === bookIdOf(item));
     const fillReview = (selected: OrderItem) => {
         const existing = order.reviews?.find(entry => entry.itemId ? entry.itemId === selected.id : entry.bookId === bookIdOf(selected));
-        setRating(existing?.rating ?? 5); setDescription(existing?.content ?? ''); setReason(existing?.reason ?? '');
+        setRating(existing?.rating ?? 0); setDescription(existing?.content ?? ''); setReason(existing?.reason ?? '');
     };
     const open = (value: OrderActionMode) => {
         setMode(value); setError(''); setReason(''); setDescription(''); setImages([]); setVideo(null); setShippingMethod(''); setBankAccount('');
@@ -38,11 +43,20 @@ export const useOrderActionForm = (order: Order, initialItem?: OrderItem) => {
     const selectFiles = async (files: FileList | null) => {
         if (!files?.length) return;
         const incoming = Array.from(files);
+        const reviewUpload = mode === 'review';
         const imageCount = incoming.filter(file => file.type.startsWith('image/')).length;
         const videoCount = incoming.filter(file => file.type.startsWith('video/')).length;
-        if (images.length + imageCount > 6 || (video ? 1 : 0) + videoCount > 1 || incoming.some(file =>
-            !['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm'].includes(file.type) || file.size === 0 || file.size > 10 * 1024 * 1024)) {
-            setError('Chọn tối đa 6 ảnh JPG/PNG/WebP và 1 video MP4/WebM, mỗi file không quá 10 MB.'); return;
+        const allowedTypes = reviewUpload
+            ? ['image/jpeg', 'image/png', 'image/webp']
+            : ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm'];
+        const maxBytes = (reviewUpload ? 5 : 10) * 1024 * 1024;
+        if (images.length + imageCount > 6 || reviewUpload && videoCount > 0
+            || !reviewUpload && (video ? 1 : 0) + videoCount > 1
+            || incoming.some(file => !allowedTypes.includes(file.type) || file.size === 0 || file.size > maxBytes)) {
+            setError(reviewUpload
+                ? 'Chọn tối đa 6 ảnh JPG/PNG/WebP, mỗi ảnh không quá 5 MB.'
+                : 'Chọn tối đa 6 ảnh JPG/PNG/WebP và 1 video MP4/WebM, mỗi file không quá 10 MB.');
+            return;
         }
         setReading(true); setError('');
         try {
@@ -62,8 +76,19 @@ export const useOrderActionForm = (order: Order, initialItem?: OrderItem) => {
         if (reading) return;
         if (mode === 'cancel') {
             if (!canCancelOrder(order)) { setError('Đơn hàng không còn ở trạng thái có thể hủy.'); return; }
-            updateOrderPresentation(order, { status: OrderStatus.Failed, failureReason: 'Khách hủy đơn hàng', rewardPoints: 0 });
-        } else if (mode === 'return') {
+            setReading(true); setError('');
+            try {
+                await cancelOrder(order.id);
+                const balance = await api.balance().catch(() => null);
+                if (balance) updateUser({ fPoints: balance.currentPoints });
+                notifyOrderHistoryChanged();
+                setMode(null);
+            } catch (cause) {
+                setError(cause instanceof Error ? cause.message : 'Không thể hủy đơn hàng.');
+            } finally { setReading(false); }
+            return;
+        }
+        if (mode === 'return') {
             if (!canReturnOrder(order) || !withinReturnWindow(order)) { setError('Đơn hàng không còn đủ điều kiện hoàn hàng.'); return; }
             if (!returnReasons.includes(reason) || description.trim().length < 10 || images.length === 0 && !video) {
                 setError('Vui lòng chọn lý do, mô tả ít nhất 10 ký tự và đính kèm ảnh hoặc video tình trạng sách.'); return;
@@ -71,48 +96,54 @@ export const useOrderActionForm = (order: Order, initialItem?: OrderItem) => {
             if (!shippingMethod.trim() || !bankAccount.trim()) {
                 setError('Vui lòng nhập phương thức gửi hàng và tài khoản nhận tiền.'); return;
             }
-            setReading(true);
+            setReading(true); setError('');
             try {
-                const rawImages = images.map(img => img.file);
-                const rawVideo = video ? video.file : null;
-
-                const refundRequest : RefundRequest = {
+                const refundRequest: RefundRequest = {
                     orderId: order.id,
-                    reason: reason,
+                    reason,
                     description: description.trim(),
                     shippingMethod: shippingMethod.trim(),
                     bankAccount: bankAccount.trim(),
-                    images: rawImages,
-                    video: rawVideo
-                }
-                
+                    images: images.map(img => img.file),
+                    video: video?.file ?? null,
+                };
                 await submitRefundRequest(refundRequest);
-                
-                updateOrderPresentation(order, { 
-                    status: OrderStatus.ReturnRequested,
-                    returnInfo: { 
-                        reason, 
-                        description: description.trim(), 
-                        imageUrls: images.map(img => img.url),
-                        videoUrl: video?.url 
-                    } 
-                });
+                notifyOrderHistoryChanged();
                 setMode(null);
-            } catch (err: any) {
-                setError(err.message || 'Lỗi khi gửi yêu cầu hoàn tiền.');
-            } finally {
-                setReading(false);
-            }
-            
-        } else if (mode === 'review') {
-            if (!canReviewOrder(order) || review) return;
-            if (!description.trim() || rating <= 2 && !lowRatingReasons.includes(reason)) {
-                setError('Vui lòng nhập nhận xét và chọn lý do khi đánh giá 1–2 sao.'); return;
-            }
-            const next: OrderHistoryReview = { bookId: bookIdOf(item), itemId: item.id, rating, content: description.trim(), reason };
-            updateOrderPresentation(order, { reviews: [...(order.reviews ?? []), next], rewardPoints: (order.rewardPoints ?? 0) + 10 });
+            } catch (cause) {
+                setError(cause instanceof Error ? cause.message : 'Lỗi khi gửi yêu cầu hoàn tiền.');
+            } finally { setReading(false); }
+            return;
         }
-        setMode(null);
+        if (mode === 'review') {
+            if (!canReviewOrder(order) || review || !item) return;
+            if (rating < 1 || rating > 5) {
+                setError('Vui lòng chọn số sao từ 1 đến 5.'); return;
+            }
+            if (description.trim().length < 10) {
+                setError('Nhận xét phải có ít nhất 10 ký tự.'); return;
+            }
+            if (rating <= 2 && !lowRatingReasons.includes(reason)) {
+                setError('Vui lòng chọn lý do khi đánh giá 1–2 sao.'); return;
+            }
+            setReading(true); setError('');
+            try {
+                const uploaded = await Promise.all(images.map(image => api.uploadReviewImage(image.file)));
+                await api.createReview({
+                    orderId: order.id,
+                    bookId: bookIdOf(item),
+                    rating,
+                    content: description.trim(),
+                    imageUrls: JSON.stringify(uploaded.map(value => value.fileUrl)),
+                });
+                const balance = await api.balance().catch(() => null);
+                if (balance) updateUser({ fPoints: balance.currentPoints });
+                notifyOrderHistoryChanged();
+                setMode(null);
+            } catch (cause) {
+                setError(cause instanceof Error ? cause.message : 'Không thể gửi đánh giá.');
+            } finally { setReading(false); }
+        }
     };
     return { mode, item, itemId, review, rating, reason, description, images, video, error, reading, open, shippingMethod, bankAccount,
         close: () => setMode(null), selectItem, setRating, setReason, setDescription, selectFiles, setShippingMethod, setBankAccount,

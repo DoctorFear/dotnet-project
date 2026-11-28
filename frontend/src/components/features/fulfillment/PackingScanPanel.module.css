@@ -1,0 +1,298 @@
+.card {
+    overflow: hidden;
+    border: 1px solid #dfe4ea;
+    border-radius: 7px;
+    background: #fff;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.card.complete {
+    border-color: #84c69b;
+    box-shadow: inset 3px 0 0 #2f855a;
+}
+
+.bookInfo {
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr) 64px;
+    gap: 12px;
+    align-items: center;
+    padding: 13px 14px;
+    background: #f8f9fb;
+    border-bottom: 1px solid #e6e9ed;
+}
+
+.cover {
+    display: grid;
+    place-items: center;
+    width: 50px;
+    height: 62px;
+    overflow: hidden;
+    border: 1px solid #d9dee4;
+    border-radius: 4px;
+    color: #697482;
+    background: #fff;
+}
+
+.cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.identity {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.identity > strong {
+    overflow: hidden;
+    color: #172033;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 14px;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.identity > span {
+    color: #687386;
+    font-size: 11px;
+}
+
+.identity b {
+    color: #28364d;
+    letter-spacing: 0.02em;
+}
+
+.location {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    width: fit-content;
+    margin-top: 2px;
+    padding: 3px 7px;
+    border-radius: 3px;
+    color: #7b4b0d !important;
+    background: #fff3d5;
+    font-weight: 700;
+}
+
+.quantity {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-left: 10px;
+    border-left: 1px solid #dde2e8;
+    color: #687386;
+    line-height: 1.1;
+}
+
+.quantity span,
+.quantity small {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 9.5px;
+}
+
+.quantity strong {
+    margin: 3px 0;
+    color: #102a52;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 24px;
+}
+
+.scanRow {
+    padding: 12px 14px 10px;
+}
+
+.scanRow > label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 6px;
+    color: #33445f;
+    font-size: 10px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-weight: 800;
+    letter-spacing: normal;
+}
+
+.scanControl {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.scanControl input {
+    min-width: 0;
+    padding: 9px 11px;
+    border: 1px solid #cfd6df;
+    border-right: 0;
+    border-radius: 4px 0 0 4px;
+    outline: none;
+    color: #1e293b;
+    background: #fff;
+    font: inherit;
+    font-size: 12px;
+}
+
+.scanControl input:focus {
+    border-color: #295c99;
+    box-shadow: inset 0 0 0 1px #295c99;
+}
+
+.scanControl input:disabled {
+    color: #687386;
+    background: #f0f2f5;
+}
+
+.scanControl button {
+    padding: 0 14px;
+    border: 1px solid #153c6c;
+    border-radius: 0 4px 4px 0;
+    color: #fff;
+    background: #153c6c;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.scanControl button:disabled {
+    border-color: #a9b1bc;
+    background: #a9b1bc;
+    cursor: not-allowed;
+}
+
+.progress {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    margin-top: 9px;
+}
+
+.progress > span {
+    display: inline-grid;
+    place-items: center;
+    width: 23px;
+    height: 23px;
+    border: 1px dashed #aeb7c3;
+    border-radius: 50%;
+    color: #7a8491;
+    background: #fff;
+    font-size: 9px;
+}
+
+.progress > span.scanned {
+    border-style: solid;
+    border-color: #2f855a;
+    color: #fff;
+    background: #2f855a;
+}
+
+.progress > b {
+    margin-left: 2px;
+    color: #334155;
+    font-size: 11px;
+}
+
+.reset {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    padding: 3px 0;
+    border: 0;
+    color: #8b3543;
+    background: transparent;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.error {
+    margin: 7px 0 0;
+    color: #b42335;
+    font-size: 10.5px;
+}
+
+.inspection {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+    padding: 10px 14px;
+    border-top: 1px solid #e7eaee;
+    color: #26364d;
+    background: #fbfcfd;
+    cursor: pointer;
+}
+
+.inspection.locked {
+    color: #7e8793;
+    background: #f5f6f8;
+    cursor: not-allowed;
+}
+
+.inspection input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.checkmark {
+    display: inline-grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+    border: 1px solid #aeb7c3;
+    border-radius: 3px;
+    color: transparent;
+    background: #fff;
+}
+
+.inspection input:checked + .checkmark {
+    border-color: #2f855a;
+    color: #fff;
+    background: #2f855a;
+}
+
+.inspection > span:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.inspection strong {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 11px;
+}
+
+.inspection small {
+    color: #748093;
+    font-size: 9.5px;
+    line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+    .bookInfo {
+        grid-template-columns: 48px minmax(0, 1fr) 54px;
+        gap: 8px;
+        padding: 10px;
+    }
+
+    .cover {
+        width: 42px;
+        height: 54px;
+    }
+
+    .identity > strong {
+        font-size: 12px;
+    }
+
+    .scanRow,
+    .inspection {
+        padding-right: 10px;
+        padding-left: 10px;
+    }
+}

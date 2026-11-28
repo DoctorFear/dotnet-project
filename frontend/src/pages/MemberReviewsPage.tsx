@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
     MessageSquareText,
     ShieldCheck,
@@ -20,8 +22,25 @@ import common from '../components/features/workflow/Workflow.module.css';
 import styles from '../components/features/member-reviews/MemberReviews.module.css';
 
 export default function MemberReviewsPage() {
-    const reviews = useMemberReviews();
+    const [searchParams] = useSearchParams();
+    const requestedBookIdValue = Number(searchParams.get('bookId'));
+    const requestedBookId = Number.isSafeInteger(requestedBookIdValue) && requestedBookIdValue > 0
+        ? requestedBookIdValue : undefined;
+    const reviews = useMemberReviews(requestedBookId);
     const data = reviews.resource.data;
+    const { setEditor, setError } = reviews;
+    const openedRequestedBook = useRef<number | null>(null);
+
+    useEffect(() => {
+        if (!requestedBookId || reviews.resource.loading || openedRequestedBook.current === requestedBookId) return;
+        const order = data?.eligible.items.find((item) =>
+            item.books.some((book) => book.bookId === requestedBookId));
+        if (order) {
+            openedRequestedBook.current = requestedBookId;
+            setError('');
+            setEditor({ order });
+        }
+    }, [data?.eligible.items, requestedBookId, reviews.resource.loading, setEditor, setError]);
 
     const open = (order?: ReviewOrder, review?: MemberReview) => {
         reviews.setError('');

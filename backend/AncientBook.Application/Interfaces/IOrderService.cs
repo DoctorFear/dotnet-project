@@ -9,7 +9,7 @@ namespace AncientBook.Application.Interfaces
     public interface IOrderService
     {
         Task<bool> UpdateOrderStatusAsync(int orderId, OrderStatus newStatus, string? updatedBy = null);
-        Task<bool> CancelOrder(int orderId);
+        Task<bool> CancelOrder(int orderId, int userId);
         Task<bool> RequestRefundOrder(int orderId);
         Task<PagedResult<OrderResponseDto>> GetPagedOrdersAsync(GetOrdersQuery query);
         Task<bool> ApproveReturnOrderAsync(int orderId, string adminUser);

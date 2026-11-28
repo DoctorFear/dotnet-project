@@ -18,6 +18,8 @@ namespace AncientBook.Infrastructure.Persistence
             $"SELECT [Id] FROM [Users] WITH (UPDLOCK, HOLDLOCK) WHERE [Id] = {id}");
         public Task LockBookAsync(int id) => Database.ExecuteSqlInterpolatedAsync(
             $"SELECT [Id] FROM [Books] WITH (UPDLOCK, HOLDLOCK) WHERE [Id] = {id}");
+        public Task LockShipperAsync(int id) => Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT [Id] FROM [Shippers] WITH (UPDLOCK, HOLDLOCK) WHERE [Id] = {id}");
 
         public DbSet<User> Users => Set<User>();
 
@@ -85,6 +87,14 @@ namespace AncientBook.Infrastructure.Persistence
             modelBuilder.Entity<Shipper>().HasIndex(s => s.UserId).IsUnique()
                 .HasFilter("[UserId] IS NOT NULL");
             modelBuilder.Entity<Order>().Property(o => o.PackingIssue).HasMaxLength(1000);
+            modelBuilder.Entity<Order>().Property(o => o.CodCollectedAmount).HasPrecision(18, 2);
+            modelBuilder.Entity<Order>().Property(o => o.CodSettlementStatus).HasMaxLength(30);
+            modelBuilder.Entity<Order>().Property(o => o.ShippingCarrier).HasMaxLength(100)
+                .HasDefaultValue("AncientBook Delivery");
+            modelBuilder.Entity<Order>().Property(o => o.DeliveryPriority).HasMaxLength(20)
+                .HasDefaultValue("Standard");
+            modelBuilder.Entity<Order>().Property(o => o.DeliveryNote).HasMaxLength(500);
+            modelBuilder.Entity<Order>().Property(o => o.WaybillCode).HasMaxLength(50);
             modelBuilder.Entity<FPoints>().Property(p => p.SourceKey).HasMaxLength(200);
             modelBuilder.Entity<FPoints>().Property(p => p.Description).HasMaxLength(1000);
             modelBuilder.Entity<FPoints>().HasIndex(p => p.SourceKey).IsUnique()
@@ -209,6 +219,7 @@ namespace AncientBook.Infrastructure.Persistence
                 entity.HasKey(i => i.Id);
                 entity.Property(i => i.QuantityOnHand).IsRequired().HasDefaultValue(0);
                 entity.Property(i => i.ReorderLevel).IsRequired().HasDefaultValue(5);
+                entity.Property(i => i.ShelfLocation).HasMaxLength(100);
                 entity.Property(i => i.LastUpdated).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                 entity.HasIndex(i => i.BookId).IsUnique();

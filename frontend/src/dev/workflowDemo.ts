@@ -31,11 +31,18 @@ export function createWorkflowDemo(): WorkflowApi {
             customerName: 'Nguyễn Thảo Nguyên',
             receiverPhone: '0901234567',
             shippingAddress: '128 Nguyễn Thị Minh Khai, Phường Bến Thành, TP. Hồ Chí Minh',
+            shippingCarrier: 'AncientBook Delivery',
+            deliveryPriority: 'Express',
+            deliveryNote: 'Vui lòng gọi trước 10 phút; giao tại sảnh.',
+            waybillCode: 'AB-20261128-00001001',
             finalAmount: 248000,
             codAmount: 248000,
             isPaid: false,
             status: 'Prepared',
+            deliveryType: 'Outbound',
             orderDate: now(),
+            note: null,
+            startedAt: null,
             isReadOnly: false,
             completedAt: null,
             failureReason: null,
@@ -48,11 +55,18 @@ export function createWorkflowDemo(): WorkflowApi {
             customerName: 'Trần Minh Anh',
             receiverPhone: '0912345678',
             shippingAddress: '45 Võ Thị Sáu, Phường Tân Định, TP. Hồ Chí Minh',
+            shippingCarrier: 'AncientBook Delivery',
+            deliveryPriority: 'Standard',
+            deliveryNote: null,
+            waybillCode: 'AB-20261128-00001002',
             finalAmount: 320000,
             codAmount: 0,
             isPaid: true,
             status: 'Shipping',
+            deliveryType: 'Outbound',
             orderDate: dated(-1),
+            note: null,
+            startedAt: null,
             isReadOnly: false,
             completedAt: null,
             failureReason: null,
@@ -65,11 +79,18 @@ export function createWorkflowDemo(): WorkflowApi {
             customerName: 'Phạm Đức Huy',
             receiverPhone: '0987654321',
             shippingAddress: '12 Nguyễn Văn Cừ, Phường Chợ Quán, TP. Hồ Chí Minh',
+            shippingCarrier: 'AncientBook Delivery',
+            deliveryPriority: 'Standard',
+            deliveryNote: null,
+            waybillCode: 'AB-20261128-00001003',
             finalAmount: 153000,
             codAmount: 153000,
             isPaid: false,
             status: 'Shipping',
+            deliveryType: 'Outbound',
             orderDate: dated(-1),
+            note: null,
+            startedAt: null,
             isReadOnly: false,
             completedAt: null,
             failureReason: null,
@@ -82,11 +103,18 @@ export function createWorkflowDemo(): WorkflowApi {
             customerName: 'Lê Hoài Nam',
             receiverPhone: '0933333333',
             shippingAddress: '76 Trần Hưng Đạo, Phường Cầu Ông Lãnh, TP. Hồ Chí Minh',
+            shippingCarrier: 'AncientBook Delivery',
+            deliveryPriority: 'Standard',
+            deliveryNote: null,
+            waybillCode: 'AB-20261128-00001004',
             finalAmount: 120000,
             codAmount: 0,
             isPaid: true,
             status: 'Completed',
+            deliveryType: 'Outbound',
             orderDate: dated(-2),
+            note: null,
+            startedAt: null,
             isReadOnly: true,
             completedAt: dated(-1),
             failureReason: null,
@@ -99,11 +127,18 @@ export function createWorkflowDemo(): WorkflowApi {
             customerName: 'Võ Quỳnh Như',
             receiverPhone: '0944444444',
             shippingAddress: '81 Điện Biên Phủ, Phường Gia Định, TP. Hồ Chí Minh',
+            shippingCarrier: 'AncientBook Delivery',
+            deliveryPriority: 'Standard',
+            deliveryNote: null,
+            waybillCode: 'AB-20261128-00001005',
             finalAmount: 185000,
             codAmount: 185000,
             isPaid: false,
             status: 'Failed',
+            deliveryType: 'Outbound',
             orderDate: dated(-3),
+            note: null,
+            startedAt: null,
             isReadOnly: true,
             completedAt: dated(-2),
             failureReason: 'Không liên hệ được khách hàng',
@@ -124,6 +159,8 @@ export function createWorkflowDemo(): WorkflowApi {
             orderDate: now(),
             totalItems: 2,
             finalAmount: 368000,
+            shippingCarrier: 'AncientBook Delivery',
+            deliveryPriority: 'Standard',
             status: 2,
             packingIssue: null,
         },
@@ -133,6 +170,8 @@ export function createWorkflowDemo(): WorkflowApi {
             orderDate: now(),
             totalItems: 1,
             finalAmount: 185000,
+            shippingCarrier: 'AncientBook Delivery',
+            deliveryPriority: 'Standard',
             status: 2,
             packingIssue: null,
         },
@@ -142,6 +181,8 @@ export function createWorkflowDemo(): WorkflowApi {
             orderDate: dated(-1),
             totalItems: 3,
             finalAmount: 459000,
+            shippingCarrier: 'AncientBook Delivery',
+            deliveryPriority: 'Standard',
             status: 2,
             packingIssue: 'Một cuốn sách bị móp góc, cần thay trước khi đóng gói.',
         },
@@ -154,6 +195,10 @@ export function createWorkflowDemo(): WorkflowApi {
                 customerName: item.customerName,
                 receiverPhone: '0901234567',
                 shippingAddress: '128 Nguyễn Thị Minh Khai, Phường Bến Thành, TP. Hồ Chí Minh',
+                shippingCarrier: item.shippingCarrier,
+                deliveryPriority: item.deliveryPriority,
+                deliveryNote: 'Vui lòng gọi trước khi giao.',
+                waybillCode: `AB-20261128-${String(item.orderId).padStart(8, '0')}`,
                 packingIssue: item.packingIssue,
                 items:
                     item.orderId === 2052
@@ -161,6 +206,8 @@ export function createWorkflowDemo(): WorkflowApi {
                               {
                                   bookId: 2,
                                   bookTitle: 'Lược sử vạn vật',
+                                  isbn: '9786040000002',
+                                  shelfLocation: 'Kệ A · Ngăn 02',
                                   bookCover: null,
                                   quantity: 1,
                                   unitPrice: 248000,
@@ -168,6 +215,8 @@ export function createWorkflowDemo(): WorkflowApi {
                               {
                                   bookId: 5,
                                   bookTitle: 'Dế mèn phiêu lưu ký',
+                                  isbn: '9786040000005',
+                                  shelfLocation: 'Kệ A · Ngăn 05',
                                   bookCover: null,
                                   quantity: 1,
                                   unitPrice: 120000,
@@ -177,6 +226,8 @@ export function createWorkflowDemo(): WorkflowApi {
                               {
                                   bookId: 6,
                                   bookTitle: 'Sapiens — Lược sử loài người',
+                                  isbn: '9786040000006',
+                                  shelfLocation: 'Kệ A · Ngăn 06',
                                   bookCover: null,
                                   quantity: item.totalItems,
                                   unitPrice: item.finalAmount / item.totalItems,
@@ -222,6 +273,7 @@ export function createWorkflowDemo(): WorkflowApi {
             id: 5,
             orderId: 1054,
             pointUsed: -124,
+            balanceAfter: 1860,
             transactionType: 'Earn',
             description: 'Tích điểm đơn #1054',
             createdAt: now(),
@@ -232,6 +284,7 @@ export function createWorkflowDemo(): WorkflowApi {
             id: 4,
             orderId: 1048,
             pointUsed: -150,
+            balanceAfter: 1860,
             transactionType: 'Earn',
             description: 'Tích điểm đơn #1048',
             createdAt: dated(-2),
@@ -242,6 +295,7 @@ export function createWorkflowDemo(): WorkflowApi {
             id: 3,
             orderId: 1046,
             pointUsed: -10,
+            balanceAfter: 1710,
             transactionType: 'Earn',
             description: 'Thưởng đánh giá sách, đơn #1046',
             createdAt: dated(-3),
@@ -252,6 +306,7 @@ export function createWorkflowDemo(): WorkflowApi {
             id: 2,
             orderId: 1044,
             pointUsed: 250,
+            balanceAfter: 1700,
             transactionType: 'Redeem',
             description: 'Sử dụng F-Point khi thanh toán',
             createdAt: dated(-4),
@@ -262,6 +317,7 @@ export function createWorkflowDemo(): WorkflowApi {
             id: 1,
             orderId: 1040,
             pointUsed: -80,
+            balanceAfter: 1950,
             transactionType: 'Earn',
             description: 'Điểm đơn #1040 đã yêu cầu hoàn trả',
             createdAt: dated(-5),
@@ -332,13 +388,14 @@ export function createWorkflowDemo(): WorkflowApi {
             const item = getDelivery(id);
             if (!(
                 (item.status === 'Prepared' && update.newStatus === 'Shipping') ||
-                (item.status === 'Shipping' && ['Completed', 'Failed'].includes(update.newStatus))
+                (item.status === 'Shipping' && ['Completed', 'Failed'].includes(update.newStatus)) ||
+                (item.status === 'ReturnApproved' && update.newStatus === 'Returned')
             ))
                 throw new Error('Đơn đã thay đổi trạng thái.');
             if (update.newStatus === 'Failed' && !update.failureReasonId)
                 throw new Error('Vui lòng chọn lý do.');
             item.status = update.newStatus;
-            item.isReadOnly = ['Completed', 'Failed'].includes(item.status);
+            item.isReadOnly = ['Completed', 'Failed', 'Returned'].includes(item.status);
             if (item.isReadOnly) item.completedAt = now();
             if (item.status === 'Completed') {
                 item.isPaid = true;
@@ -368,13 +425,25 @@ export function createWorkflowDemo(): WorkflowApi {
                 ),
             ),
         packingDetail: async (id) => {
-            if (!packing.some((item) => item.orderId === id))
-                throw new Error('Đơn không còn ở trạng thái Đã xác nhận.');
+            if (!details[id]) throw new Error('Không tìm thấy đơn hàng.');
             return wait(details[id]);
         },
-        confirmPacking: async (id) => {
+        confirmPacking: async (id, verification) => {
             const index = packing.findIndex((item) => item.orderId === id);
             if (index < 0) throw new Error('Đơn đã được xử lý.');
+            const detail = details[id];
+            const verified = verification.verifiedItems.every((item) => {
+                const expected = detail.items.find((book) => book.bookId === item.bookId);
+                return expected
+                    && item.verifiedQuantity === expected.quantity
+                    && item.scannedCodes.length === expected.quantity
+                    && item.visualInspectionPassed;
+            });
+            if (!verified) throw new Error('Vui lòng quét đủ mã và xác nhận ngoại quan từng cuốn.');
+            detail.status = 3;
+            detail.canConfirmPacking = false;
+            detail.packedAt = now();
+            detail.packedBy = 'warehouse.demo';
             packing.splice(index, 1);
             return wait({});
         },
@@ -387,10 +456,25 @@ export function createWorkflowDemo(): WorkflowApi {
             return wait({});
         },
         balance: async () => wait(balance),
-        pointHistory: async (p, size) => wait(page(history, p, size)),
+        pointHistory: async (query) => {
+            const filtered = history.filter((item) =>
+                (!query.fromDate || item.createdAt.slice(0, 10) >= query.fromDate)
+                && (!query.toDate || item.createdAt.slice(0, 10) <= query.toDate)
+                && (!query.transactionType || item.transactionType === query.transactionType));
+            const result = page(filtered, query.pageNumber, query.pageSize);
+            return wait({
+                ...result,
+                totalEarned: filtered.filter((item) => item.transactionType === 'Earn' && item.status !== 'Cancelled')
+                    .reduce((sum, item) => sum + Math.abs(item.pointUsed), 0),
+                totalRedeemed: filtered.filter((item) => item.transactionType === 'Redeem')
+                    .reduce((sum, item) => sum + Math.abs(item.pointUsed), 0),
+                totalRefunded: filtered.filter((item) => item.transactionType === 'Refund')
+                    .reduce((sum, item) => sum + Math.abs(item.pointUsed), 0),
+            });
+        },
         tiers: async () => wait(tiers),
         previewPoints: async (pointsToUse, totalAmount) => {
-            const max = Math.min(1000, balance.currentPoints, Math.floor(totalAmount / 200));
+            const max = Math.min(1000, balance.currentPoints, Math.floor(totalAmount / 100));
             if (!Number.isInteger(pointsToUse) || pointsToUse < 0 || pointsToUse > max)
                 throw new Error(`Chỉ được dùng tối đa ${max} F-Point cho đơn này.`);
             return wait({
@@ -429,31 +513,34 @@ export function createWorkflowDemo(): WorkflowApi {
                 canConfirmReceipt: false,
             });
         },
-        myReviews: async (p, size) => wait(page(reviews, p, size)),
+        myReviews: async (p, size, bookId) =>
+            wait(page(bookId ? reviews.filter((review) => review.bookId === bookId) : reviews, p, size)),
         reviewOrders: async (p, size) => wait(page(eligible, p, size)),
         createReview: async (draft) => {
             const index = eligible.findIndex((item) => item.orderId === draft.orderId);
             if (index < 0 || !draft.content.trim())
                 throw new Error('Giao dịch không hợp lệ hoặc đã được đánh giá.');
             const book = eligible[index].books.find((book) => book.bookId === draft.bookId)!;
-            reviews = [
-                {
-                    id: Date.now(),
-                    orderId: draft.orderId!,
-                    bookId: draft.bookId,
-                    bookTitle: book.title,
-                    rating: draft.rating,
-                    title: draft.title ?? '',
-                    content: draft.content,
-                    imageUrls: draft.imageUrls ?? null,
-                    verificationLabel: book.purchaseType === 1 ? 'Đã mua sách' : 'Đã thuê sách',
-                    createdAt: now(),
-                },
-                ...reviews,
-            ];
+            const review: MemberReview = {
+                id: Date.now(),
+                orderId: draft.orderId!,
+                bookId: draft.bookId,
+                bookTitle: book.title,
+                rating: draft.rating,
+                title: draft.title ?? '',
+                content: draft.content,
+                imageUrls: draft.imageUrls ?? null,
+                verificationLabel: book.purchaseType === 1 ? 'Đã mua hàng' : 'Đã thuê sách',
+                rewardPointsAwarded: 10,
+                createdAt: now(),
+            };
+            reviews = [review, ...reviews];
             eligible.splice(index, 1);
             balance.currentPoints += 10;
-            return wait({});
+            return wait({
+                message: 'Gửi đánh giá thành công! Bạn được cộng thêm 10 điểm thưởng F-Point.',
+                data: review,
+            });
         },
         updateReview: async (id, draft) => {
             const review = reviews.find((item) => item.id === id);

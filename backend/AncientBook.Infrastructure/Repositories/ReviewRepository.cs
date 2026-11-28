@@ -87,13 +87,18 @@ namespace AncientBook.Infrastructure.Repositories
         }
 
         public async Task<(List<BookReview> Items, int TotalCount)> GetByUserAsync(
-            int userId, int pageNumber, int pageSize)
+            int userId, int pageNumber, int pageSize, int? bookId = null)
         {
             var query = _context.BookReviews
                 .AsNoTracking()
                 .Include(r => r.Book)
                 .Where(r => r.Status != ReviewStatus.Hidden)
                 .Where(r => r.UserId == userId);
+
+            if (bookId.HasValue)
+            {
+                query = query.Where(r => r.BookId == bookId.Value);
+            }
 
             var totalCount = await query.CountAsync();
 

@@ -36,7 +36,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             email: authData.email,
             fullName: authData.fullName,
             role: authData.role,
-            fPoints: authData.fPoints,  
+            fPoints: authData.fPoints,
+            membershipTierName: authData.membershipTierName,
             avatarUrl: 'https://media.istockphoto.com/id/2149922267/vector/user-icon.jpg?s=612x612&w=0&k=20&c=i6jYPfB1pWjK8pll6YRxAK9fgBmf65-w5wbKH9R1dyQ='
         };
 

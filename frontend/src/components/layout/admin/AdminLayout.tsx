@@ -83,7 +83,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                     {adminMenuItems
                         .filter((item) =>
                             user?.role === 'Admin'
-                                ? ['reports', 'users', 'audit-logs', 'settings'].includes(item.page ?? '')
+                                ? ['reports', 'users', 'audit-logs', 'settings', 'books', 'packing'].includes(item.page ?? '')
                                 : !['users', 'audit-logs'].includes(item.page ?? '') && item.icon !== UserCog
                         )
                         .map((item) => {
@@ -94,7 +94,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                                     <button
                                         type="button"
                                         className={`${styles.menuLink} ${isActive ? styles.active : ''}`}
-                                        onClick={() => item.path && navigate(item.path)}
+                                        onClick={() => item.path && navigate(
+                                            item.page === 'packing' && user?.role === 'Admin'
+                                                ? '/admin/packing'
+                                                : item.path,
+                                        )}
                                     >
                                         <Icon />
                                         {item.label}

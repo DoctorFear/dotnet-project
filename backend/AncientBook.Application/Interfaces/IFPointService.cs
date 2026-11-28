@@ -9,7 +9,7 @@ namespace AncientBook.Application.Interfaces
     {
         Task<FPointBalanceDto> GetBalanceAsync(int userId);
 
-        Task<PagedResult<FPointTransactionDto>> GetHistoryAsync(int userId, int pageNumber, int pageSize);
+        Task<FPointHistoryResultDto> GetHistoryAsync(int userId, FPointHistoryQuery query);
 
         // Chỉ xem trước mức giảm giá; Checkout kiểm tra lại và trừ điểm trong transaction.
         Task<UseFPointResponse> ValidateAndCalculatePointsAsync(int userId, UseFPointRequest request);

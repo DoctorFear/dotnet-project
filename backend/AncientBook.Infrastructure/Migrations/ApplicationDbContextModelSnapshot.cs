@@ -1044,6 +1044,10 @@ namespace AncientBook.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(5);
 
+                    b.Property<string>("ShelfLocation")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -1126,6 +1130,31 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("CodCollectedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("CodCollectedAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("CodCollectedByShipperId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CodSettlementStatus")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("DeliveryNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("DeliveryPriority")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("Standard");
+
                     b.Property<decimal>("DiscountAmount")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("decimal(18,2)")
@@ -1169,6 +1198,13 @@ namespace AncientBook.Infrastructure.Migrations
                     b.Property<int?>("ShipperId")
                         .HasColumnType("int");
 
+                    b.Property<string>("ShippingCarrier")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasDefaultValue("AncientBook Delivery");
+
                     b.Property<string>("ShippingAddress")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -1189,6 +1225,10 @@ namespace AncientBook.Infrastructure.Migrations
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
+
+                    b.Property<string>("WaybillCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
 

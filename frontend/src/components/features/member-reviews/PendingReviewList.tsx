@@ -42,7 +42,7 @@ export default function PendingReviewList({ orders, onOpen }: PendingReviewListP
                                     <h3>{book.title}</h3>
                                     <span className={`${common.badge} ${common.badgeGreen}`}>
                                         <BadgeCheck size={12} />
-                                        {book.purchaseType === 1 ? 'Đã mua sách' : 'Đã thuê sách'}
+                                        {book.purchaseType === 1 ? 'Đã mua hàng' : 'Đã thuê E-Book'}
                                     </span>
                                 </div>
                             </div>

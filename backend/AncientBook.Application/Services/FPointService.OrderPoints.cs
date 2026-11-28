@@ -133,21 +133,53 @@ public partial class FPointService
         var redeem = await _db.Set<FPoints>().FirstOrDefaultAsync(p =>
             p.SourceKey == $"Order:{orderId}:Redeem" && p.PointUsed > 0);
         var refundRedeem = order.Status is OrderStatus.Failed or OrderStatus.Returned;
-        if (refundRedeem && redeem != null && redeem.Status != PointStatus.Cancelled)
+        if (refundRedeem && redeem != null)
         {
-            await WorkflowSupport.LockUserAsync(_db, order.UserId);
-            var user = await _db.Set<User>().FirstAsync(u => u.Id == order.UserId);
-            var before = user.FPoints;
-            user.FPoints = checked(user.FPoints + redeem.PointUsed);
-            redeem.Status = PointStatus.Cancelled;
-            redeem.UpdatedBy = "System";
-            WorkflowSupport.Audit(_db, "RedeemedPointsRefunded", "FPoints", redeem.Id,
-                new { Status = PointStatus.Available.ToString(), FPoints = before },
-                new { Status = redeem.Status.ToString(), user.FPoints },
-                details: $"Đơn #{orderId}: hoàn {redeem.PointUsed} F-Point do đơn {order.Status}.");
-            WorkflowSupport.Notify(_db, $"Đã hoàn {redeem.PointUsed} F-Point của đơn #{orderId} vào ví.",
-                orderId, order.UserId);
-            await _db.SaveChangesAsync();
+            var actor = order.UpdatedBy ?? "System";
+            var actorMatch = System.Text.RegularExpressions.Regex.Match(actor, @"([0-9]+)$");
+            var actorUserId = actorMatch.Success && int.TryParse(actorMatch.Value, out var parsedActorId)
+                ? parsedActorId : (int?)null;
+            var refundKey = $"Order:{orderId}:RedeemRefund";
+            var refundExists = await _db.Set<FPoints>().AnyAsync(p => p.SourceKey == refundKey);
+            if (redeem.Status != PointStatus.Cancelled)
+            {
+                await WorkflowSupport.LockUserAsync(_db, order.UserId);
+                var user = await _db.Set<User>().FirstAsync(u => u.Id == order.UserId);
+                var before = user.FPoints;
+                var previousPointStatus = redeem.Status;
+                user.FPoints = checked(user.FPoints + redeem.PointUsed);
+                redeem.Status = PointStatus.Cancelled;
+                redeem.Description = $"Sử dụng {redeem.PointUsed} F-Point đơn #{orderId} (đã hoàn)";
+                redeem.UpdatedBy = actor;
+                if (!refundExists)
+                    _db.Set<FPoints>().Add(new FPoints
+                    {
+                        UserId = order.UserId, OrderId = orderId, PointUsed = -redeem.PointUsed,
+                        SourceKey = refundKey, Description = $"Hoàn {redeem.PointUsed} F-Point của đơn #{orderId}",
+                        Status = PointStatus.Available, AvailableAt = TimeZoneHelper.GetVietnamTime(), CreatedBy = actor
+                    });
+                WorkflowSupport.Audit(_db, "RedeemedPointsRefunded", "FPoints", redeem.Id,
+                    new { Status = previousPointStatus.ToString(), FPoints = before },
+                    new { Status = redeem.Status.ToString(), user.FPoints,
+                        RefundedPoints = redeem.PointUsed, RefundedValue = redeem.PointUsed * 100m }, actorUserId,
+                    $"Đơn #{orderId}: hoàn {redeem.PointUsed} F-Point ({redeem.PointUsed * 100m:N0} đ) do đơn {order.Status}.");
+                WorkflowSupport.Notify(_db, $"Đã hoàn {redeem.PointUsed} F-Point của đơn #{orderId} vào ví.",
+                    orderId, order.UserId);
+                await _db.SaveChangesAsync();
+            }
+            else if (!refundExists)
+            {
+                _db.Set<FPoints>().Add(new FPoints
+                {
+                    UserId = order.UserId, OrderId = orderId, PointUsed = -redeem.PointUsed,
+                    SourceKey = refundKey, Description = $"Hoàn {redeem.PointUsed} F-Point của đơn #{orderId}",
+                    Status = PointStatus.Available, AvailableAt = TimeZoneHelper.GetVietnamTime(), CreatedBy = "System"
+                });
+                WorkflowSupport.Audit(_db, "RedeemRefundLedgerBackfilled", "FPoints", redeem.Id,
+                    null, new { SourceKey = refundKey, RefundedPoints = redeem.PointUsed }, actorUserId,
+                    $"Bổ sung dòng lịch sử hoàn điểm đã thực hiện cho đơn #{orderId}; không thay đổi số dư.");
+                await _db.SaveChangesAsync();
+            }
         }
 
         var earn = await _db.Set<FPoints>().FirstOrDefaultAsync(p => p.SourceKey == $"Order:{orderId}:Earn");
@@ -163,6 +195,36 @@ public partial class FPointService
             WorkflowSupport.Audit(_db, "OrderPointsRestored", "FPoints", earn.Id,
                 new { Status = PointStatus.Cancelled.ToString() }, new { Status = PointStatus.Pending.ToString() },
                 details: $"Đơn #{orderId} không hoàn trả; giữ hạn đổi trả ban đầu.");
+            await _db.SaveChangesAsync();
+        }
+        if (earn?.Status == PointStatus.Available && order.Status == OrderStatus.Returned)
+        {
+            await WorkflowSupport.LockUserAsync(_db, order.UserId);
+            var user = await _db.Set<User>().FirstAsync(u => u.Id == order.UserId);
+            var before = user.FPoints;
+            var earnedPoints = -earn.PointUsed;
+            user.FPoints = checked(user.FPoints - earnedPoints);
+            earn.Status = PointStatus.Cancelled;
+            var actor = order.UpdatedBy ?? "System";
+            earn.UpdatedBy = actor;
+            var revokeKey = $"Order:{orderId}:EarnRevoke";
+            if (!await _db.Set<FPoints>().AnyAsync(p => p.SourceKey == revokeKey))
+                _db.Set<FPoints>().Add(new FPoints
+                {
+                    UserId = order.UserId, OrderId = orderId, PointUsed = earnedPoints,
+                    SourceKey = revokeKey, Description = $"Thu hồi {earnedPoints} F-Point do hoàn trả đơn #{orderId}",
+                    Status = PointStatus.Available, AvailableAt = TimeZoneHelper.GetVietnamTime(), CreatedBy = actor
+                });
+            var actorMatch = System.Text.RegularExpressions.Regex.Match(actor, @"([0-9]+)$");
+            var actorUserId = actorMatch.Success && int.TryParse(actorMatch.Value, out var parsedActorId)
+                ? parsedActorId : (int?)null;
+            WorkflowSupport.Audit(_db, "OrderPointsRevoked", "FPoints", earn.Id,
+                new { Status = PointStatus.Available.ToString(), FPoints = before },
+                new { Status = earn.Status.ToString(), user.FPoints, RevokedPoints = earnedPoints },
+                actorUserId, $"Đơn #{orderId} hoàn trả: thu hồi {earnedPoints} F-Point đã tích.");
+            WorkflowSupport.Notify(_db,
+                $"Đã thu hồi {earnedPoints} F-Point đã tích của đơn #{orderId} do hoàn trả thành công.",
+                orderId, order.UserId);
             await _db.SaveChangesAsync();
         }
         if (earn?.Status == PointStatus.Pending)

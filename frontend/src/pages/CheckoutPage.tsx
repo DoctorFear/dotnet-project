@@ -1,26 +1,30 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './CheckoutPage.module.css';
 import TopBar from '../components/layout/TopBar';
 import Header from '../components/layout/Header';
 import { useCheckout } from '../hooks/useCheckout';
-import type { OrderItem } from '../types/order';
+import type { CheckoutItem } from '../hooks/useCheckout';
 import { Clock } from 'lucide-react';
 import BookCover from '../components/common/BookCover';
+import CheckoutPointsPanel from '../components/features/checkout/CheckoutPointsPanel';
 
 export const CheckoutPage: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const cartItems = location.state?.selectedItems || [];
+    const cartItems = useMemo<CheckoutItem[]>(() => {
+        const state = location.state as { selectedItems?: CheckoutItem[] } | null;
+        return Array.isArray(state?.selectedItems) ? state.selectedItems : [];
+    }, [location.state]);
 
-    const hasRentalItem = cartItems.some((item: any) => 
-        item.purchaseType === 2 || 
-        item.purchaseType === '2' || 
-        item.purchaseType === 'Rental' || 
+    const hasRentalItem = cartItems.some((item) =>
+        item.purchaseType === 2 ||
+        item.purchaseType === '2' ||
+        item.purchaseType === 'Rental' ||
         !!item.rentalDuration
     );
 
-    const hasOnlineItem = cartItems.some((item: OrderItem) =>
+    const hasOnlineItem = cartItems.some((item) =>
         item.purchaseType === 2 ||
         item.purchaseType === '2' ||
         item.purchaseType === 'Rental' ||
@@ -37,11 +41,22 @@ export const CheckoutPage: React.FC = () => {
         isLoadingAddresses,
         paymentMethod,
         setPaymentMethod,
+        pointsEnabled,
+        setPointsEnabled,
         pointsUsed,
         pointsInput,
         userMaxPoints,
-        pointError,
-        handlePointsChange,
+        availablePoints,
+        pendingPoints,
+        pointsLoading,
+        pointsMessage,
+        pointsValidationError,
+        pointsLoadError,
+        handlePointsInputChange,
+        applyPoints,
+        selectSuggestedPoints,
+        selectMaximumPoints,
+        clearPoints,
         shippingFee,
         subTotal,
         discountVal,
@@ -63,12 +78,9 @@ export const CheckoutPage: React.FC = () => {
         if (hasOnlineItem && paymentMethod === 'cod') {
             setPaymentMethod('momo');
         }
-        if (hasRentalItem && pointsUsed > 0) {
-            handlePointsChange('0');
-        }
-    }, [hasOnlineItem, hasRentalItem, paymentMethod, pointsUsed, setPaymentMethod, handlePointsChange]);
+    }, [hasOnlineItem, paymentMethod, setPaymentMethod]);
 
-    const renderPurchaseFormat = (item: OrderItem) => {
+    const renderPurchaseFormat = (item: CheckoutItem) => {
         const isRental = item.purchaseType === 2 || item.purchaseType === '2' || item.purchaseType === 'Rental' || !!item.rentalDuration;
         const isEbook = item.purchaseType === 3 || item.purchaseType === '3' || item.purchaseType === 'EBook';
 
@@ -87,7 +99,7 @@ export const CheckoutPage: React.FC = () => {
                 <div className={styles.formatWrapper}>
                     <span className={styles.badgeEbook}>Thuê đọc E-Book</span>
                     <span className={styles.metaDuration}>
-                        <Clock size={14} /> 
+                        <Clock size={14} />
                         <div>Thời hạn thuê: <strong>{durationText}</strong></div>
                     </span>
                 </div>
@@ -198,7 +210,7 @@ export const CheckoutPage: React.FC = () => {
                         </div>
 
                         <div className={styles.cartItemsFullList}>
-                            {cartItems.map((item: any, idx: number) => (
+                            {cartItems.map((item, idx) => (
                                 <div key={item.cartItemId || `${item.bookId}-${idx}`} className={styles.cartItemCard}>
                                     <BookCover src={item.coverImg} className={styles.cartItemImg} title={item.title} />
                                     <div className={styles.cartItemInfo}>
@@ -235,29 +247,25 @@ export const CheckoutPage: React.FC = () => {
                             </label>
                         </div>
 
-                        <div className={styles.checkoutCardTitle} style={{ fontSize: '14px', marginTop: '20px' }}>
-                            <span>Sử dụng điểm F-Points</span>
-                        </div>
-                        <div className={styles.voucherBox} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                            <input
-                                type="text"
-                                inputMode="numeric"
-                                pattern="[0-9]*"
-                                aria-label="Số F-Point dùng thanh toán"
-                                className={styles.voucherInput}
-                                value={pointsInput}
-                                onChange={(e) => handlePointsChange(e.target.value)}
-                                placeholder="Nhập số điểm..."
-                                disabled={isProcessing}
-                            />
-                            <span style={{ fontSize: '13px', color: '#5b6e99', flexShrink: 0 }}>/ {userMaxPoints} điểm</span>
-                        </div>
-                        <p style={{ fontSize: '11px', color: '#5b6e99', marginBottom: 12 }}>{pointError || 'Chỉ dùng điểm khả dụng; không dùng điểm chờ. Hạn mức được tính theo số dư, cấu hình và 50% tiền sách.'}</p>
-                        {pointsUsed > 0 && (
-                            <div style={{ fontSize: '11.5px', marginBottom: '14px', color: '#15803d' }}>
-                                ✔ Đã quy đổi {pointsUsed} điểm thành -{(discountVal).toLocaleString()} đ
-                            </div>
-                        )}
+                        <CheckoutPointsPanel
+                            enabled={pointsEnabled}
+                            input={pointsInput}
+                            appliedPoints={pointsUsed}
+                            availablePoints={availablePoints}
+                            pendingPoints={pendingPoints}
+                            maxPoints={userMaxPoints}
+                            loading={pointsLoading}
+                            loadError={pointsLoadError}
+                            validationError={pointsValidationError}
+                            message={pointsMessage}
+                            disabled={isProcessing}
+                            onToggle={setPointsEnabled}
+                            onInputChange={handlePointsInputChange}
+                            onApply={() => void applyPoints()}
+                            onSelectSuggested={selectSuggestedPoints}
+                            onSelectMaximum={selectMaximumPoints}
+                            onClear={clearPoints}
+                        />
 
                         <div className={styles.calcRow} style={{ marginTop: '20px' }}>
                             <span>Tạm tính tiền sách:</span>
@@ -278,10 +286,10 @@ export const CheckoutPage: React.FC = () => {
                             <span className={styles.totalPriceVal}>{finalTotal.toLocaleString()} đ</span>
                         </div>
 
-                        <button 
-                            type="button" 
-                            className={styles.btnCompleteOrder} 
-                            onClick={() => submitCheckout(1)}
+                        <button
+                            type="button"
+                            className={styles.btnCompleteOrder}
+                            onClick={submitCheckout}
                             disabled={isProcessing || isLoadingAddresses || addresses.length === 0}
                         >
                             {isProcessing ? 'Đang xử lý...' : 'Đặt mua đơn hàng ngay'}

@@ -6,6 +6,7 @@ using AncientBook.Application.Common;
 using AncientBook.Domain.Entities;
 using AncientBook.Domain.Enums;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using System.Text;
 using System.Text.Json;
 
@@ -18,110 +19,61 @@ namespace AncientBook.Application.Services
         private readonly IHmacSha256Hasher _hasher;
         private readonly HttpClient _httpClient;
         private readonly ILogger<OrderService> _logger;
+        private readonly IWorkflowDbContext _workflow;
 
-        public OrderService(IOrderRepository orderRepository, IInventoryRepository inventoryRepository, IHmacSha256Hasher hasher, HttpClient httpClient, ILogger<OrderService> logger)
+        public OrderService(IOrderRepository orderRepository, IInventoryRepository inventoryRepository, IHmacSha256Hasher hasher, HttpClient httpClient, ILogger<OrderService> logger, IWorkflowDbContext workflow)
         {
             _orderRepository = orderRepository;
             _inventoryRepository = inventoryRepository;
             _hasher = hasher;
             _httpClient = httpClient;
             _logger = logger;
+            _workflow = workflow;
         }
 
         public async Task<bool> UpdateOrderStatusAsync(int orderId, OrderStatus newStatus, string? updatedBy = null)
         {
-            var order = await _orderRepository.GetByIdAsync(orderId);
-            if (order == null)
-            {
-                throw new KeyNotFoundException($"Không tìm thấy đơn hàng với ID: {orderId}");
-            }
+            await using var transaction = await _workflow.BeginWorkflowTransactionAsync();
+            await _workflow.LockOrderAsync(orderId);
+            var order = await _workflow.Set<Order>().Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.Id == orderId)
+                ?? throw new KeyNotFoundException($"Không tìm thấy đơn hàng với ID: {orderId}");
 
-            if (order.Status == newStatus)
-            {
-                throw new InvalidOperationException($"Đơn hàng #{orderId} đã ở trạng thái {newStatus}.");
-            }
-
-            if (!IsValidStatusTransition(order.Status, newStatus))
-            {
+            if (order.Status != OrderStatus.Pending || newStatus != OrderStatus.Confirmed)
                 throw new InvalidOperationException(
-                    $"Không thể chuyển trạng thái đơn hàng từ {(int)order.Status} ({order.Status}) sang {(int)newStatus} ({newStatus}). " +
-                    "Quy tắc: 1→2→3→4→5 theo thứ tự, 6 hoặc 7 có thể cập nhật bất kỳ lúc nào, và 7→8→9 theo thứ tự.");
-            }
+                    "Chức năng này chỉ xác nhận đơn Chờ xác nhận. Hãy dùng màn hình Đóng gói/Điều phối/Giao nhận cho các bước tiếp theo.");
+            if (!order.OrderItems.Any(item => item.PurchaseType == PurchaseType.Physical))
+                throw new InvalidOperationException("Chỉ xác nhận kho qua chức năng này đối với đơn có sách giấy.");
 
             var previousStatus = order.Status;
-            order.Status = newStatus;
+            order.Status = OrderStatus.Confirmed;
             order.UpdatedAt = TimeZoneHelper.GetVietnamTime();
-            if (!string.IsNullOrEmpty(updatedBy))
-            {
-                order.UpdatedBy = updatedBy;
-            }
-            if (order.Status == OrderStatus.Completed)
-            {
-                order.IsPaid = true;
-                order.ReturnedDeadline = TimeZoneHelper.GetVietnamTime().AddDays(5);
-            }
-
-            bool wasAlreadyRestocked = previousStatus == OrderStatus.Failed || previousStatus == OrderStatus.Returned;
-            if (!wasAlreadyRestocked && (newStatus == OrderStatus.Failed || newStatus == OrderStatus.Returned))
-            {
-                if (order.OrderItems != null)
-                {
-                    foreach (var item in order.OrderItems)
-                    {
-                        try
-                        {
-                            await _inventoryRepository.IncreaseStockAsync(item.BookId, item.Quantity);
-                            _logger.LogInformation("Đã hoàn lại {Quantity} sản phẩm cho sách ID {BookId} do cập nhật đơn hàng #{OrderId} sang {NewStatus}", item.Quantity, item.BookId, order.Id, newStatus);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "LỖI: Không thể hoàn kho cho sách ID {BookId} khi cập nhật đơn hàng #{OrderId}", item.BookId, order.Id);
-                            throw;
-                        }
-                    }
-                }
-            }
-
-            await _orderRepository.UpdateAsync(order);
-            _logger.LogInformation("Cập nhật trạng thái đơn hàng #{OrderId} thành công từ {OldStatus} sang {NewStatus}", orderId, previousStatus, newStatus);
-
+            order.UpdatedBy = string.IsNullOrWhiteSpace(updatedBy) ? "Staff" : updatedBy;
+            var actorId = int.TryParse(updatedBy, out var parsedActorId) ? parsedActorId : (int?)null;
+            WorkflowSupport.StatusHistory(_workflow, order, previousStatus, order.UpdatedBy,
+                "Nhân viên xác nhận đơn; chuyển sang hàng đợi UC35.");
+            WorkflowSupport.Audit(_workflow, "OrderConfirmed", "Order", orderId,
+                new { Status = previousStatus }, new { order.Status }, actorId);
+            WorkflowSupport.Notify(_workflow, $"Đơn #{orderId} đã được xác nhận và chuyển sang khâu đóng gói.",
+                orderId, order.UserId);
+            await _workflow.SaveChangesAsync();
+            await transaction.CommitAsync();
+            _logger.LogInformation("Đã xác nhận đơn hàng #{OrderId}; đơn chuyển sang hàng đợi đóng gói.", orderId);
             return true;
         }
 
-        private static bool IsValidStatusTransition(OrderStatus currentStatus, OrderStatus newStatus)
+        public async Task<bool> CancelOrder(int orderId, int userId)
         {
-            if (currentStatus == newStatus)
-            {
-                return false;
-            }
-
-            if (newStatus == OrderStatus.Failed || newStatus == OrderStatus.ReturnRequested)
-            {
-                return true;
-            }
-
-            if (newStatus >= OrderStatus.Pending && newStatus <= OrderStatus.Completed)
-            {
-                return currentStatus >= OrderStatus.Pending
-                    && currentStatus < OrderStatus.Completed
-                    && (int)newStatus == (int)currentStatus + 1;
-            }
-
-            if (newStatus == OrderStatus.ReturnApproved || newStatus == OrderStatus.Returned)
-            {
-                return (currentStatus == OrderStatus.ReturnRequested && newStatus == OrderStatus.ReturnApproved)
-                    || (currentStatus == OrderStatus.ReturnApproved && newStatus == OrderStatus.Returned);
-            }
-
-            return false;
-        }
-
-        public async Task<bool> CancelOrder(int orderId)
-        {
+            await using var transaction = await _workflow.BeginWorkflowTransactionAsync();
+            await _workflow.LockOrderAsync(orderId);
             var order = await _orderRepository.GetByIdAsync(orderId);
             if (order == null)
             {
                 throw new KeyNotFoundException($"Không tìm thấy đơn hàng với ID: {orderId}");
+            }
+            if (order.UserId != userId)
+            {
+                throw new UnauthorizedAccessException("Bạn không có quyền hủy đơn hàng này.");
             }
 
             // Chỉ cho hủy đơn trước khi chuẩn bị xong.
@@ -133,6 +85,7 @@ namespace AncientBook.Application.Services
             var previousStatus = order.Status;
             order.Status = OrderStatus.Failed;
             order.UpdatedAt = TimeZoneHelper.GetVietnamTime();
+            order.UpdatedBy = userId.ToString();
 
             // Hoàn sản phẩm
             if (previousStatus == OrderStatus.Pending || previousStatus == OrderStatus.Confirmed)
@@ -169,6 +122,7 @@ namespace AncientBook.Application.Services
             }
 
             await _orderRepository.UpdateAsync(order);
+            await transaction.CommitAsync();
             _logger.LogInformation("Cập nhật trạng thái đơn hàng #{OrderId} thành công từ {OldStatus} sang {NewStatus}", orderId, previousStatus, order.Status);
 
             return true;
@@ -199,40 +153,29 @@ namespace AncientBook.Application.Services
 
         public async Task<bool> ApproveReturnOrderAsync(int orderId, string adminUser)
         {
-            var order = await _orderRepository.GetByIdAsync(orderId);
-            if (order == null)
-            {
-                throw new KeyNotFoundException($"Không tìm thấy đơn hàng với ID: {orderId}");
-            }
-
+            await using var tx = await _workflow.BeginWorkflowTransactionAsync();
+            await _workflow.LockOrderAsync(orderId);
+            var order = await _workflow.Set<Order>().FirstOrDefaultAsync(o => o.Id == orderId)
+                ?? throw new KeyNotFoundException($"Không tìm thấy đơn hàng với ID: {orderId}");
             if (order.Status != OrderStatus.ReturnRequested)
-            {
                 throw new InvalidOperationException("Đơn hàng này không nằm trong trạng thái chờ duyệt hoàn trả.");
-            }
 
             var previousStatus = order.Status;
             order.Status = OrderStatus.ReturnApproved;
             order.UpdatedAt = TimeZoneHelper.GetVietnamTime();
             order.UpdatedBy = adminUser;
-
-            if (order.OrderItems != null)
-            {
-                foreach (var item in order.OrderItems)
-                {
-                    await _inventoryRepository.IncreaseStockAsync(item.BookId, item.Quantity);
-                    _logger.LogInformation("Admin đã duyệt hoàn trả, hoàn lại {Quantity} sản phẩm cho sách ID {BookId} của đơn #{OrderId}", item.Quantity, item.BookId, order.Id);
-                }
-            }
-
-            if (order.IsPaid)
-            {
-                await ProcessMoMoRefundAsync(order);
-            }
-            order.Status = OrderStatus.Returned;
-
-            await _orderRepository.UpdateAsync(order);
-            _logger.LogInformation("Admin {Admin} đã duyệt hoàn trả thành công cho đơn hàng #{OrderId}", adminUser, orderId);
-
+            WorkflowSupport.StatusHistory(_workflow, order, previousStatus, adminUser,
+                "Yêu cầu hoàn trả đã được duyệt; chờ điều phối Shipper thu hồi.");
+            var actorId = int.TryParse(adminUser, out var parsedActorId) ? parsedActorId : (int?)null;
+            WorkflowSupport.Audit(_workflow, "ReturnApproved", "Order", orderId,
+                new { Status = previousStatus }, new { order.Status }, actorId,
+                "Chấp thuận hoàn trả; chưa hoàn kho/hoàn tiền cho đến khi thu hồi thành công.");
+            WorkflowSupport.Notify(_workflow,
+                $"Yêu cầu hoàn trả đơn #{orderId} đã được duyệt. Shipper sẽ được điều phối đến thu hồi sách.",
+                orderId, order.UserId);
+            await _workflow.SaveChangesAsync();
+            await tx.CommitAsync();
+            _logger.LogInformation("Nhân viên {Actor} đã duyệt hoàn trả đơn #{OrderId}; chờ thu hồi.", adminUser, orderId);
             return true;
         }
         

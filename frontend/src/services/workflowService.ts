@@ -11,9 +11,11 @@ import type {
     PackingDetail,
     PackingOrder,
     PackingQuery,
+    PackingVerification,
     PointBalance,
     PointPreview,
-    PointTransaction,
+    PointHistoryQuery,
+    PointHistoryResult,
     ReviewDraft,
     ReviewOrder,
     WorkflowNotification,
@@ -42,15 +44,13 @@ export const workflowService = {
     packingOrders: (query: PackingQuery) =>
         requestApi<WorkflowPage<PackingOrder>>(`/Fulfillment/pending-orders?${queryString(query)}`),
     packingDetail: (id: number) => requestApi<PackingDetail>(`/Fulfillment/orders/${id}`),
-    confirmPacking: (id: number) =>
-        requestApi<unknown>(`/Fulfillment/orders/${id}/confirm-packing`, json('POST')),
+    confirmPacking: (id: number, verification: PackingVerification) =>
+        requestApi<unknown>(`/Fulfillment/orders/${id}/confirm-packing`, json('POST', verification)),
     packingIssue: (id: number, reason: string) =>
         requestApi<unknown>(`/Fulfillment/orders/${id}/packing-issue`, json('POST', { reason })),
     balance: () => requestApi<PointBalance>('/FPoint/balance'),
-    pointHistory: (pageNumber: number, pageSize: number) =>
-        requestApi<WorkflowPage<PointTransaction>>(
-            `/FPoint/history?${queryString({ pageNumber, pageSize })}`,
-        ),
+    pointHistory: (query: PointHistoryQuery) =>
+        requestApi<PointHistoryResult>(`/FPoint/history?${queryString(query)}`),
     tiers: () => requestApi<MembershipTier[]>('/FPoint/tiers'),
     previewPoints: (pointsToUse: number, totalAmount: number) =>
         requestApi<PointPreview>('/FPoint/apply', json('POST', { pointsToUse, totalAmount })),
@@ -60,15 +60,16 @@ export const workflowService = {
             `/FPoint/orders/${id}/confirm-receipt`,
             json('POST', { acceptCloseReturnWindow: true }),
         ),
-    myReviews: (pageNumber: number, pageSize: number) =>
+    myReviews: (pageNumber: number, pageSize: number, bookId?: number) =>
         requestApi<WorkflowPage<MemberReview>>(
-            `/Reviews/my-reviews?${queryString({ pageNumber, pageSize })}`,
+            `/Reviews/my-reviews?${queryString({ pageNumber, pageSize, bookId })}`,
         ),
-    reviewOrders: (pageNumber: number, pageSize: number) =>
+    reviewOrders: (pageNumber: number, pageSize: number, bookId?: number) =>
         requestApi<WorkflowPage<ReviewOrder>>(
-            `/Reviews/eligible-orders?${queryString({ pageNumber, pageSize })}`,
+            `/Reviews/eligible-orders?${queryString({ pageNumber, pageSize, bookId })}`,
         ),
-    createReview: (review: ReviewDraft) => requestApi<unknown>('/Reviews', json('POST', review)),
+    createReview: (review: ReviewDraft) =>
+        requestApi<{ message: string; data: MemberReview }>('/Reviews', json('POST', review)),
     updateReview: (id: number, review: ReviewDraft) =>
         requestApi<unknown>(`/Reviews/${id}`, json('PUT', review)),
     deleteReview: (id: number) => requestApi<unknown>(`/Reviews/${id}`, json('DELETE')),

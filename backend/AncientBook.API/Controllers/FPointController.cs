@@ -51,12 +51,12 @@ namespace AncientBook.API.Controllers
         // UC22: Xem lịch sử biến động điểm
         [HttpGet("history")]
         [Authorize(Roles = "Member")]
-        public async Task<IActionResult> GetHistory([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetHistory([FromQuery] FPointHistoryQuery query)
         {
             try
             {
                 var userId = GetCurrentUserId();
-                var result = await _fpointService.GetHistoryAsync(userId, pageNumber, pageSize);
+                var result = await _fpointService.GetHistoryAsync(userId, query);
                 return Ok(result);
             }
             catch (Exception ex)

@@ -18,6 +18,7 @@ import { useShipperPortal } from '../../../hooks/useShipperPortal';
 import { workflowDateTime, workflowMoney } from '../../../utils/workflowPresentation';
 import styles from './ShipperPortal.module.css';
 import { statusText } from './shipperMeta';
+import DeliveryInstructionCard from './DeliveryInstructionCard';
 
 type Shipper = ReturnType<typeof useShipperPortal>;
 
@@ -33,7 +34,8 @@ export default function ShipperOrderCard({
     onOpenAction,
 }: ShipperOrderCardProps) {
     const expanded = shipper.detailId === order.orderId;
-    const active = order.status === 'Prepared' || order.status === 'Shipping';
+    const active = ['Prepared', 'Shipping', 'ReturnApproved'].includes(order.status);
+    const isReturn = order.deliveryType === 'Return';
     const detail = expanded ? shipper.detail : null;
     return (
         <article className={styles.order}>
@@ -58,13 +60,15 @@ export default function ShipperOrderCard({
                 <div className={styles.cod}>
                     <span>
                         <Wallet size={15} />{' '}
-                        {active ? 'Tiền COD cần thu' : 'Giá trị đơn hàng'}
+                        {isReturn
+                            ? 'Giá trị hoàn dự kiến'
+                            : active ? 'Tiền COD cần thu' : 'Giá trị đơn hàng'}
                     </span>
                     <strong>
-                        {workflowMoney(active ? order.codAmount : order.finalAmount)}
+                        {workflowMoney(isReturn ? order.finalAmount : active ? order.codAmount : order.finalAmount)}
                     </strong>
                 </div>
-                {active && order.isPaid && (
+                {active && !isReturn && order.isPaid && (
                     <p className={styles.prepaid}>
                         <CheckCircle2 size={13} /> Đã thanh toán trước · Không thu
                         thêm tiền
@@ -89,6 +93,7 @@ export default function ShipperOrderCard({
                     ) : (
                         detail && (
                             <div className={styles.detail}>
+                                <DeliveryInstructionCard delivery={detail} compact />
                                 <a
                                     className={styles.phoneLink}
                                     href={
@@ -162,12 +167,16 @@ export default function ShipperOrderCard({
                                         Kết thúc: {workflowDateTime(detail.completedAt)}
                                     </p>
                                 )}
-                                {detail.failureReason && (
+                                {isReturn && detail.note && (
+                                    <div className={styles.failure}>
+                                        <strong>Lý do hoàn trả</strong>
+                                        <p>{detail.note}</p>
+                                    </div>
+                                )}
+                                {!isReturn && detail.failureReason && (
                                     <div className={styles.failure}>
                                         <strong>{detail.failureReason}</strong>
-                                        {detail.failureNote && (
-                                            <p>{detail.failureNote}</p>
-                                        )}
+                                        {detail.failureNote && <p>{detail.failureNote}</p>}
                                     </div>
                                 )}
                                 {detail.isReadOnly && (
@@ -179,7 +188,7 @@ export default function ShipperOrderCard({
                             </div>
                         )
                     ))}
-                {(order.status === 'Prepared' || order.status === 'Shipping') && (
+                {(['Prepared', 'Shipping', 'ReturnApproved'] as DeliveryStatus[]).includes(order.status) && (
                     <button
                         type="button"
                         className={styles.primary}
@@ -193,7 +202,9 @@ export default function ShipperOrderCard({
                         )}
                         {order.status === 'Prepared'
                             ? 'Bắt đầu giao'
-                            : 'Cập nhật giao hàng'}
+                            : order.status === 'ReturnApproved'
+                                ? 'Xác nhận đã thu hồi hàng'
+                                : 'Cập nhật giao hàng'}
                         <ChevronRight size={17} />
                     </button>
                 )}

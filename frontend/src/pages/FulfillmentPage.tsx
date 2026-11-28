@@ -17,10 +17,8 @@ export default function FulfillmentPage() {
     const packing = useFulfillment();
     const [issue, setIssue] = useState(false);
     const [reason, setReason] = useState('');
-    const [checked, setChecked] = useState(false);
 
     const openDetail = (orderId: number) => {
-        setChecked(false);
         setIssue(false);
         setReason('');
         void packing.select(orderId);
@@ -68,13 +66,12 @@ export default function FulfillmentPage() {
                 tại màn hình điều phối.
             </p>
             <PackingDetailModal
+                key={packing.selected?.orderId ?? 'no-selection'}
                 packing={packing}
                 issue={issue}
                 reason={reason}
-                checked={checked}
                 setIssue={setIssue}
                 setReason={setReason}
-                setChecked={setChecked}
             />
         </AdminLayout>
     );

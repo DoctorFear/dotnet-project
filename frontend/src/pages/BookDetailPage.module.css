@@ -274,3 +274,25 @@
 .categories { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .categories a { background: var(--alice); color: var(--egyptian); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
 .description { white-space: pre-wrap; font-size: 14px; line-height: 1.7; }
+
+.reviewTabContent {
+    display: grid;
+    gap: 14px;
+}
+
+.writeReviewButton {
+    justify-self: end;
+    padding: 9px 16px;
+    border: 1px solid var(--egyptian, #0b409c);
+    border-radius: 7px;
+    background: var(--egyptian, #0b409c);
+    color: #fff;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.writeReviewButton:hover {
+    background: var(--catalina, #0d226b);
+}

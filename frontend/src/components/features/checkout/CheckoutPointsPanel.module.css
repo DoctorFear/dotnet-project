@@ -1,0 +1,253 @@
+.panel {
+    margin: 18px 0 20px;
+    border: 1px solid var(--hairline);
+    border-radius: 9px;
+    background: #fbfdff;
+    overflow: hidden;
+}
+
+.toggle {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 14px;
+    cursor: pointer;
+}
+
+.toggle input {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--egyptian);
+    cursor: pointer;
+}
+
+.toggleIcon {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    color: var(--egyptian);
+    background: #eaf1ff;
+}
+
+.toggle > span:last-child {
+    display: grid;
+    gap: 3px;
+}
+
+.toggle strong {
+    color: var(--catalina);
+    font-size: 13px;
+}
+
+.toggle small {
+    color: var(--muted);
+    font-size: 10.5px;
+}
+
+.unavailable {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.balanceRow {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 0 14px 14px;
+}
+
+.balanceRow span {
+    display: grid;
+    gap: 3px;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.balanceRow strong {
+    color: var(--catalina);
+    font-size: 11px;
+}
+
+.body {
+    padding: 14px;
+    border-top: 1px solid var(--hairline);
+    background: white;
+}
+
+.rateNotice,
+.info,
+.success,
+.error {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    margin: 0;
+    font-size: 10.5px;
+    line-height: 1.55;
+}
+
+.info {
+    padding: 0 14px 14px;
+    color: var(--muted);
+}
+
+.body > .info,
+.body > .success,
+.body > .error {
+    padding: 0;
+    margin-top: 9px;
+}
+
+.rateNotice {
+    padding: 10px 11px;
+    color: #31558f;
+    background: #eef4ff;
+    border-radius: 6px;
+}
+
+.rateNotice svg {
+    flex: 0 0 auto;
+    margin-top: 1px;
+}
+
+.quickActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin: 12px 0;
+}
+
+.quickActions button,
+.appliedSummary button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid #cddbf2;
+    border-radius: 6px;
+    background: white;
+    color: var(--egyptian);
+    padding: 7px 9px;
+    font-size: 10.5px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.quickActions button:hover,
+.appliedSummary button:hover {
+    border-color: var(--egyptian);
+    background: var(--alice);
+}
+
+.applyRow {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 9px;
+    align-items: end;
+}
+
+.applyRow label {
+    display: grid;
+    gap: 6px;
+    color: var(--catalina);
+    font-size: 10.5px;
+    font-weight: 650;
+}
+
+.applyRow label > div {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    overflow: hidden;
+    background: white;
+}
+
+.applyRow input {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 11px;
+    border: 0;
+    outline: 0;
+    color: var(--ink);
+    font-size: 12px;
+    text-transform: none;
+}
+
+.applyRow label > div > span {
+    padding-right: 10px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.applyRow .invalidInput {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 2px #d9383812;
+}
+
+.applyButton {
+    min-height: 38px;
+    border: 0;
+    border-radius: 6px;
+    padding: 0 14px;
+    color: white;
+    background: var(--egyptian);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.success {
+    color: var(--success);
+}
+
+.error {
+    color: var(--danger);
+}
+
+.appliedSummary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 10px 11px;
+    border-radius: 6px;
+    background: var(--success-bg);
+    color: var(--success);
+    font-size: 10.5px;
+}
+
+.appliedSummary button {
+    flex-shrink: 0;
+    border-color: #b9ddc5;
+    color: var(--success);
+    background: white;
+}
+
+.panel button:disabled,
+.panel input:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+@media (max-width: 520px) {
+    .balanceRow {
+        grid-template-columns: 1fr;
+    }
+
+    .applyRow {
+        grid-template-columns: 1fr;
+    }
+
+    .applyButton {
+        min-height: 42px;
+    }
+
+    .appliedSummary {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}

@@ -15,6 +15,8 @@ internal static class WorkflowSupport
         db.LockUserAsync(id);
     public static Task LockBookAsync(IWorkflowDbContext db, int id) =>
         db.LockBookAsync(id);
+    public static Task LockShipperAsync(IWorkflowDbContext db, int id) =>
+        db.LockShipperAsync(id);
 
     public static void Audit(IWorkflowDbContext db, string action, string entity, int id,
         object? before, object? after, int? actorId = null, string? details = null)

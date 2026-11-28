@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Data;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Net.Http;
+using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using AncientBook.Application.DTOs;
@@ -41,6 +43,42 @@ namespace AncientBook.Application.Services
             _logger = logger;
             _workflow = workflow;
             _loyalty = loyalty;
+        }
+
+        private static void EnsureOwnedPendingPayment(Order order, int requesterUserId)
+        {
+            if (order.UserId != requesterUserId)
+                throw new UnauthorizedAccessException("Bạn không có quyền thanh toán hoặc xem trạng thái đơn này.");
+            if (order.Status != OrderStatus.Pending || order.IsPaid)
+                throw new InvalidOperationException("Chỉ tạo thanh toán cho đơn đang chờ và chưa thanh toán.");
+            if (IsPaymentExpired(order))
+                throw new InvalidOperationException("Đơn đã quá thời hạn thanh toán 15 phút.");
+        }
+
+        private static bool IsPaymentExpired(Order order)
+        {
+            var createdUtc = order.OrderDate.Kind switch
+            {
+                DateTimeKind.Utc => order.OrderDate,
+                DateTimeKind.Local => order.OrderDate.ToUniversalTime(),
+                _ => DateTime.SpecifyKind(order.OrderDate, DateTimeKind.Utc)
+            };
+            return createdUtc.AddMinutes(15) <= DateTime.UtcNow;
+        }
+
+        private static string JsonText(JsonElement data, string propertyName)
+        {
+            if (!data.TryGetProperty(propertyName, out var value))
+                throw new InvalidOperationException($"Thiếu trường {propertyName} trong thông báo thanh toán.");
+            return value.ValueKind == JsonValueKind.String ? value.GetString() ?? string.Empty : value.ToString();
+        }
+
+        private static bool SecureEquals(string left, string right)
+        {
+            var leftBytes = Encoding.UTF8.GetBytes(left);
+            var rightBytes = Encoding.UTF8.GetBytes(right);
+            return leftBytes.Length == rightBytes.Length
+                && CryptographicOperations.FixedTimeEquals(leftBytes, rightBytes);
         }
 
         public async Task<CreateCheckoutResponse> ProcessCheckoutAsync(CreateCheckoutRequest request)
@@ -155,8 +193,8 @@ namespace AncientBook.Application.Services
                 if (request.PointsUsed > 0)
                 {
                     var limit = Math.Min(1000, await WorkflowSupport.IntSettingAsync(_workflow, "MAX_POINTS_PER_ORDER", 1000));
-                    if (request.PointsUsed > userFpoints || request.PointsUsed > limit || request.PointsUsed * 100m > subTotal * 0.5m)
-                        throw new InvalidOperationException("Số điểm vượt số dư hoặc hạn mức cho đơn hàng.");
+                    if (request.PointsUsed > userFpoints || request.PointsUsed > limit || request.PointsUsed * 100m > subTotal)
+                        throw new InvalidOperationException("Số điểm vượt số dư, hạn mức 1.000 điểm hoặc tiền sách của đơn hàng.");
                     discountAmount = (decimal)request.PointsUsed * 100;
                 }
 
@@ -239,13 +277,20 @@ namespace AncientBook.Application.Services
             }
         }
 
-        public async Task<CreateMomoResponse> CreatePaymentUrlAsync(int orderId)
+        public async Task<CreateMomoResponse> CreatePaymentUrlAsync(int orderId, int requesterUserId)
         {
             var order = await _orderRepository.GetByIdAsync(orderId);
             if (order == null)
             {
                 throw new KeyNotFoundException($"Không tìm thấy đơn hàng {orderId}");
             }
+            EnsureOwnedPendingPayment(order, requesterUserId);
+
+            if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("PARTNERCODE"))
+                || string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ACCESSKEY"))
+                || string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SECRETKEY"))
+                || string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CREATEURL")))
+                throw new InvalidOperationException("Chưa cấu hình đầy đủ cổng thanh toán MoMo.");
 
             var partnerCode = Environment.GetEnvironmentVariable("PARTNERCODE");
             var accessKey = Environment.GetEnvironmentVariable("ACCESSKEY");
@@ -256,7 +301,8 @@ namespace AncientBook.Application.Services
 
             var requestId = Guid.NewGuid().ToString();
             order.MoMoRequestId = requestId;
-            
+            order.PaymentMethod = "MoMo";
+
             await _orderRepository.UpdateAsync(order);
             
             var amount = ((long)order.FinalAmount).ToString();
@@ -318,18 +364,26 @@ namespace AncientBook.Application.Services
             throw new Exception($"Không thể tạo giao dịch MoMo: {message}");
         }
         
-        public async Task<GetMomoResponse> QueryMoMoPaymentStatusAsync(int orderId)
+        public async Task<GetMomoResponse> QueryMoMoPaymentStatusAsync(int orderId, int? requesterUserId = null)
         {
             var order = await _orderRepository.GetByIdAsync(orderId);
             if (order == null)
             {
                 throw new KeyNotFoundException($"Không tìm thấy đơn hàng {orderId}");
             }
+            if (requesterUserId.HasValue && order.UserId != requesterUserId.Value)
+                throw new UnauthorizedAccessException("Bạn không có quyền xem trạng thái thanh toán đơn này.");
+            if (!string.Equals(order.PaymentMethod, "MoMo", StringComparison.OrdinalIgnoreCase)
+                || string.IsNullOrWhiteSpace(order.MoMoRequestId))
+                throw new InvalidOperationException("Đơn chưa có giao dịch MoMo để kiểm tra.");
 
             var partnerCode = Environment.GetEnvironmentVariable("PARTNERCODE");
             var accessKey = Environment.GetEnvironmentVariable("ACCESSKEY");
             var secretKey = Environment.GetEnvironmentVariable("SECRETKEY") ?? "";
             var endpoint = Environment.GetEnvironmentVariable("QUERYURL");
+            if (string.IsNullOrWhiteSpace(partnerCode) || string.IsNullOrWhiteSpace(accessKey)
+                || string.IsNullOrWhiteSpace(secretKey) || string.IsNullOrWhiteSpace(endpoint))
+                throw new InvalidOperationException("Chưa cấu hình đầy đủ API tra cứu MoMo.");
 
             var requestId = order.MoMoRequestId ?? Guid.NewGuid().ToString();
 
@@ -363,14 +417,33 @@ namespace AncientBook.Application.Services
             string qrCodeUrl = root.TryGetProperty("qrCodeUrl", out var qrProp) ? qrProp.GetString() ?? "" : "Không có mã QR";
             string deeplinkWebInApp = root.TryGetProperty("deeplinkWebInApp", out var deeplinkWIAProp) ? deeplinkWIAProp.GetString() ?? "" : "Không có deeplink web in app";
 
-            if (root.TryGetProperty("resultCode", out var resultCode) && resultCode.GetInt32() == 0)
+            var responseAmount = JsonText(root, "amount");
+            var responseExtraData = JsonText(root, "extraData");
+            var responseMessage = JsonText(root, "message");
+            var responseOrderId = JsonText(root, "orderId");
+            var responsePartnerCode = JsonText(root, "partnerCode");
+            var responsePayType = JsonText(root, "payType");
+            var responseRequestId = JsonText(root, "requestId");
+            var responseTime = JsonText(root, "responseTime");
+            var responseResultCode = JsonText(root, "resultCode");
+            var responseTransId = JsonText(root, "transId");
+            var responseSignature = JsonText(root, "signature");
+            var responseRawHash = $"accessKey={accessKey}&amount={responseAmount}&extraData={responseExtraData}"
+                + $"&message={responseMessage}&orderId={responseOrderId}&partnerCode={responsePartnerCode}"
+                + $"&payType={responsePayType}&requestId={responseRequestId}&responseTime={responseTime}"
+                + $"&resultCode={responseResultCode}&transId={responseTransId}";
+            if (!SecureEquals(_hasher.ComputeHmacSha256(responseRawHash, secretKey), responseSignature)
+                || !SecureEquals(partnerCode ?? string.Empty, responsePartnerCode))
+                throw new UnauthorizedAccessException("Chữ ký phản hồi tra cứu MoMo không hợp lệ.");
+
+            if (int.TryParse(responseResultCode, out var successfulResult) && successfulResult == 0)
             {
-                if (!order.IsPaid)
-                {
-                    order.IsPaid = true;
-                    await _orderRepository.UpdateAsync(order);
-                }
-                await _loyalty.ProcessPaidDigitalOrderAsync(order.Id);
+                if (responseOrderId != orderId.ToString(CultureInfo.InvariantCulture)
+                    || !SecureEquals(requestId, responseRequestId)
+                    || !decimal.TryParse(responseAmount, NumberStyles.Number, CultureInfo.InvariantCulture, out var paidAmount)
+                    || paidAmount != decimal.Truncate(order.FinalAmount))
+                    throw new InvalidOperationException("Phản hồi MoMo không khớp giao dịch của đơn hàng.");
+                order.IsPaid = await ConfirmReconciledPaymentAsync(order.Id, "MoMo", order.FinalAmount);
             }
 
             return new GetMomoResponse
@@ -388,58 +461,108 @@ namespace AncientBook.Application.Services
 
         public async Task HandleMoMoIpnAsync(JsonElement ipnData)
         {
-            var orderIdStr = ipnData.GetProperty("orderId").ToString();
-            var resultCode = ipnData.GetProperty("resultCode").GetInt32();
-            var requestId = ipnData.GetProperty("requestId").GetString();
+            var partnerCode = Environment.GetEnvironmentVariable("PARTNERCODE");
+            var accessKey = Environment.GetEnvironmentVariable("ACCESSKEY");
+            var secretKey = Environment.GetEnvironmentVariable("SECRETKEY");
+            if (string.IsNullOrWhiteSpace(partnerCode) || string.IsNullOrWhiteSpace(accessKey)
+                || string.IsNullOrWhiteSpace(secretKey))
+                throw new InvalidOperationException("Chưa cấu hình khóa xác thực MoMo.");
 
-            if (!int.TryParse(orderIdStr, out int orderId)) return;
+            var amountText = JsonText(ipnData, "amount");
+            var extraData = JsonText(ipnData, "extraData");
+            var message = JsonText(ipnData, "message");
+            var orderIdText = JsonText(ipnData, "orderId");
+            var orderInfo = JsonText(ipnData, "orderInfo");
+            var orderType = JsonText(ipnData, "orderType");
+            var callbackPartnerCode = JsonText(ipnData, "partnerCode");
+            var payType = JsonText(ipnData, "payType");
+            var requestId = JsonText(ipnData, "requestId");
+            var responseTime = JsonText(ipnData, "responseTime");
+            var resultCodeText = JsonText(ipnData, "resultCode");
+            var transId = JsonText(ipnData, "transId");
+            var suppliedSignature = JsonText(ipnData, "signature");
+            var rawHash = $"accessKey={accessKey}&amount={amountText}&extraData={extraData}"
+                + $"&message={message}&orderId={orderIdText}&orderInfo={orderInfo}&orderType={orderType}"
+                + $"&partnerCode={callbackPartnerCode}&payType={payType}&requestId={requestId}"
+                + $"&responseTime={responseTime}&resultCode={resultCodeText}&transId={transId}";
+            var expectedSignature = _hasher.ComputeHmacSha256(rawHash, secretKey);
+            if (!SecureEquals(expectedSignature, suppliedSignature)
+                || !SecureEquals(partnerCode, callbackPartnerCode))
+                throw new UnauthorizedAccessException("Chữ ký thông báo MoMo không hợp lệ.");
+            if (!int.TryParse(orderIdText, out var orderId)
+                || !int.TryParse(resultCodeText, out var resultCode)
+                || !decimal.TryParse(amountText, NumberStyles.Number, CultureInfo.InvariantCulture, out var amount))
+                throw new InvalidOperationException("Dữ liệu thông báo MoMo không hợp lệ.");
 
-            var order = await _orderRepository.GetByIdAsync(orderId);
-
-            if (order == null || order.MoMoRequestId != requestId) return;
+            await using var transaction = await _workflow.BeginWorkflowTransactionAsync();
+            await WorkflowSupport.LockOrderAsync(_workflow, orderId);
+            var order = await _workflow.Set<Order>().Include(item => item.OrderItems)
+                .FirstOrDefaultAsync(item => item.Id == orderId)
+                ?? throw new KeyNotFoundException($"Không tìm thấy đơn hàng {orderId}.");
+            if (!string.Equals(order.PaymentMethod, "MoMo", StringComparison.OrdinalIgnoreCase)
+                || !SecureEquals(order.MoMoRequestId ?? string.Empty, requestId)
+                || amount != decimal.Truncate(order.FinalAmount))
+                throw new InvalidOperationException("Thông báo MoMo không khớp giao dịch của đơn hàng.");
 
             if (resultCode != 0)
             {
-                order.Status = OrderStatus.Failed;
-                
-                foreach (var item in order.OrderItems)
+                if (!order.IsPaid && order.Status == OrderStatus.Pending)
                 {
-                    var inventory = await _inventoryRepository.IncreaseStockAsync(item.BookId, item.Quantity);
+                    order.PayUrl = null;
+                    order.UpdatedBy = "MoMo-IPN";
+                    WorkflowSupport.Audit(_workflow, "OnlinePaymentAttemptFailed", "Order", order.Id, null,
+                        new { Method = "MoMo", ResultCode = resultCode, Message = message },
+                        details: "Giữ đơn trong cửa sổ 15 phút để khách có thể thử lại.");
+                    await _workflow.SaveChangesAsync();
                 }
+                await transaction.CommitAsync();
+                return;
             }
-            else
+            if (order.IsPaid)
             {
-                order.IsPaid = true;
+                await transaction.CommitAsync();
+                return;
             }
+            if (order.Status != OrderStatus.Pending)
+                throw new InvalidOperationException("Đơn không còn chờ thanh toán; cần đối soát thủ công giao dịch đến muộn.");
 
-            await _orderRepository.UpdateAsync(order);
-            if (resultCode == 0) await _loyalty.ProcessPaidDigitalOrderAsync(order.Id);
+            order.IsPaid = true;
+            order.UpdatedBy = "MoMo-IPN";
+            WorkflowSupport.Audit(_workflow, "OnlinePaymentConfirmed", "Order", order.Id,
+                new { IsPaid = false }, new { order.IsPaid, Method = "MoMo", Amount = amount, TransId = transId });
+            await _workflow.SaveChangesAsync();
+            await _loyalty.ProcessPaidDigitalOrderAsync(order.Id);
+            await transaction.CommitAsync();
         }
 
-        public async Task<bool> IsOrderOnlinePaidAsync(int orderId)
+        public async Task<bool> IsOrderOnlinePaidAsync(int orderId, int requesterUserId)
         {
             var order = await _orderRepository.GetByIdAsync(orderId);
             if (order == null)
             {
                 throw new KeyNotFoundException($"Không tìm thấy đơn hàng {orderId}");
             }
+            if (order.UserId != requesterUserId)
+                throw new UnauthorizedAccessException("Bạn không có quyền xem trạng thái thanh toán đơn này.");
             return order.IsPaid;
         }
 
-        public async Task<string> CreateVnPayUrlAsync(int orderId, string clientIpAddress)
+        public async Task<string> CreateVnPayUrlAsync(int orderId, string clientIpAddress, int requesterUserId)
         {
             var order = await _orderRepository.GetByIdAsync(orderId);
             if (order == null)
             {
                 throw new KeyNotFoundException($"Không tìm thấy đơn hàng {orderId}");
             }
+            EnsureOwnedPendingPayment(order, requesterUserId);
 
             var tmnCode = Environment.GetEnvironmentVariable("VNPAY_TMNCODE");
             var hashSecret = Environment.GetEnvironmentVariable("VNPAY_HASHSECRET");
             var vnpUrl = Environment.GetEnvironmentVariable("VNPAY_URL");
             var returnUrl = Environment.GetEnvironmentVariable("VNPAY_RETURNURL");
 
-            if (string.IsNullOrEmpty(tmnCode) || string.IsNullOrEmpty(hashSecret) || string.IsNullOrEmpty(vnpUrl))
+            if (string.IsNullOrEmpty(tmnCode) || string.IsNullOrEmpty(hashSecret)
+                || string.IsNullOrEmpty(vnpUrl) || string.IsNullOrEmpty(returnUrl))
             {
                 throw new Exception("Chưa cấu hình biến môi trường cho VNPay.");
             }
@@ -499,7 +622,7 @@ namespace AncientBook.Application.Services
 
         private class VnPayCompare : IComparer<string>
         {
-            public int Compare(string x, string y)
+            public int Compare(string? x, string? y)
             {
                 if (x == y) return 0;
                 if (x == null) return -1;
@@ -510,13 +633,16 @@ namespace AncientBook.Application.Services
             }
         }
 
-        public async Task<string> CreateSePayUrlAsync(int orderId)
+        public async Task<string> CreateSePayUrlAsync(int orderId, int requesterUserId)
         {
             var order = await _orderRepository.GetByIdAsync(orderId);
             if (order == null)
             {
                 throw new KeyNotFoundException($"Không tìm thấy đơn hàng {orderId}");
             }
+            EnsureOwnedPendingPayment(order, requesterUserId);
+            if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SEPAY_URL")))
+                throw new InvalidOperationException("Chưa cấu hình cổng thanh toán SePay.");
 
             var sepayBaseUrl = Environment.GetEnvironmentVariable("SEPAY_URL"); 
             var amount = (long)order.FinalAmount;
@@ -531,69 +657,93 @@ namespace AncientBook.Application.Services
             return paymentUrl;
         }
 
-        public async Task HandleSePayIpnAsync(JsonElement ipnData)
+        public async Task HandleSePayIpnAsync(JsonElement ipnData, string? authorizationHeader)
         {
-            if (ipnData.TryGetProperty("transferType", out var typeProp) && typeProp.GetString() == "in" &&
-                ipnData.TryGetProperty("transferAmount", out var amountProp) &&
-                ipnData.TryGetProperty("content", out var contentProp))
-            {
-                long transferAmount = amountProp.GetInt64();
-                string content = contentProp.GetString()?.ToUpper() ?? "";
+            var webhookKey = Environment.GetEnvironmentVariable("SEPAY_WEBHOOK_API_KEY");
+            if (string.IsNullOrWhiteSpace(webhookKey))
+                throw new InvalidOperationException("Chưa cấu hình khóa xác thực webhook SePay.");
+            if (!SecureEquals($"Apikey {webhookKey}", authorizationHeader?.Trim() ?? string.Empty))
+                throw new UnauthorizedAccessException("Xác thực webhook SePay không hợp lệ.");
 
-                var match = System.Text.RegularExpressions.Regex.Match(content, @"AB(\d+)");
-                if (match.Success && int.TryParse(match.Groups[1].Value, out int orderId))
-                {
-                    var order = await _orderRepository.GetByIdAsync(orderId);
-                    if (order != null && !order.IsPaid && order.FinalAmount <= transferAmount)
-                    {
-                        order.IsPaid = true;
-                        await _orderRepository.UpdateAsync(order);
-                        await _loyalty.ProcessPaidDigitalOrderAsync(order.Id);
-                    }
-                }
+            if (!string.Equals(JsonText(ipnData, "transferType"), "in", StringComparison.OrdinalIgnoreCase)
+                || !decimal.TryParse(JsonText(ipnData, "transferAmount"), NumberStyles.Number,
+                    CultureInfo.InvariantCulture, out var transferAmount))
+                throw new InvalidOperationException("Webhook SePay không phải giao dịch tiền vào hợp lệ.");
+            var content = JsonText(ipnData, "content").ToUpperInvariant();
+            var match = System.Text.RegularExpressions.Regex.Match(content, @"\bAB(\d+)\b");
+            if (!match.Success || !int.TryParse(match.Groups[1].Value, out var orderId))
+                throw new InvalidOperationException("Không tìm thấy mã đơn hợp lệ trong webhook SePay.");
+
+            var configuredAccount = Environment.GetEnvironmentVariable("SEPAY_ACCOUNT_NUMBER");
+            if (!string.IsNullOrWhiteSpace(configuredAccount)
+                && ipnData.TryGetProperty("accountNumber", out var accountValue)
+                && !SecureEquals(configuredAccount, accountValue.GetString() ?? string.Empty))
+                throw new UnauthorizedAccessException("Webhook SePay không thuộc tài khoản nhận tiền đã cấu hình.");
+
+            await using var transaction = await _workflow.BeginWorkflowTransactionAsync();
+            await WorkflowSupport.LockOrderAsync(_workflow, orderId);
+            var order = await _workflow.Set<Order>().Include(item => item.OrderItems)
+                .FirstOrDefaultAsync(item => item.Id == orderId)
+                ?? throw new KeyNotFoundException($"Không tìm thấy đơn hàng {orderId}.");
+            if (!string.Equals(order.PaymentMethod, "SePay", StringComparison.OrdinalIgnoreCase)
+                || transferAmount != order.FinalAmount)
+                throw new InvalidOperationException("Số tiền hoặc phương thức SePay không khớp đơn hàng.");
+            if (order.IsPaid)
+            {
+                await transaction.CommitAsync();
+                return;
             }
+            if (order.Status != OrderStatus.Pending)
+                throw new InvalidOperationException("Đơn không còn chờ thanh toán; cần đối soát thủ công giao dịch đến muộn.");
+
+            order.IsPaid = true;
+            order.UpdatedBy = "SePay-IPN";
+            var referenceCode = ipnData.TryGetProperty("referenceCode", out var reference)
+                ? reference.GetString() : null;
+            WorkflowSupport.Audit(_workflow, "OnlinePaymentConfirmed", "Order", order.Id,
+                new { IsPaid = false },
+                new { order.IsPaid, Method = "SePay", Amount = transferAmount, ReferenceCode = referenceCode });
+            await _workflow.SaveChangesAsync();
+            await _loyalty.ProcessPaidDigitalOrderAsync(order.Id);
+            await transaction.CommitAsync();
         }
 
-        // Add to CheckoutService.cs:
         public async Task<int> ReconcileUnpaidOnlineOrdersAsync(CancellationToken cancellationToken = default)
         {
-            // Check pending unpaid online orders created within the last 24 hours
-            var cutoff = DateTime.UtcNow.AddHours(-24);
-            var unpaidOrders = await _workflow.Set<Order>()
-                .AsNoTracking()
-                .Where(o => !o.IsPaid
-                    && o.Status == OrderStatus.Pending
-                    && o.OrderDate >= cutoff
-                    && (o.PaymentMethod == "MoMo" || o.PaymentMethod == "SePay"))
-                .OrderBy(o => o.OrderDate)
-                .Take(50)
-                .ToListAsync(cancellationToken);
-
-            int reconciledCount = 0;
+            var unpaidOrders = await _workflow.Set<Order>().AsNoTracking()
+                .Where(order => !order.IsPaid && order.Status == OrderStatus.Pending
+                    && (order.PaymentMethod == "MoMo" || order.PaymentMethod == "SePay"))
+                .OrderBy(order => order.OrderDate).Take(100).ToListAsync(cancellationToken);
+            var reconciledCount = 0;
 
             foreach (var order in unpaidOrders)
             {
-                if (cancellationToken.IsCancellationRequested) break;
-
+                cancellationToken.ThrowIfCancellationRequested();
+                var paid = false;
                 try
                 {
-                    if (order.PaymentMethod == "MoMo" && !string.IsNullOrEmpty(order.MoMoRequestId))
-                    {
-                        var status = await QueryMoMoPaymentStatusAsync(order.Id);
-                        if (status.IsPaid) reconciledCount++;
-                    }
+                    if (order.PaymentMethod == "MoMo" && !string.IsNullOrWhiteSpace(order.MoMoRequestId))
+                        paid = (await QueryMoMoPaymentStatusAsync(order.Id)).IsPaid;
                     else if (order.PaymentMethod == "SePay")
-                    {
-                        var paid = await VerifySePayTransactionAsync(order, cancellationToken);
-                        if (paid) reconciledCount++;
-                    }
+                        paid = await VerifySePayTransactionAsync(order, cancellationToken);
+                    if (paid) reconciledCount++;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Không thể đối soát thanh toán tự động cho đơn hàng #{OrderId} ({Method}).", order.Id, order.PaymentMethod);
+                    _logger.LogWarning(ex,
+                        "Không thể đối soát thanh toán tự động cho đơn hàng #{OrderId} ({Method}).",
+                        order.Id, order.PaymentMethod);
+                }
+
+                if (!paid && IsPaymentExpired(order))
+                {
+                    try { await ExpireUnpaidOnlineOrderAsync(order.Id); }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Không thể hết hạn thanh toán đơn hàng #{OrderId}.", order.Id);
+                    }
                 }
             }
-
             return reconciledCount;
         }
 
@@ -601,74 +751,111 @@ namespace AncientBook.Application.Services
         {
             var apiToken = Environment.GetEnvironmentVariable("SEPAY_API_KEY");
             var accountNumber = Environment.GetEnvironmentVariable("SEPAY_ACCOUNT_NUMBER");
-            if (string.IsNullOrEmpty(apiToken)) return false;
+            if (string.IsNullOrWhiteSpace(apiToken)) return false;
+            var baseUrl = Environment.GetEnvironmentVariable("SEPAY_TRANSACTIONS_URL")
+                ?? "https://userapi-sandbox.sepay.vn/v2/transactions";
+            var url = string.IsNullOrWhiteSpace(accountNumber)
+                ? $"{baseUrl}?limit=50"
+                : $"{baseUrl}?account_number={Uri.EscapeDataString(accountNumber)}&limit=50";
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiToken);
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+            if (!response.IsSuccessStatusCode) return false;
 
-            var url = string.IsNullOrEmpty(accountNumber)
-                ? "https://userapi-sandbox.sepay.vn/v2/transactions?limit=50"
-                : $"https://userapi-sandbox.sepay.vn/v2/transactions?account_number={accountNumber}&limit=50";
-
-            using var req = new HttpRequestMessage(HttpMethod.Get, url);
-            req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiToken);
-
-            var response = await _httpClient.SendAsync(req, cancellationToken);
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning("SePay API trả về mã lỗi {StatusCode} khi kiểm tra đơn #{OrderId}.", response.StatusCode, order.Id);
-                return false;
-            }
-
-            var json = await response.Content.ReadAsStringAsync(cancellationToken);
-            using var doc = JsonDocument.Parse(json);
-
-            // v2 API uses "data", fallback to "transactions" for v1 compatibility
-            if (!doc.RootElement.TryGetProperty("data", out var txArray) &&
-                !doc.RootElement.TryGetProperty("transactions", out txArray))
-            {
-                return false;
-            }
-
-            if (txArray.ValueKind != JsonValueKind.Array) return false;
-
+            using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+            if (!document.RootElement.TryGetProperty("data", out var transactions)
+                && !document.RootElement.TryGetProperty("transactions", out transactions)) return false;
+            if (transactions.ValueKind != JsonValueKind.Array) return false;
             var expectedCode = $"AB{order.Id}";
-            var codeRegex = new System.Text.RegularExpressions.Regex($@"\bAB{order.Id}\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            var codeRegex = new System.Text.RegularExpressions.Regex(
+                $@"\bAB{order.Id}\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
-            foreach (var tx in txArray.EnumerateArray())
+            foreach (var item in transactions.EnumerateArray())
             {
-                var transferType = tx.TryGetProperty("transfer_type", out var tProp) ? tProp.GetString() : "";
+                var transferType = item.TryGetProperty("transfer_type", out var typeValue)
+                    ? typeValue.GetString() : string.Empty;
                 if (!string.Equals(transferType, "in", StringComparison.OrdinalIgnoreCase)) continue;
-
-                var code = tx.TryGetProperty("code", out var codeProp) ? codeProp.GetString()?.Trim() ?? "" : "";
-                var content = tx.TryGetProperty("transaction_content", out var cProp) ? cProp.GetString() ?? "" : "";
-
-                bool isOrderMatch = string.Equals(code, expectedCode, StringComparison.OrdinalIgnoreCase)
-                    || codeRegex.IsMatch(content);
-
-                if (!isOrderMatch) continue;
+                var code = item.TryGetProperty("code", out var codeValue)
+                    ? codeValue.GetString()?.Trim() ?? string.Empty : string.Empty;
+                var content = item.TryGetProperty("transaction_content", out var contentValue)
+                    ? contentValue.GetString() ?? string.Empty : string.Empty;
+                if (!string.Equals(code, expectedCode, StringComparison.OrdinalIgnoreCase)
+                    && !codeRegex.IsMatch(content)) continue;
 
                 decimal amountIn = 0;
-                if (tx.TryGetProperty("amount_in", out var aProp))
+                if (item.TryGetProperty("amount_in", out var amountValue))
                 {
-                    if (aProp.ValueKind == JsonValueKind.Number)
-                        amountIn = aProp.GetDecimal();
-                    else if (aProp.ValueKind == JsonValueKind.String)
-                        decimal.TryParse(aProp.GetString(), out amountIn);
+                    if (amountValue.ValueKind == JsonValueKind.Number) amountIn = amountValue.GetDecimal();
+                    else decimal.TryParse(amountValue.GetString(), NumberStyles.Number,
+                        CultureInfo.InvariantCulture, out amountIn);
                 }
+                if (amountIn == order.FinalAmount
+                    && await ConfirmReconciledPaymentAsync(order.Id, "SePay", amountIn)) return true;
+            }
+            return false;
+        }
 
-                if (amountIn >= order.FinalAmount)
-                {
-                    var trackedOrder = await _orderRepository.GetByIdAsync(order.Id);
-                    if (trackedOrder != null && !trackedOrder.IsPaid)
-                    {
-                        trackedOrder.IsPaid = true;
-                        await _orderRepository.UpdateAsync(trackedOrder);
-                        await _loyalty.ProcessPaidDigitalOrderAsync(trackedOrder.Id);
-                        _logger.LogInformation("Đã đối soát thành công giao dịch SePay cho đơn hàng #{OrderId}.", trackedOrder.Id);
-                        return true;
-                    }
-                }
+        private async Task<bool> ConfirmReconciledPaymentAsync(int orderId, string method, decimal amount)
+        {
+            await using var transaction = await _workflow.BeginWorkflowTransactionAsync();
+            await WorkflowSupport.LockOrderAsync(_workflow, orderId);
+            var order = await _workflow.Set<Order>().Include(item => item.OrderItems)
+                .FirstOrDefaultAsync(item => item.Id == orderId);
+            if (order == null || order.IsPaid)
+            {
+                await transaction.CommitAsync();
+                return order?.IsPaid == true;
+            }
+            if (order.Status != OrderStatus.Pending
+                || !string.Equals(order.PaymentMethod, method, StringComparison.OrdinalIgnoreCase)
+                || order.FinalAmount != amount)
+            {
+                await transaction.CommitAsync();
+                return false;
+            }
+            order.IsPaid = true;
+            order.UpdatedBy = method + "-Reconciliation";
+            WorkflowSupport.Audit(_workflow, "OnlinePaymentReconciled", "Order", order.Id,
+                new { IsPaid = false }, new { order.IsPaid, Method = method, Amount = amount });
+            await _workflow.SaveChangesAsync();
+            await _loyalty.ProcessPaidDigitalOrderAsync(order.Id);
+            await transaction.CommitAsync();
+            return true;
+        }
+
+        private async Task<bool> ExpireUnpaidOnlineOrderAsync(int orderId)
+        {
+            await using var transaction = await _workflow.BeginWorkflowTransactionAsync();
+            await WorkflowSupport.LockOrderAsync(_workflow, orderId);
+            var order = await _workflow.Set<Order>().Include(item => item.OrderItems)
+                .FirstOrDefaultAsync(item => item.Id == orderId);
+            if (order == null || order.IsPaid || order.Status != OrderStatus.Pending
+                || !IsPaymentExpired(order)
+                || order.PaymentMethod is not ("MoMo" or "SePay"))
+            {
+                await transaction.CommitAsync();
+                return false;
             }
 
-            return false;
+            var previous = order.Status;
+            order.Status = OrderStatus.Failed;
+            order.PayUrl = null;
+            order.UpdatedBy = "PaymentTimeout";
+            foreach (var item in order.OrderItems.Where(item => item.PurchaseType == PurchaseType.Physical))
+                await _inventoryRepository.IncreaseStockAsync(item.BookId, item.Quantity);
+            WorkflowSupport.StatusHistory(_workflow, order, previous, "System",
+                "Hết thời hạn thanh toán online 15 phút.");
+            WorkflowSupport.Audit(_workflow, "OnlinePaymentExpired", "Order", order.Id,
+                new { Status = previous, order.IsPaid }, new { order.Status, order.IsPaid },
+                details: "Tự động hủy sau 15 phút, hoàn kho và hoàn F-Point đã dùng.");
+            WorkflowSupport.Notify(_workflow,
+                $"Đơn #{order.Id} đã tự hủy do quá 15 phút chưa thanh toán. F-Point đã dùng được hoàn lại.",
+                order.Id, order.UserId);
+            await _workflow.SaveChangesAsync();
+            await _loyalty.ReconcileOrderPointsAsync(order.Id);
+            await transaction.CommitAsync();
+            return true;
         }
     }
 }

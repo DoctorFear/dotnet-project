@@ -27,11 +27,14 @@ public class DeliveryService : IDeliveryService
     {
         var shipperId = await ResolveShipperAsync(shipperUserId);
         query.PageNumber = Math.Max(1, query.PageNumber); query.PageSize = Math.Clamp(query.PageSize, 1, 100);
-        var orders = _db.Set<Order>().AsNoTracking().Where(o => o.ShipperId == shipperId);
+        var orders = _db.Set<Order>().AsNoTracking().Where(o => o.ShipperId == shipperId
+            && (o.Status == OrderStatus.Prepared || o.Status == OrderStatus.Shipping
+                || o.Status == OrderStatus.Completed || o.Status == OrderStatus.Failed
+                || o.Status == OrderStatus.ReturnApproved || o.Status == OrderStatus.Returned));
         if (!string.IsNullOrWhiteSpace(query.Status))
         {
             if (!Enum.TryParse<OrderStatus>(query.Status, true, out var status) ||
-                status is not (OrderStatus.Prepared or OrderStatus.Shipping or OrderStatus.Completed or OrderStatus.Failed))
+                status is not (OrderStatus.Prepared or OrderStatus.Shipping or OrderStatus.Completed or OrderStatus.Failed or OrderStatus.ReturnApproved or OrderStatus.Returned))
                 throw new InvalidOperationException("Trạng thái lọc không hợp lệ.");
             orders = orders.Where(o => o.Status == status);
         }
@@ -45,7 +48,7 @@ public class DeliveryService : IDeliveryService
                 (o.User.FullName.Contains(keyword) || o.User.PhoneNumber != null && o.User.PhoneNumber.Contains(keyword)));
         }
         var count = await orders.CountAsync();
-        var items = await orders.OrderBy(o => o.Status == OrderStatus.Prepared || o.Status == OrderStatus.Shipping ? 0 : 1)
+        var items = await orders.OrderBy(o => o.Status == OrderStatus.Prepared || o.Status == OrderStatus.Shipping || o.Status == OrderStatus.ReturnApproved ? 0 : 1)
             .ThenByDescending(o => o.CreatedAt).ThenByDescending(o => o.Id)
             .Skip((query.PageNumber - 1) * query.PageSize).Take(query.PageSize)
             .Select(o => new DeliveryOrderSummaryDto
@@ -53,7 +56,7 @@ public class DeliveryService : IDeliveryService
                 OrderId = o.Id, OrderCode = "ORD-" + o.Id, CustomerName = o.User != null ? o.User.FullName : "N/A",
                 ReceiverPhone = o.User != null ? o.User.PhoneNumber : null, ShippingAddress = o.ShippingAddress,
                 FinalAmount = o.FinalAmount, CodAmount = !o.IsPaid && o.PaymentMethod == "COD" ? o.FinalAmount : 0, IsPaid = o.IsPaid,
-                Status = o.Status.ToString(), OrderDate = o.OrderDate
+                Status = o.Status.ToString(), DeliveryType = o.Status == OrderStatus.ReturnApproved || o.Status == OrderStatus.Returned ? "Return" : "Outbound", OrderDate = o.OrderDate
             }).ToListAsync();
         return new(items, count, query.PageNumber, query.PageSize);
     }
@@ -64,24 +67,35 @@ public class DeliveryService : IDeliveryService
         var order = await _db.Set<Order>().AsNoTracking().Include(o => o.User).Include(o => o.Shipper)
             .Include(o => o.OrderItems).ThenInclude(i => i.Book).FirstOrDefaultAsync(o => o.Id == orderId)
             ?? throw new KeyNotFoundException("Không tìm thấy đơn hàng.");
-        if (order.ShipperId != shipperId) throw new UnauthorizedAccessException("Bạn không có quyền xem đơn hàng này.");
+        if (order.ShipperId != shipperId) throw new UnauthorizedAccessException("Bạn không có quyền thao tác trên đơn hàng này!");
         var failure = await _db.Set<OrderFailureReason>().AsNoTracking().Where(f => f.OrderId == orderId)
             .OrderByDescending(f => f.RecordedAt)
             .Select(f => new { Reason = f.FailureReason!.ReasonText, f.FailureNote }).FirstOrDefaultAsync();
-        var isReadOnly = order.Status is not (OrderStatus.Prepared or OrderStatus.Shipping);
+        var refund = await _db.Set<Refund>().AsNoTracking().Where(r => r.OrderId == orderId)
+            .Select(r => new { r.Reason, r.Description }).FirstOrDefaultAsync();
+        var isReadOnly = order.Status is not (OrderStatus.Prepared or OrderStatus.Shipping or OrderStatus.ReturnApproved);
         var completedAt = isReadOnly
             ? await _db.Set<OrderStatusHistory>().AsNoTracking()
                 .Where(h => h.OrderId == orderId && h.ToStatus == order.Status)
                 .OrderByDescending(h => h.ChangedAt).Select(h => (DateTime?)h.ChangedAt).FirstOrDefaultAsync()
             : null;
+        var startedAt = await _db.Set<OrderStatusHistory>().AsNoTracking()
+            .Where(h => h.OrderId == orderId && h.ToStatus == OrderStatus.Shipping)
+            .OrderByDescending(h => h.ChangedAt).Select(h => (DateTime?)h.ChangedAt).FirstOrDefaultAsync();
         return new DeliveryOrderDetailDto
         {
             OrderId = order.Id, OrderCode = "ORD-" + order.Id, CustomerName = order.User?.FullName ?? "N/A",
             ReceiverPhone = order.User?.PhoneNumber, ShippingAddress = order.ShippingAddress,
-            OrderDate = order.OrderDate, Status = order.Status.ToString(), IsPaid = order.IsPaid,
+            ShippingCarrier = order.ShippingCarrier,
+            DeliveryPriority = order.DeliveryPriority,
+            DeliveryNote = order.DeliveryNote,
+            WaybillCode = string.IsNullOrWhiteSpace(order.WaybillCode)
+                ? $"AB-{order.OrderDate:yyyyMMdd}-{order.Id:D8}" : order.WaybillCode,
+            OrderDate = order.OrderDate, Status = order.Status.ToString(), DeliveryType = order.Status == OrderStatus.ReturnApproved || order.Status == OrderStatus.Returned ? "Return" : "Outbound", IsPaid = order.IsPaid,
             FinalAmount = order.FinalAmount, CodAmount = !order.IsPaid && order.PaymentMethod.Equals("COD", StringComparison.OrdinalIgnoreCase) ? order.FinalAmount : 0,
-            Note = failure?.Reason,
-            IsReadOnly = isReadOnly, CompletedAt = completedAt,
+            Note = refund == null ? failure?.Reason : string.IsNullOrWhiteSpace(refund.Description)
+                ? refund.Reason : $"{refund.Reason}: {refund.Description}",
+            IsReadOnly = isReadOnly, StartedAt = startedAt, CompletedAt = completedAt,
             FailureReason = failure?.Reason, FailureNote = failure?.FailureNote,
             Items = order.OrderItems.Where(i => i.PurchaseType == PurchaseType.Physical).Select(i => new DeliveryItemDto
             { BookId = i.BookId, BookTitle = i.Book?.Title ?? "N/A", Quantity = i.Quantity, UnitPrice = i.UnitPrice }).ToList()
@@ -93,21 +107,37 @@ public class DeliveryService : IDeliveryService
         var shipperId = await ResolveShipperAsync(shipperUserId);
         if (!Enum.TryParse<OrderStatus>(request.NewStatus, true, out var next) || !Enum.IsDefined(next))
             throw new InvalidOperationException("Trạng thái không hợp lệ.");
+
         await using var tx = await _db.BeginWorkflowTransactionAsync();
         await WorkflowSupport.LockOrderAsync(_db, orderId);
         var order = await _db.Set<Order>().Include(o => o.OrderItems).FirstOrDefaultAsync(o => o.Id == orderId)
             ?? throw new KeyNotFoundException("Không tìm thấy đơn hàng.");
-        if (order.ShipperId != shipperId) throw new UnauthorizedAccessException("Bạn không có quyền cập nhật đơn này.");
+        if (order.ShipperId != shipperId) throw new UnauthorizedAccessException("Bạn không có quyền thao tác trên đơn hàng này!");
+
         var previous = order.Status;
-        if (!((previous == OrderStatus.Prepared && next == OrderStatus.Shipping) ||
-            (previous == OrderStatus.Shipping && next is OrderStatus.Completed or OrderStatus.Failed)))
-            throw new InvalidOperationException($"Không thể chuyển từ {previous} sang {next}.");
+        var outboundTransition = previous == OrderStatus.Prepared && next == OrderStatus.Shipping
+            || previous == OrderStatus.Shipping && next is OrderStatus.Completed or OrderStatus.Failed;
+        var returnTransition = previous == OrderStatus.ReturnApproved && next == OrderStatus.Returned;
+        if (!outboundTransition && !returnTransition)
+            throw new InvalidOperationException("Trạng thái đơn hàng không hợp lệ để thực hiện thao tác này. Vui lòng làm mới trang!");
         if (!order.OrderItems.Any(i => i.PurchaseType == PurchaseType.Physical))
             throw new InvalidOperationException("Shipper chỉ xử lý đơn sách vật lý.");
-        if (next == OrderStatus.Completed && !order.IsPaid
-            && !order.PaymentMethod.Equals("COD", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Đơn thanh toán online chưa được xác nhận thanh toán; không thể xác nhận thu tiền COD.");
+
         var actor = "Shipper-" + shipperUserId;
+        var wasPaid = order.IsPaid;
+        var codDue = next == OrderStatus.Completed && !order.IsPaid
+            && string.Equals(order.PaymentMethod, "COD", StringComparison.OrdinalIgnoreCase)
+            ? order.FinalAmount : 0m;
+        if (next == OrderStatus.Completed)
+        {
+            if (!order.IsPaid && !string.Equals(order.PaymentMethod, "COD", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("Đơn thanh toán online chưa được xác nhận thanh toán.");
+            if (codDue > 0 && request.CodCollectedAmount != codDue)
+                throw new InvalidOperationException($"Phải xác nhận đúng số tiền COD đã thu: {codDue:N0} đ.");
+            if (codDue == 0 && request.CodCollectedAmount is < 0 or > 0)
+                throw new InvalidOperationException("Đơn đã thanh toán trước, không được ghi nhận thêm tiền COD.");
+        }
+
         string? note = null;
         if (next == OrderStatus.Failed)
         {
@@ -118,44 +148,123 @@ public class DeliveryService : IDeliveryService
             note = reason.ReasonText;
             _db.Set<OrderFailureReason>().Add(new OrderFailureReason
             {
-                OrderId = orderId, FailureReasonId = reason.Id, FailureNote = request.FailureNote,
+                OrderId = orderId, FailureReasonId = reason.Id, FailureNote = request.FailureNote?.Trim(),
                 RecordedBy = actor, RecordedAt = TimeZoneHelper.GetVietnamTime(), CreatedBy = actor
             });
-            foreach (var group in order.OrderItems.Where(i => i.PurchaseType == PurchaseType.Physical)
-                .GroupBy(i => i.BookId).OrderBy(g => g.Key))
-            {
-                await WorkflowSupport.LockBookAsync(_db, group.Key);
-                var book = await _db.Set<Book>().FirstAsync(b => b.Id == group.Key);
-                var inventory = await _db.Set<Inventory>().FirstOrDefaultAsync(i => i.BookId == group.Key)
-                    ?? throw new InvalidOperationException("Không tìm thấy tồn kho để hoàn sách.");
-                var before = inventory.QuantityOnHand;
-                var quantity = group.Sum(i => i.Quantity);
-                inventory.QuantityOnHand = checked(before + quantity);
-                inventory.UpdatedBy = actor; inventory.LastUpdated = TimeZoneHelper.GetVietnamTime();
-                book.StockCount = checked(book.StockCount + quantity);
-                book.StockStatus = book.StockCount > 0 ? StockStatus.InStock : StockStatus.OutOfStock;
-                WorkflowSupport.Audit(_db, "DeliveryStockRestored", "Inventory", inventory.Id,
-                    new { QuantityOnHand = before }, new { inventory.QuantityOnHand }, shipperUserId,
-                    $"Đơn #{orderId}; lý do: {note}; hoàn {quantity} cuốn.");
-            }
-            WorkflowSupport.Notify(_db, $"Đơn #{orderId} giao thất bại: {note}. Đã hoàn kho, kho và vận chuyển cần nhận lại kiện hàng.", orderId);
+            await RestorePhysicalInventoryAsync(order, actor, shipperUserId, "DeliveryStockRestored", note);
+            WorkflowSupport.Notify(_db,
+                $"Đơn #{orderId} giao thất bại: {note}. Đã hoàn kho, kho và vận chuyển cần nhận lại kiện hàng.", orderId);
         }
-        order.Status = next; order.UpdatedBy = actor;
-        if (next == OrderStatus.Completed) order.IsPaid = true;
+        else if (next == OrderStatus.Returned)
+        {
+            note = "Shipper đã thu hồi sách hoàn trả thành công.";
+            await RestorePhysicalInventoryAsync(order, actor, shipperUserId, "ReturnStockRestored", note);
+            WorkflowSupport.Notify(_db, $"Đơn #{orderId} đã thu hồi hoàn trả thành công và nhập lại kho.", orderId);
+            WorkflowSupport.Notify(_db,
+                $"Đã thu hồi sách hoàn trả của đơn #{orderId}. Quy trình hoàn tiền và điểm đã được cập nhật.",
+                orderId, order.UserId);
+        }
+
+        order.Status = next;
+        order.UpdatedBy = actor;
+        if (next == OrderStatus.Completed)
+        {
+            order.IsPaid = true;
+            if (codDue > 0)
+            {
+                order.CodCollectedAmount = codDue;
+                order.CodCollectedAt = TimeZoneHelper.GetVietnamTime();
+                order.CodCollectedByShipperId = shipperId;
+                order.CodSettlementStatus = "Outstanding";
+            }
+        }
+        if (next == OrderStatus.Returned)
+        {
+            order.IsPaid = false;
+            if (order.CodCollectedAmount > 0) order.CodSettlementStatus = "RefundRequired";
+        }
         WorkflowSupport.StatusHistory(_db, order, previous, actor, note);
         WorkflowSupport.Audit(_db, "DeliveryStatusUpdated", "Order", orderId,
-            new { Status = previous }, new { order.Status, order.IsPaid }, shipperUserId, note);
+            new { Status = previous, IsPaid = wasPaid },
+            new { order.Status, order.IsPaid, CodCollectedAmount = codDue > 0 ? request.CodCollectedAmount : null },
+            shipperUserId, note);
+
+        if (next == OrderStatus.Shipping)
+            WorkflowSupport.Notify(_db,
+                $"Đơn #{orderId} đã được Shipper nhận và đang trên đường giao đến bạn.", orderId, order.UserId);
+        if (next == OrderStatus.Completed && codDue > 0)
+            WorkflowSupport.Audit(_db, "CodCollected", "Shipper", shipperId, null,
+                new { OrderId = orderId, Amount = order.CodCollectedAmount,
+                    order.CodCollectedAt, order.CodSettlementStatus },
+                shipperUserId, $"Ghi nhận công nợ COD {codDue:N0} đ của đơn #{orderId}.");
+        if (next == OrderStatus.Returned && order.CodCollectedAmount > 0)
+            WorkflowSupport.Audit(_db, "CodRefundRequired", "Order", orderId,
+                new { SettlementStatus = "Outstanding", order.CodCollectedAmount },
+                new { order.CodSettlementStatus, order.CodCollectedAmount }, shipperUserId,
+                "Đơn COD đã thu tiền được hoàn trả; chuyển công nợ sang chờ hoàn tiền khách.");
+
         await _db.SaveChangesAsync();
-        if (next == OrderStatus.Failed)
+
+        if (next is OrderStatus.Failed or OrderStatus.Returned)
             await _points.ReconcileOrderPointsAsync(orderId);
         if (next == OrderStatus.Completed)
         {
             await _points.AwardCompletedOrderAsync(orderId);
-            WorkflowSupport.Notify(_db, $"Đơn #{orderId} đã giao thành công. Điểm thưởng được ghi nhận theo thời hạn đổi trả; E-Book tặng kèm (nếu có) đã được mở.", orderId, order.UserId);
+            await _points.ReconcileOrderPointsAsync(orderId);
+            var pointState = await _points.GetOrderPointsAsync(order.UserId, orderId);
+            var effectivePoints = pointState.PendingPoints + pointState.AvailablePoints;
+            WorkflowSupport.Audit(_db, "DeliveryCompleted", "Order", orderId,
+                new { Status = previous },
+                new { Status = next, CodCollectedAmount = codDue, FPointsAwarded = effectivePoints },
+                shipperUserId,
+                $"Giao thành công; COD: {codDue:N0} đ; F-Point: {effectivePoints}.");
+            WorkflowSupport.Notify(_db,
+                $"Đơn #{orderId} đã giao thành công. {effectivePoints} F-Point được ghi nhận theo thời hạn đổi trả.",
+                orderId, order.UserId);
             await _db.SaveChangesAsync();
         }
+        if (next == OrderStatus.Returned)
+        {
+            var revokedPoints = await _db.Set<FPoints>().AsNoTracking()
+                .Where(p => p.SourceKey == $"Order:{orderId}:Earn")
+                .Select(p => (int?)-p.PointUsed).FirstOrDefaultAsync() ?? 0;
+            var restockedBooks = order.OrderItems
+                .Where(i => i.PurchaseType == PurchaseType.Physical).Sum(i => i.Quantity);
+            WorkflowSupport.Audit(_db, "ReturnCollectionCompleted", "Order", orderId,
+                new { Status = previous, IsPaid = wasPaid },
+                new { Status = next, order.IsPaid, RefundAmount = wasPaid ? order.FinalAmount : 0m,
+                    RestockedBooks = restockedBooks, FPointsRevoked = revokedPoints },
+                shipperUserId,
+                $"Thu hồi thành công; hoàn kho {restockedBooks} cuốn; đối soát {revokedPoints} F-Point; "
+                + $"chuyển hoàn tiền {(wasPaid ? order.FinalAmount : 0m):N0} đ.");
+            await _db.SaveChangesAsync();
+        }
+
         await tx.CommitAsync();
         return true;
+    }
+
+    private async Task RestorePhysicalInventoryAsync(Order order, string actor, int actorUserId,
+        string auditAction, string? reason)
+    {
+        foreach (var group in order.OrderItems.Where(i => i.PurchaseType == PurchaseType.Physical)
+            .GroupBy(i => i.BookId).OrderBy(g => g.Key))
+        {
+            await WorkflowSupport.LockBookAsync(_db, group.Key);
+            var book = await _db.Set<Book>().FirstAsync(b => b.Id == group.Key);
+            var inventory = await _db.Set<Inventory>().FirstOrDefaultAsync(i => i.BookId == group.Key)
+                ?? throw new InvalidOperationException("Không tìm thấy tồn kho để hoàn sách.");
+            var before = inventory.QuantityOnHand;
+            var quantity = group.Sum(i => i.Quantity);
+            inventory.QuantityOnHand = checked(before + quantity);
+            inventory.UpdatedBy = actor;
+            inventory.LastUpdated = TimeZoneHelper.GetVietnamTime();
+            book.StockCount = checked(book.StockCount + quantity);
+            book.StockStatus = book.StockCount > 0 ? StockStatus.InStock : StockStatus.OutOfStock;
+            WorkflowSupport.Audit(_db, auditAction, "Inventory", inventory.Id,
+                new { QuantityOnHand = before }, new { inventory.QuantityOnHand }, actorUserId,
+                $"Đơn #{order.Id}; lý do: {reason}; hoàn {quantity} cuốn.");
+        }
     }
 
     public Task<List<FailureReasonDto>> GetFailureReasonsAsync() => _db.Set<FailureReason>().AsNoTracking()

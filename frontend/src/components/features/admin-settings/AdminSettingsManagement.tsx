@@ -156,7 +156,7 @@ export const AdminSettingsManagement: React.FC = () => {
                                 Mức điểm sử dụng tối đa
                             </label>
                             <span className={styles.settingDesc}>
-                                Số F-Point tối đa được quy đổi trừ tiền trên một đơn hàng.
+                                Số F-Point tối đa được quy đổi trên một đơn, không vượt quá 1.000 điểm.
                             </span>
                             <div className={styles.inputWrapper}>
                                 <input

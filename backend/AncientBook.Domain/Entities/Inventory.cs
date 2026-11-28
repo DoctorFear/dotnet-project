@@ -9,6 +9,7 @@ namespace AncientBook.Domain.Entities
         public int BookId { get; set; }
         public int QuantityOnHand { get; set; } = 0;
         public int ReorderLevel { get; set; } = 5;
+        public string? ShelfLocation { get; set; } = "Kệ chờ phân bổ";
         public DateTime LastUpdated { get; set; } = TimeZoneHelper.GetVietnamTime();
 
         // Navigation property

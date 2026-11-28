@@ -105,13 +105,31 @@ namespace AncientBook.Infrastructure.Persistence.Repositories
 
         public async Task UpdateAsync(Order order)
         {
-            if (order.Status is OrderStatus.Completed or OrderStatus.ReturnRequested or OrderStatus.ReturnApproved or OrderStatus.Returned)
+            if (order.Status is OrderStatus.Completed or OrderStatus.Failed or OrderStatus.ReturnRequested or OrderStatus.ReturnApproved or OrderStatus.Returned)
             {
                 await using var tx = _context.Database.CurrentTransaction == null
                     ? await _context.BeginWorkflowTransactionAsync() : null;
                 await _context.LockOrderAsync(order.Id);
                 if (order.Status == OrderStatus.ReturnRequested)
                     await _loyalty.ValidateReturnEligibilityAsync(order.Id);
+                if (order.Status == OrderStatus.Failed)
+                {
+                    var previousStatus = _context.Entry(order).Property(o => o.Status).OriginalValue;
+                    if (previousStatus != OrderStatus.Failed)
+                    {
+                        var actor = order.UpdatedBy ?? "System";
+                        _context.OrderStatusHistories.Add(new OrderStatusHistory
+                        {
+                            OrderId = order.Id,
+                            FromStatus = previousStatus,
+                            ToStatus = OrderStatus.Failed,
+                            ChangedBy = actor,
+                            ChangedAt = TimeZoneHelper.GetVietnamTime(),
+                            Note = int.TryParse(actor, out _) ? "Khách hủy đơn hàng" : "Đơn hàng không thành công",
+                            CreatedBy = actor
+                        });
+                    }
+                }
                 _context.Orders.Update(order);
                 await _context.SaveChangesAsync();
                 await _loyalty.ReconcileOrderPointsAsync(order.Id);

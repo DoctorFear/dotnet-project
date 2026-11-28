@@ -1,0 +1,100 @@
+.card {
+    overflow: hidden;
+    margin: 12px 0;
+    border: 1px solid #dce4f0;
+    border-radius: 8px;
+    color: #24344d;
+    background: #fff;
+}
+
+.card header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-bottom: 1px solid #e4e9f1;
+    background: #f4f7fb;
+}
+
+.card header span {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    color: #173f75;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.card header b {
+    padding: 3px 6px;
+    border: 1px solid #d7c07f;
+    border-radius: 999px;
+    color: #7b570d;
+    background: #fff6d9;
+    font-size: 8.5px;
+}
+
+.rows > div {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 9px 10px;
+    border-bottom: 1px solid #edf1f6;
+    color: #58708f;
+}
+
+.rows > div:last-child {
+    border-bottom: 0;
+}
+
+.rows > div > svg {
+    flex: 0 0 auto;
+    margin-top: 2px;
+}
+
+.rows span {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.rows small {
+    color: #7c8798;
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.rows strong {
+    color: #2e3c51;
+    font-size: 10.5px;
+    font-weight: 600;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.rows .note {
+    color: #8a641a;
+    background: #fffaf0;
+}
+
+.rows .note strong {
+    color: #6c4b0f;
+}
+
+.compact {
+    margin: 10px 0 12px;
+    border-radius: 6px;
+}
+
+.compact header {
+    padding: 7px 9px;
+}
+
+.compact .rows > div {
+    padding: 8px 9px;
+}

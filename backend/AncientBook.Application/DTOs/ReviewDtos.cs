@@ -49,6 +49,7 @@ namespace AncientBook.Application.DTOs
         public string? VerificationLabel { get; set; }
         public ReviewStatus Status { get; set; }
         public int HelpfulCount { get; set; }
+        public int RewardPointsAwarded { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 

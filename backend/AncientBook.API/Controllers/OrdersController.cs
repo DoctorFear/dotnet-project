@@ -28,7 +28,11 @@ namespace AncientBook.API.Controllers
         {
             try
             {
-                var result = await _orderService.CancelOrder(id);
+                var userIdClaim = User.FindFirst("UserId")?.Value
+                    ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(userIdClaim, out var userId))
+                    return Unauthorized(new { message = "Không xác định được người dùng." });
+                var result = await _orderService.CancelOrder(id, userId);
                 if (result)
                 {
                     return Ok(new { message = $"Đã gửi yêu cầu hủy hoặc hủy thành công đơn hàng #{id}." });
@@ -38,6 +42,10 @@ namespace AncientBook.API.Controllers
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
             }
             catch (InvalidOperationException ex)
             {
@@ -87,7 +95,9 @@ namespace AncientBook.API.Controllers
 
             try
             {
-                string adminName = User.Identity?.Name ?? "SystemAdmin";
+                string adminName = User.FindFirst("UserId")?.Value
+                    ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                    ?? User.Identity?.Name ?? "SystemAdmin";
 
                 var result = await _orderService.UpdateOrderStatusAsync(id, request.NewStatus, adminName);
                 if (result)
@@ -116,7 +126,9 @@ namespace AncientBook.API.Controllers
         {
             try
             {
-                string adminName = User.Identity?.Name ?? "SystemAdmin";
+                string adminName = User.FindFirst("UserId")?.Value
+                    ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                    ?? User.Identity?.Name ?? "SystemAdmin";
 
                 var result = await _orderService.ApproveReturnOrderAsync(id, adminName);
                 
@@ -142,7 +154,7 @@ namespace AncientBook.API.Controllers
 
         // Lấy danh sách đơn hàng theo điều kiện.
         [HttpGet]
-        [Authorize]
+        [Authorize(Roles = "Member,Staff,Admin")]
         public async Task<IActionResult> GetPagedOrders([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] int? userId = null, [FromQuery] OrderStatus? status = null, [FromQuery] string? searchKeyword = null,
             [FromQuery] string? bookTitle = null, [FromQuery] DateTime? fromDate = null, [FromQuery] DateTime? toDate = null,
             [FromQuery] string? orderType = null, [FromQuery] string? statusGroup = null, [FromQuery] string? sortBy = null)
@@ -158,7 +170,7 @@ namespace AncientBook.API.Controllers
                     return Unauthorized(new { message = "Không thể xác thực thông tin người dùng." });
                 }
 
-                bool isAdmin = userRoleClaim == "Admin" || userRoleClaim == "Staff" || userRoleClaim == "Shipper";
+                bool isAdmin = userRoleClaim == "Admin" || userRoleClaim == "Staff";
 
                 if (!isAdmin)
                 {
@@ -195,7 +207,7 @@ namespace AncientBook.API.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize]
+        [Authorize(Roles = "Member,Staff,Admin")]
         public async Task<IActionResult> GetOrderById(int id)
         {
             try
@@ -215,7 +227,7 @@ namespace AncientBook.API.Controllers
                     return NotFound(new { message = $"Không tìm thấy đơn hàng #{id}." });
                 }
 
-                bool isAdmin = userRoleClaim == "Admin" || userRoleClaim == "Staff" || userRoleClaim == "Shipper";
+                bool isAdmin = userRoleClaim == "Admin" || userRoleClaim == "Staff";
                 if (!isAdmin && order.User?.Id != currentUserId)
                 {
                     return Forbid();

@@ -48,9 +48,9 @@ public class TierUpgradeBackgroundService(IServiceScopeFactory scopes, ILogger<T
                      (o.Status == OrderStatus.Pending || o.Status == OrderStatus.Confirmed) &&
                      o.OrderItems.Any() && !o.OrderItems.Any(i => i.PurchaseType == PurchaseType.Physical))
                      || db.FPoints.Any(p => p.OrderId == o.Id && p.Status == PointStatus.Pending)
-                     || o.Status == OrderStatus.Failed
-                        && db.FPoints.Any(p => p.SourceKey == "Order:" + o.Id + ":Redeem"
-                            && p.Status != PointStatus.Cancelled)
+                     || (o.Status == OrderStatus.Failed || o.Status == OrderStatus.Returned)
+                        && db.FPoints.Any(p => p.SourceKey == "Order:" + o.Id + ":Redeem")
+                        && !db.FPoints.Any(p => p.SourceKey == "Order:" + o.Id + ":RedeemRefund")
                      || o.Status == OrderStatus.Completed && o.IsPaid
                         && db.FPoints.Any(p => p.OrderId == o.Id && p.Status == PointStatus.Cancelled)
                         && db.OrderStatusHistories.Any(h => h.OrderId == o.Id && h.ToStatus == OrderStatus.Completed
@@ -87,9 +87,28 @@ public class TierUpgradeBackgroundService(IServiceScopeFactory scopes, ILogger<T
         {
             stoppingToken.ThrowIfCancellationRequested();
             using var scope = scopes.CreateScope();
-            try { await scope.ServiceProvider.GetRequiredService<IFPointService>().AutoUpgradeTierAsync(userId, 0, 0); }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { throw; }
-            catch (Exception ex) { logger.LogWarning(ex, "Chưa thể đối soát hạng tài khoản #{UserId}; sẽ thử lại.", userId); }
+            for (var attempt = 1; attempt <= 3; attempt++)
+            {
+                try
+                {
+                    await scope.ServiceProvider.GetRequiredService<IFPointService>()
+                        .AutoUpgradeTierAsync(userId, 0, 0);
+                    break;
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { throw; }
+                catch (Exception ex) when (attempt < 3)
+                {
+                    logger.LogWarning(ex,
+                        "Đối soát hạng tài khoản #{UserId} lỗi; retry {Attempt}/3.", userId, attempt);
+                    await Task.Delay(TimeSpan.FromSeconds(attempt), stoppingToken);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex,
+                        "SystemErrorLog: đối soát hạng tài khoản #{UserId} thất bại sau 3 lần; worker sẽ thử lại ở chu kỳ sau.",
+                        userId);
+                }
+            }
         }
     }
 

@@ -221,6 +221,77 @@
     border-color: var(--egyptian);
     color: var(--egyptian);
 }
+.historySummary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 16px;
+}
+.historySummary article {
+    padding: 17px 19px;
+    background: #fff;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    display: grid;
+    gap: 5px;
+}
+.historySummary span,
+.historySummary small {
+    color: var(--muted);
+    font-size: 10px;
+}
+.historySummary strong {
+    font-size: 21px;
+    line-height: 1.2;
+}
+.historyFilters {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.25fr auto;
+    align-items: end;
+    gap: 12px;
+    padding: 15px 18px;
+    border-bottom: 1px solid var(--hairline);
+    background: #f8fafc;
+}
+.historyFilters label {
+    display: grid;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 600;
+}
+.historyFilters input,
+.historyFilters select {
+    min-height: 36px;
+    padding: 7px 9px;
+    border: 1px solid var(--hairline);
+    border-radius: 7px;
+    background: #fff;
+    color: var(--catalina);
+    font: inherit;
+    font-size: 11px;
+}
+.filterActions {
+    display: flex;
+    gap: 7px;
+}
+.filterActions button {
+    min-height: 36px;
+    white-space: nowrap;
+}
+.dateCell {
+    min-width: 120px;
+    font-size: 10px;
+    color: var(--muted);
+}
+.balanceValue {
+    display: block;
+    margin-top: 2px;
+}
+.refund {
+    color: #3564a6;
+}
+
 .history {
     margin-bottom: 20px;
 }
@@ -233,6 +304,13 @@
 .transaction strong {
     font-size: 11px;
     font-weight: 550;
+}
+.transaction small {
+    display: block;
+    max-width: 250px;
+    margin-top: 3px;
+    color: var(--muted);
+    line-height: 1.35;
 }
 .transactionIcon {
     width: 33px;
@@ -445,6 +523,7 @@
     padding: 24px 0 10px;
 }
 @media (max-width: 1150px) {
+    .historyFilters { grid-template-columns: 1fr 1fr; }
     .heroGrid {
         grid-template-columns: 1fr 1fr;
     }
@@ -465,6 +544,8 @@
     }
 }
 @media (max-width: 600px) {
+    .historySummary { grid-template-columns: 1fr; }
+    .historyFilters { grid-template-columns: 1fr; }
     .heroGrid {
         grid-template-columns: 1fr;
     }
@@ -508,5 +589,39 @@
     }
     .balance {
         font-size: 44px;
+    }
+}
+
+.customDates {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.historyEmpty {
+    display: grid;
+    justify-items: center;
+    padding-bottom: 22px;
+}
+
+.emptyLink {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 36px;
+    margin-top: -12px;
+    padding: 0 12px;
+    border-radius: 6px;
+    color: white;
+    background: var(--egyptian);
+    font-size: 11px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+@media (max-width: 760px) {
+    .customDates {
+        grid-column: 1 / -1;
     }
 }

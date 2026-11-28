@@ -6,6 +6,7 @@ using AncientBook.Application.DTOs;
 using AncientBook.Application.Interfaces;
 using AncientBook.Domain.Entities;
 using AncientBook.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace AncientBook.Application.Services
 {
@@ -14,8 +15,8 @@ namespace AncientBook.Application.Services
         Task<List<ShipperDto>> GetAllShippersAsync(string? status = null, string? area = null);
         Task<ShipperDto?> GetShipperByIdAsync(int id);
         Task<List<PhysicalOrderSummaryDto>> GetOrdersByShipperAsync(int shipperId);
-        Task<bool> AssignOrderToShipperAsync(AssignShipperDto dto);
-        Task<bool> UnassignOrderAsync(int orderId);
+        Task<bool> AssignOrderToShipperAsync(AssignShipperDto dto, int? actorUserId = null);
+        Task<bool> UnassignOrderAsync(int orderId, int? actorUserId = null);
         Task<bool> CreateShipperAsync(ShipperDto dto);
         Task<bool> UpdateShipperAsync(int id, ShipperDto dto);
         Task<bool> UpdateShipperStatusAsync(int id, string status);
@@ -26,15 +27,18 @@ namespace AncientBook.Application.Services
         private readonly IShipperRepository _shipperRepository;
         private readonly IOrderRepository _orderRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IWorkflowDbContext _db;
 
         public ShipperService(
             IShipperRepository shipperRepository,
             IOrderRepository orderRepository,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            IWorkflowDbContext db)
         {
             _shipperRepository = shipperRepository;
             _orderRepository = orderRepository;
             _userRepository = userRepository;
+            _db = db;
         }
 
         public async Task<List<ShipperDto>> GetAllShippersAsync(string? status = null, string? area = null)
@@ -138,50 +142,67 @@ namespace AncientBook.Application.Services
                 }).ToList();
         }
 
-        public async Task<bool> AssignOrderToShipperAsync(AssignShipperDto dto)
+        public async Task<bool> AssignOrderToShipperAsync(AssignShipperDto dto, int? actorUserId = null)
         {
-            var order = await _orderRepository.GetByIdAsync(dto.OrderId);
-            var shipper = await _shipperRepository.GetByIdAsync(dto.ShipperId);
-
+            await using var transaction = await _db.BeginWorkflowTransactionAsync();
+            await WorkflowSupport.LockOrderAsync(_db, dto.OrderId);
+            await WorkflowSupport.LockShipperAsync(_db, dto.ShipperId);
+            var order = await _db.Set<Order>().FirstOrDefaultAsync(item => item.Id == dto.OrderId);
+            var shipper = await _db.Set<Shipper>().FirstOrDefaultAsync(item => item.Id == dto.ShipperId);
             if (order == null || shipper == null) return false;
 
             if (!string.Equals(shipper.Status, "Active", StringComparison.OrdinalIgnoreCase))
-            {
                 throw new InvalidOperationException($"Shipper {shipper.Name} hiện đang ở trạng thái '{shipper.Status}', không thể nhận đơn mới.");
-            }
-
-            if (order.Status == OrderStatus.Completed || order.Status == OrderStatus.Failed || order.Status == OrderStatus.Returned)
+            if (order.Status is not (OrderStatus.Prepared or OrderStatus.ReturnApproved))
+                throw new InvalidOperationException(
+                    "Chỉ phân công đơn đã đóng gói xong hoặc đơn hoàn trả đã được duyệt.");
+            if (order.ShipperId == dto.ShipperId)
             {
-                throw new InvalidOperationException($"Không thể phân công đơn hàng đang ở trạng thái '{order.Status}'.");
+                await transaction.CommitAsync();
+                return true;
             }
+            if (order.ShipperId.HasValue)
+                throw new InvalidOperationException("Đơn đã được phân công. Hãy hủy phân công cũ trước khi chọn Shipper khác.");
 
-            var shipperOrders = await _orderRepository.GetByShipperIdAsync(dto.ShipperId);
-            int activeCount = shipperOrders.Count(o => o.Id != dto.OrderId && IsOrderActiveWithShipper(o));
-
+            var activeCount = await _db.Set<Order>().CountAsync(item => item.ShipperId == dto.ShipperId
+                && item.Status != OrderStatus.Completed && item.Status != OrderStatus.Failed
+                && item.Status != OrderStatus.Returned);
             if (activeCount >= shipper.MaxConcurrentOrders)
-            {
                 throw new InvalidOperationException($"Shipper {shipper.Name} đã đạt giới hạn nhận {shipper.MaxConcurrentOrders} đơn hàng cùng lúc.");
-            }
 
             order.ShipperId = dto.ShipperId;
-            _orderRepository.Update(order);
-            await _orderRepository.SaveChangesAsync();
+            order.UpdatedBy = actorUserId.HasValue ? $"Staff:{actorUserId}" : "Staff";
+            WorkflowSupport.Audit(_db, "ShipperAssigned", "Order", order.Id,
+                new { ShipperId = (int?)null, order.Status },
+                new { order.ShipperId, ShipperName = shipper.Name, order.Status }, actorUserId);
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
             return true;
         }
 
-        public async Task<bool> UnassignOrderAsync(int orderId)
+        public async Task<bool> UnassignOrderAsync(int orderId, int? actorUserId = null)
         {
-            var order = await _orderRepository.GetByIdAsync(orderId);
+            await using var transaction = await _db.BeginWorkflowTransactionAsync();
+            await WorkflowSupport.LockOrderAsync(_db, orderId);
+            var order = await _db.Set<Order>().FirstOrDefaultAsync(item => item.Id == orderId);
             if (order == null) return false;
-
-            if (order.Status == OrderStatus.Completed || order.Status == OrderStatus.Returned)
+            if (order.Status is not (OrderStatus.Prepared or OrderStatus.ReturnApproved))
+                throw new InvalidOperationException("Chỉ hủy phân công trước khi Shipper bắt đầu giao/thu hồi.");
+            if (!order.ShipperId.HasValue)
             {
-                throw new InvalidOperationException("Không thể hủy phân công đối với đơn hàng đã hoàn tất.");
+                await transaction.CommitAsync();
+                return true;
             }
 
+            var previousShipperId = order.ShipperId.Value;
+            await WorkflowSupport.LockShipperAsync(_db, previousShipperId);
             order.ShipperId = null;
-            _orderRepository.Update(order);
-            await _orderRepository.SaveChangesAsync();
+            order.UpdatedBy = actorUserId.HasValue ? $"Staff:{actorUserId}" : "Staff";
+            WorkflowSupport.Audit(_db, "ShipperUnassigned", "Order", order.Id,
+                new { ShipperId = previousShipperId, order.Status },
+                new { ShipperId = (int?)null, order.Status }, actorUserId);
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
             return true;
         }
 

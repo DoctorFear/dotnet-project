@@ -14,6 +14,10 @@ namespace AncientBook.Domain.Entities
         public decimal DiscountAmount { get; set; } = 0;
         public decimal FinalAmount { get; set; }
         public string ShippingAddress { get; set; } = string.Empty;
+        public string ShippingCarrier { get; set; } = "AncientBook Delivery";
+        public string DeliveryPriority { get; set; } = "Standard";
+        public string? DeliveryNote { get; set; }
+        public string? WaybillCode { get; set; }
         public string PaymentMethod { get; set; } = "COD";
         public OrderStatus Status { get; set; } = OrderStatus.Pending; 
         public DateTime? ReturnedDeadline { get; set; }
@@ -23,6 +27,10 @@ namespace AncientBook.Domain.Entities
         public int? ShipperId { get; set; } 
         public string? PackingIssue { get; set; }
         public DateTime? ReceiptConfirmedAt { get; set; }
+        public decimal? CodCollectedAmount { get; set; }
+        public DateTime? CodCollectedAt { get; set; }
+        public int? CodCollectedByShipperId { get; set; }
+        public string? CodSettlementStatus { get; set; }
         public Shipper? Shipper { get; set; } 
         // Navigation properties
         public User? User { get; set; }

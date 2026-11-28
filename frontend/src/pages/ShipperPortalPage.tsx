@@ -13,6 +13,7 @@ import ShipperHeader from '../components/features/shipper-portal/ShipperHeader';
 import ShipperOrderList from '../components/features/shipper-portal/ShipperOrderList';
 import ShipperActionSheet from '../components/features/shipper-portal/ShipperActionSheet';
 import ShipperAccountSheet from '../components/features/shipper-portal/ShipperAccountSheet';
+import ShipperNetworkStatus from '../components/features/shipper-portal/ShipperNetworkStatus';
 import styles from '../components/features/shipper-portal/ShipperPortal.module.css';
 
 export default function ShipperPortalPage() {
@@ -36,6 +37,7 @@ export default function ShipperPortalPage() {
     const selected = shipper.detail;
     const valid =
         shipper.action === 'start' ||
+        shipper.action === 'return' ||
         (result === 'Failed' && !!reason) ||
         (result === 'Completed' && (selected?.codAmount === 0 || codConfirmed));
 
@@ -50,6 +52,7 @@ export default function ShipperPortalPage() {
                     name={preview ? 'Hoàng Khang' : user?.fullName || user?.username || 'bạn'}
                     onReload={shipper.orders.reload}
                 />
+                <ShipperNetworkStatus />
                 <ShipperOrderList shipper={shipper} onOpenAction={openAction} />
                 <nav className={styles.bottomNav} aria-label="Điều hướng Shipper">
                     <button

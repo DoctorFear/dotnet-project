@@ -14,4 +14,5 @@ public interface IWorkflowDbContext
     Task LockOrderAsync(int id);
     Task LockUserAsync(int id);
     Task LockBookAsync(int id);
+    Task LockShipperAsync(int id);
 }

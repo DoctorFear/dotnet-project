@@ -4,6 +4,7 @@ using AncientBook.Application.DTOs.Auth;
 using AncientBook.Application.Interfaces;
 using AncientBook.Domain.Entities;
 using AncientBook.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading.Tasks;
 
@@ -16,19 +17,22 @@ namespace AncientBook.Application.Services
         private readonly IEmailService _emailService;
         private readonly ITokenService _tokenService;
         private readonly IAuditLogService _auditLogService;
+        private readonly IWorkflowDbContext _workflow;
 
         public AuthService(
             IUserRepository userRepository,
             IPasswordHasher passwordHasher,
             IEmailService emailService,
             ITokenService tokenService,
-            IAuditLogService auditLogService)
+            IAuditLogService auditLogService,
+            IWorkflowDbContext workflow)
         {
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
             _emailService = emailService;
             _tokenService = tokenService;
             _auditLogService = auditLogService;
+            _workflow = workflow;
         }
 
         public async Task<ApiResponse<RegisterResponseDto>> RegisterAsync(RegisterRequestDto request)
@@ -41,6 +45,13 @@ namespace AncientBook.Application.Services
 
             // 2. BỎ bước kiểm tra ExistsByEmailAsync ở đây để cho phép trùng Email
 
+            var defaultTierId = await _workflow.Set<MembershipTier>().AsNoTracking()
+                .OrderBy(t => t.DisplayOrder).ThenBy(t => t.MinSpending)
+                .Where(t => t.IsActive)
+                .Select(t => (int?)t.Id).FirstOrDefaultAsync();
+            if (!defaultTierId.HasValue)
+                return ApiResponse<RegisterResponseDto>.Fail("Hệ thống chưa cấu hình hạng thành viên mặc định.");
+
             var passwordHash = _passwordHasher.HashPassword(request.Password);
 
             var user = new User
@@ -51,6 +62,7 @@ namespace AncientBook.Application.Services
                 PhoneNumber = request.PhoneNumber?.Trim(),
                 PasswordHash = passwordHash,
                 Role = UserRole.Member,
+                MembershipTierId = defaultTierId.Value,
                 FPoints = 0,
                 IsActive = true
             };
@@ -113,6 +125,11 @@ namespace AncientBook.Application.Services
                 );
             }
 
+            var membershipTierName = user.MembershipTierId.HasValue
+                ? await _workflow.Set<MembershipTier>().AsNoTracking()
+                    .Where(t => t.Id == user.MembershipTierId.Value)
+                    .Select(t => t.TierName).FirstOrDefaultAsync()
+                : null;
             var responseData = new LoginResponseDto
             {
                 UserId = user.Id,
@@ -121,6 +138,7 @@ namespace AncientBook.Application.Services
                 FullName = user.FullName,
                 Role = user.Role.ToString(),
                 FPoints = user.FPoints,
+                MembershipTierName = membershipTierName,
                 AccessToken = accessToken,
                 RefreshToken = refreshToken
             };
@@ -144,6 +162,11 @@ namespace AncientBook.Application.Services
 
             var newAccessToken = _tokenService.GenerateAccessToken(user);
 
+            var membershipTierName = user.MembershipTierId.HasValue
+                ? await _workflow.Set<MembershipTier>().AsNoTracking()
+                    .Where(t => t.Id == user.MembershipTierId.Value)
+                    .Select(t => t.TierName).FirstOrDefaultAsync()
+                : null;
             var responseData = new LoginResponseDto
             {
                 UserId = user.Id,
@@ -152,6 +175,7 @@ namespace AncientBook.Application.Services
                 FullName = user.FullName,
                 Role = user.Role.ToString(),
                 FPoints = user.FPoints,
+                MembershipTierName = membershipTierName,
                 AccessToken = newAccessToken,
                 RefreshToken = newRefreshToken
             };

@@ -78,7 +78,7 @@ export default function AdminCatalogForm({ controller }: { controller: ReturnTyp
 }
 
 function CategoryEditorFields({ controller }: { controller: ReturnType<typeof useBookManagement> }) {
-    const { categories, draft, updateDraft } = controller;
+    const { categories, draft, editingId, updateDraft } = controller;
     return (
 <div className={styles.formGrid}>
                                     <div className={`${styles.formGroup} ${styles.full}`}>
@@ -100,7 +100,7 @@ function CategoryEditorFields({ controller }: { controller: ReturnType<typeof us
                                             onChange={(e) => updateDraft('parentId', e.target.value)}
                                         >
                                             <option value="">Danh mục gốc (Không có cha)</option>
-                                            {categories.map((c) => (
+                                            {categories.filter((c) => c.id !== editingId).map((c) => (
                                                 <option key={c.id} value={c.id}>
                                                     {c.name}
                                                 </option>

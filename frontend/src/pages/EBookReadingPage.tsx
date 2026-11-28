@@ -1,6 +1,6 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Download, Upload } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import TopBar from '../components/layout/TopBar';
 import Header from '../components/layout/Header';
 import Navbar from '../components/layout/Navbar';
@@ -10,28 +10,17 @@ import { ReaderBottomDock } from '../components/features/ebook-reader/ReaderBott
 import { ReaderCopilotSidebar } from '../components/features/ebook-reader/ReaderCopilotSidebar';
 import { ReaderTocDrawer } from '../components/features/ebook-reader/ReaderTocDrawer';
 import { ReaderAiSettingsModal } from '../components/features/ebook-reader/ReaderAiSettingsModal';
-import { SAMPLE_BOOKS } from '../utils/sampleBooks';
 import styles from './EbookReaderPage.module.css';
 
 export const EbookReaderPage: React.FC = () => {
     const { bookId } = useParams<{ bookId: string }>();
     const location = useLocation();
     const navigate = useNavigate();
-    const fileInputRef = useRef<HTMLInputElement | null>(null);
-
     const reader = useEbookReader(bookId, location.state?.book);
 
     const handlePageJump = () => {
         const parsed = parseInt(reader.pageInput, 10);
         if (!Number.isNaN(parsed)) reader.goToPage(parsed);
-    };
-
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            void reader.loadUploadedFile(file);
-            e.target.value = '';
-        }
     };
 
     const readProgressPercent = Math.round((reader.leftPage / reader.totalPages) * 100);

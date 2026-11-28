@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './Navbar.module.css';
 import { useUser } from '../../context/UserContext';
+import { workflowService } from '../../services/workflowService';
+import type { WorkflowNotification } from '../../types/workflow';
 
 export interface CategoryItem {
     id: string;
@@ -22,14 +24,6 @@ export interface NavbarProps {
     showPublishers?: boolean;
     className?: string;
 }
-
-// Hàm tính hạng thành viên tự động dựa theo điểm FPoints
-const getMembershipRank = (points: number): string => {
-    if (points >= 1000) return 'Hạng Kim Cương';
-    if (points >= 500) return 'Hạng Vàng';
-    if (points >= 200) return 'Hạng Bạc';
-    return 'Hạng Đồng';
-};
 
 export const Navbar: React.FC<NavbarProps> = ({
     categories = [
@@ -60,11 +54,44 @@ export const Navbar: React.FC<NavbarProps> = ({
     showPublishers = true,
     className = '',
 }) => {
-    const { isLoggedIn, user } = useUser();
+    const { isLoggedIn, user, updateUser } = useUser();
+    const [memberNotifications, setMemberNotifications] = useState<WorkflowNotification[]>([]);
+    const [notificationError, setNotificationError] = useState('');
 
-    // Lấy điểm thực tế từ UserContext
+    useEffect(() => {
+        if (!isLoggedIn || user?.role !== 'Member') return;
+        let active = true;
+        const loadNotifications = async () => {
+            try {
+                const [result, balance] = await Promise.all([
+                    workflowService.notifications(),
+                    workflowService.balance(),
+                ]);
+                if (active) {
+                    setMemberNotifications(result.items);
+                    setNotificationError('');
+                    if (user?.fPoints !== balance.currentPoints || user?.membershipTierName !== balance.tierName) {
+                        updateUser({ fPoints: balance.currentPoints, membershipTierName: balance.tierName });
+                    }
+                }
+            } catch {
+                if (active) setNotificationError('Không thể tải thông báo lúc này.');
+            }
+        };
+        void loadNotifications();
+        const timer = window.setInterval(() => void loadNotifications(), 60_000);
+        window.addEventListener('focus', loadNotifications);
+        return () => {
+            active = false;
+            window.clearInterval(timer);
+            window.removeEventListener('focus', loadNotifications);
+        };
+    }, [isLoggedIn, updateUser, user?.fPoints, user?.id, user?.membershipTierName, user?.role]);
+
     const currentPoints = isLoggedIn && user ? user.fPoints ?? 0 : 0;
-    const currentRank = getMembershipRank(currentPoints);
+    const currentRank = user?.membershipTierName
+        ? `Hạng ${user.membershipTierName}`
+        : 'Hạng thành viên';
 
     return (
         <div className={`${styles.navbarSub} ${className}`}>
@@ -133,14 +160,44 @@ export const Navbar: React.FC<NavbarProps> = ({
                 )}
 
                 {/* Khối Điểm thưởng thành viên bên phải */}
-                <div className={styles.membershipInfo}>
-                    {isLoggedIn ? (
-                        <>
-                            Thành viên: <strong className={styles.membershipRankText}>{currentRank} ({currentPoints} F-Points)</strong>
-                        </>
-                    ) : (
-                        <span>Đăng nhập để tích lũy điểm <strong>F-Points</strong></span>
+                <div className={styles.memberArea}>
+                    {isLoggedIn && user?.role === 'Member' && (
+                        <details className={styles.notificationCenter}>
+                            <summary className={styles.notificationTrigger} aria-label="Mở trung tâm thông báo">
+                                <svg className={styles.icon} viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+                                    <path d="M10 21h4" />
+                                </svg>
+                                {memberNotifications.length > 0 && (
+                                    <span className={styles.notificationBadge}>{Math.min(memberNotifications.length, 20)}</span>
+                                )}
+                            </summary>
+                            <section className={styles.notificationMenu} aria-label="Thông báo của thành viên">
+                                <strong className={styles.notificationTitle}>Thông báo</strong>
+                                {notificationError && <p className={styles.notificationState} role="alert">{notificationError}</p>}
+                                {!notificationError && memberNotifications.length === 0 && (
+                                    <p className={styles.notificationState}>Chưa có thông báo mới.</p>
+                                )}
+                                {memberNotifications.slice(0, 8).map(notification => (
+                                    <article className={styles.notificationItem} key={notification.id}>
+                                        <p>{notification.message}</p>
+                                        <time dateTime={notification.createdAt}>
+                                            {new Date(notification.createdAt).toLocaleString('vi-VN')}
+                                        </time>
+                                    </article>
+                                ))}
+                            </section>
+                        </details>
                     )}
+                    <div className={styles.membershipInfo}>
+                        {isLoggedIn ? (
+                            <>
+                                Thành viên: <strong className={styles.membershipRankText}>{currentRank} ({currentPoints} F-Points)</strong>
+                            </>
+                        ) : (
+                            <span>Đăng nhập để tích lũy điểm <strong>F-Points</strong></span>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

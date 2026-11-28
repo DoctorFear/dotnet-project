@@ -65,7 +65,7 @@ export const ApproveRefundModal: React.FC<ApproveRefundModalProps> = ({
                         <strong>#{orderId}</strong>?
                     </p>
                     <p className={styles.modalSubtext}>
-                        Sau khi duyệt, trạng thái đơn hàng sẽ chuyển sang đã hoàn trả và không thể hoàn tác.
+                        Sau khi duyệt, đơn chuyển sang chờ điều phối Shipper thu hồi. Kho và hoàn tiền chỉ được xử lý khi thu hồi thành công.
                     </p>
                 </div>
 

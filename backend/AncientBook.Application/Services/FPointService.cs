@@ -26,27 +26,105 @@ public partial class FPointService : IFPointService
         var pending = await _db.Set<FPoints>().Where(p => p.UserId == userId && p.Status == PointStatus.Pending)
             .SumAsync(p => (int?)-p.PointUsed) ?? 0;
         var earned = await _db.Set<FPoints>().Where(p => p.UserId == userId && p.PointUsed < 0
-            && p.Status == PointStatus.Available)
+            && p.Status == PointStatus.Available
+            && (p.SourceKey == null || !p.SourceKey.EndsWith(":RedeemRefund")))
             .SumAsync(p => (int?)-p.PointUsed) ?? 0;
         return new FPointBalanceDto { UserId = user.Id, CurrentPoints = user.FPoints,
             PendingPoints = pending, TotalPointsEarned = earned, TotalSpent = user.TotalSpent,
             TierName = tier?.TierName ?? "Đồng", PointRate = tier?.PointRate ?? 5 };
     }
 
-    public async Task<PagedResult<FPointTransactionDto>> GetHistoryAsync(int userId, int pageNumber, int pageSize)
+    public async Task<FPointHistoryResultDto> GetHistoryAsync(int userId, FPointHistoryQuery query)
     {
-        pageNumber = Math.Max(1, pageNumber); pageSize = Math.Clamp(pageSize, 1, 100);
-        var query = _db.Set<FPoints>().AsNoTracking().Where(p => p.UserId == userId);
-        var count = await query.CountAsync();
-        var items = await query.OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id)
-            .Skip((pageNumber - 1) * pageSize).Take(pageSize).Select(p => new FPointTransactionDto
+        query.PageNumber = Math.Max(1, query.PageNumber);
+        query.PageSize = Math.Clamp(query.PageSize, 1, 100);
+        if (query.FromDate.HasValue && query.ToDate.HasValue
+            && query.FromDate.Value.Date > query.ToDate.Value.Date)
+            throw new InvalidOperationException("Khoảng ngày lịch sử F-Point không hợp lệ.");
+
+        var user = await _db.Set<User>().AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId)
+            ?? throw new KeyNotFoundException("Không tìm thấy tài khoản.");
+        var records = await _db.Set<FPoints>().AsNoTracking()
+            .Where(p => p.UserId == userId && p.PointUsed != 0).ToListAsync();
+        var sourceKeys = records.Where(record => record.SourceKey != null)
+            .Select(record => record.SourceKey!).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var refundedAtByOrder = records
+            .Where(record => record.OrderId.HasValue && record.UpdatedAt.HasValue
+                && record.SourceKey?.EndsWith(":Redeem", StringComparison.OrdinalIgnoreCase) == true)
+            .GroupBy(record => record.OrderId!.Value)
+            .ToDictionary(group => group.Key, group => group.Max(record => record.UpdatedAt!.Value));
+        DateTime EffectiveCreatedAt(FPoints record) =>
+            record.OrderId.HasValue
+            && record.SourceKey?.EndsWith(":RedeemRefund", StringComparison.OrdinalIgnoreCase) == true
+            && refundedAtByOrder.TryGetValue(record.OrderId.Value, out var refundedAt)
+                ? refundedAt : record.CreatedAt;
+        records = records.OrderByDescending(EffectiveCreatedAt).ThenByDescending(record => record.Id).ToList();
+
+        var runningBalance = user.FPoints;
+        var history = new List<FPointTransactionDto>(records.Count);
+        foreach (var record in records)
+        {
+            var transactionType = record.SourceKey?.EndsWith(":RedeemRefund", StringComparison.OrdinalIgnoreCase) == true
+                ? "Refund"
+                : record.PointUsed < 0 || record.SourceKey?.EndsWith(":Earn", StringComparison.OrdinalIgnoreCase) == true
+                    ? "Earn" : "Redeem";
+            history.Add(new FPointTransactionDto
             {
-                Id = p.Id, UserId = p.UserId, OrderId = p.OrderId, PointUsed = p.PointUsed,
-                TransactionType = p.PointUsed < 0 || p.SourceKey != null && p.SourceKey.EndsWith(":Earn") ? "Earn" : "Redeem",
-                Description = p.Description ?? (p.PointUsed >= 0 ? "Sử dụng điểm" : "Tích lũy điểm"),
-                CreatedAt = p.CreatedAt, Status = p.Status.ToString(), AvailableAt = p.AvailableAt
-            }).ToListAsync();
-        return new(items, count, pageNumber, pageSize);
+                Id = record.Id,
+                UserId = record.UserId,
+                OrderId = record.OrderId,
+                PointUsed = record.PointUsed,
+                BalanceAfter = runningBalance,
+                TransactionType = transactionType,
+                Description = record.Description ?? transactionType switch
+                {
+                    "Refund" => "Hoàn F-Point",
+                    "Redeem" => "Sử dụng F-Point",
+                    _ => "Tích lũy F-Point"
+                },
+                CreatedAt = EffectiveCreatedAt(record),
+                Status = record.Status.ToString(),
+                AvailableAt = record.AvailableAt
+            });
+
+            var affectedBalance = record.Status == PointStatus.Available
+                || record.Status == PointStatus.Cancelled && (
+                    record.PointUsed > 0
+                    || record.OrderId.HasValue
+                    && sourceKeys.Contains($"Order:{record.OrderId.Value}:EarnRevoke"));
+            if (affectedBalance) runningBalance = checked(runningBalance + record.PointUsed);
+        }
+
+        IEnumerable<FPointTransactionDto> filtered = history;
+        if (query.FromDate.HasValue)
+            filtered = filtered.Where(item => item.CreatedAt >= query.FromDate.Value.Date);
+        if (query.ToDate.HasValue)
+        {
+            var exclusiveEnd = query.ToDate.Value.Date.AddDays(1);
+            filtered = filtered.Where(item => item.CreatedAt < exclusiveEnd);
+        }
+        if (!string.IsNullOrWhiteSpace(query.TransactionType))
+        {
+            var requestedType = query.TransactionType.Trim();
+            if (requestedType is not ("Earn" or "Redeem" or "Refund"))
+                throw new InvalidOperationException("Loại giao dịch F-Point không hợp lệ.");
+            filtered = filtered.Where(item => item.TransactionType == requestedType);
+        }
+
+        var filteredItems = filtered.ToList();
+        return new FPointHistoryResultDto
+        {
+            Items = filteredItems.Skip((query.PageNumber - 1) * query.PageSize).Take(query.PageSize).ToList(),
+            TotalCount = filteredItems.Count,
+            PageNumber = query.PageNumber,
+            PageSize = query.PageSize,
+            TotalEarned = filteredItems.Where(item => item.TransactionType == "Earn" && item.Status != PointStatus.Cancelled.ToString())
+                .Sum(item => -item.PointUsed),
+            TotalRedeemed = filteredItems.Where(item => item.TransactionType == "Redeem")
+                .Sum(item => item.PointUsed),
+            TotalRefunded = filteredItems.Where(item => item.TransactionType == "Refund")
+                .Sum(item => -item.PointUsed)
+        };
     }
 
     // Chỉ xem trước; Checkout kiểm tra lại giá sách và số dư điểm trong transaction.
@@ -57,7 +135,7 @@ public partial class FPointService : IFPointService
         var user = await _db.Set<User>().AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId && u.IsActive)
             ?? throw new KeyNotFoundException("Không tìm thấy tài khoản đang hoạt động.");
         var limit = Math.Min(1000, await WorkflowSupport.IntSettingAsync(_db, "MAX_POINTS_PER_ORDER", 1000));
-        var max = (int)Math.Min(int.MaxValue, decimal.Floor(request.TotalAmount / 200m));
+        var max = (int)Math.Min(int.MaxValue, decimal.Floor(request.TotalAmount / 100m));
         max = Math.Min(user.FPoints, Math.Min(limit, max));
         if (request.PointsToUse > max)
             throw new InvalidOperationException($"Chỉ được sử dụng tối đa {max} F-Point cho đơn này.");
@@ -113,17 +191,23 @@ public partial class FPointService : IFPointService
         if (upgraded)
         {
             var before = user.MembershipTierId;
+            var beforeTier = current?.TierName ?? "Đồng";
+            var upgradedAt = TimeZoneHelper.GetVietnamTime();
             user.MembershipTierId = next!.Id;
+            user.UpdatedAt = upgradedAt;
             user.UpdatedBy = "System";
             int? triggerId = orderId > 0 && await _db.Set<Order>().AnyAsync(o => o.Id == orderId
                 && o.UserId == userId && o.Status == OrderStatus.Completed && o.IsPaid) ? orderId : null;
             _db.Set<TierHistory>().Add(new TierHistory { UserId = userId,
-                FromTier = current?.TierName ?? "Đồng", ToTier = next.TierName,
+                FromTier = beforeTier, ToTier = next.TierName,
                 TotalSpendingAtChange = user.TotalSpent, TriggerOrderId = triggerId,
-                ChangedAt = TimeZoneHelper.GetVietnamTime(), ChangedBy = "System", CreatedBy = "System" });
-            WorkflowSupport.Audit(_db, "TierUpgrade", "User", userId,
-                new { MembershipTierId = before }, new { user.MembershipTierId, user.TotalSpent });
-            WorkflowSupport.Notify(_db, $"Chúc mừng bạn đã lên hạng {next.TierName}! Tỉ lệ tích điểm: {next.PointRate}%.",
+                ChangedAt = upgradedAt, ChangedBy = "System", CreatedBy = "System" });
+            WorkflowSupport.Audit(_db, "AUTO_UPGRADE_TIER", "User", userId,
+                new { MembershipTierId = before, TierName = beforeTier },
+                new { user.MembershipTierId, TierName = next.TierName, TotalSpending = user.TotalSpent, TierUpgradedAt = upgradedAt },
+                details: $"System tự động nâng hạng {beforeTier} -> {next.TierName}; tổng chi tiêu {user.TotalSpent:N0} đ.");
+            WorkflowSupport.Notify(_db,
+                $"Chúc mừng bạn đã lên hạng {next.TierName}! Tỉ lệ tích điểm: {next.PointRate}%. {next.Benefits}",
                 triggerId, userId);
         }
         else if (!user.MembershipTierId.HasValue && current != null)
@@ -150,6 +234,7 @@ public partial class FPointService : IFPointService
         var tier = tiers.FirstOrDefault(t => t.Id == user.MembershipTierId) ?? tiers.FirstOrDefault();
         // Cộng điểm theo hạng hiện tại trước khi xét nâng hạng từ đơn này.
         var points = checked((int)decimal.Floor(order.FinalAmount * (tier?.PointRate ?? 5) / 100m / 100m));
+        if (points <= 0) return 0;
         var physical = await _db.Set<OrderItem>().AnyAsync(i => i.OrderId == orderId
             && i.PurchaseType == PurchaseType.Physical);
         var now = TimeZoneHelper.GetVietnamTime();
@@ -171,7 +256,8 @@ public partial class FPointService : IFPointService
 
     public async Task ProcessPaidDigitalOrderAsync(int orderId)
     {
-        await using var tx = await _db.BeginWorkflowTransactionAsync();
+        await using var tx = _db.Database.CurrentTransaction == null
+            ? await _db.BeginWorkflowTransactionAsync() : null;
         await WorkflowSupport.LockOrderAsync(_db, orderId);
         var order = await _db.Set<Order>().Include(o => o.OrderItems).FirstOrDefaultAsync(o => o.Id == orderId);
         if (order == null || !order.IsPaid || order.Status is OrderStatus.Failed or OrderStatus.Returned) return;
@@ -187,7 +273,7 @@ public partial class FPointService : IFPointService
             await _db.SaveChangesAsync();
         }
         await AwardCompletedOrderAsync(orderId);
-        await tx.CommitAsync();
+        if (tx != null) await tx.CommitAsync();
     }
 
     public async Task<bool> UpdateMembershipTierAsync(int id, MembershipTierDto dto, int? actorUserId = null)

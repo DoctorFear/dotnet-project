@@ -72,7 +72,7 @@ public class FPointsRepository : IFPointRepository
                 .Select(s => s.SettingValue).FirstOrDefaultAsync();
             var cap = value == null ? 1000 : int.TryParse(value, out var configured) && configured >= 0
                 ? configured : throw new InvalidOperationException("Hạn mức điểm không hợp lệ.");
-            max = Math.Min(max, Math.Min(Math.Min(1000, cap), (int)Math.Min(int.MaxValue, decimal.Floor(order.SubTotal / 200m))));
+            max = Math.Min(max, Math.Min(Math.Min(1000, cap), (int)Math.Min(int.MaxValue, decimal.Floor(order.SubTotal / 100m))));
         }
         if (points > max) throw new InvalidOperationException($"Chỉ được sử dụng tối đa {max} F-Point.");
         var before = user.FPoints; user.FPoints -= points;

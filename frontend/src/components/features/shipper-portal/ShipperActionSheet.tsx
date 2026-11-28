@@ -10,6 +10,7 @@ import { WorkflowError, WorkflowModal } from '../workflow/WorkflowShared';
 import { workflowMoney } from '../../../utils/workflowPresentation';
 import common from '../workflow/Workflow.module.css';
 import styles from './ShipperPortal.module.css';
+import DeliveryInstructionCard from './DeliveryInstructionCard';
 
 type Shipper = ReturnType<typeof useShipperPortal>;
 
@@ -43,7 +44,13 @@ export default function ShipperActionSheet({
     return (
         <WorkflowModal
             sheet
-            title={shipper.action === 'start' ? 'Bắt đầu giao hàng' : 'Cập nhật giao hàng'}
+            title={
+                shipper.action === 'start'
+                    ? 'Bắt đầu giao hàng'
+                    : shipper.action === 'return'
+                        ? 'Xác nhận thu hồi hoàn trả'
+                        : 'Cập nhật giao hàng'
+            }
             busy={shipper.busy}
             onClose={() => {
                 shipper.setAction(null);
@@ -54,6 +61,7 @@ export default function ShipperActionSheet({
                 <p className={common.muted}>
                     Đơn {selected.orderCode} · {selected.customerName}
                 </p>
+                <DeliveryInstructionCard delivery={selected} compact />
                 {shipper.error && <WorkflowError message={shipper.error} />}
                 {shipper.action === 'start' ? (
                     <div className={common.info}>
@@ -61,6 +69,17 @@ export default function ShipperActionSheet({
                         <p>
                             Xác nhận bạn đã nhận đủ sách từ kho và sẵn sàng giao đến khách hàng.
                         </p>
+                    </div>
+                ) : shipper.action === 'return' ? (
+                    <div className={common.info}>
+                        <CheckCircle2 size={24} />
+                        <div>
+                            <strong>Đã nhận lại đúng sách và đủ số lượng</strong>
+                            <p>
+                                Xác nhận này sẽ hoàn tất thu hồi, nhập lại kho, đối soát hoàn tiền
+                                và thu hồi F-Point của đơn. Thao tác không thể hoàn tác.
+                            </p>
+                        </div>
                     </div>
                 ) : (
                     <>
@@ -160,9 +179,14 @@ export default function ShipperActionSheet({
                             newStatus:
                                 shipper.action === 'start'
                                     ? 'Shipping'
-                                    : (result as DeliveryStatus),
+                                    : shipper.action === 'return'
+                                        ? 'Returned'
+                                        : (result as DeliveryStatus),
                             ...(result === 'Failed'
                                 ? { failureReasonId: Number(reason), failureNote: note.trim() }
+                                : {}),
+                            ...(result === 'Completed' && selected.codAmount > 0
+                                ? { codCollectedAmount: selected.codAmount }
                                 : {}),
                         })
                     }

@@ -12,6 +12,8 @@ namespace AncientBook.Infrastructure.Persistence
     {
         public static async Task SeedAsync(ApplicationDbContext context, IPasswordHasher passwordHasher)
         {
+            await MembershipTierSeeder.SeedAsync(context);
+            await FailureReasonSeeder.SeedAsync(context);
             await BookCatalogSeeder.SeedAsync(context);
 
             // ==================== 2. SEED TÀI KHOẢN USERS ====================

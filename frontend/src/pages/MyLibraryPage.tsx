@@ -7,6 +7,7 @@ import { useUser } from '../context/UserContext';
 import { useMyLibrary } from '../hooks/useMyLibrary';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { matchesVietnameseSearch } from '../utils/vietnameseSearch';
+import { LibraryBookActions } from '../components/features/member-reviews/LibraryBookActions';
 
 export const MyLibraryPage: React.FC = () => {
     const { isLoggedIn } = useUser();
@@ -158,23 +159,13 @@ export const MyLibraryPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {!book.isExpired ? (
-                                        <button
-                                            type="button"
-                                            style={{ width: '100%', padding: '9px', background: '#0B409C', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', marginTop: 'auto' }}
-                                            onClick={() => navigate(`/reader/${book.id}`, { state: { book } })}
-                                        >
-                                            Đọc Sách Online
-                                        </button>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            style={{ width: '100%', padding: '9px', background: '#F2F7FF', color: '#0B409C', border: '1px solid #0B409C', borderRadius: '6px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', marginTop: 'auto' }}
-                                            onClick={() => navigate(`/books/${book.id}?format=rental`)}
-                                        >
-                                            Gia Hạn Gói Thuê
-                                        </button>
-                                    )}
+                                    <LibraryBookActions
+                                        isExpired={Boolean(book.isExpired)}
+                                        isRented={book.type === 'rented'}
+                                        onRead={() => navigate(`/reader/${book.id}`, { state: { book } })}
+                                        onRenew={() => navigate(`/books/${book.id}?format=rental`)}
+                                        onReview={() => navigate(`/my-reviews?bookId=${encodeURIComponent(book.id)}`)}
+                                    />
                                 </div>
                             ))
                         ) : (

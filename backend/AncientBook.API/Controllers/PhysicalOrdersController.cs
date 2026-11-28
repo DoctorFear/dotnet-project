@@ -2,12 +2,14 @@ using System;
 using System.Threading.Tasks;
 using AncientBook.Application.DTOs;
 using AncientBook.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AncientBook.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Staff,Admin")]
     public class PhysicalOrdersController : ControllerBase
     {
         private readonly IPhysicalOrderService _physicalOrderService;
@@ -47,21 +49,12 @@ namespace AncientBook.API.Controllers
         }
 
         [HttpPut("{orderId}/status")]
-        public async Task<IActionResult> UpdateOrderStatus(int orderId, [FromBody] UpdatePhysicalOrderStatusDto dto)
+        public IActionResult UpdateOrderStatus(int orderId, [FromBody] UpdatePhysicalOrderStatusDto dto)
         {
-            try
+            return Conflict(new
             {
-                var success = await _physicalOrderService.UpdateOrderStatusAsync(orderId, dto.NewStatus);
-                if (!success)
-                {
-                    return NotFound(new { message = $"Không tìm thấy đơn hàng #{orderId}." });
-                }
-                return Ok(new { message = $"Cập nhật trạng thái đơn hàng #{orderId} sang '{dto.NewStatus}' thành công." });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                message = "Không cập nhật trạng thái qua API chung. Hãy dùng đúng quy trình Xác nhận đơn, Đóng gói hoặc Giao nhận để giữ checklist, COD và Audit Log."
+            });
         }
     }
 }

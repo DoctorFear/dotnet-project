@@ -45,9 +45,17 @@ export const getRefundOrderStatusMeta = (status?: string) => {
         };
     }
 
-    if (normalized === 'returned' || normalized === 'refunded' || normalized === 'returnapproved') {
+    if (normalized === 'returnapproved') {
         return {
-            label: 'Đã hoàn trả',
+            label: 'Đã duyệt - chờ Shipper thu hồi',
+            canApprove: false,
+            tone: 'pending' as const,
+        };
+    }
+
+    if (normalized === 'returned' || normalized === 'refunded') {
+        return {
+            label: 'Hoàn trả thành công',
             canApprove: false,
             tone: 'returned' as const,
         };

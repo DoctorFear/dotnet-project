@@ -1,13 +1,16 @@
 using System;
 using System.Threading.Tasks;
+using System.Security.Claims;
 using AncientBook.Application.DTOs;
 using AncientBook.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AncientBook.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Staff,Admin")]
     public class ShippersController : ControllerBase
     {
         private readonly IShipperService _shipperService;
@@ -16,6 +19,10 @@ namespace AncientBook.API.Controllers
         {
             _shipperService = shipperService;
         }
+
+        private int? CurrentUserId() => int.TryParse(
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("UserId"),
+            out var userId) ? userId : null;
 
         [HttpGet]
         public async Task<IActionResult> GetAllShippers([FromQuery] string? status = null, [FromQuery] string? area = null)
@@ -68,7 +75,7 @@ namespace AncientBook.API.Controllers
         {
             try
             {
-                var success = await _shipperService.AssignOrderToShipperAsync(dto);
+                var success = await _shipperService.AssignOrderToShipperAsync(dto, CurrentUserId());
                 if (!success) return NotFound(new { message = "Không tìm thấy Đơn hàng hoặc Shipper." });
                 return Ok(new { message = "Phân công đơn hàng cho Shipper thành công." });
             }
@@ -83,7 +90,7 @@ namespace AncientBook.API.Controllers
         {
             try
             {
-                var success = await _shipperService.UnassignOrderAsync(orderId);
+                var success = await _shipperService.UnassignOrderAsync(orderId, CurrentUserId());
                 if (!success) return NotFound(new { message = "Không tìm thấy đơn hàng." });
                 return Ok(new { message = "Đã hủy phân công đơn hàng." });
             }

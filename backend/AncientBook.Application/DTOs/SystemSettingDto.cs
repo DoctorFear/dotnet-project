@@ -10,7 +10,7 @@ namespace AncientBook.Application.DTOs
         public int MaxPointsPerOrder { get; set; } = 1000;
         public int MaxReturnDays { get; set; } = 3;
         public decimal MemberUpgradeSpendingBronze { get; set; } = 0;
-        public decimal MemberUpgradeSpendingSilver { get; set; } = 1000000;
+        public decimal MemberUpgradeSpendingSilver { get; set; } = 2000000;
         public decimal MemberUpgradeSpendingGold { get; set; } = 5000000;
     }
 }

@@ -4,6 +4,18 @@ import { useWorkflowResource } from './useWorkflowResource';
 import { useToastNotifications } from './useToastNotifications';
 import type { DeliveryDetail, DeliveryStatus, DeliveryUpdate, FailureReason } from '../types/workflow';
 
+const OFFLINE_MESSAGE = 'Mất kết nối mạng. Không thể cập nhật trạng thái đơn hàng. Vui lòng kiểm tra kết nối 4G/Wifi và thử lại!';
+
+const isOffline = () => typeof navigator !== 'undefined' && !navigator.onLine;
+
+const deliveryErrorMessage = (cause: unknown, fallback: string) => {
+    const message = cause instanceof Error ? cause.message : '';
+    if (isOffline() || cause instanceof TypeError && /fetch|network|load failed/i.test(message)) {
+        return OFFLINE_MESSAGE;
+    }
+    return message || fallback;
+};
+
 export function useShipperPortal() {
     const { api } = useWorkflow();
     const [status, setStatus] = useState('');
@@ -12,15 +24,21 @@ export function useShipperPortal() {
     const [detail, setDetail] = useState<DeliveryDetail | null>(null);
     const [detailId, setDetailId] = useState<number | null>(null);
     const [detailLoading, setDetailLoading] = useState(false);
-    const [action, setAction] = useState<'start' | 'finish' | null>(null);
+    const [action, setAction] = useState<'start' | 'finish' | 'return' | null>(null);
     const [reasons, setReasons] = useState<FailureReason[]>([]);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const notifications = useToastNotifications();
-    const load = useCallback(
-        () => api.deliveries({ pageNumber: page, pageSize: 10, keyword, status }),
-        [api, page, keyword, status],
-    );
+    const load = useCallback(async () => {
+        try {
+            return await api.deliveries({ pageNumber: page, pageSize: 10, keyword, status });
+        } catch (cause) {
+            throw new Error(
+                deliveryErrorMessage(cause, 'Không thể tải danh sách đơn được phân công.'),
+                { cause },
+            );
+        }
+    }, [api, page, keyword, status]);
     const orders = useWorkflowResource(load);
     const openDetail = async (id: number) => {
         if (detailId === id) {
@@ -35,7 +53,7 @@ export function useShipperPortal() {
         try {
             setDetail(await api.delivery(id));
         } catch (cause) {
-            setError(cause instanceof Error ? cause.message : 'Không thể tải chi tiết.');
+            setError(deliveryErrorMessage(cause, 'Không thể tải chi tiết.'));
         } finally {
             setDetailLoading(false);
         }
@@ -51,15 +69,19 @@ export function useShipperPortal() {
             setDetail(value);
             setDetailId(id);
             setReasons(catalog);
-            setAction(status === 'Prepared' ? 'start' : 'finish');
+            setAction(status === 'Prepared' ? 'start' : status === 'ReturnApproved' ? 'return' : 'finish');
         } catch (cause) {
-            setError(cause instanceof Error ? cause.message : 'Không thể tải đơn.');
+            setError(deliveryErrorMessage(cause, 'Không thể tải đơn.'));
         } finally {
             setDetailLoading(false);
         }
     };
     const submit = async (update: DeliveryUpdate) => {
         if (!detail || busy) return;
+        if (isOffline()) {
+            setError(OFFLINE_MESSAGE);
+            return;
+        }
         setBusy(true);
         setError('');
         try {
@@ -72,11 +94,13 @@ export function useShipperPortal() {
                     ? 'Đã bắt đầu giao hàng.'
                     : update.newStatus === 'Completed'
                       ? 'Đã ghi nhận giao hàng thành công.'
-                      : 'Đã ghi nhận giao thất bại và báo cho Staff.',
+                      : update.newStatus === 'Returned'
+                        ? 'Đã ghi nhận thu hồi hoàn trả thành công.'
+                        : 'Đã ghi nhận giao thất bại và báo cho Staff.',
             );
         } catch (cause) {
-            setError(cause instanceof Error ? cause.message : 'Không thể cập nhật.');
-            orders.reload();
+            setError(deliveryErrorMessage(cause, 'Không thể cập nhật.'));
+            if (!isOffline()) orders.reload();
         } finally {
             setBusy(false);
         }

@@ -340,3 +340,24 @@
         font-size: 10px;
     }
 }
+
+.ratingPicker > p > span,
+.invalidField > span {
+    color: var(--danger);
+}
+
+.invalidGroup {
+    border: 1px solid #efb7b7;
+    border-radius: 8px;
+    background: #fff8f8;
+}
+
+.invalidGroup small,
+.fieldError {
+    color: var(--danger) !important;
+}
+
+.invalidField textarea {
+    border-color: var(--danger) !important;
+    box-shadow: 0 0 0 2px #d9383812;
+}

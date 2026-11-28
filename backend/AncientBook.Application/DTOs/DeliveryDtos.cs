@@ -14,6 +14,7 @@ namespace AncientBook.Application.DTOs
         public decimal? CodAmount { get; set; }
         public bool IsPaid { get; set; }
         public string Status { get; set; } = string.Empty;
+        public string DeliveryType { get; set; } = "Outbound";
         public DateTime OrderDate { get; set; }
     }
 
@@ -24,13 +25,19 @@ namespace AncientBook.Application.DTOs
         public string CustomerName { get; set; } = string.Empty;
         public string? ReceiverPhone { get; set; }
         public string ShippingAddress { get; set; } = string.Empty;
+        public string ShippingCarrier { get; set; } = string.Empty;
+        public string DeliveryPriority { get; set; } = string.Empty;
+        public string? DeliveryNote { get; set; }
+        public string WaybillCode { get; set; } = string.Empty;
         public DateTime OrderDate { get; set; }
         public string Status { get; set; } = string.Empty;
+        public string DeliveryType { get; set; } = "Outbound";
         public bool IsPaid { get; set; }
         public decimal FinalAmount { get; set; }
         public decimal? CodAmount { get; set; }
         public string? Note { get; set; }
         public bool IsReadOnly { get; set; }
+        public DateTime? StartedAt { get; set; }
         public DateTime? CompletedAt { get; set; }
         public string? FailureReason { get; set; }
         public string? FailureNote { get; set; }
@@ -50,6 +57,7 @@ namespace AncientBook.Application.DTOs
         public string NewStatus { get; set; } = string.Empty;   // "Shipping", "Completed", "Failed"
         public int? FailureReasonId { get; set; }
         public string? FailureNote { get; set; }
+        public decimal? CodCollectedAmount { get; set; }
     }
 
     public class FailureReasonDto

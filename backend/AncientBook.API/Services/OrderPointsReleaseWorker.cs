@@ -12,7 +12,7 @@ public class OrderPointsReleaseWorker : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<OrderPointsReleaseWorker> _logger;
-    private readonly TimeSpan _interval = TimeSpan.FromMinutes(5);
+    private readonly TimeSpan _interval = TimeSpan.FromMinutes(1);
 
     public OrderPointsReleaseWorker(
         IServiceScopeFactory scopeFactory,

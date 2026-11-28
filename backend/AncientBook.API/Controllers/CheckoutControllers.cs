@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using AncientBook.Application.DTOs;
 using AncientBook.Application.Interfaces;
 using System.Text.Json;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AncientBook.API.Controllers
 {
@@ -16,6 +18,15 @@ namespace AncientBook.API.Controllers
         public CheckoutController(ICheckoutService checkoutService)
         {
             _checkoutService = checkoutService;
+        }
+
+        private int GetCurrentUserId()
+        {
+            var value = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? User.FindFirstValue("UserId");
+            if (!int.TryParse(value, out var userId))
+                throw new UnauthorizedAccessException("Không xác định được người dùng.");
+            return userId;
         }
 
         [HttpPost]
@@ -49,12 +60,13 @@ namespace AncientBook.API.Controllers
         }
 
         [HttpPost("{orderId}/momo-payment")]
+        [Authorize(Roles = "Member")]
         public async Task<IActionResult> CreateMoMoPayment(int orderId)
         {
 
             try
             {
-                var payUrl = await _checkoutService.CreatePaymentUrlAsync(orderId);
+                var payUrl = await _checkoutService.CreatePaymentUrlAsync(orderId, GetCurrentUserId());
                 return Ok(new { payUrl });
             }
             catch (Exception ex)
@@ -64,6 +76,7 @@ namespace AncientBook.API.Controllers
         }
 
         [HttpPost("{orderId}/vn-payment")]
+        [Authorize(Roles = "Member")]
         public async Task<IActionResult> CreateVnPayPayment(int orderId)
         {
             var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
@@ -74,7 +87,7 @@ namespace AncientBook.API.Controllers
             }
             try
             {
-                var payUrl = await _checkoutService.CreateVnPayUrlAsync(orderId, ipAddress);
+                var payUrl = await _checkoutService.CreateVnPayUrlAsync(orderId, ipAddress, GetCurrentUserId());
                 return Ok(new { payUrl });
             }
             catch (Exception ex)
@@ -84,11 +97,12 @@ namespace AncientBook.API.Controllers
         }
 
         [HttpPost("{orderId}/sepay-payment")]
+        [Authorize(Roles = "Member")]
         public async Task<IActionResult> CreateSePayPayment(int orderId)
         {
             try
             {
-                var payUrl = await _checkoutService.CreateSePayUrlAsync(orderId);
+                var payUrl = await _checkoutService.CreateSePayUrlAsync(orderId, GetCurrentUserId());
                 return Ok(new { payUrl });
             }
             catch (Exception ex)
@@ -98,12 +112,13 @@ namespace AncientBook.API.Controllers
         }
 
         [HttpPost("sepay-ipn")]
+        [AllowAnonymous]
         public async Task<IActionResult> SePayIpn([FromBody] JsonElement ipnPayload)
         {
             try
             {
-                Console.WriteLine("Working");
-                await _checkoutService.HandleSePayIpnAsync(ipnPayload);
+                await _checkoutService.HandleSePayIpnAsync(
+                    ipnPayload, Request.Headers.Authorization.ToString());
                 return Ok(new { success = true, message = "Webhook processed successfully" });
             }
             catch (Exception ex)
@@ -113,6 +128,7 @@ namespace AncientBook.API.Controllers
         }
 
         [HttpPost("momo-ipn")]
+        [AllowAnonymous]
         public async Task<IActionResult> MoMoIpn([FromBody] JsonElement ipnPayload)
         {
             try
@@ -127,11 +143,12 @@ namespace AncientBook.API.Controllers
         }
 
         [HttpGet("{orderId}/check-status")]
+        [Authorize(Roles = "Member")]
         public async Task<IActionResult> CheckPaymentStatus(int orderId)
         {
             try
             {
-                GetMomoResponse response = await _checkoutService.QueryMoMoPaymentStatusAsync(orderId);
+                GetMomoResponse response = await _checkoutService.QueryMoMoPaymentStatusAsync(orderId, GetCurrentUserId());
                 return Ok(response);
             }
             catch (KeyNotFoundException ex)
@@ -145,11 +162,12 @@ namespace AncientBook.API.Controllers
         }
 
         [HttpGet("{orderId}/is-paid")]
+        [Authorize(Roles = "Member")]
         public async Task<IActionResult> CheckIsPaid(int orderId)
         {
             try
             {
-                var isPaid = await _checkoutService.IsOrderOnlinePaidAsync(orderId);
+                var isPaid = await _checkoutService.IsOrderOnlinePaidAsync(orderId, GetCurrentUserId());
                 return Ok(new { isPaid });
             }
             catch (KeyNotFoundException ex)

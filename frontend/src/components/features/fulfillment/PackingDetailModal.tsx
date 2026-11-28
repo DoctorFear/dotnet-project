@@ -1,178 +1,244 @@
-import {
-    AlertTriangle,
-    CheckCircle2,
-    MapPin,
-    Phone,
-    X,
-} from 'lucide-react';
-import BookCover from '../../common/BookCover';
+import { useMemo, useState } from 'react';
+import { AlertTriangle, CheckCircle2, ClipboardCheck, PackageCheck, XCircle } from 'lucide-react';
+import type { useFulfillment } from '../../../hooks/useFulfillment';
+import type { PackingVerification } from '../../../types/workflow';
 import { WorkflowError, WorkflowModal } from '../workflow/WorkflowShared';
-import { workflowMoney } from '../../../utils/workflowPresentation';
-import { useFulfillment } from '../../../hooks/useFulfillment';
+import PackingConfirmationDialog from './PackingConfirmationDialog';
+import PackingOrderSummary from './PackingOrderSummary';
+import PackingScanPanel from './PackingScanPanel';
+import PackingWaybill from './PackingWaybill';
+import { workflowDateTime } from '../../../utils/workflowPresentation';
 import common from '../workflow/Workflow.module.css';
 import styles from './Fulfillment.module.css';
 
-type Fulfillment = ReturnType<typeof useFulfillment>;
-
 interface PackingDetailModalProps {
-    packing: Fulfillment;
+    packing: ReturnType<typeof useFulfillment>;
     issue: boolean;
     reason: string;
-    checked: boolean;
     setIssue: (value: boolean) => void;
     setReason: (value: string) => void;
-    setChecked: (value: boolean) => void;
 }
 
 export default function PackingDetailModal({
     packing,
     issue,
     reason,
-    checked,
     setIssue,
     setReason,
-    setChecked,
 }: PackingDetailModalProps) {
-    if (!packing.selected) return null;
+    const detail = packing.selected;
+    const [scannedCodes, setScannedCodes] = useState<Record<number, string[]>>({});
+    const [inspections, setInspections] = useState<Record<number, boolean>>({});
+    const [packingNote, setPackingNote] = useState('');
+    const [confirmOpen, setConfirmOpen] = useState(false);
+
+
+    const verification = useMemo<PackingVerification | null>(() => {
+        if (!detail) return null;
+        return {
+            verifiedItems: detail.items.map((item) => ({
+                bookId: item.bookId,
+                verifiedQuantity: item.quantity,
+                scannedCodes: scannedCodes[item.bookId] ?? [],
+                visualInspectionPassed: inspections[item.bookId] ?? false,
+            })),
+            note: packingNote.trim() || undefined,
+        };
+    }, [detail, inspections, packingNote, scannedCodes]);
+
+    if (!detail && !packing.loadingDetail) return null;
+
+    const close = () => {
+        if (packing.busy) return;
+        packing.setSelected(null);
+        setConfirmOpen(false);
+    };
+
+    const canConfirm = Boolean(
+        detail?.canConfirmPacking
+        && verification
+        && verification.verifiedItems.length > 0
+        && verification.verifiedItems.every((item) => {
+            const expected = detail.items.find((book) => book.bookId === item.bookId)?.quantity ?? 0;
+            return item.scannedCodes.length === expected && item.visualInspectionPassed;
+        }),
+    );
+
+    const verifiedQuantity = verification?.verifiedItems.reduce(
+        (sum, item) => sum + item.scannedCodes.length,
+        0,
+    ) ?? 0;
+    const totalQuantity = detail?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+    const prepared = detail?.status === 3;
+    const orderCode = detail?.orderCode
+        || (detail ? `ORD-${String(detail.orderId).padStart(8, '0')}` : 'Đang tải...');
+
     return (
         <WorkflowModal
-            title={`Soạn đơn ORD-${packing.selected.orderId}`}
+            title={`${prepared ? 'Kết quả đóng gói' : 'Soạn sách & đóng gói'} · ${orderCode}`}
+            onClose={close}
             busy={packing.busy}
-            onClose={() => packing.setSelected(null)}
+            sheet
         >
             <div className={common.dialogBody}>
-                <div className={styles.recipient}>
-                    <span className={common.eyebrow}>THÔNG TIN NGƯỜI NHẬN</span>
-                    <h3>{packing.selected.customerName}</h3>
-                    <p>
-                        <Phone size={14} />
-                        {packing.selected.receiverPhone || 'Chưa cập nhật số điện thoại'}
-                    </p>
-                    <p>
-                        <MapPin size={14} />
-                        {packing.selected.shippingAddress}
-                    </p>
-                </div>
-                {packing.error && <WorkflowError message={packing.error} />}
-                {packing.selected.packingIssue && (
-                    <div className={styles.issueNotice}>
-                        <AlertTriangle size={18} />
-                        <div>
-                            <strong>Sự cố đã ghi nhận</strong>
-                            <p>{packing.selected.packingIssue}</p>
-                        </div>
-                    </div>
-                )}
-                <section>
-                    <h3 className={styles.sectionTitle}>
-                        Sách cần đóng gói{' '}
-                        <span>
-                            {packing.selected.items.reduce((sum, item) => sum + item.quantity, 0)}{' '}
-                            cuốn
-                        </span>
-                    </h3>
-                    {packing.selected.items.map((item, index) => (
-                        <div className={common.bookRow} key={`${item.bookId}-${index}`}>
-                            <BookCover
-                                src={item.bookCover ?? undefined}
-                                title={item.bookTitle}
-                                className={common.bookCover}
-                            />
-                            <div>
-                                <h3>{item.bookTitle}</h3>
-                                <p>{workflowMoney(item.unitPrice)} / cuốn</p>
-                            </div>
-                            <strong className={styles.quantity}>× {item.quantity}</strong>
-                        </div>
-                    ))}
-                </section>
-                {issue ? (
-                    <div className={styles.issueForm}>
-                        <div className={common.actionRow}>
-                            <strong>Báo cáo sự cố kho</strong>
-                            <button
-                                type="button"
-                                className={common.textButton}
-                                aria-label="Đóng biểu mẫu sự cố"
-                                onClick={() => setIssue(false)}
-                            >
-                                <X size={16} />
-                            </button>
-                        </div>
-                        <label className={common.field}>
-                            Lý do sự cố
-                            <textarea
-                                value={reason}
-                                maxLength={1000}
-                                rows={3}
-                                onChange={(event) => setReason(event.target.value)}
-                                placeholder="Ví dụ: sách bị hư, cần kiểm tra lại trước khi đóng gói..."
-                            />
-                            <small>
-                                {reason.length}/1.000 ký tự · Đơn giữ nguyên trạng thái Đã xác nhận.
-                            </small>
-                        </label>
-                    </div>
+                {packing.loadingDetail || !detail ? (
+                    <div className={common.loading}>Đang tải dữ liệu đơn hàng...</div>
                 ) : (
-                    <label className={common.checkbox}>
-                        <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={(event) => setChecked(event.target.checked)}
-                        />
-                        Tôi đã đối chiếu đúng sách, đủ số lượng và đóng gói hoàn tất.
-                    </label>
+                    <>
+                        <PackingOrderSummary detail={detail} />
+
+                        {detail.packingIssue && (
+                            <div className={styles.alert}>
+                                <AlertTriangle size={16} />
+                                <span><b>Sự cố kho đã ghi nhận:</b> {detail.packingIssue}</span>
+                            </div>
+                        )}
+
+                        {!prepared && detail.canConfirmPacking !== false && (
+                            <>
+                                <div className={styles.sectionTitle}>
+                                    <div>
+                                        <ClipboardCheck size={16} />
+                                        <span>
+                                            <strong>Danh sách lấy hàng & xác minh từng cuốn</strong>
+                                            <small>Đến đúng kệ, lấy đủ số lượng, quét mã rồi kiểm tra ngoại quan.</small>
+                                        </span>
+                                    </div>
+                                    <b>{verifiedQuantity}/{totalQuantity} đã quét</b>
+                                </div>
+
+                                <div className={styles.itemList}>
+                                    {detail.items.map((item) => (
+                                        <PackingScanPanel
+                                            key={item.bookId}
+                                            item={item}
+                                            scannedCodes={scannedCodes[item.bookId] ?? []}
+                                            visualInspectionPassed={inspections[item.bookId] ?? false}
+                                            disabled={packing.busy}
+                                            onScannedCodesChange={(codes) => setScannedCodes((current) => ({
+                                                ...current,
+                                                [item.bookId]: codes,
+                                            }))}
+                                            onVisualInspectionChange={(passed) => setInspections((current) => ({
+                                                ...current,
+                                                [item.bookId]: passed,
+                                            }))}
+                                        />
+                                    ))}
+                                </div>
+
+                                <div className={`${styles.verificationStatus} ${canConfirm ? styles.ready : ''}`}>
+                                    {canConfirm ? <CheckCircle2 size={18} /> : <PackageCheck size={18} />}
+                                    <span>
+                                        <strong>
+                                            {canConfirm
+                                                ? 'Đã hoàn tất checklist — có thể đóng gói'
+                                                : `Còn ${Math.max(0, totalQuantity - verifiedQuantity)} cuốn cần quét và kiểm tra`}
+                                        </strong>
+                                        <small>
+                                            {canConfirm
+                                                ? 'Kiểm tra lại thông tin giao nhận trước khi xác nhận cuối.'
+                                                : 'Nút xác nhận chỉ mở khi mọi đầu sách đủ số lần quét và đã đạt ngoại quan.'}
+                                        </small>
+                                    </span>
+                                </div>
+
+                                <label className={styles.noteField}>
+                                    <span>Ghi chú đóng gói <small>(không bắt buộc)</small></span>
+                                    <textarea
+                                        rows={2}
+                                        maxLength={500}
+                                        value={packingNote}
+                                        placeholder="Ví dụ: Đã bọc chống sốc và chống ẩm..."
+                                        onChange={(event) => setPackingNote(event.target.value)}
+                                    />
+                                    <small>{packingNote.length}/500</small>
+                                </label>
+
+                                <label className={styles.checkbox}>
+                                    <input
+                                        type="checkbox"
+                                        checked={issue}
+                                        onChange={(event) => setIssue(event.target.checked)}
+                                    />
+                                    <span>
+                                        <XCircle size={15} /> Phát hiện thiếu sách, sai sách hoặc hư hỏng
+                                    </span>
+                                </label>
+                                {issue && (
+                                    <textarea
+                                        className={styles.issueReason}
+                                        rows={3}
+                                        maxLength={1000}
+                                        value={reason}
+                                        placeholder="Mô tả rõ đầu sách, số lượng và tình trạng để kho xử lý..."
+                                        onChange={(event) => setReason(event.target.value)}
+                                    />
+                                )}
+                            </>
+                        )}
+
+                        {prepared && (
+                            <>
+                                {(detail.packedBy || detail.packedAt) && (
+                                    <p className={styles.statusMeta}>
+                                        Xác nhận bởi <b>{detail.packedBy || 'Nhân viên kho'}</b>
+                                        {detail.packedAt ? ` · ${workflowDateTime(detail.packedAt)}` : ''}
+                                    </p>
+                                )}
+                                <PackingWaybill detail={detail} />
+                            </>
+                        )}
+
+                        {!prepared && detail.canConfirmPacking === false && (
+                            <div className={styles.alert}>
+                                <AlertTriangle size={16} />
+                                Đơn không còn ở trạng thái “Đã xác nhận”, nên không thể đóng gói lại.
+                            </div>
+                        )}
+
+                        {packing.error && <WorkflowError message={packing.error} />}
+                    </>
                 )}
             </div>
-            <footer className={common.dialogFooter}>
-                {issue ? (
-                    <>
-                        <button
-                            type="button"
-                            className={common.secondary}
-                            disabled={packing.busy}
-                            onClick={() => setIssue(false)}
-                        >
-                            Quay lại
-                        </button>
-                        <button
-                            type="button"
-                            className={common.primary}
-                            disabled={packing.busy || !reason.trim()}
-                            onClick={() =>
-                                void packing.save(reason.trim()).then((saved) => {
-                                    if (saved) {
-                                        setIssue(false);
-                                        setReason('');
-                                    }
-                                })
-                            }
-                        >
-                            {packing.busy ? 'Đang gửi...' : 'Gửi báo cáo sự cố'}
-                        </button>
-                    </>
+
+            <div className={common.dialogFooter}>
+                <button type="button" className={common.secondary} onClick={close} disabled={packing.busy}>Đóng</button>
+                {detail && !prepared && detail.canConfirmPacking !== false && (issue ? (
+                    <button
+                        type="button"
+                        className={common.danger}
+                        disabled={packing.busy || !reason.trim()}
+                        onClick={() => void packing.save(reason.trim())}
+                    >
+                        {packing.busy ? 'Đang ghi nhận...' : 'Báo sự cố kho'}
+                    </button>
                 ) : (
-                    <>
-                        <button
-                            type="button"
-                            className={common.secondary}
-                            disabled={packing.busy}
-                            onClick={() => setIssue(true)}
-                        >
-                            <AlertTriangle size={15} /> Báo sự cố
-                        </button>
-                        <button
-                            type="button"
-                            className={common.primary}
-                            disabled={!checked || packing.busy}
-                            onClick={() => void packing.save()}
-                        >
-                            <CheckCircle2 size={16} />
-                            {packing.busy ? 'Đang lưu...' : 'Xác nhận đóng gói xong'}
-                        </button>
-                    </>
-                )}
-            </footer>
+                    <button
+                        type="button"
+                        className={common.primary}
+                        disabled={packing.busy || !canConfirm}
+                        onClick={() => setConfirmOpen(true)}
+                    >
+                        <PackageCheck size={15} /> Kiểm tra lại & xác nhận đóng gói
+                    </button>
+                ))}
+            </div>
+
+            {detail && verification && (
+                <PackingConfirmationDialog
+                    open={confirmOpen}
+                    detail={detail}
+                    busy={packing.busy}
+                    onCancel={() => setConfirmOpen(false)}
+                    onConfirm={() => {
+                        void (async () => {
+                            const saved = await packing.save(undefined, verification);
+                            if (saved) setConfirmOpen(false);
+                        })();
+                    }}
+                />
+            )}
         </WorkflowModal>
     );
 }

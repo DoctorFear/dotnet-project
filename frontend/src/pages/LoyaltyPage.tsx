@@ -13,6 +13,7 @@ import LoyaltyProgress from '../components/features/loyalty/LoyaltyProgress';
 import MembershipTierSection from '../components/features/loyalty/MembershipTierSection';
 import PointsHistorySection from '../components/features/loyalty/PointsHistorySection';
 import ReceiptConfirmModal from '../components/features/loyalty/ReceiptConfirmModal';
+import LoyaltyPolicyModal from '../components/features/loyalty/LoyaltyPolicyModal';
 import {
     MemberShell,
     WorkflowError,
@@ -29,6 +30,7 @@ export default function LoyaltyPage({
     const { preview } = useWorkflow();
     const [amount, setAmount] = useState('200000');
     const [points, setPoints] = useState('0');
+    const [policyOpen, setPolicyOpen] = useState(false);
     const data = loyalty.resource.data;
     const balance = data?.balance;
     const tiers = data?.tiers ?? [];
@@ -51,7 +53,7 @@ export default function LoyaltyPage({
     const maxPreview = Math.min(
         balance?.currentPoints ?? 0,
         1000,
-        Math.floor(Number(amount) / 200),
+        Math.floor(Number(amount) / 100),
     );
     const path = (tab: string) =>
         preview
@@ -115,6 +117,7 @@ export default function LoyaltyPage({
                             setAmount={setAmount}
                             setPoints={setPoints}
                             maxPreview={maxPreview}
+                            onOpenPolicy={() => setPolicyOpen(true)}
                         />
                     )}
                     {loyalty.error && !loyalty.receipt && (
@@ -125,6 +128,13 @@ export default function LoyaltyPage({
                         nối.
                     </p>
                 </>
+            )}
+            {!membership && policyOpen && data && balance && (
+                <LoyaltyPolicyModal
+                    tiers={tiers}
+                    currentTier={balance.tierName}
+                    onClose={() => setPolicyOpen(false)}
+                />
             )}
             {loyalty.receipt && (
                 <ReceiptConfirmModal key={loyalty.receipt.orderId} loyalty={loyalty} />
