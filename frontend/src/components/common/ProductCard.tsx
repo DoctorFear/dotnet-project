@@ -29,8 +29,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     const isPhysicalInStock = (product.stockCount ?? 0) > 0;
     const hasPhysical = product.isPhysicalAvailable && isPhysicalInStock;
     const hasPublishedEbook = Boolean(product.hasPublishedEbook);
+    const rentalPrices = [
+        product.weeklyRentalPrice ?? 0,
+        product.monthlyRentalPrice ?? 0,
+        product.yearlyRentalPrice ?? 0,
+    ].filter((price) => price > 0);
+    const minRentalPrice = rentalPrices.length > 0 ? Math.min(...rentalPrices) : 0;
     const hasEBook = product.isEBookAvailable && hasPublishedEbook;
-    const hasRental = product.isRentalAvailable && product.isEBookAvailable && hasPublishedEbook;
+    const hasRental = product.isRentalAvailable && rentalPrices.length > 0 && hasPublishedEbook;
     const hasAnyActiveFormat = hasPhysical || hasEBook || hasRental;
 
     const displayPrice = hasPhysical
@@ -38,12 +44,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         : hasEBook
         ? product.eBookPrice
         : hasRental
-        ? (product.weeklyRentalPrice ?? 0)
+        ? minRentalPrice
         : product.isPhysicalAvailable
         ? product.physicalPrice
         : product.isEBookAvailable
         ? product.eBookPrice
-        : (product.weeklyRentalPrice ?? 0);
+        : minRentalPrice;
     const activeWishlistState = product.isWishlisted ?? isWishlisted;
 
     // Phân định rõ ràng:
@@ -123,9 +129,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
             <div className={styles.priceRow}>
                 <span className={styles.salePrice}>{displayPrice.toLocaleString('vi-VN')} đ</span>
-                {hasRental && product.weeklyRentalPrice !== undefined && !isStopped && !isUpcoming && !isOutOfStock && (
+                {hasRental && minRentalPrice > 0 && !isStopped && !isUpcoming && !isOutOfStock && (
                     <span className={styles.subPriceInfo}>
-                        Thuê từ {product.weeklyRentalPrice.toLocaleString('vi-VN')} đ/tuần
+                        {(product.weeklyRentalPrice ?? 0) > 0
+                            ? `Thuê từ ${product.weeklyRentalPrice.toLocaleString('vi-VN')} đ/tuần`
+                            : `Thuê từ ${minRentalPrice.toLocaleString('vi-VN')} đ`}
                     </span>
                 )}
             </div>

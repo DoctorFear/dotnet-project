@@ -21,6 +21,7 @@ import WishListButton from '../components/common/WishListButton';
 import BookGallery from '../components/features/storefront/BookGallery';
 import BookReviews from '../components/features/storefront/BookReviews';
 import WishlistLoginPrompt from '../components/features/storefront/WishlistLoginPrompt';
+import StockAvailabilityBadge from '../components/common/StockAvailabilityBadge';
 import { useBookFilterOptions } from '../hooks/useBookFilterOptions';
 
 export const BookDetailPage: React.FC = () => {
@@ -81,8 +82,12 @@ export const BookDetailPage: React.FC = () => {
 
     const hasPhysical = bookData.isPhysicalAvailable && (bookData.stockCount ?? 0) > 0;
     const hasPublishedEbook = Boolean(bookData.hasPublishedEbook);
+    const hasAnyRentalPrice =
+        (bookData.weeklyRentalPrice ?? 0) > 0 ||
+        (bookData.monthlyRentalPrice ?? 0) > 0 ||
+        (bookData.yearlyRentalPrice ?? 0) > 0;
     const hasEBook = bookData.isEBookAvailable && bookData.eBookPrice > 0 && hasPublishedEbook;
-    const hasRental = bookData.isRentalAvailable && bookData.isEBookAvailable && (bookData.weeklyRentalPrice ?? 0) > 0 && hasPublishedEbook;
+    const hasRental = bookData.isRentalAvailable && hasAnyRentalPrice && hasPublishedEbook;
     const hasAnyActiveFormat = hasPhysical || hasEBook || hasRental;
 
     const canPurchase = bookData.status === 'selling' && hasAnyActiveFormat && selection.isCurrentFormatAvailable && !(selection.format === 'physical' && bookData.stockCount < selection.quantity);
@@ -131,6 +136,12 @@ export const BookDetailPage: React.FC = () => {
                                 {selection.price.toLocaleString('vi-VN')} đ
                             </span>
                         </div>
+
+                        {bookData.status === 'selling' && hasPhysical && bookData.stockStatus === 'low_stock' && (
+                            <div style={{ margin: '10px 0 4px' }}>
+                                <StockAvailabilityBadge book={bookData} />
+                            </div>
+                        )}
 
                         {bookData.status === 'stopped' && (
                             <div>

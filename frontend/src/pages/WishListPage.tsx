@@ -27,17 +27,83 @@ export default function WishListPage() {
     const currentPage = Math.min(page, Math.max(1, Math.ceil(wishlist.wishlistCount / pageSize)));
     const messages = <ToastNotification toasts={[...wishlist.toasts, ...notifications.toasts]} onClose={id => { wishlist.dismissToast(id); notifications.dismissToast(id); }} />;
 
-    return <div className={styles.page}>
-        {!purchaseBook && messages}
-        {purchaseBook && <BookPurchaseDialog book={purchaseBook} isSubmitting={isSubmitting} onClose={() => setPurchaseBook(null)} onConfirm={submitPurchase}>{messages}</BookPurchaseDialog>}
-        <TopBar /><Header wishlistCount={wishlist.wishlistCount} onSearch={term => navigate(`/?search=${encodeURIComponent(term)}`)} /><Navbar categories={options.categories.map(({ id, name }) => ({ id: String(id), name }))} publishers={options.publishers.map(({ id, name }) => ({ id: String(id), name }))} onSelectCategory={name => { const category = options.categories.find(item => item.name === name); if (category) navigate(`/?category=${category.id}`); }} onSelectPublisher={name => { const publisher = options.publishers.find(item => item.name === name); if (publisher) navigate(`/?publisher=${publisher.id}`); }} />
-        <main className={styles.content}>
-            <Breadcrumb items={[{ label: 'Trang chủ', link: '/' }, { label: 'Danh sách yêu thích' }]} />
-            <h1>Danh sách sách yêu thích ({wishlist.wishlistCount})</h1>
-            {wishlist.isLoading ? <p>Đang tải danh sách yêu thích...</p> : wishlist.error ? <p role="alert">{wishlist.error}</p> : wishlist.wishlistCount === 0 ? <p>Chưa có sách trong danh sách yêu thích.</p> : <>
-                <div className={styles.grid}>{wishlist.wishlistItems.slice((currentPage - 1) * pageSize, currentPage * pageSize).map(book => <ProductCard key={book.id} product={book} onToggleWishlist={() => void wishlist.toggleWishlist(book)} onSelectBook={id => navigate(`/books/${id}`)} onAddToCart={() => setPurchaseBook(book)} />)}</div>
-                <BookPagination page={currentPage} pageSize={pageSize} totalCount={wishlist.wishlistCount} onPageChange={setPage} onPageSizeChange={size => { setPageSize(size); setPage(1); }} />
-            </>}
-        </main>
-    </div>;
+    return (
+        <div className={styles.page}>
+            {!purchaseBook && messages}
+            {purchaseBook && (
+                <BookPurchaseDialog
+                    book={purchaseBook}
+                    isSubmitting={isSubmitting}
+                    onClose={() => setPurchaseBook(null)}
+                    onConfirm={submitPurchase}
+                >
+                    {messages}
+                </BookPurchaseDialog>
+            )}
+            <TopBar />
+            <Header
+                wishlistCount={wishlist.wishlistCount}
+                onSearch={(term) => navigate(`/?search=${encodeURIComponent(term)}`)}
+            />
+            <Navbar
+                categories={options.categories.map(({ id, name }) => ({ id: String(id), name }))}
+                publishers={options.publishers.map(({ id, name }) => ({ id: String(id), name }))}
+                onSelectCategory={(name) => {
+                    const category = options.categories.find((item) => item.name === name);
+                    if (category) navigate(`/?category=${category.id}`);
+                }}
+                onSelectPublisher={(name) => {
+                    const publisher = options.publishers.find((item) => item.name === name);
+                    if (publisher) navigate(`/?publisher=${publisher.id}`);
+                }}
+            />
+
+            <main className={styles.content}>
+                <Breadcrumb items={[{ label: 'Trang chủ', link: '/' }, { label: 'Danh sách yêu thích' }]} />
+                <h1>Danh sách sách yêu thích ({wishlist.wishlistCount})</h1>
+                {wishlist.isLoading ? (
+                    <p>Đang tải danh sách yêu thích...</p>
+                ) : wishlist.error ? (
+                    <p role="alert">{wishlist.error}</p>
+                ) : wishlist.wishlistCount === 0 ? (
+                    <div className={styles.emptyState}>
+                        <p>Danh sách yêu thích của bạn đang trống!</p>
+                        <button
+                            type="button"
+                            className={styles.exploreButton}
+                            onClick={() => navigate('/')}
+                        >
+                            Khám phá sách ngay
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        <div className={styles.grid}>
+                            {wishlist.wishlistItems
+                                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                                .map((book) => (
+                                    <ProductCard
+                                        key={book.id}
+                                        product={book}
+                                        onToggleWishlist={() => void wishlist.toggleWishlist(book)}
+                                        onSelectBook={(id) => navigate(`/books/${id}`)}
+                                        onAddToCart={() => setPurchaseBook(book)}
+                                    />
+                                ))}
+                        </div>
+                        <BookPagination
+                            page={currentPage}
+                            pageSize={pageSize}
+                            totalCount={wishlist.wishlistCount}
+                            onPageChange={setPage}
+                            onPageSizeChange={(size) => {
+                                setPageSize(size);
+                                setPage(1);
+                            }}
+                        />
+                    </>
+                )}
+            </main>
+        </div>
+    );
 }

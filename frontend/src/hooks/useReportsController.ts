@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { getReport, getReportPdf } from '../services/reportService';
 import type { DashboardReport, ReportPeriod, ReportQuery } from '../types/report';
-import { reportDates } from '../utils/reportPresentation';
+import { reportDates, todayReportDate } from '../utils/reportPresentation';
 import { useBookFilterOptions } from './useBookFilterOptions';
 import { useToastNotifications } from './useToastNotifications';
 
@@ -24,8 +24,17 @@ export const useReportsController = () => {
         const abort = new AbortController();
         void Promise.resolve().then(async () => {
             if (!active) return;
-            setIsLoading(true); setError(''); setReport(null);
-            if (!query.fromDate || !query.toDate || query.fromDate > query.toDate) { setError('Vui lòng chọn khoảng thời gian hợp lệ.'); setIsLoading(false); return; }
+            setIsLoading(true);
+            setError('');
+            setReport(null);
+
+            const today = todayReportDate();
+            if (!query.fromDate || !query.toDate || query.fromDate > query.toDate || query.toDate > today) {
+                setError('Khoảng thời gian lựa chọn không hợp lệ. Vui lòng kiểm tra lại ngày bắt đầu và kết thúc!');
+                setIsLoading(false);
+                return;
+            }
+
             try { const data = await getReport(query, abort.signal); if (active) setReport(data); }
             catch (reason) { if (active) setError(reason instanceof Error ? reason.message : 'Không thể tải báo cáo.'); }
             finally { if (active) setIsLoading(false); }

@@ -101,10 +101,14 @@ export const App: React.FC = () => {
                         <Route path="/shipper/orders" element={<ShipperPortalPage />} />
                     </Route>
 
-                    {/* 5. Admin Only Routes: Chỉ Super Admin / Quản trị viên tối cao cấu hình hệ thống */}
-                    <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
+                    {/* 5. Shared Admin & Staff Routes: Xem cấu hình hệ thống (Staff chỉ đọc) và Báo cáo thống kê */}
+                    <Route element={<ProtectedRoute allowedRoles={['Admin', 'Staff']} />}>
                         <Route path="/admin/settings" element={<AdminSettingsPage />} />
                         <Route path="/admin/reports" element={<AdminReportsPage />} />
+                    </Route>
+
+                    {/* 6. Admin Only Routes: Phân quyền, quản lý người dùng và nhật ký kiểm toán */}
+                    <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
                         <Route path="/admin/users" element={<AdminUserManagementPage />} />
                         <Route path="/admin/audit-logs" element={<AuditLogPage />} />
                     </Route>

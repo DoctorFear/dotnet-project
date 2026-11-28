@@ -5,7 +5,20 @@ import type { useBookManagement } from '../../../hooks/useBookManagement';
 import styles from './AdminBookManagement.module.css';
 
 export default function BookEditorFields({ controller }: { controller: ReturnType<typeof useBookManagement> }) {
-    const { categories, publishers, editingId, draft, isCategoryDropdownOpen, categoryDropdownRef, selectedCategoriesText, isEBookDisabled, setIsCategoryDropdownOpen, updateDraft, toggleCategorySelection } = controller;
+    const {
+        categories,
+        publishers,
+        editingId,
+        draft,
+        formWarn,
+        isCategoryDropdownOpen,
+        categoryDropdownRef,
+        selectedCategoriesText,
+        isRentalDisabled,
+        setIsCategoryDropdownOpen,
+        updateDraft,
+        toggleCategorySelection,
+    } = controller;
 
     // Tính toán trạng thái Xanh / Vàng của từng hình thức phát hành theo ràng buộc thực tế
     const isPhysicalGreen = draft.isPhysicalAvailable === true && (Number(draft.stockCount) || 0) > 0;
@@ -14,10 +27,8 @@ export default function BookEditorFields({ controller }: { controller: ReturnTyp
     const isEBookGreen = draft.isEBookAvailable === true && draft.hasPublishedEbook === true;
     const isEBookYellow = draft.isEBookAvailable === true && !draft.hasPublishedEbook;
 
-    const isRentalGreen = draft.isRentalAvailable === true && draft.isEBookAvailable === true && draft.hasPublishedEbook === true;
-    const isRentalYellow = draft.isRentalAvailable === true && (!draft.isEBookAvailable || !draft.hasPublishedEbook);
-
-    const hasAnyGreen = isPhysicalGreen || isEBookGreen || isRentalGreen;
+    const isRentalGreen = draft.isRentalAvailable === true && draft.hasPublishedEbook === true;
+    const isRentalYellow = draft.isRentalAvailable === true && !draft.hasPublishedEbook;
 
     return (
 <div className={styles.formGrid}>
@@ -56,7 +67,6 @@ export default function BookEditorFields({ controller }: { controller: ReturnTyp
                                                 <input
                                                     type="checkbox"
                                                     checked={draft.isRentalAvailable === true}
-                                                    disabled={draft.isEBookAvailable !== true}
                                                     onChange={(event) => updateDraft('isRentalAvailable', event.target.checked)}
                                                 />
                                                 <span>Thuê đọc</span>
@@ -65,17 +75,9 @@ export default function BookEditorFields({ controller }: { controller: ReturnTyp
                                             </label>
                                         </div>
 
-                                        {(isPhysicalYellow || isEBookYellow || isRentalYellow) && (
-                                            <div className={styles.formatNoticeBox}>
-                                                {isPhysicalYellow && (
-                                                    <div>• <strong>Sách giấy:</strong> Hết hàng tồn kho</div>
-                                                )}
-                                                {isEBookYellow && (
-                                                    <div>• <strong>E-Book:</strong> Chưa có ấn bản điện tử xuất bản</div>
-                                                )}
-                                                {isRentalYellow && (
-                                                    <div>• <strong>Thuê đọc:</strong> Chưa có ấn bản điện tử xuất bản</div>
-                                                )}
+                                        {formWarn && (
+                                            <div className={styles.formWarn} role="alert">
+                                                {formWarn}
                                             </div>
                                         )}
                                     </fieldset>
@@ -169,20 +171,13 @@ export default function BookEditorFields({ controller }: { controller: ReturnTyp
                                         <select
                                             id="status"
                                             className={styles.formControl}
-                                            value={(draft.status as AdminBookStatus) || (hasAnyGreen ? 'selling' : 'upcoming')}
+                                            value={(draft.status as AdminBookStatus) || 'upcoming'}
                                             onChange={(e) => updateDraft('status', e.target.value as AdminBookStatus)}
                                         >
-                                            <option value="selling" disabled={!hasAnyGreen}>
-                                                Đang bán {!hasAnyGreen ? '(Khóa: Cần ít nhất 1 hình thức màu xanh)' : ''}
-                                            </option>
+                                            <option value="selling">Đang bán</option>
                                             <option value="upcoming">Sắp phát hành</option>
                                             <option value="stopped">Ngừng bán</option>
                                         </select>
-                                        {!hasAnyGreen && draft.status === 'selling' && (
-                                            <span className={styles.inputWarningText}>
-                                                Chưa có hình thức nào màu xanh. Vui lòng chọn &quot;Sắp phát hành&quot; hoặc &quot;Ngừng bán&quot;.
-                                            </span>
-                                        )}
                                     </div>
 
                                     <div className={styles.formGroup}>
@@ -208,43 +203,43 @@ export default function BookEditorFields({ controller }: { controller: ReturnTyp
                                     </div>
 
                                     <div className={styles.formGroup}>
-                                        <label htmlFor="weeklyRentalPrice" className={isEBookDisabled ? styles.lockedLabel : ''}>
-                                            Giá thuê theo Tuần (VNĐ) {isEBookDisabled && <Ban size={12} color="#94a3b8" />}
+                                        <label htmlFor="weeklyRentalPrice" className={isRentalDisabled ? styles.lockedLabel : ''}>
+                                            Giá thuê theo Tuần (VNĐ) {isRentalDisabled && <Ban size={12} color="#94a3b8" />}
                                         </label>
                                         <input
                                             id="weeklyRentalPrice"
                                             type="number"
-                                            disabled={isEBookDisabled}
-                                            className={`${styles.formControl} ${isEBookDisabled ? styles.disabledInput : ''}`}
-                                            value={isEBookDisabled ? 0 : (draft.weeklyRentalPrice as number) || 0}
+                                            disabled={isRentalDisabled}
+                                            className={`${styles.formControl} ${isRentalDisabled ? styles.disabledInput : ''}`}
+                                            value={isRentalDisabled ? 0 : (draft.weeklyRentalPrice as number) || 0}
                                             onChange={(e) => updateDraft('weeklyRentalPrice', Number(e.target.value))}
                                         />
                                     </div>
 
                                     <div className={styles.formGroup}>
-                                        <label htmlFor="monthlyRentalPrice" className={isEBookDisabled ? styles.lockedLabel : ''}>
-                                            Giá thuê theo Tháng (VNĐ) {isEBookDisabled && <Ban size={12} color="#94a3b8" />}
+                                        <label htmlFor="monthlyRentalPrice" className={isRentalDisabled ? styles.lockedLabel : ''}>
+                                            Giá thuê theo Tháng (VNĐ) {isRentalDisabled && <Ban size={12} color="#94a3b8" />}
                                         </label>
                                         <input
                                             id="monthlyRentalPrice"
                                             type="number"
-                                            disabled={isEBookDisabled}
-                                            className={`${styles.formControl} ${isEBookDisabled ? styles.disabledInput : ''}`}
-                                            value={isEBookDisabled ? 0 : (draft.monthlyRentalPrice as number) || 0}
+                                            disabled={isRentalDisabled}
+                                            className={`${styles.formControl} ${isRentalDisabled ? styles.disabledInput : ''}`}
+                                            value={isRentalDisabled ? 0 : (draft.monthlyRentalPrice as number) || 0}
                                             onChange={(e) => updateDraft('monthlyRentalPrice', Number(e.target.value))}
                                         />
                                     </div>
 
                                     <div className={styles.formGroup}>
-                                        <label htmlFor="yearlyRentalPrice" className={isEBookDisabled ? styles.lockedLabel : ''}>
-                                            Giá thuê theo Năm (VNĐ) {isEBookDisabled && <Ban size={12} color="#94a3b8" />}
+                                        <label htmlFor="yearlyRentalPrice" className={isRentalDisabled ? styles.lockedLabel : ''}>
+                                            Giá thuê theo Năm (VNĐ) {isRentalDisabled && <Ban size={12} color="#94a3b8" />}
                                         </label>
                                         <input
                                             id="yearlyRentalPrice"
                                             type="number"
-                                            disabled={isEBookDisabled}
-                                            className={`${styles.formControl} ${isEBookDisabled ? styles.disabledInput : ''}`}
-                                            value={isEBookDisabled ? 0 : (draft.yearlyRentalPrice as number) || 0}
+                                            disabled={isRentalDisabled}
+                                            className={`${styles.formControl} ${isRentalDisabled ? styles.disabledInput : ''}`}
+                                            value={isRentalDisabled ? 0 : (draft.yearlyRentalPrice as number) || 0}
                                             onChange={(e) => updateDraft('yearlyRentalPrice', Number(e.target.value))}
                                         />
                                     </div>

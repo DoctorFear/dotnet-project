@@ -10,10 +10,16 @@ export const AdminSettingsManagement: React.FC = () => {
     const controller = useSystemSettingsController();
     if (controller.error) return <p role="alert">{controller.error}</p>;
     if (!controller.settings) return <p>Đang tải cài đặt...</p>;
+    const isInputDisabled = controller.isReadOnly || controller.isBusy;
     const { lowStockThreshold, pointRateBronze: bronzeRate, pointRateSilver: silverRate, pointRateGold: goldRate, maxPointsPerOrder: maxPoints, maxReturnDays, memberUpgradeSpendingBronze: bronzeUpgradeSpending, memberUpgradeSpendingSilver: silverUpgradeSpending, memberUpgradeSpendingGold: goldUpgradeSpending } = controller.settings;
     const notification = <ToastNotification toasts={controller.notifications.toasts} onClose={controller.notifications.dismissToast} />;
     return (
         <div className={styles.settingsContainer}>
+            {controller.isReadOnly && (
+                <div className={styles.infoNote} role="status">
+                    Bạn đang xem cấu hình ở chế độ chỉ đọc (Staff). Chỉ Quản trị viên (Admin) mới có quyền chỉnh sửa hoặc khôi phục mặc định.
+                </div>
+            )}
             {/* Cảnh báo tồn kho và quy định đổi trả */}
             <section className={styles.settingsCard}>
                 <div className={styles.cardHeader}>
@@ -30,12 +36,14 @@ export const AdminSettingsManagement: React.FC = () => {
                                 Số lượng tồn kho tối thiểu để hệ thống đưa ra cảnh báo cho nhân viên kho.
                             </span>
                             <div className={styles.inputWrapper}>
-                                <input disabled={controller.isBusy}
+                                <input
+                                    disabled={isInputDisabled}
                                     id="lowStockThreshold"
                                     type="number"
                                     className={styles.inputControl}
                                     value={lowStockThreshold}
-                                    min={0}
+                                    min={1}
+                                    max={100}
                                     onChange={(e) => controller.change('lowStockThreshold', Number(e.target.value))}
                                 />
                                 <span className={styles.unitText}>Cuốn</span>
@@ -50,7 +58,8 @@ export const AdminSettingsManagement: React.FC = () => {
                                 Số ngày tối đa khách hàng được gửi yêu cầu hoàn trả kể từ khi giao thành công.
                             </span>
                             <div className={styles.inputWrapper}>
-                                <input disabled={controller.isBusy}
+                                <input
+                                    disabled={isInputDisabled}
                                     id="maxReturnDays"
                                     type="number"
                                     className={styles.inputControl}
@@ -81,7 +90,8 @@ export const AdminSettingsManagement: React.FC = () => {
                                 Tỉ lệ phần trăm tích điểm cho thành viên Hạng Đồng.
                             </span>
                             <div className={styles.inputWrapper}>
-                                <select disabled={controller.isBusy}
+                                <select
+                                    disabled={isInputDisabled}
                                     id="bronzeRate"
                                     className={styles.selectControl}
                                     value={bronzeRate}
@@ -103,7 +113,8 @@ export const AdminSettingsManagement: React.FC = () => {
                                 Tỉ lệ phần trăm tích điểm cho thành viên Hạng Bạc.
                             </span>
                             <div className={styles.inputWrapper}>
-                                <select disabled={controller.isBusy}
+                                <select
+                                    disabled={isInputDisabled}
                                     id="silverRate"
                                     className={styles.selectControl}
                                     value={silverRate}
@@ -125,7 +136,8 @@ export const AdminSettingsManagement: React.FC = () => {
                                 Tỉ lệ phần trăm tích điểm cho thành viên Hạng Vàng.
                             </span>
                             <div className={styles.inputWrapper}>
-                                <select disabled={controller.isBusy}
+                                <select
+                                    disabled={isInputDisabled}
                                     id="goldRate"
                                     className={styles.selectControl}
                                     value={goldRate}
@@ -147,12 +159,14 @@ export const AdminSettingsManagement: React.FC = () => {
                                 Số F-Point tối đa được quy đổi trừ tiền trên một đơn hàng.
                             </span>
                             <div className={styles.inputWrapper}>
-                                <input disabled={controller.isBusy}
+                                <input
+                                    disabled={isInputDisabled}
                                     id="maxPoints"
                                     type="number"
                                     className={styles.inputControl}
                                     value={maxPoints}
                                     min={0}
+                                    max={1000}
                                     onChange={(e) => controller.change('maxPointsPerOrder', Number(e.target.value))}
                                 />
                                 <span className={styles.unitText}>F-Point</span>
@@ -174,7 +188,8 @@ export const AdminSettingsManagement: React.FC = () => {
                                     Tổng chi tiêu tối thiểu để khách hàng đạt Hạng Đồng.
                                 </span>
                                 <div className={styles.inputWrapper}>
-                                    <input disabled={controller.isBusy}
+                                    <input
+                                        disabled={isInputDisabled}
                                         id="bronzeUpgradeSpending"
                                         type="number"
                                         className={styles.inputControl}
@@ -194,7 +209,8 @@ export const AdminSettingsManagement: React.FC = () => {
                                     Tổng chi tiêu tối thiểu để khách hàng đạt Hạng Bạc.
                                 </span>
                                 <div className={styles.inputWrapper}>
-                                    <input disabled={controller.isBusy}
+                                    <input
+                                        disabled={isInputDisabled}
                                         id="silverUpgradeSpending"
                                         type="number"
                                         className={styles.inputControl}
@@ -214,7 +230,8 @@ export const AdminSettingsManagement: React.FC = () => {
                                     Tổng chi tiêu tối thiểu để khách hàng đạt Hạng Vàng.
                                 </span>
                                 <div className={styles.inputWrapper}>
-                                    <input disabled={controller.isBusy}
+                                    <input
+                                        disabled={isInputDisabled}
                                         id="goldUpgradeSpending"
                                         type="number"
                                         className={styles.inputControl}
@@ -230,18 +247,40 @@ export const AdminSettingsManagement: React.FC = () => {
 
                 </div>
 
-                <div className={styles.cardFooter}>
-                    <button type="button" className={styles.btnSecondary} disabled={controller.isBusy} onClick={() => controller.setRestoreOpen(true)}>
-                        <RotateCcw size={16} /> Khôi phục mặc định
-                    </button>
-                    <button type="button" className={styles.btnPrimary} disabled={controller.isBusy} onClick={() => void controller.save()}>
-                        <Save size={16} /> Lưu thay đổi
-                    </button>
-                </div>
+                {!controller.isReadOnly && (
+                    <div className={styles.cardFooter}>
+                        <button
+                            type="button"
+                            className={styles.btnSecondary}
+                            disabled={controller.isBusy}
+                            onClick={() => controller.setRestoreOpen(true)}
+                        >
+                            <RotateCcw size={16} /> Khôi phục mặc định
+                        </button>
+                        <button
+                            type="button"
+                            className={styles.btnPrimary}
+                            disabled={controller.isBusy}
+                            onClick={() => void controller.save()}
+                        >
+                            <Save size={16} /> Lưu thay đổi
+                        </button>
+                    </div>
+                )}
             </section>
 
             {!controller.restoreOpen && notification}
-            {controller.restoreOpen && <ConfirmDialog title="Khôi phục cài đặt mặc định?" message="Thao tác này thay thế các cấu hình hiện tại trong database." busy={controller.isBusy} onClose={() => controller.setRestoreOpen(false)} onConfirm={() => void controller.restore()}>{notification}</ConfirmDialog>}
+            {!controller.isReadOnly && controller.restoreOpen && (
+                <ConfirmDialog
+                    title="Khôi phục cài đặt mặc định?"
+                    message="Thao tác này thay thế các cấu hình hiện tại trong database."
+                    busy={controller.isBusy}
+                    onClose={() => controller.setRestoreOpen(false)}
+                    onConfirm={() => void controller.restore()}
+                >
+                    {notification}
+                </ConfirmDialog>
+            )}
 
         </div>
     );

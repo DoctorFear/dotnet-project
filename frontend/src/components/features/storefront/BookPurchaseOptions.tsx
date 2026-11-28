@@ -14,7 +14,7 @@ export default function BookPurchaseOptions({ book, selection, disabled = false 
     const isPhysicalInStock = (book.stockCount ?? 0) > 0;
     const hasPublishedEbook = Boolean(book.hasPublishedEbook);
     const isEBookActive = Boolean(book.isEBookAvailable) && hasPublishedEbook;
-    const isRentalActive = Boolean(book.isRentalAvailable) && Boolean(book.isEBookAvailable) && hasPublishedEbook;
+    const isRentalActive = Boolean(book.isRentalAvailable) && hasPublishedEbook && selection.rentals.length > 0;
     const minRentalPrice = selection.rentals.length > 0
         ? Math.min(...selection.rentals.map((option) => option.price))
         : (book.weeklyRentalPrice ?? 0);

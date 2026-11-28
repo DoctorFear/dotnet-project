@@ -83,8 +83,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                     {adminMenuItems
                         .filter((item) =>
                             user?.role === 'Admin'
-                                ? ['reports', 'settings', 'users', 'audit-logs', 'books'].includes(item.page ?? '')
-                                : !['reports', 'settings', 'users', 'audit-logs'].includes(item.page ?? '') && item.icon !== UserCog
+                                ? ['reports', 'users', 'audit-logs', 'settings'].includes(item.page ?? '')
+                                : !['users', 'audit-logs'].includes(item.page ?? '') && item.icon !== UserCog
                         )
                         .map((item) => {
                             const Icon = item.icon;

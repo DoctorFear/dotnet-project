@@ -20,7 +20,7 @@ export const useBookSearch = () => {
     const [sortBy, setSortBy] = useState('newest');
     const [filters, setFilters] = useState<Partial<StorefrontFilterParams>>({});
     const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(6);
+    const [pageSize, setPageSize] = useState(12);
     const [purchaseBook, setPurchaseBook] = useState<ProductData | null>(null);
     const notifications = useToastNotifications();
     const cart = useBookCartAction(notifications.notify);

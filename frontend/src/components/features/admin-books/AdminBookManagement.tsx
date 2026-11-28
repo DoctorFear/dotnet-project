@@ -170,10 +170,17 @@ export const AdminBookManagement: React.FC = () => {
                                     </td>
                                     <td className={styles.priceCell}>
                                         <div className={styles.cellTitle}>
-                                            <span>Sách giấy: {formatCurrency(book.physicalPrice)}</span>
+                                            <span>
+                                                Sách giấy:{' '}
+                                                {book.isPhysicalAvailable ? (
+                                                    formatCurrency(book.physicalPrice)
+                                                ) : (
+                                                    <em style={{ color: '#94a3b8' }}>Không bán sách giấy</em>
+                                                )}
+                                            </span>
                                             <span>
                                                 E-book:{' '}
-                                                {book.eBookPrice > 0 ? (
+                                                {book.isEBookAvailable ? (
                                                     formatCurrency(book.eBookPrice)
                                                 ) : (
                                                     <em style={{ color: '#94a3b8' }}>Không bán Online</em>
@@ -181,7 +188,7 @@ export const AdminBookManagement: React.FC = () => {
                                             </span>
                                             <span>
                                                 Thuê (T/T/N):{' '}
-                                                {book.eBookPrice > 0 ? (
+                                                {book.isRentalAvailable ? (
                                                     `${formatCurrency(book.weeklyRentalPrice)} / ${formatCurrency(book.monthlyRentalPrice || 0)} / ${formatCurrency(book.yearlyRentalPrice || 0)}`
                                                 ) : (
                                                     <em style={{ color: '#94a3b8' }}>Không cho thuê</em>

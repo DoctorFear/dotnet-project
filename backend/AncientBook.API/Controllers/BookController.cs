@@ -27,6 +27,12 @@ namespace AncientBook.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetFiltered([FromQuery] BookFilterRequestDto filter)
         {
+            bool isStaff = User.IsInRole("Staff");
+            if (!isStaff)
+            {
+                filter.IncludeStopped = false;
+            }
+
             var result = await _bookService.GetFilteredBooksAsync(filter);
             return Ok(result);
         }
@@ -45,7 +51,7 @@ namespace AncientBook.API.Controllers
 
         // Upload ảnh bìa/gallery; ấn bản PDF/EPUB dùng API EbookEditions.
         [HttpPost("upload-file")]
-        [Authorize(Roles = "Staff,Admin")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> UploadFile(IFormFile file, [FromQuery] string folder = "books")
         {
             try
@@ -64,7 +70,7 @@ namespace AncientBook.API.Controllers
 
         // Thêm đầu sách mới.
         [HttpPost]
-        [Authorize(Roles = "Staff,Admin")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Create([FromBody] SaveBookDto dto)
         {
             try
@@ -81,7 +87,7 @@ namespace AncientBook.API.Controllers
 
         // Cập nhật thông tin sách, thể loại và ảnh.
         [HttpPut("{id}")]
-        [Authorize(Roles = "Staff,Admin")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Update(int id, [FromBody] SaveBookDto dto)
         {
             try
@@ -99,7 +105,7 @@ namespace AncientBook.API.Controllers
 
         // Đổi nhanh trạng thái kinh doanh của sách.
         [HttpPatch("{id}/status")]
-        [Authorize(Roles = "Staff,Admin")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] string status)
         {
             try
@@ -117,7 +123,7 @@ namespace AncientBook.API.Controllers
 
         // Xóa sách hoặc ngừng kinh doanh nếu đã có đơn hàng.
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Staff,Admin")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Delete(int id)
         {
             try

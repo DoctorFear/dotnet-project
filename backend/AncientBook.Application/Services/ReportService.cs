@@ -43,16 +43,29 @@ public class ReportService(IReportRepository reports, IReportPdfExporter exporte
         var today = TimeZoneHelper.GetVietnamTime().Date;
         var from = (filter.FromDate ?? new DateTime(today.Year, today.Month, 1)).Date;
         var to = (filter.ToDate ?? today).Date;
-        if (from > to || (to - from).Days > 365 || to == DateTime.MaxValue.Date)
-            throw new ArgumentException("Khoảng thời gian phải hợp lệ và không vượt quá 366 ngày.");
+
+        if (from > to || to > today || (to - from).Days > 365 || to == DateTime.MaxValue.Date)
+        {
+            throw new ArgumentException("Khoảng thời gian lựa chọn không hợp lệ. Vui lòng kiểm tra lại ngày bắt đầu và kết thúc!");
+        }
+
         var type = (filter.PurchaseType ?? "all").ToLowerInvariant();
-        if (type is not ("all" or "physical" or "rental") || filter.CategoryId is <= 0 || filter.PublisherId is <= 0)
+        if (type is not ("all" or "physical" or "ebook" or "rental") || filter.CategoryId is <= 0 || filter.PublisherId is <= 0)
+        {
             throw new ArgumentException("Bộ lọc báo cáo không hợp lệ.");
+        }
+
         return new ReportFilterDto
         {
-            FromDate = from, ToDate = to, CategoryId = filter.CategoryId, PublisherId = filter.PublisherId, PurchaseType = type,
-            TopPage = Math.Max(1, filter.TopPage), TopPageSize = Math.Clamp(filter.TopPageSize, 1, 10),
-            InventoryPage = Math.Max(1, filter.InventoryPage), InventoryPageSize = Math.Clamp(filter.InventoryPageSize, 1, 100)
+            FromDate = from,
+            ToDate = to,
+            CategoryId = filter.CategoryId,
+            PublisherId = filter.PublisherId,
+            PurchaseType = type,
+            TopPage = Math.Max(1, filter.TopPage),
+            TopPageSize = Math.Clamp(filter.TopPageSize, 1, 10),
+            InventoryPage = Math.Max(1, filter.InventoryPage),
+            InventoryPageSize = Math.Clamp(filter.InventoryPageSize, 1, 100)
         };
     }
 } 
